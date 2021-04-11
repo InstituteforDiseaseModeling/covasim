@@ -263,35 +263,42 @@ def get_strain_colors():
 
 # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
 overview_plots = [
-            'cum_infections',
-            # 'cum_infections_by_strain',
-            'cum_severe',
-            'cum_critical',
-            'cum_deaths',
-            'cum_diagnoses',
-            'new_infections',
-            # 'new_infections_by_strain',
-            'new_severe',
-            'new_critical',
-            'new_deaths',
-            'new_diagnoses',
-            'n_infectious',
-            # 'n_infectious_by_strain',
-            'n_severe',
-            'n_critical',
-            'n_susceptible',
-            'new_tests',
-            'n_symptomatic',
-            'new_quarantined',
-            'n_quarantined',
-            'new_vaccinations',
-            'new_vaccinated',
-            'cum_vaccinated',
-            'cum_vaccinations',
-            'test_yield',
-            'r_eff',
-            ]
+    'cum_infections',
+    'cum_severe',
+    'cum_critical',
+    'cum_deaths',
+    'cum_diagnoses',
+    'new_infections',
+    'new_severe',
+    'new_critical',
+    'new_deaths',
+    'new_diagnoses',
+    'n_infectious',
+    'n_severe',
+    'n_critical',
+    'n_susceptible',
+    'new_tests',
+    'n_symptomatic',
+    'new_quarantined',
+    'n_quarantined',
+    'new_vaccinations',
+    'new_vaccinated',
+    'cum_vaccinated',
+    'cum_vaccinations',
+    'test_yield',
+    'r_eff',
+]
 
+overview_strain_plots = [
+    'cum_infections_by_strain',
+    'new_infections_by_strain',
+    'n_infectious_by_strain',
+    'cum_reinfections',
+    'new_reinfections',
+    'pop_nabs',
+    'pop_protection',
+    'pop_symp_protection',
+]
 
 def get_sim_plots(which='default'):
     '''
@@ -300,6 +307,8 @@ def get_sim_plots(which='default'):
     Args:
         which (str): either 'default' or 'overview'
     '''
+
+    # Default plots
     if which in [None, 'default']:
         plots = sc.odict({
                 'Total counts': [
@@ -317,9 +326,36 @@ def get_sim_plots(which='default'):
                     'cum_deaths',
                 ],
         })
+
+    # Show everything
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
-    elif which == 'seir':
+
+    # Show everything plus strains
+    elif 'overview' in which and 'strain' in which:
+        plots = sc.dcp(overview_plots) + sc.dcp(overview_strain_plots)
+
+    # Show default but with strains
+    elif 'strain' in which:
+        plots = sc.odict({
+                'Total counts': [
+                    'cum_infections_by_strain',
+                    'n_infectious_by_strain',
+                    'cum_diagnoses',
+                ],
+                'Daily counts': [
+                    'new_infections_by_strain',
+                    'new_diagnoses',
+                ],
+                'Health outcomes': [
+                    'cum_severe',
+                    'cum_critical',
+                    'cum_deaths',
+                ],
+        })
+
+    # Plot SEIR compartments
+    elif which.lower() == 'seir':
         plots = sc.odict({
                 'SEIR states': [
                     'n_susceptible',
@@ -328,8 +364,9 @@ def get_sim_plots(which='default'):
                     'n_removed',
                 ],
         })
+
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "strain", "overview-strain", or "seir"'
         raise ValueError(errormsg)
     return plots
 

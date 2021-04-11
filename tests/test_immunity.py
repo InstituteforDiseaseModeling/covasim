@@ -12,7 +12,7 @@ do_save = 0
 cv.options.set(interactive=False) # Assume not running interactively
 
 base_pars = dict(
-    pop_size = 2e3,
+    pop_size = 1e3,
     verbose = -1,
 )
 
@@ -20,12 +20,12 @@ base_pars = dict(
 
 def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
-    s1 = cv.Sim(base_pars, n_days=300, label='No waning')
+    s1 = cv.Sim(base_pars, n_days=300, use_waning=True, label='No waning')
     s2 = cv.Sim(base_pars, n_days=300, use_waning=True, label='With waning')
     msim = cv.MultiSim([s1,s2])
     msim.run()
     if do_plot:
-        msim.plot()
+        msim.plot('strain')
     return msim
 
 

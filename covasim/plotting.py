@@ -107,7 +107,11 @@ def handle_to_plot(which, to_plot, n_cols, sim, check_ready=True):
         to_plot_list = to_plot # Store separately
         to_plot = sc.odict() # Create the dict
         for reskey in to_plot_list:
-            to_plot[sim.results[reskey].name] = [reskey] # Use the result name as the key and the reskey as the value
+            if 'strain' in sim.results and reskey in sim.results['strain']:
+                name = sim.results['strain'][reskey].name
+            else:
+                name = sim.results[reskey].name
+            to_plot[name] = [reskey] # Use the result name as the key and the reskey as the value
 
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
@@ -390,9 +394,9 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for resnum,reskey in enumerate(keylabels):
-            res = sim.results[reskey]
             res_t = sim.results['t']
-            if 'by_strain' in reskey:
+            if 'strain' in sim.results and reskey in sim.results['strain']:
+                res = sim.results['strain'][reskey]
                 for strain in range(sim['total_strains']):
                     color = cvd.get_strain_colors()[strain]  # Choose the color
                     if strain == 0:
@@ -405,6 +409,7 @@ def plot_sim(sim, to_plot=None, do_save=None, fig_path=None, fig_args=None, plot
                     ax.plot(res_t, res.values[strain,:], label=label, **args.plot, c=color)  # Actually plot the sim!
 
             else:
+                res = sim.results[reskey]
                 color = set_line_options(colors, reskey, resnum, res.color)  # Choose the color
                 label = set_line_options(labels, reskey, resnum, res.name)  # Choose the label
                 if res.low is not None and res.high is not None:
@@ -443,7 +448,7 @@ def plot_scens(scens, to_plot=None, do_save=None, fig_path=None, fig_args=None, 
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
-                if 'by_strain' in reskey:
+                if 'by_strain' in reskey: # TODO: refactor
                     for strain in range(sim['total_strains']):
                         res_y = scendata.best[strain,:]
                         color = default_colors[strain]  # Choose the color
