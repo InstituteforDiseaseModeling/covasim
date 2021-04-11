@@ -1196,8 +1196,9 @@ class vaccine(Intervention):
                 self.date_vaccinated[v_ind].append(sim.t)
 
             # Update vaccine attributes in sim
+            sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccinations[vacc_inds] += 1
-            sim.people.vaccination_dates = self.date_vaccinated
+            sim.people.vaccination_dates = self.date_vaccinated # TODO: refactor
 
         return
 

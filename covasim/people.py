@@ -62,28 +62,29 @@ class People(cvb.BasePeople):
 
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
-            if key in ['uid']:
+            if key == 'uid':
                 self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
-            elif key in ['vaccinations']:
-                self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
-            elif key in ['sus_imm', 'symp_imm', 'sev_imm']:  # everyone starts out with no immunity
-                self[key] = np.full((self.total_strains, self.pop_size), 0, dtype=cvd.default_float)
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
         # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
-            if key == 'susceptible':
-                self[key] = np.full(self.pop_size, True, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, False, dtype=bool)
+            val = (key == 'susceptible') # Default value is True for susceptible, false otherwise
+            self[key] = np.full(self.pop_size, val, dtype=bool)
 
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
-            if 'by' in key:
-                self[key] = np.full((self.total_strains, self.pop_size), False, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+        for key in self.meta.by_strain_states:
+            self[key] = np.full((self.total_strains, self.pop_size), False, dtype=bool)
+
+        # Set immunity and antibody states
+        for key in self.meta.imm_states:  # Everyone starts out with no immunity
+            self[key] = np.zeros((self.total_strains, self.pop_size), dtype=cvd.default_float)
+        for key in self.meta.nab_states:  # Everyone starts out with no antibodies
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+        for key in self.meta.vacc_states:
+            self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
@@ -114,6 +115,7 @@ class People(cvb.BasePeople):
                 self[key] = value
 
         self._pending_quarantine = defaultdict(list)  # Internal cache to record people that need to be quarantined on each timestep {t:(person, quarantine_end_day)}
+
         return
 
 
@@ -351,17 +353,23 @@ class People(cvb.BasePeople):
             else:
                 self[key][inds] = False
 
+        # Reset strain states
         for key in self.meta.strain_states:
-            if 'by' in key: # TODO: refactor
-                self[key][:, inds] = False
-            else:
-                self[key][inds] = np.nan
+            self[key][inds] = np.nan
+        for key in self.meta.by_strain_states:
+            self[key][:, inds] = False
 
+        # Reset immunity and antibody states
+        for key in self.meta.imm_states:
+            self[key][:, inds] = 0
+        for key in self.meta.nab_states:
+            self[key][inds] = np.nan
+        for key in self.meta.vacc_states:
+            self[key][inds] = 0
+
+        # Reset dates
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
-
-        self['init_NAb'][inds] = np.nan
-        self['NAb'][inds] = np.nan
 
         return
 
