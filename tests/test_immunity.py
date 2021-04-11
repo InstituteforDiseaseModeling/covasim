@@ -25,7 +25,7 @@ def test_waning(do_plot=False):
     msim = cv.MultiSim([s1,s2])
     msim.run()
     if do_plot:
-        msim.plot('strain')
+        msim.plot('overview-strain')
     return msim
 
 
