@@ -248,9 +248,6 @@ class People(cvb.BasePeople):
         ''' Check for recovery '''
         inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp) # TODO TEMP!!!!
 
-        if 7723 in inds:
-            print('yes on ', self.t)
-
         # Now reset all disease states
         self.exposed[inds]          = False
         self.infectious[inds]       = False
