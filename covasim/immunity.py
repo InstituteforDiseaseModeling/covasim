@@ -124,9 +124,8 @@ class Strain(cvi.Intervention):
             if hasattr(self, strain_key): # TODO: refactor
                 newval = getattr(self, strain_key)
                 sim['strain_pars'][strain_key].append(newval)
-            else:
-                # use default
-                print(f'{strain_key} not provided for this strain, using default value')
+            else: # use default
+                sc.printv(f'{strain_key} not provided for this strain, using default value', 1, sim['verbose'])
                 sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
 
         return
@@ -275,6 +274,7 @@ class Vaccine(cvi.Intervention):
 
         return vaccine_pars
 
+
     def initialize(self, sim):
         super().initialize()
 
@@ -287,8 +287,8 @@ class Vaccine(cvi.Intervention):
             errormsg = 'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
-        if self.rel_imm is None:
-            print('Did not provide rel_imm parameters for this vaccine, trying to find values')
+        if self.rel_imm is None: # TODO: refactor
+            sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
             self.rel_imm = []
             for strain in circulating_strains:
                 if strain in self.vaccine_strain_info['known_strains']:

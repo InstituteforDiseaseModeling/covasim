@@ -4,20 +4,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-do_plot   = 1
+do_plot   = 0
 do_show   = 0
-do_save   = 1
+do_save   = 0
 
 base_pars = dict(
     pop_size = 10e3,
-    verbose = 0.01,
+    verbose = -1,
 )
 
+def test_simple(do_plot=False):
+    s1 = cv.Sim(base_pars).run()
+    s2 = cv.Sim(base_pars, n_days=300, use_waning=True).run()
+    if do_plot:
+        s1.plot()
+        s2.plot()
+    return
 
 
 def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test varying properties of immunity')
-    sc.heading('Setting up...')
 
     # Define baseline parameters
     n_runs = 3
@@ -208,8 +214,6 @@ def test_synthpops():
 
 def test_vaccine_1strain_scen(do_plot=True, do_show=True, do_save=False):
     sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
-
-    sc.heading('Setting up...')
 
     # Define baseline parameters
     n_runs = 3
@@ -506,8 +510,7 @@ if __name__ == '__main__':
     sc.tic()
 
     # Run simplest possible test
-    sim = cv.Sim().run().plot()
-    sim = cv.Sim(n_days=300, use_waning=True).run().plot()
+    test_simple(do_plot=do_plot)
 
     # Run more complex single-sim tests
     sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
