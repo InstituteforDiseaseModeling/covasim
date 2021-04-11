@@ -1,5 +1,5 @@
 '''
-Tests covering all the built-in interventions, mostly taken 
+Tests covering all the built-in interventions, mostly taken
 from the intervention's docstrings.
 '''
 
@@ -20,6 +20,7 @@ csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 
 def test_all_interventions():
     ''' Test all interventions supported by Covasim '''
+    sc.heading('Testing default interventions')
 
     pars = sc.objdict(
         pop_size     = 1e3,
@@ -27,6 +28,18 @@ def test_all_interventions():
         n_days       = 90,
     )
     hpars = sc.mergedicts(pars, {'pop_type':'hybrid'}) # Some, but not all, tests require layers
+    rsim = cv.Sim(pars).initialize()
+    hsim = cv.Sim(hpars).initialize()
+
+    def make_sim(which='r', interventions=None):
+        ''' Helper function to avoid having to recreate the sim each time '''
+        if which == 'r':
+            sim = sc.dcp(rsim)
+        elif which == 'h':
+            sim = sc.dcp(hsim)
+        sim['interventions'] = interventions
+        sim.initialize()
+        return sim
 
 
     #%% Define the interventions
@@ -83,17 +96,17 @@ def test_all_interventions():
 
     #%% Create the simulations
     sims = sc.objdict()
-    sims.dynamic      = cv.Sim(pars=pars,  interventions=[i1a, i1b])
-    sims.sequence     = cv.Sim(pars=pars,  interventions=i2)
-    sims.change_beta1 = cv.Sim(pars=hpars, interventions=i3a)
-    sims.clip_edges1  = cv.Sim(pars=hpars, interventions=i4a) # Roughly equivalent to change_beta1
-    sims.change_beta2 = cv.Sim(pars=pars,  interventions=i3b)
-    sims.clip_edges2  = cv.Sim(pars=pars,  interventions=i4b) # Roughly equivalent to change_beta2
-    sims.test_num     = cv.Sim(pars=pars,  interventions=i5)
-    sims.test_prob    = cv.Sim(pars=pars,  interventions=i6)
-    sims.tracing      = cv.Sim(pars=hpars, interventions=[i7a, i7b])
-    sims.combo        = cv.Sim(pars=hpars, interventions=[i8a, i8b, i8c, i8d])
-    sims.vaccine      = cv.Sim(pars=pars,  interventions=[i9a, i9b])
+    sims.dynamic      = make_sim('r', [i1a, i1b])
+    sims.sequence     = make_sim('r', i2)
+    sims.change_beta1 = make_sim('h', i3a)
+    sims.clip_edges1  = make_sim('h', i4a) # Roughly equivalent to change_beta1
+    sims.change_beta2 = make_sim('r', i3b)
+    sims.clip_edges2  = make_sim('r', i4b) # Roughly equivalent to change_beta2
+    sims.test_num     = make_sim('r', i5)
+    sims.test_prob    = make_sim('r', i6)
+    sims.tracing      = make_sim('h', [i7a, i7b])
+    sims.combo        = make_sim('h', [i8a, i8b, i8c, i8d])
+    sims.vaccine      = make_sim('r', [i9a, i9b])
 
     # Run the simualations
     for key,sim in sims.items():
