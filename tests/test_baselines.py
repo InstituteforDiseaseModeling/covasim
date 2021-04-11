@@ -105,7 +105,7 @@ def test_benchmark(do_save=do_save, repeats=1):
     def normalize_performance():
         ''' Normalize performance across CPUs -- simple Numpy calculation '''
         t_bls = []
-        bl_repeats = 5
+        bl_repeats = 3
         n_outer = 10
         n_inner = 1e6
         for r in range(bl_repeats):
