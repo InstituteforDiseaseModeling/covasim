@@ -534,8 +534,8 @@ if __name__ == '__main__':
     T = sc.tic()
 
     # msim1 = test_waning(do_plot=do_plot)
-    msim2 = test_rescale(do_plot=do_plot)
-    # sim1  = test_states()
+    # msim2 = test_rescale(do_plot=do_plot)
+    sim1  = test_states()
 
     sc.toc(T)
     print('Done.')

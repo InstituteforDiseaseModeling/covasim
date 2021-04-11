@@ -488,21 +488,27 @@ class Sim(cvb.BaseSim):
         cvimm.init_immunity(self, create=create)
         return
 
-    def init_vaccines(self):
+    def init_vaccines(self): # TODO: refactor
         ''' Check if there are any vaccines in simulation, if so initialize vaccine info param'''
-        if len(self['vaccines']):
-            nv = len(self['vaccines'])
-            ns = self['total_strains']
+        print('TEMP')
+        # if len(self['vaccines']):
+        nv = max(1, len(self['vaccines']))
+        ns = self['total_strains']
 
-            self['vaccine_info'] = {}
-            self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
+        self['vaccine_info'] = {}
+        self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
+        self['vaccine_info']['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
+        self['vaccine_info']['doses'] = 2
+        self['vaccine_info']['interval'] = 22
+        self['vaccine_info']['NAb_boost'] = 2
+        self['vaccine_info']['NAb_eff'] = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
 
-            for ind, vacc in enumerate(self['vaccines']):
-                self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
-                self['vaccine_info']['doses'] = vacc.doses
-                self['vaccine_info']['NAb_init'] = vacc.NAb_init
-                self['vaccine_info']['NAb_boost'] = vacc.NAb_boost
-                self['vaccine_info']['NAb_eff'] = vacc.NAb_eff
+        for ind, vacc in enumerate(self['vaccines']):
+            self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
+            self['vaccine_info']['doses'] = vacc.doses
+            self['vaccine_info']['NAb_init'] = vacc.NAb_init
+            self['vaccine_info']['NAb_boost'] = vacc.NAb_boost
+            self['vaccine_info']['NAb_eff'] = vacc.NAb_eff
 
         return
 
