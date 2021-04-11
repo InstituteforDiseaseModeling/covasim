@@ -35,6 +35,23 @@ def test_waning(do_plot=False):
     return msim
 
 
+def test_rescale(do_plot=False):
+    sc.heading('Testing with and without waning with rescaling')
+    pars = dict(
+        pop_size = 10e3,
+        pop_scale = 10,
+        n_days = 300,
+        beta = 0.008,
+        NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
+    )
+    s1 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
+    s2 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+    msim = cv.MultiSim([s1,s2])
+    if do_plot:
+        msim.plot('overview-strain', rotation=30)
+    return msim
+
+
 def test_states():
     ''' Test state consistency against state_diagram.xlsx '''
 
@@ -47,10 +64,7 @@ def test_states():
     # Create and run simulation
     for use_waning in [False, True]:
         sc.heading(f'Testing state consistency with waning = {use_waning}')
-
-        # Different states are possible with or without waning: resolve discrepancies
-        df = dfs[use_waning]
-
+        df = dfs[use_waning] # Different states are possible with or without waning
 
         # Parameters chosen to be midway through the sim so as few states as possible are empty
         pars = dict(
@@ -519,8 +533,9 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    msim1 = test_waning(do_plot=do_plot)
-    sim1  = test_states()
+    # msim1 = test_waning(do_plot=do_plot)
+    msim2 = test_rescale(do_plot=do_plot)
+    # sim1  = test_states()
 
     sc.toc(T)
     print('Done.')
