@@ -1,5 +1,5 @@
 '''
-Execute analysis tools in order to broadly cover basic functionality of analysis.py
+Tests for the analyzers and other analysis tools.
 '''
 
 import numpy as np

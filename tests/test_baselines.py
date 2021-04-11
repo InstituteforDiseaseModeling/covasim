@@ -1,5 +1,6 @@
 """
-Compare current results to baseline
+Test that the current version of Covasim exactly matches 
+the baseline results.
 """
 
 import numpy as np

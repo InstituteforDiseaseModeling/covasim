@@ -1,5 +1,8 @@
 '''
-Numerical utilities for running Covasim
+Numerical utilities for running Covasim.
+
+These include the viral load, transmissibility, and infection calculations
+at the heart of the integration loop.
 '''
 
 #%% Housekeeping

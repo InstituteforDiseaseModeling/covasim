@@ -1,5 +1,6 @@
 '''
-Demonstrate all interventions, taken from intervention docstrings
+Tests covering all the built-in interventions, mostly taken 
+from the intervention's docstrings.
 '''
 
 #%% Housekeeping

@@ -1,5 +1,5 @@
 '''
-Tests of the utilies for the model.
+Tests of the numerical utilities for the model.
 '''
 
 #%% Imports and settings
