@@ -203,7 +203,6 @@ def savefig(filename=None, comments=None, **kwargs):
     return filename
 
 
-
 #%% Migration functions
 
 __all__ += ['migrate']
@@ -365,9 +364,6 @@ def migrate(obj, update=True, verbose=True, die=False):
         obj.version = cvv.__version__
 
     return obj
-
-
-
 
 
 
@@ -584,6 +580,7 @@ def get_png_metadata(filename, output=False):
         return metadata
     else:
         return
+
 
 
 #%% Simulation/statistics functions

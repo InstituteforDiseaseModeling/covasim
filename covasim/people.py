@@ -399,16 +399,14 @@ class People(cvb.BasePeople):
             cvi.check_immunity(self, strain, sus=False, inds=inds)
 
         # Deal with strain parameters
-        infect_parkeys = ['dur', 'rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
-        if not strain: # Use defaults for wild type
-            infect_pars = self.pars
-        else:
-            infect_pars = dict()
-            for key in infect_parkeys:
-                infect_pars[key] = self.pars['strain_pars'][key][strain]
+        strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
+        infect_pars = {k:self.pars[k] for k in strain_keys}
+        if strain:
+            for k in strain_keys:
+                infect_pars[k] *= self.pars['strain_pars'][k][strain]
 
         n_infections = len(inds)
-        durpars      = infect_pars['dur']
+        durpars      = self.pars['dur']
 
         # Update states, strain info, and flows
         self.susceptible[inds]   = False
