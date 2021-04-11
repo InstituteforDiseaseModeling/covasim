@@ -478,6 +478,56 @@ class People(cvb.BasePeople):
         return
         
     
+    def TestTimeVaryingSensitivity(self, inds, loss_prob=0.0, test_delay=0,test_type='pcr'): 
+        '''
+        Method to test people. Typically not to be called by the user directly;
+        see the test_num() and test_prob() interventions.
+
+        Args:
+            inds: indices of who to test
+            test_type (str): options are 'pcr' (default) and 'lfa';different tests have different sensitivity curves
+            loss_prob (float): probability of loss to follow-up
+            test_delay (int): number of days before test results are ready
+        '''
+        inds = np.unique(inds)
+        self.tested[inds] = True
+        self.date_tested[inds] = self.t # Only keep the last time they tested
+        is_infectious = cvu.itruei(self.infectious, inds)
+        self.infec_time       = cvd.default_int(self.t - self.date_infectious[is_infectious])
+
+        # for each individual being tested, lets get the probability that they will test positive
+        if test_type is 'pcr':
+            prob_test_positive = [
+                self.pcr(infectious_age)
+                for infectious_age
+                in self.infec_time
+            ]
+        elif test_type is 'lfa':
+            prob_test_positive = [
+                self.lfa(infectious_age)
+                for infectious_age
+                in self.infec_time
+            ]
+        else:
+            # todo: add a proper error here
+            print('something went wrong')
+
+        # now, we use the covasim binomial_arr function
+        # this function performs lots of binomial trials with different probabilities
+        # so you pass a vector [0.1, 0.3, 0.5] and it performs 3 trials
+        # it returns a random [False, True, True] style vector 
+        pos_test      = cvu.binomial_arr(prob_arr=prob_test_positive)
+        print(f'There were {sum(pos_test)} positive tests')
+        is_inf_pos    = is_infectious[pos_test]
+        
+        not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
+        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
+        final_inds    = not_diagnosed[not_lost]
+        
+        self.date_diagnosed[final_inds] = self.t + test_delay
+        self.date_pos_test[final_inds] = self.t
+        
+        return
 
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
