@@ -92,12 +92,6 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
 
 def test_import1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain partway through a sim')
-    sc.heading('Setting up...')
-
-    strain_labels = [
-        'Strain 1',
-        'Strain 2: 1.5x more transmissible'
-    ]
 
     strain_pars = {
         'rel_beta': 1.5,
@@ -105,7 +99,7 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
     pars = {
         'beta': 0.01
     }
-    strain = cv.Strain(strain_pars, days=1, n_imports=20)
+    strain = cv.Strain(strain_pars, days=1, n_imports=20, label='Strain 2: 1.5x more transmissible')
     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, analyzers=cv.snapshot(30, 60), **pars, **base_pars)
     sim.run()
 
@@ -114,34 +108,17 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
 
 def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
-    sc.heading('Setting up...')
 
     b117 = cv.Strain('b117', days=1, n_imports=20)
     p1 = cv.Strain('sa variant', days=2, n_imports=20)
     sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
     sim.run()
 
-    strain_labels = [
-        'Strain 1: Wild Type',
-        'Strain 2: UK Variant on day 10',
-        'Strain 3: SA Variant on day 30'
-    ]
-
-    # if do_plot:
-    #     plot_results(sim, key='incidence_by_strain', title='Imported strains', filename='test_importstrain2', labels=strain_labels, do_show=do_show, do_save=do_save)
-    #     plot_shares(sim, key='new_infections', title='Shares of new infections by strain',
-    #             filename='test_importstrain2_shares', do_show=do_show, do_save=do_save)
     return sim
 
 
 def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing a new strain with longer duration partway through a sim')
-    sc.heading('Setting up...')
-
-    strain_labels = [
-        'Strain 1: beta 0.016',
-        'Strain 2: beta 0.025'
-    ]
 
     pars = sc.mergedicts(base_pars, {
         'n_days': 120,
@@ -152,19 +129,15 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
         'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
     }
 
-    strain = cv.Strain(strain=strain_pars, strain_label='Custom strain', days=10, n_imports=30)
+    strain = cv.Strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, label='With imported infections')
     sim.run()
 
-    # if do_plot:
-    #     plot_results(sim, key='incidence_by_strain', title='Imported strain on day 30 (longer duration)', filename='test_importstrain1', labels=strain_labels, do_show=do_show, do_save=do_save)
-    #     plot_shares(sim, key='new_infections', title='Shares of new infections by strain', filename='test_importstrain_longerdur_shares', do_show=do_show, do_save=do_save)
     return sim
 
 
 def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
-    sc.heading('Setting up...')
 
     strain2 = {'rel_beta': 1.5,
                'rel_severe_prob': 1.3}
@@ -334,7 +307,7 @@ def test_vaccine_2strains_scen(do_plot=True, do_show=True, do_save=False):
         # 'Cumulative reinfections': ['cum_reinfections'],
     })
     if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path=f'results/test_vaccine_b1351.png', to_plot=to_plot)
+        scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_vaccine_b1351.png', to_plot=to_plot)
 
     return scens
 
@@ -344,7 +317,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     sc.heading('Setting up...')
 
     strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
-    strains = cv.Strain(strain=strain_pars, strain_label='10 days til symptoms', days=10, n_imports=30)
+    strains = cv.Strain(strain=strain_pars, label='10 days til symptoms', days=10, n_imports=30)
     tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
 
     pars = sc.mergedicts(base_pars, {

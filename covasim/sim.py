@@ -412,7 +412,7 @@ class Sim(cvb.BaseSim):
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
-        pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains'])
+        pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains']) # TODO: refactor
         for strain in range(self['n_strains']):
             inds = cvu.choose(self['pop_size'], pop_infected_per_strain)
             self.people.infect(inds=inds, layer='seed_infection', strain=strain)
@@ -608,12 +608,10 @@ class Sim(cvb.BaseSim):
                 cvimm.check_immunity(people, strain, sus=True)
 
             # Deal with strain parameters
-            if not strain:
-                rel_beta = self['rel_beta']
-                asymp_factor = self['asymp_factor']
-            else:
-                rel_beta = self['strain_pars']['rel_beta'][strain]
-                asymp_factor = cvd.default_float(self['strain_pars']['asymp_factor'][strain])
+            rel_beta = self['rel_beta']
+            asymp_factor = self['asymp_factor']
+            if strain:
+                rel_beta *= self['strain_pars']['rel_beta'][strain]
             beta = cvd.default_float(self['beta'] * rel_beta)
 
             for lkey, layer in contacts.items():
@@ -622,13 +620,12 @@ class Sim(cvb.BaseSim):
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                inf_by_this_strain = people.infectious * (people.infectious_strain == strain)#people.infectious
+                inf_strain = people.infectious * (people.infectious_strain == strain) # TODO: move out of loop?
                 sus_imm = people.sus_imm[strain,:]
-                iso_factor = cvd.default_float(self['iso_factor'][lkey])
+                iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
-                beta_layer = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_by_this_strain, sus, beta_layer, viral_load, symp,
-                                                           diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+                beta_layer  = cvd.default_float(self['beta_layer'][lkey])
+                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_strain, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1

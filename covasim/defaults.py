@@ -166,20 +166,19 @@ result_imm = {
     'pop_protection': 'Population average protective immunity'
 }
 
-# Define these here as well
+# Define new and cumulative flows
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 new_result_flows_by_strain = [f'new_{key}' for key in result_flows_by_strain.keys()]
 cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.keys()]
 
-# Parameters that can vary by strain (should be in list format)
-strain_pars = ['rel_beta',
-               'asymp_factor',
-               'dur',
-               'rel_symp_prob',
-               'rel_severe_prob',
-               'rel_crit_prob',
-               'rel_death_prob',
+# Parameters that can vary by strain
+strain_pars = [
+    'rel_beta',
+    'rel_symp_prob',
+    'rel_severe_prob',
+    'rel_crit_prob',
+    'rel_death_prob',
 ]
 
 # Immunity is broken down according to 3 axes, as listed here
@@ -194,26 +193,26 @@ immunity_sources = [
 
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
-            [ 0,  4, 0.0605],
-            [ 5,  9, 0.0607],
-            [10, 14, 0.0566],
-            [15, 19, 0.0557],
-            [20, 24, 0.0612],
-            [25, 29, 0.0843],
-            [30, 34, 0.0848],
-            [35, 39, 0.0764],
-            [40, 44, 0.0697],
-            [45, 49, 0.0701],
-            [50, 54, 0.0681],
-            [55, 59, 0.0653],
-            [60, 64, 0.0591],
-            [65, 69, 0.0453],
-            [70, 74, 0.0312],
-            [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
-            [80, 84, 0.01344],
-            [85, 89, 0.01008],
-            [90, 99, 0.00672],
-            ])
+    [ 0,  4, 0.0605],
+    [ 5,  9, 0.0607],
+    [10, 14, 0.0566],
+    [15, 19, 0.0557],
+    [20, 24, 0.0612],
+    [25, 29, 0.0843],
+    [30, 34, 0.0848],
+    [35, 39, 0.0764],
+    [40, 44, 0.0697],
+    [45, 49, 0.0701],
+    [50, 54, 0.0681],
+    [55, 59, 0.0653],
+    [60, 64, 0.0591],
+    [65, 69, 0.0453],
+    [70, 74, 0.0312],
+    [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
+    [80, 84, 0.01344],
+    [85, 89, 0.01008],
+    [90, 99, 0.00672],
+])
 
 
 def get_colors():
@@ -227,7 +226,7 @@ def get_colors():
     c.exposed               = '#c78f65'
     c.exposed_by_strain     = '#c75649',
     c.infectious            = '#e45226'
-    c.infectious_by_strain  = '#e45226'
+    c.infectious_by_strain  = c.infectious
     c.infections            = '#b62413'
     c.reinfections          = '#732e26'
     c.infections_by_strain  = '#b62413'
@@ -235,8 +234,8 @@ def get_colors():
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
     c.quarantined           = '#5c399c'
-    c.vaccinations          = '#5c399c'
-    c.vaccinated            = '#5c399c'
+    c.vaccinations          = c.quarantined # TODO: new color
+    c.vaccinated            = c.quarantined
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'

@@ -6,6 +6,7 @@ import numpy as np
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
+from . import interventions as cvi
 
 
 # %% Define strain class
@@ -13,7 +14,7 @@ from . import defaults as cvd
 __all__ = ['Strain', 'Vaccine']
 
 
-class Strain():
+class Strain(cvi.Intervention):
     '''
     Add a new strain to the sim
 
@@ -21,125 +22,135 @@ class Strain():
         day (int): day on which new variant is introduced.
         n_imports (int): the number of imports of the strain to be added
         strain (dict): dictionary of parameters specifying information about the strain
-        kwargs (dict):
+        kwargs (dict): passed to Intervention()
 
     **Example**::
 
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
         # Make a custom strain active from day 20
-        my_var  = cv.Strain(strain={'rel_beta': 2.5}, strain_label='My strain', days=20)
+        my_var  = cv.Strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
         sim     = cv.Sim(strains=[b117, p1, my_var]) # Add them all to the sim
     '''
 
-    def __init__(self, strain=None, strain_label=None, days=None, n_imports=1, **kwargs):
+    def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True, **kwargs):
+        super().__init__(**kwargs) # Initialize the Intervention object
 
         # Handle inputs
         self.days = days
         self.n_imports = cvd.default_int(n_imports)
 
         # Strains can be defined in different ways: process these here
-        self.strain_pars = self.parse_strain_pars(strain=strain, strain_label=strain_label)
+        self.strain_pars = self.parse_strain_pars(strain=strain, label=label)
         for par, val in self.strain_pars.items():
             setattr(self, par, val)
         return
 
-    def parse_strain_pars(self, strain=None, strain_label=None):
+
+    def parse_strain_pars(self, strain=None, label=None):
         ''' Unpack strain information, which may be given in different ways'''
+
+        # List of choices currently available: new ones can be added to the list along with their aliases
+        choices = {
+            'wild': ['wild', 'default', 'pre-existing', 'original'],
+            'b117': ['b117', 'uk'],
+            'b1351': ['b1351', 'sa'],
+            'p1': ['p1', 'b11248', 'brazil'],
+        }
+        choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
+        reversemap = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
+
+        mapping = dict( # TODO: move to parameters.py
+            wild = dict(),
+
+            b117 = dict(
+                rel_beta        = 1.5,  # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+                rel_severe_prob = 1.8,  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
+            ),
+
+            b1351 = dict(
+                rel_imm         = 0.25,
+                rel_beta        = 1.4,
+                rel_severe_prob = 1.4,
+                rel_death_prob  = 1.4,
+            ),
+
+            p1 = dict(
+                rel_imm         = 0.5,
+                rel_beta        = 1.4,
+                rel_severe_prob = 1.4,
+                rel_death_prob  = 2,
+            )
+        )
 
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
 
-            # List of choices currently available: new ones can be added to the list along with their aliases
-            choices = {
-                'wild': ['default', 'wild', 'pre-existing'],
-                'b117': ['b117', 'B117', 'B.1.1.7', 'UK', 'uk', 'UK variant', 'uk variant'],
-                'b1351': ['b1351', 'B1351', 'B.1.351', 'SA', 'sa', 'SA variant', 'sa variant'],
-                'p1': ['p1', 'P1', 'P.1', 'B.1.1.248', 'b11248', 'Brazil', 'Brazil variant', 'brazil variant'],
-            }
+            # Normalize input: lowrcase and remove
+            normstrain = strain.lower()
+            for txt in ['.', ' ', 'strain', 'variant', 'voc']:
+                normstrain = normstrain.replace(txt, '')
 
-            # Empty pardict for wild strain
-            if strain in choices['wild']:
-                strain_pars = dict()
-                self.strain_label = strain
-
-            # Known parameters on B117
-            elif strain in choices['b117']:
-                strain_pars = dict()
-                strain_pars['rel_beta'] = 1.5  # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-                strain_pars['rel_severe_prob'] = 1.8  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-                self.strain_label = strain
-
-            # Known parameters on South African variant
-            elif strain in choices['b1351']:
-                strain_pars = dict()
-                strain_pars['rel_beta'] = 1.4
-                strain_pars['rel_severe_prob'] = 1.4
-                strain_pars['rel_death_prob'] = 1.4
-                strain_pars['rel_imm'] = 0.25
-                self.strain_label = strain
-
-            # Known parameters on Brazil variant
-            elif strain in choices['p1']:
-                strain_pars = dict()
-                strain_pars['rel_imm'] = 0.5
-                strain_pars['rel_beta'] = 1.4
-                strain_pars['rel_severe_prob'] = 1.4
-                strain_pars['rel_death_prob'] = 2
-                self.strain_label = strain
-
+            if normstrain in reversemap:
+                strain_pars = mapping[reversemap[normstrain]]
             else:
-                choicestr = '\n'.join(choices.values())
-                errormsg = f'The selected variant "{strain}" is not implemented; choices are: {choicestr}'
+                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(strain, dict):
             strain_pars = strain
-            self.strain_label = strain_label
+            if label is None:
+                label = 'Custom strain'
 
         else:
-            errormsg = f'Could not understand {type(strain)}, please specify as a string indexing a predefined strain or a dict.'
+            errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{choicestr}'
             raise ValueError(errormsg)
+
+        # Set label
+        self.label = label if label else normstrain
 
         return strain_pars
 
+
     def initialize(self, sim):
-        if not hasattr(self, 'rel_imm'):
+        super().initialize()
+
+        if not hasattr(self, 'rel_imm'): # TODO: refactor
             self.rel_imm = 1
 
         # Update strain info
         for strain_key in cvd.strain_pars:
-            if hasattr(self, strain_key):
+            if hasattr(self, strain_key): # TODO: refactor
                 newval = getattr(self, strain_key)
-                if strain_key == 'dur':  # Validate durations (make sure there are values for all durations)
-                    newval = sc.mergenested(sim['strain_pars'][strain_key][0], newval)
                 sim['strain_pars'][strain_key].append(newval)
             else:
                 # use default
                 print(f'{strain_key} not provided for this strain, using default value')
                 sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
 
-        self.initialized = True
+        return
+
 
     def apply(self, sim):
 
-        if sim.t == self.days:  # Time to introduce strain
+        if sim.t == self.days:  # Time to introduce strain # TODO: use find_day
 
             # Check number of strains
-            prev_strains = sim['n_strains']
+            prev_strains = sim['n_strains'] # TODO: refactor to be explicit
             sim['n_strains'] += 1
 
             # Update strain-specific people attributes
             #cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
             susceptible_inds = cvu.true(sim.people.susceptible)
-            importation_inds = np.random.choice(susceptible_inds, self.n_imports)
+            n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
+            importation_inds = np.random.choice(susceptible_inds, n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
 
         return
 
 
-class Vaccine():
+class Vaccine(cvi.Intervention):
     '''
     Add a new vaccine to the sim (called by interventions.py vaccinate()
 
@@ -147,7 +158,7 @@ class Vaccine():
 
     Args:
         vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
-        kwargs (dict):
+        kwargs (dict): passed to Intervention()
 
     **Example**::
 
@@ -159,8 +170,8 @@ class Vaccine():
         sim = cv.Sim(interventions=interventions)
     '''
 
-    def __init__(self, vaccine=None):
-
+    def __init__(self, vaccine=None, **kwargs):
+        super().__init__(**kwargs)
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
@@ -265,18 +276,19 @@ class Vaccine():
         return vaccine_pars
 
     def initialize(self, sim):
+        super().initialize()
 
         ts = sim['total_strains']
         circulating_strains = ['wild'] # assume wild is circulating
         for strain in range(ts-1):
-            circulating_strains.append(sim['strains'][strain].strain_label)
+            circulating_strains.append(sim['strains'][strain].label)
 
         if self.NAb_init is None :
-            errormsg = f'Did not provide parameters for this vaccine'
+            errormsg = 'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
         if self.rel_imm is None:
-            print(f'Did not provide rel_imm parameters for this vaccine, trying to find values')
+            print('Did not provide rel_imm parameters for this vaccine, trying to find values')
             self.rel_imm = []
             for strain in circulating_strains:
                 if strain in self.vaccine_strain_info['known_strains']:
@@ -286,7 +298,7 @@ class Vaccine():
 
         correct_size = len(self.rel_imm) == ts
         if not correct_size:
-            errormsg = f'Did not provide relative immunity for each strain'
+            errormsg = 'Did not provide relative immunity for each strain'
             raise ValueError(errormsg)
 
         return
@@ -294,7 +306,6 @@ class Vaccine():
 
 
 # %% NAb methods
-__all__ += ['init_nab', 'check_nab', 'nab_to_efficacy']
 
 def init_nab(people, inds, prior_inf=True):
     '''
@@ -310,7 +321,7 @@ def init_nab(people, inds, prior_inf=True):
     prior_NAb_inds = cvu.idefined(NAb_arrays, inds) # Find people with prior NAbs
     no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
 
-    prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
+    # prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
     peak_NAb = people.init_NAb[prior_NAb_inds]
 
     # NAbs from infection
@@ -393,7 +404,6 @@ def nab_to_efficacy(nab, ax, function_args):
 
 
 # %% Immunity methods
-__all__ += ['init_immunity', 'check_immunity']
 
 
 def update_strain_attributes(people):
@@ -428,8 +438,8 @@ def init_immunity(sim, create=False):
     circulating_strains = ['wild']
     rel_imms =  dict()
     for strain in sim['strains']:
-        circulating_strains.append(strain.strain_label)
-        rel_imms[strain.strain_label] = strain.rel_imm
+        circulating_strains.append(strain.label)
+        rel_imms[strain.label] = strain.rel_imm
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
@@ -555,7 +565,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
 
 # %% Methods for computing waning
-__all__ += ['pre_compute_waning']
+# __all__ += ['pre_compute_waning']
 
 def pre_compute_waning(length, form='nab_decay', pars=None):
     '''
