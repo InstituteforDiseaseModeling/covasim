@@ -40,6 +40,7 @@ def test_rescale(do_plot=False):
     pars = dict(
         pop_size = 10e3,
         pop_scale = 10,
+        rescale_factor = 2.0,
         n_days = 300,
         beta = 0.008,
         NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
@@ -534,8 +535,8 @@ if __name__ == '__main__':
     T = sc.tic()
 
     # msim1 = test_waning(do_plot=do_plot)
-    # msim2 = test_rescale(do_plot=do_plot)
-    sim1  = test_states()
+    msim2 = test_rescale(do_plot=do_plot)
+    # sim1  = test_states()
 
     sc.toc(T)
     print('Done.')

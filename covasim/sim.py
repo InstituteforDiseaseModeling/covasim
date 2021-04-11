@@ -518,7 +518,10 @@ class Sim(cvb.BaseSim):
             pop_scale = self['pop_scale']
             current_scale = self.rescale_vec[self.t]
             if current_scale < pop_scale: # We have room to rescale
-                not_sus_inds = self.people.false('susceptible') # Find everyone not susceptible
+                if not self['use_waning']:
+                    not_sus_inds = self.people.false('susceptible') # Find everyone not susceptible
+                else:
+                    not_sus_inds = sc.cat(*[cvu.true(self.people[k]) for k in ['exposed', 'recovered', 'dead']]) # Find everyone not susceptible
                 n_not_sus = len(not_sus_inds) # Number of people who are not susceptible
                 n_people = len(self.people) # Number of people overall
                 current_ratio = n_not_sus/n_people # Current proportion not susceptible
