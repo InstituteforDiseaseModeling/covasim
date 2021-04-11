@@ -33,9 +33,10 @@
     "high_cap": 4
   },
   "beta": 0.016,
+  "n_imports": 0,
   "n_strains": 1,
   "total_strains": 1,
-  "use_immunity": false,
+  "use_waning": false,
   "NAb_init": {
     "dist": "normal",
     "par1": 0,
@@ -50,20 +51,20 @@
     }
   },
   "NAb_kin": null,
-  "NAb_boost": 2,
+  "NAb_boost": 1.5,
   "NAb_eff": {
-    "slope": 3.433,
-    "n_50": {
-      "sus": 0.5,
-      "symp": 0.1987,
-      "sev": 0.031
-    }
+    "sus": {
+      "slope": 2.7,
+      "n_50": 0.03
+    },
+    "symp": 0.1,
+    "sev": 0.52
   },
   "cross_immunity": 0.5,
   "rel_imm": {
-    "asymptomatic": 0.7,
-    "mild": 0.9,
-    "severe": 1
+    "asymptomatic": 0.85,
+    "mild": 1,
+    "severe": 1.5
   },
   "immunity": null,
   "vaccine_info": null,
@@ -239,58 +240,6 @@
   "strain_pars": {
     "rel_beta": [
       1.0
-    ],
-    "asymp_factor": [
-      1.0
-    ],
-    "dur": [
-      {
-        "exp2inf": {
-          "dist": "lognormal_int",
-          "par1": 4.5,
-          "par2": 1.5
-        },
-        "inf2sym": {
-          "dist": "lognormal_int",
-          "par1": 1.1,
-          "par2": 0.9
-        },
-        "sym2sev": {
-          "dist": "lognormal_int",
-          "par1": 6.6,
-          "par2": 4.9
-        },
-        "sev2crit": {
-          "dist": "lognormal_int",
-          "par1": 1.5,
-          "par2": 2.0
-        },
-        "asym2rec": {
-          "dist": "lognormal_int",
-          "par1": 8.0,
-          "par2": 2.0
-        },
-        "mild2rec": {
-          "dist": "lognormal_int",
-          "par1": 8.0,
-          "par2": 2.0
-        },
-        "sev2rec": {
-          "dist": "lognormal_int",
-          "par1": 18.1,
-          "par2": 6.3
-        },
-        "crit2rec": {
-          "dist": "lognormal_int",
-          "par1": 18.1,
-          "par2": 6.3
-        },
-        "crit2die": {
-          "dist": "lognormal_int",
-          "par1": 10.7,
-          "par2": 4.8
-        }
-      }
     ],
     "rel_symp_prob": [
       1.0
