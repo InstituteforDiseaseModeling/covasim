@@ -19,7 +19,7 @@ class Strain(cvi.Intervention):
     Add a new strain to the sim
 
     Args:
-        day (int): day on which new variant is introduced.
+        day (int): day on which new variant is introduced. # TODO: update with correct name and find_day
         n_imports (int): the number of imports of the strain to be added
         strain (dict): dictionary of parameters specifying information about the strain
         kwargs (dict): passed to Intervention()
