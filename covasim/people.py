@@ -256,6 +256,7 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
+            print(f'DEBUG: {self.t} {len(inds)}')
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
             self.recovered_strain[inds] = self.exposed_strain[inds]
@@ -415,8 +416,9 @@ class People(cvb.BasePeople):
         self.exposed_by_strain[strain, inds] = True
         self.date_exposed[inds]  = self.t
         self.flows['new_infections'] += len(inds)
-        self.flows_strain['new_infections_by_strain'][strain] += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
+        self.flows_strain['new_infections_by_strain'][strain] += len(inds)
+        print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
         #self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions
