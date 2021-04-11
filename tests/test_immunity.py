@@ -31,6 +31,7 @@ def test_waning(do_plot=False):
     msim = cv.MultiSim([s1,s2])
     if do_plot:
         msim.plot('overview-strain', rotation=30)
+        sc.maximize()
     return msim
 
 
