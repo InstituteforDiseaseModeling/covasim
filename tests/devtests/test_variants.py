@@ -212,7 +212,7 @@ def test_synthpops():
 
 #%% Multisim and scenario tests
 
-def test_vaccine_1strain_scen(do_plot=True, do_show=True, do_save=False):
+def test_vaccine_1strain_scen(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
 
     # Define baseline parameters
@@ -257,7 +257,7 @@ def test_vaccine_1strain_scen(do_plot=True, do_show=True, do_save=False):
     return scens
 
 
-def test_vaccine_2strains_scen(do_plot=True, do_show=True, do_save=False):
+def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
 
     # Define baseline parameters
@@ -357,7 +357,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_waning_vs_not(do_plot=True, do_show=True, do_save=False):
+def test_waning_vs_not(do_plot=False, do_show=True, do_save=False):
     sc.heading('Testing waning...')
 
     # Define baseline parameters
@@ -402,7 +402,7 @@ def test_waning_vs_not(do_plot=True, do_show=True, do_save=False):
     return scens
 
 
-def test_msim():
+def test_msim(do_plot=False):
     sc.heading('Testing multisim...')
 
     # basic test for vaccine
@@ -418,67 +418,68 @@ def test_msim():
         'New Re-infections per day': ['new_reinfections'],
     })
 
-    msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
+    if do_plot:
+        msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
 
     return msim
 
 
 #%% Plotting and utilities
 
-def plot_results(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
+# def plot_results(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
 
-    results = sim.results
-    results_to_plot = results[key]
+#     results = sim.results
+#     results_to_plot = results[key]
 
-    # extract data for plotting
-    x = sim.results['t']
-    y = results_to_plot.values
-    y = np.transpose(y)
+#     # extract data for plotting
+#     x = sim.results['t']
+#     y = results_to_plot.values
+#     y = np.transpose(y)
 
-    fig, ax = plt.subplots()
-    ax.plot(x, y)
+#     fig, ax = plt.subplots()
+#     ax.plot(x, y)
 
-    ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
+#     ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
 
-    if labels is None:
-        labels = [0]*len(y[0])
-        for strain in range(len(y[0])):
-            labels[strain] = f'Strain {strain +1}'
-    ax.legend(labels)
+#     if labels is None:
+#         labels = [0]*len(y[0])
+#         for strain in range(len(y[0])):
+#             labels[strain] = f'Strain {strain +1}'
+#     ax.legend(labels)
 
-    if do_show:
-        plt.show()
-    if do_save:
-        cv.savefig(f'results/{filename}.png')
+#     if do_show:
+#         plt.show()
+#     if do_save:
+#         cv.savefig(f'results/{filename}.png')
 
-    return
+#     return
 
 
-def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
+# def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
 
-    results = sim.results
-    n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
-    prop_new = {f'Strain {s}': sc.safedivide(results[key+'_by_strain'].values[s,:], results[key].values, 0) for s in range(n_strains)}
-    num_new = {f'Strain {s}': results[key+'_by_strain'].values[s,:] for s in range(n_strains)}
+#     results = sim.results
+#     n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
+#     prop_new = {f'Strain {s}': sc.safedivide(results[key+'_by_strain'].values[s,:], results[key].values, 0) for s in range(n_strains)}
+#     num_new = {f'Strain {s}': results[key+'_by_strain'].values[s,:] for s in range(n_strains)}
 
-    # extract data for plotting
-    x = sim.results['t']
-    fig, ax = plt.subplots(2,1,sharex=True)
-    ax[0].stackplot(x, prop_new.values(),
-                 labels=prop_new.keys())
-    ax[0].legend(loc='upper left')
-    ax[0].set_title(title)
-    ax[1].stackplot(sim.results['t'], num_new.values(),
-                 labels=num_new.keys())
-    ax[1].legend(loc='upper left')
-    ax[1].set_title(title)
+#     # extract data for plotting
+#     x = sim.results['t']
+#     fig, ax = plt.subplots(2,1,sharex=True)
+#     ax[0].stackplot(x, prop_new.values(),
+#                  labels=prop_new.keys())
+#     ax[0].legend(loc='upper left')
+#     ax[0].set_title(title)
+#     ax[1].stackplot(sim.results['t'], num_new.values(),
+#                  labels=num_new.keys())
+#     ax[1].legend(loc='upper left')
+#     ax[1].set_title(title)
 
-    if do_show:
-        plt.show()
-    if do_save:
-        cv.savefig(f'results/{filename}.png')
+#     if do_show:
+#         plt.show()
+#     if do_save:
+#         cv.savefig(f'results/{filename}.png')
 
-    return
+#     return
 
 
 def vacc_subtarg(sim):
