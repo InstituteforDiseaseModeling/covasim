@@ -12,7 +12,7 @@ import sciris as sc
 from .settings import options as cvo # To set options
 
 # Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
-__all__ = ['default_float', 'default_int', 'get_colors', 'get_sim_plots', 'get_scen_plots']
+__all__ = ['default_float', 'default_int', 'get_default_colors', 'get_default_plots']
 
 
 #%% Specify what data types to use
@@ -232,7 +232,7 @@ default_age_data = np.array([
 ])
 
 
-def get_colors():
+def get_default_colors():
     '''
     Specify plot colors -- used in sim.py.
 
@@ -306,7 +306,7 @@ overview_strain_plots = [
     'pop_symp_protection',
 ]
 
-def get_sim_plots(which='default', sim=None):
+def get_default_plots(which='default', kind='sim', sim=None):
     '''
     Specify which quantities to plot; used in sim.py.
 
@@ -314,28 +314,47 @@ def get_sim_plots(which='default', sim=None):
         which (str): either 'default' or 'overview'
     '''
 
-    # Default plots
+    # Default plots -- different for sims and scenarios
     if which in [None, 'default']:
-        plots = sc.odict({
-                'Total counts': [
+
+        if kind == 'sim':
+            plots = sc.odict({
+                    'Total counts': [
+                        'cum_infections',
+                        'n_infectious',
+                        'cum_diagnoses',
+                    ],
+                    'Daily counts': [
+                        'new_infections',
+                        'new_diagnoses',
+                    ],
+                    'Health outcomes': [
+                        'cum_severe',
+                        'cum_critical',
+                        'cum_deaths',
+                    ],
+            })
+
+        elif kind == 'scens':
+            plots = sc.odict({
+                'Cumulative infections': [
                     'cum_infections',
-                    'n_infectious',
-                    'cum_diagnoses',
                 ],
-                'Daily counts': [
+                'New infections per day': [
                     'new_infections',
-                    'new_diagnoses',
                 ],
-                'Health outcomes': [
-                    'cum_severe',
-                    'cum_critical',
+                'Cumulative deaths': [
                     'cum_deaths',
                 ],
-        })
+            })
 
     # Show an overview
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
+
+    # Plot absolutely everything
+    elif which.lower() == 'all':
+        plots = sim.result_keys(strain=True)
 
     # Show an overview plus strains
     elif 'overview' in which and 'strain' in which:
@@ -362,43 +381,15 @@ def get_sim_plots(which='default', sim=None):
 
     # Plot SEIR compartments
     elif which.lower() == 'seir':
-        plots = sc.odict({
-                'SEIR states': [
-                    'n_susceptible',
-                    'n_preinfectious',
-                    'n_infectious',
-                    'n_removed',
-                ],
-        })
-
-    # Plot absolutely everything
-    elif which.lower() == 'all':
-        plots = sim.result_keys(strain=True)
+        plots = [
+            'n_susceptible',
+            'n_preinfectious',
+            'n_infectious',
+            'n_removed',
+        ],
 
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "strain", "overview-strain", "seir", or "all"'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "strain", "overview-strain", or "seir"'
         raise ValueError(errormsg)
+
     return plots
-
-
-def get_scen_plots(which='default'):
-    ''' Default scenario plots -- used in run.py '''
-    if which in [None, 'default']:
-        plots = sc.odict({
-            'Cumulative infections': [
-                'cum_infections',
-            ],
-            'New infections per day': [
-                'new_infections',
-            ],
-            'Cumulative deaths': [
-                'cum_deaths',
-            ],
-        })
-    elif which == 'overview':
-        plots = sc.dcp(overview_plots)
-    else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported'
-        raise ValueError(errormsg)
-    return plots
-

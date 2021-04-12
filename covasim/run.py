@@ -420,7 +420,7 @@ class MultiSim(cvb.FlexPretty):
         other options.
 
         Args:
-            to_plot      (list) : list or dict of which results to plot; see cv.get_sim_plots() for structure
+            to_plot      (list) : list or dict of which results to plot; see cv.get_default_plots() for structure
             inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
             plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
             color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
@@ -473,10 +473,8 @@ class MultiSim(cvb.FlexPretty):
 
             # Handle what to plot
             if to_plot is None:
-                if color_by_sim:
-                    to_plot = cvd.get_scen_plots()
-                else:
-                    to_plot = cvd.get_sim_plots()
+                kind = 'scens' if color_by_sim else 'sim'
+                to_plot = cvd.get_default_plots(kind=kind)
 
             # Handle colors
             if colors is None:

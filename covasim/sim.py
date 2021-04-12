@@ -276,7 +276,7 @@ class Sim(cvb.BaseSim):
             output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.get_colors() # Get default colors
+        dcols = cvd.get_default_colors() # Get default colors
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
@@ -1228,7 +1228,7 @@ class Sim(cvb.BaseSim):
         Plot the results of a single simulation.
 
         Args:
-            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            to_plot      (dict): Dict of results to plot; see get_default_plots() for structure
             do_save      (bool): Whether or not to save the figure
             fig_path     (str):  Path to save the figure
             fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
