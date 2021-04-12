@@ -69,11 +69,15 @@ def test_waning(do_plot=False):
 def test_states():
     ''' Test state consistency against state_diagram.xlsx '''
 
+    filename = 'state_diagram.xlsx'
+    sheets   = ['Without waning', 'With waning']
+    indexcol = 'From ↓ to →'
+
     # Load state diagram
     dfs = sc.odict()
-    for sheet in ['Without waning', 'With waning']:
-        dfs[sheet] = pd.read_excel('state_diagram.xlsx', sheet_name=sheet)
-        dfs[sheet] = dfs[sheet].set_index('From ↓ to →')
+    for sheet in sheets:
+        dfs[sheet] = pd.read_excel(filename, sheet_name=sheet)
+        dfs[sheet] = dfs[sheet].set_index(indexcol)
 
     # Create and run simulation
     for use_waning in [False, True]:
@@ -130,7 +134,7 @@ def test_strains(do_plot=False):
 
     b117 = cv.Strain('b117',       days=10, n_imports=20)
     p1   = cv.Strain('sa variant', days=20, n_imports=20)
-    sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
+    sim  = cv.Sim(use_waning=True, strains=[b117, p1], **base_pars)
     sim.run()
 
     if do_plot:
