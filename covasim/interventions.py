@@ -1107,12 +1107,12 @@ class contact_tracing(Intervention):
 
 #%% Treatment and prevention interventions
 
-__all__+= ['vaccine', 'vaccinate']
+__all__+= ['simple_vaccine', 'vaccinate']
 
 
-class vaccine(Intervention):
+class simple_vaccine(Intervention):
     '''
-    Apply a vaccine to a subset of the population. In addition to changing the
+    Apply a simple vaccine to a subset of the population. In addition to changing the
     relative susceptibility and the probability of developing symptoms if still
     infected, this intervention stores several types of data:
 
@@ -1134,8 +1134,8 @@ class vaccine(Intervention):
 
     **Examples**::
 
-        interv = cv.vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
-        interv = cv.vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
+        interv = cv.simple_vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
+        interv = cv.simple_vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
     '''
     def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object

@@ -48,7 +48,7 @@ def test_states():
             interventions = [
                 cv.test_prob(symp_prob=0.4, asymp_prob=0.01),
                 cv.contact_tracing(trace_probs=0.1),
-                cv.vaccine(days=60, prob=0.1)
+                cv.simple_vaccine(days=60, prob=0.1)
             ]
         )
         sim = cv.Sim(pars).run()

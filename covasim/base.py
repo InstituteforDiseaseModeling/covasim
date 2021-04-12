@@ -393,10 +393,12 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def result_keys(self, strain=False):
+    def result_keys(self, main=True, strain=False):
         ''' Get the actual results objects, not other things stored in sim.results '''
-        keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
-        if strain:
+        keys = []
+        if main:
+            keys += [key for key in self.results.keys() if isinstance(self.results[key], Result)]
+        if strain and 'strain' in self.results:
             keys += [key for key in self.results['strain'].keys() if isinstance(self.results['strain'][key], Result)]
         return keys
 
