@@ -393,13 +393,23 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def result_keys(self, main=True, strain=False):
-        ''' Get the actual results objects, not other things stored in sim.results '''
+    def result_keys(self, which='main'):
+        '''
+        Get the actual results objects, not other things stored in sim.results.
+
+        If which is 'main', return only the main results keys. If 'strain', return
+        only strain keys. If 'all', return all keys.
+
+        '''
         keys = []
-        if main:
-            keys += [key for key in self.results.keys() if isinstance(self.results[key], Result)]
-        if strain and 'strain' in self.results:
-            keys += [key for key in self.results['strain'].keys() if isinstance(self.results['strain'][key], Result)]
+        choices = ['main', 'strain', 'all']
+        if which in ['main', 'all']:
+            keys += [key for key,res in self.results.items() if isinstance(res, Result)]
+        if which in ['strain', 'all'] and 'strain' in self.results:
+            keys += [key for key,res in self.results['strain'].items() if isinstance(res, Result)]
+        if which not in choices: # pragma: no cover
+            errormsg = f'Choice "which" not available; choices are: {sc.strjoin(choices)}'
+            raise ValueError(errormsg)
         return keys
 
 

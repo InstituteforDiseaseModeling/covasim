@@ -766,14 +766,11 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
-            if 'by_strain' in reskey:
-                # resize results to include only active strains
-                self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
-                if 'by_strain' in reskey:
-                    self.results[reskey].values = np.einsum('ij,j->ij',self.results[reskey].values,self.rescale_vec)
-                else:
-                    self.results[reskey].values *= self.rescale_vec
+                self.results[reskey].values *= self.rescale_vec
+        for reskey in self.result_keys('strain'):
+            if self.results['strain'][reskey].scale: # Scale the result dynamically
+                self.results['strain'][reskey].values = np.einsum('ij,j->ij', self.results['strain'][reskey].values, self.rescale_vec)
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
@@ -781,8 +778,8 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_flows_by_strain.keys():
             for strain in range(self['total_strains']):
                 self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
-        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
-        self.results['strain']['cum_infections_by_strain'].values += self['pop_infected']*self.rescale_vec[0]
+        for res in [self.results['cum_infections'], self.results['strain']['cum_infections_by_strain']]: # Include initially infected people
+            res.values += self['pop_infected']*self.rescale_vec[0]
 
         # Finalize interventions and analyzers
         self.finalize_interventions()
@@ -1048,14 +1045,7 @@ class Sim(cvb.BaseSim):
 
         summary = sc.objdict()
         for key in self.result_keys():
-            if 'by_strain' in key:
-                summary[key] = self.results[key][:,t]
-                # TODO: the following line rotates the results - do we need this?
-                # TODO: the following line rotates the results - do we need this?
-                #if len(self.results[key]) < t:
-                #    self.results[key].values = np.rot90(self.results[key].values)
-            else:
-                summary[key] = self.results[key][t]
+            summary[key] = self.results[key][t]
 
         # Update the stored state
         if update:

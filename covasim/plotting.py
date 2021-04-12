@@ -383,7 +383,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
-    strain_keys = sim.result_keys(main=False, strain=True)
+    strain_keys = sim.result_keys('strain')
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for resnum,reskey in enumerate(keylabels):
@@ -438,7 +438,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
-                strain_keys = sim.result_keys(main=False, strain=True)
+                strain_keys = sim.result_keys('strain')
                 if reskey in strain_keys:
                     ns = sim['total_strains']
                     strain_colors = sc.gridcolors(ns)
