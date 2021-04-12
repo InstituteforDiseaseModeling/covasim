@@ -198,8 +198,18 @@ class Sim(cvb.BaseSim):
             validate_layers (bool): whether to validate layer parameters as well via validate_layer_pars() -- usually yes, except during initialization
         '''
 
+        # Handle population size
+        pop_size   = self.pars.get('pop_size')
+        scaled_pop = self.pars.get('scaled_pop')
+        pop_scale  = self.pars.get('pop_scale')
+        if scaled_pop is not None: # If scaled_pop is supplied, try to use it
+            if pop_scale is not None: # Normal case, recalculate number of agents
+                self['pop_size'] = scaled_pop/pop_scale
+            else: # Special case, recalculate population scale
+                self['pop_scale'] = scaled_pop/pop_size
+
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size']:
+        for key in ['pop_size', 'pop_infected']:
             try:
                 self[key] = int(self[key])
             except Exception as E:
@@ -411,6 +421,11 @@ class Sim(cvb.BaseSim):
         # Actually make the people
         self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
+
+        # Handle anyone who isn't susceptible
+        if self['frac_susceptible'] < 1:
+            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+            self.people.make_nonnaive(inds=inds)
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])

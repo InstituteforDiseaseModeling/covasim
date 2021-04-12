@@ -245,13 +245,29 @@ class BaseSim(ParsObj):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
+
+        # Merge everything together
         pars = sc.mergedicts(pars, kwargs)
         if pars:
+
+            # Define aliases
+            mapping = dict(
+                n_agents = 'pop_size',
+                init_infected = 'pop_infected',
+            )
+            for key1,key2 in mapping.items():
+                if key1 in pars:
+                    pars[key2] = pars.pop(key1)
+
+            # Handle other special parameters
             if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+
+            # Call update_pars() for ParsObj
+            super().update_pars(pars=pars, create=create)
+
         return
 
 

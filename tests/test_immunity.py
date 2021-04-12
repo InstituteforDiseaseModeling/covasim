@@ -74,7 +74,7 @@ def test_states():
                         print(f'× {n_true}/{n_inds} error!')
                     elif relation == -1 and n_false != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=False, but only {n_false}/{n_inds} people are'
-                        print(f'× {n_true}/{n_inds} error!')
+                        print(f'× {n_false}/{n_inds} error!')
                     else:
                         print(f'✓ {n_true}/{n_inds}')
                     if errormsg:
