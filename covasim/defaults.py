@@ -50,19 +50,12 @@ class PeopleMeta(sc.prettyobj):
             'death_prob',       # Float
             'rel_trans',        # Float
             'rel_sus',          # Float
-            'sus_imm',          # Float, by strain
-            'symp_imm',         # Float, by strain
-            'sev_imm',          # Float, by strain
-            'prior_symptoms',   # Float
-            'vaccinations',     # Number of doses given per person
-            'vaccine_source',   # index of vaccine that individual received
-            'init_NAb',         # Initial neutralization titre relative to convalescent plasma
-            'NAb',              # Current neutralization titre relative to convalescent plasma
         ]
 
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
         self.states = [
             'susceptible',
+            'naive',
             'exposed',
             'infectious',
             'symptomatic',
@@ -77,19 +70,43 @@ class PeopleMeta(sc.prettyobj):
             'vaccinated',
         ]
 
+        # Strain states -- these are ints
         self.strain_states = [
             'exposed_strain',
-            'exposed_by_strain',
             'infectious_strain',
-            'infectious_by_strain',
             'recovered_strain',
+        ]
+
+        # Strain states -- these are ints, by strain
+        self.by_strain_states = [
+            'exposed_by_strain',
+            'infectious_by_strain',
+        ]
+
+        # Immune states, by strain
+        self.imm_states = [
+            'sus_imm',          # Float, by strain
+            'symp_imm',         # Float, by strain
+            'sev_imm',          # Float, by strain
+        ]
+
+        # Neutralizing antibody states, not by strain
+        self.nab_states = [
+            'prior_symptoms',   # Float
+            'init_NAb',         # Float, initial neutralization titre relative to convalescent plasma
+            'NAb',              # Float, current neutralization titre relative to convalescent plasma
+        ]
+
+        # Additional vaccination states
+        self.vacc_states = [
+            'vaccinations',     # Number of doses given per person
+            'vaccine_source',   # index of vaccine that individual received
         ]
 
         # Set the dates various events took place: these are floats per person -- used in people.py
         self.dates = [f'date_{state}' for state in self.states] # Convert each state into a date
         self.dates.append('date_pos_test') # Store the date when a person tested which will come back positive
         self.dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
-        # self.dates.append('date_recovered') # Store the date when a person recovers
         # self.dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
         # Duration of different states: these are floats per person -- used in people.py
@@ -101,10 +118,10 @@ class PeopleMeta(sc.prettyobj):
             'dur_disease',
         ]
 
-        self.all_states = self.person + self.states + self.strain_states + self.dates + self.durs
+        self.all_states = self.person + self.states + self.strain_states + self.by_strain_states + self.imm_states + self.nab_states + self.vacc_states + self.dates + self.durs
 
         # Validate
-        self.state_types = ['person', 'states', 'strain_states', 'dates', 'durs', 'all_states']
+        self.state_types = ['person', 'states', 'strain_states', 'by_strain_states', 'imm_states', 'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
         for state_type in self.state_types:
             states = getattr(self, state_type)
             n_states        = len(states)
@@ -114,8 +131,6 @@ class PeopleMeta(sc.prettyobj):
                 raise ValueError(errormsg)
 
         return
-
-
 
 
 
@@ -129,6 +144,8 @@ result_stocks = {
     'symptomatic': 'Number symptomatic',
     'severe':      'Number of severe cases',
     'critical':    'Number of critical cases',
+    'recovered':   'Number recovered',
+    'dead':        'Number dead',
     'diagnosed':   'Number of confirmed cases',
     'quarantined': 'Number in quarantine',
     'vaccinated':  'Number of people vaccinated',
@@ -144,13 +161,13 @@ result_flows = {
     'infections':   'infections',
     'reinfections': 'reinfections',
     'infectious':   'infectious',
-    'tests':        'tests',
-    'diagnoses':    'diagnoses',
-    'recoveries':   'recoveries',
     'symptomatic':  'symptomatic cases',
     'severe':       'severe cases',
     'critical':     'critical cases',
+    'recoveries':   'recoveries',
     'deaths':       'deaths',
+    'tests':        'tests',
+    'diagnoses':    'diagnoses',
     'quarantined':  'quarantined people',
     'vaccinations': 'vaccinations',
     'vaccinated':   'vaccinated people'

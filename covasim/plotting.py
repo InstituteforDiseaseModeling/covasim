@@ -398,9 +398,9 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
             if 'strain' in sim.results and reskey in sim.results['strain']:
                 res = sim.results['strain'][reskey]
                 ns = sim['total_strains']
-                colors = sc.gridcolors(ns)
+                strain_colors = sc.gridcolors(ns)
                 for strain in range(ns):
-                    color = colors[strain]  # Choose the color
+                    color = strain_colors[strain]  # Choose the color
                     if strain == 0:
                         label = 'wild type'
                     else:

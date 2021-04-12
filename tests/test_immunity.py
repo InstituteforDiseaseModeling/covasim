@@ -23,7 +23,7 @@ base_pars = dict(
 def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
     pars = dict(
-        n_days = 500,
+        n_days = 300,
         beta = 0.008,
         NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
     )
@@ -32,28 +32,42 @@ def test_waning(do_plot=False):
     msim = cv.MultiSim([s1,s2])
     if do_plot:
         msim.plot('overview-strain', rotation=30)
-        sc.maximize()
+    return msim
+
+
+def test_rescale(do_plot=False):
+    sc.heading('Testing with and without waning with rescaling')
+    pars = dict(
+        pop_size = 10e3,
+        pop_scale = 10,
+        rescale_factor = 2.0,
+        n_days = 300,
+        beta = 0.008,
+        NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
+    )
+    s1 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
+    s2 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+    msim = cv.MultiSim([s1,s2])
+    if do_plot:
+        msim.plot('overview-strain', rotation=30)
     return msim
 
 
 def test_states():
+    ''' Test state consistency against state_diagram.xlsx '''
+
     # Load state diagram
-    rawdf = pd.read_excel('state_diagram.xlsx', nrows=13)
-    rawdf = rawdf.set_index('From ↓ to →')
+    dfs = sc.odict()
+    for sheet in ['Without waning', 'With waning']:
+        dfs[sheet] = pd.read_excel('state_diagram.xlsx', sheet_name=sheet)
+        dfs[sheet] = dfs[sheet].set_index('From ↓ to →')
 
     # Create and run simulation
     for use_waning in [False, True]:
         sc.heading(f'Testing state consistency with waning = {use_waning}')
+        df = dfs[use_waning] # Different states are possible with or without waning
 
-        # Different states are possible with or without waning: resolve discrepancies
-        df = sc.dcp(rawdf)
-        if use_waning:
-            df = df.replace(-0.5, 0)
-            df = df.replace(-0.1, 1)
-        else:
-            df = df.replace(-0.5, -1)
-            df = df.replace(-0.1, -1)
-
+        # Parameters chosen to be midway through the sim so as few states as possible are empty
         pars = dict(
             pop_size = 1e3,
             pop_infected = 20,
@@ -63,6 +77,7 @@ def test_states():
             interventions = [
                 cv.test_prob(symp_prob=0.4, asymp_prob=0.01),
                 cv.contact_tracing(trace_probs=0.1),
+                cv.vaccine(days=60, prob=0.1)
             ]
         )
         sim = cv.Sim(pars).run()
@@ -519,8 +534,9 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    msim1 = test_waning(do_plot=do_plot)
-    sim1  = test_states()
+    # msim1 = test_waning(do_plot=do_plot)
+    msim2 = test_rescale(do_plot=do_plot)
+    # sim1  = test_states()
 
     sc.toc(T)
     print('Done.')

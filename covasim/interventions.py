@@ -1071,7 +1071,6 @@ class contact_tracing(Intervention):
                 continue
 
             traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
-            traceable_inds = np.setdiff1d(traceable_inds, cvu.true(sim.people.dead)) # Do not trace people who are dead
             if len(traceable_inds):
                 contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
 
@@ -1096,7 +1095,9 @@ class contact_tracing(Intervention):
             sim: Simulation object
             contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
         '''
+        is_dead = cvu.true(sim.people.dead) # Find people who are not alive
         for trace_time, contact_inds in contacts.items():
+            contact_inds = np.setdiff1d(contact_inds, is_dead) # Do not notify contacts who are dead
             sim.people.known_contact[contact_inds] = True
             sim.people.date_known_contact[contact_inds] = np.fmin(sim.people.date_known_contact[contact_inds], sim.t + trace_time)
             sim.people.schedule_quarantine(contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)  # Schedule quarantine for the notified people to start on the date they will be notified
@@ -1196,8 +1197,9 @@ class vaccine(Intervention):
                 self.date_vaccinated[v_ind].append(sim.t)
 
             # Update vaccine attributes in sim
-            sim.people.vaccinations = self.vaccinations
-            sim.people.vaccination_dates = self.date_vaccinated
+            sim.people.vaccinated[vacc_inds] = True
+            sim.people.vaccinations[vacc_inds] += 1
+            sim.people.vaccination_dates = self.date_vaccinated # TODO: refactor
 
         return
 
