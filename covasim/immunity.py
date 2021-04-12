@@ -237,7 +237,7 @@ def init_nab(people, inds, prior_inf=True, vacc_info=None):
     '''
 
     if vacc_info is None:
-        print('Note: using default vaccine dosing information')
+        # print('Note: using default vaccine dosing information')
         vacc_info = cvpar.get_vaccine_dose_pars()['default']
 
     NAb_arrays = people.NAb[inds]
@@ -403,7 +403,7 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
     Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
     '''
     if vacc_info is None:
-        print('Note: using default vaccine dosing information')
+        # print('Note: using default vaccine dosing information')
         vacc_info   = cvpar.get_vaccine_dose_pars()['default']
         vacc_strain = cvpar.get_vaccine_strain_pars()['default']
 
