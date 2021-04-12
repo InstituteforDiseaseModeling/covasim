@@ -10,46 +10,56 @@ import numpy as np
 import pandas as pd
 
 do_plot = 1
-do_save = 0
 cv.options.set(interactive=False) # Assume not running interactively
 
+# Shared parameters arcross simulations
 base_pars = dict(
     pop_size = 1e3,
-    verbose = -1,
+    verbose  = -1,
 )
+
 
 #%% Define the tests
 
 def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
-    pars = dict(
-        n_days = 300,
-        beta = 0.008,
-        NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
-    )
-    s1 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
-    s2 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
-    msim = cv.MultiSim([s1,s2])
-    if do_plot:
-        msim.plot('overview-strain', rotation=30)
-    return msim
 
+    for rescale in [False, True]:
+        print(f'Checking with rescale = {rescale}...')
 
-def test_rescale(do_plot=False):
-    sc.heading('Testing with and without waning with rescaling')
-    pars = dict(
-        pop_size = 10e3,
-        pop_scale = 10,
-        rescale_factor = 2.0,
-        n_days = 300,
-        beta = 0.008,
-        NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
-    )
-    s1 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
-    s2 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
-    msim = cv.MultiSim([s1,s2])
-    if do_plot:
-        msim.plot('overview-strain', rotation=30)
+        # Define more parameters specific to this test
+        pars = dict(
+            n_days    = 90,
+            beta      = 0.008,
+            NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
+        )
+
+        # Optionally include rescaling
+        if rescale:
+            pars.update(
+                pop_scale      = 10,
+                rescale_factor = 2.0, # Use a large rescale factor to make differences more obvious
+            )
+
+        # Run the simulations and pull out the results
+        s0 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
+        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+        res0 = s0.summary
+        res1 = s1.summary
+
+        # Check results
+        for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
+            v0 = res0[key]
+            v1 = res1[key]
+            print(f'Checking {key:20s} ... ', end='')
+            assert v1 > v0, f'Expected {key} to be higher with waning than without'
+            print(f'✓ ({v1} > {v0})')
+
+        # Optionally plot
+        if do_plot:
+            msim = cv.MultiSim([s0,s1])
+            msim.plot('overview-strain', rotation=30)
+
     return msim
 
 
@@ -534,8 +544,7 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # msim1 = test_waning(do_plot=do_plot)
-    msim2 = test_rescale(do_plot=do_plot)
+    msim1 = test_waning(do_plot=do_plot)
     # sim1  = test_states()
 
     sc.toc(T)
