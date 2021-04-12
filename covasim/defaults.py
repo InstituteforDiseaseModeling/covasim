@@ -190,6 +190,7 @@ cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.key
 
 # Parameters that can vary by strain
 strain_pars = [
+    'rel_imm',
     'rel_beta',
     'rel_symp_prob',
     'rel_severe_prob',

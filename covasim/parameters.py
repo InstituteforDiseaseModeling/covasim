@@ -352,6 +352,7 @@ def get_strain_pars():
         wild = sc.objdict(
             rel_imm         = 1.0,
             rel_beta        = 1.0,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.0,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
@@ -360,6 +361,7 @@ def get_strain_pars():
         b117 = sc.objdict(
             rel_imm         = 1.0,
             rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
@@ -368,6 +370,7 @@ def get_strain_pars():
         b1351 = sc.objdict(
             rel_imm         = 0.25,
             rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.4,
@@ -376,6 +379,7 @@ def get_strain_pars():
         p1 = sc.objdict(
             rel_imm         = 0.5,
             rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 2.0,

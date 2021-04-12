@@ -36,15 +36,9 @@ class Strain(cvi.Intervention):
 
     def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-
-        # Handle inputs
-        self.days = days
+        self.days = days # Handle inputs
         self.n_imports = cvd.default_int(n_imports)
-
-        # Strains can be defined in different ways: process these here
-        self.strain_pars = self.parse_strain_pars(strain=strain, label=label)
-        for par, val in self.strain_pars.items():
-            setattr(self, par, val)
+        self.parse_strain_pars(strain=strain, label=label) # Strains can be defined in different ways: process these here
         return
 
 
@@ -81,8 +75,9 @@ class Strain(cvi.Intervention):
 
         # Set label
         self.label = label if label else normstrain
+        self.p = sc.objdict(strain_pars) # Convert to an objdict and save
 
-        return strain_pars
+        return
 
 
     def initialize(self, sim):
@@ -92,29 +87,22 @@ class Strain(cvi.Intervention):
         self.index = sim['n_strains']
         sim['n_strains'] += 1
 
-        if not hasattr(self, 'rel_imm'): # TODO: refactor
-            self.rel_imm = 1
-
         # Update strain info
-        for strain_key in cvd.strain_pars:
-            if hasattr(self, strain_key): # TODO: refactor
-                newval = getattr(self, strain_key)
-                sim['strain_pars'][strain_key].append(newval)
-            else: # use default
-                sc.printv(f'{strain_key} not provided for this strain, using default value', 1, sim['verbose'])
-                sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
+        defaults = cvpar.get_strain_pars()['wild']
+        for key in cvd.strain_pars:
+            if key not in self.p:
+                self.p[key] = defaults[key]
+            sim['strain_pars'][key].append(self.p[key])
 
         return
 
 
     def apply(self, sim):
-        if sim.t == self.days:  # Time to introduce strain # TODO: use find_day
-            # Update strain-specific people attributes
+        for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce strain
             susceptible_inds = cvu.true(sim.people.susceptible)
             n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=self.index)
-
         return
 
 
@@ -359,7 +347,7 @@ def init_immunity(sim, create=False):
     rel_imms =  dict()
     for strain in sim['strains']:
         circulating_strains.append(strain.label)
-        rel_imms[strain.label] = strain.rel_imm
+        rel_imms[strain.label] = strain.p.rel_imm
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
