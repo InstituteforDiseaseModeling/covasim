@@ -380,28 +380,6 @@ def init_immunity(sim, create=False):
                         immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
         sim['immunity'] = immunity
 
-    else:
-        # if we know all the circulating strains, then update, otherwise use defaults
-        known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
-        if sc.checktype(sim['immunity']['sus'], 'arraylike'):
-            correct_size = sim['immunity']['sus'].shape == (ts, ts)
-            if not correct_size:
-                errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {sim["immunity"]["sus"].shape}, but it should be sized {(ts, ts)}'
-                raise ValueError(errormsg)
-            for i in range(ts):
-                for j in range(ts):
-                    if i != j:
-                        if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
-                            sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][
-                                circulating_strains[i]]
-
-        elif sc.checktype(sim['immunity']['sus'], dict):
-            raise NotImplementedError
-        else:
-            errormsg = f'Type of immunity["sus"] not understood: you provided {type(sim["immunity"]["sus"])}, but it should be an array or dict.'
-            raise ValueError(errormsg)
-
     # Next, precompute the NAb kinetics and store these for access during the sim
     sim['NAb_kin'] = pre_compute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
 
@@ -483,8 +461,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
 
 
-# %% Methods for computing waning
-# __all__ += ['pre_compute_waning']
+#%% Methods for computing waning
 
 def pre_compute_waning(length, form='nab_decay', pars=None):
     '''
@@ -541,16 +518,30 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
 def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
     '''
     Returns an array of length 'length' containing the evaluated function NAb decay
-    function at each point
-    Uses exponential decay, with the rate of exponential decay also set to exponentilly decay (!) after 250 days
-    '''
+    function at each point.
 
-    f1  = lambda t, init_decay_rate: np.exp(-t*init_decay_rate)
-    f2  = lambda t, init_decay_rate, init_decay_time, decay_decay_rate: np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
-    t   = np.arange(length, dtype=cvd.default_int)
-    y1  = f1(cvu.true(t<init_decay_time), init_decay_rate)
-    y2  = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
-    y   = np.concatenate([y1,y2])
+    Uses exponential decay, with the rate of exponential decay also set to exponentially
+    decay (!) after 250 days.
+
+    Args:
+        length (int): number of points
+        init_decay_rate (float): initial rate of exponential decay
+        init_decay_time (float): time on the first exponential decay
+        decay_decay_rate (float): the rate at which the decay decays
+    '''
+    def f1(t, init_decay_rate):
+        ''' Simple exponential decay '''
+        return np.exp(-t*init_decay_rate)
+
+    def f2(t, init_decay_rate, init_decay_time, decay_decay_rate):
+        ''' Complex exponential decay '''
+        return np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
+
+    t  = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t<=init_decay_time), init_decay_rate)
+    y2 = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
+    y  = np.concatenate([y1,y2])
+
     return y
 
 
@@ -563,7 +554,7 @@ def exp_decay(length, init_val, half_life, delay=None):
         t = np.arange(length-delay, dtype=cvd.default_int)
         growth = linear_growth(delay, init_val/delay)
         decay = init_val * np.exp(-decay_rate * t)
-        result = np.concatenate(growth, decay, axis=None)
+        result = np.concatenate([growth, decay], axis=None)
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = init_val * np.exp(-decay_rate * t)
@@ -576,13 +567,11 @@ def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=No
     if delay is not None:
         t = np.arange(length - delay, dtype=cvd.default_int)
         growth = linear_growth(delay, init_val / delay)
-        decay = (init_val + (lower_asymp - init_val) / (
-                1 + (t / half_val) ** decay_rate))
+        decay = (init_val + (lower_asymp - init_val) / (1 + (t / half_val)**decay_rate))
         result = np.concatenate((growth, decay), axis=None)
     else:
         t = np.arange(length, dtype=cvd.default_int)
-        result = (init_val + (lower_asymp - init_val) / (
-                1 + (t / half_val) ** decay_rate))
+        result = (init_val + (lower_asymp - init_val) / (1 + (t / half_val)**decay_rate))
     return result  # TODO: make this robust to /0 errors
 
 
@@ -590,8 +579,7 @@ def linear_decay(length, init_val, slope):
     ''' Calculate linear decay '''
     t = np.arange(length, dtype=cvd.default_int)
     result = init_val - slope*t
-    if result < 0:
-        result = 0
+    result = np.maximum(result, 0)
     return result
 
 
