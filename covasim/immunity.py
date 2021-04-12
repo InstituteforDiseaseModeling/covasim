@@ -51,17 +51,22 @@ class Strain(cvi.Intervention):
     def parse_strain_pars(self, strain=None, label=None):
         ''' Unpack strain information, which may be given in different ways'''
 
-        choices, mapping = cvpar.get_strain_choices()
-        pars = cvpar.get_strain_pars()
-        choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
-
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
 
-            # Normalize input: lowercase and remove extra characters
+            choices, mapping = cvpar.get_strain_choices()
+            pars = cvpar.get_strain_pars()
+            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
+            normstrain = strain.lower()
+            for txt in ['.', ' ', 'strain', 'variant', 'voc']:
+                normstrain = normstrain.replace(txt, '')
 
-
+            if normstrain in mapping:
+                strain_pars = pars[mapping[normstrain]]
+            else:
+                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
+                raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(strain, dict):
@@ -156,20 +161,18 @@ class Vaccine(cvi.Intervention):
         # Option 1: vaccines can be chosen from a list of pre-defined strains
         if isinstance(vaccine, str):
 
-            # List of choices currently available: new ones can be added to the list along with their aliases
-            choices = {
-                'pfizer': ['pfizer', 'Pfizer', 'Pfizer-BionTech'],
-                'moderna': ['moderna', 'Moderna'],
-                'az': ['az', 'AstraZeneca', 'astrazeneca'],
-                'j&j': ['j&j', 'johnson & johnson', 'Johnson & Johnson'],
-            }
+            choices, mapping = cvpar.get_vaccine_choices()
+            pars = cvpar.get_vaccine_strain_pars()
+            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
-            # (TODO: link to actual evidence)
-            # Known parameters on pfizer
+            normvacc = vaccine.lower()
+            for txt in ['.', ' ', '&', '-', 'vaccine']:
+                normvacc = normvacc.replace(txt, '')
 
+            if normvacc in mapping:
+                vaccine_pars = pars[mapping[normvacc]]
             else:
-                choicestr = '\n'.join(choices.values())
-                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are: {choicestr}'
+                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars

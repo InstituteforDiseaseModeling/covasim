@@ -311,7 +311,7 @@ def absolute_prognoses(prognoses):
 
 #%% Strain, vaccine, and immunity parameters and functions
 
-def get_strain_choices(strain=None):
+def get_strain_choices():
     '''
     Define valid pre-defined strain names
     '''
@@ -323,23 +323,7 @@ def get_strain_choices(strain=None):
         'p1':    ['p1', 'b11248', 'brazil'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
-
-    def normalizer(strain):
-        ''' Normalize a strain string '''
-        normstrain = strain.lower()
-        for txt in ['.', ' ', 'strain', 'variant', 'voc']:
-            normstrain = normstrain.replace(txt, '')
-        return normstrain
-
-    if strain is None:
-        return choices, mapping, normalizer
-    else:
-        normstrain = normalizer(strain)
-        if normstrain in mapping:
-            strain_pars = pars[mapping[normstrain]]
-        else:
-            errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
-            raise NotImplementedError(errormsg)
+    return choices, mapping
 
 
 def get_vaccine_choices():
