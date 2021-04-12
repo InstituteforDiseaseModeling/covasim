@@ -25,7 +25,7 @@ def test_states():
 
     filename = 'state_diagram.xlsx'
     sheets   = ['Without waning', 'With waning']
-    indexcol = 'From ↓ to →'
+    indexcol = 'In ↓ you can be →'
 
     # Load state diagram
     dfs = sc.odict()
@@ -196,7 +196,6 @@ def test_decays(do_plot=False):
 
     # Calculate all the delays
     res = sc.objdict()
-    res.x = x
     for key,par in pars.items():
         func = par.pop('func')
         res[key] = func(**par)
@@ -207,6 +206,8 @@ def test_decays(do_plot=False):
             pl.semilogy(x, y, label=key, lw=3, alpha=0.7)
         pl.legend()
         pl.show()
+
+    res.x = x
 
     return res
 
