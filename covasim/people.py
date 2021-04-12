@@ -49,7 +49,7 @@ class People(cvb.BasePeople):
         self.pars          = pars # Equivalent to self.set_pars(pars)
         self.pop_size      = int(pars['pop_size'])
         self.location      = pars.get('location') # Try to get location, but set to None otherwise
-        self.total_strains = pars.get('total_strains', 1) # Assume 1 strain if not supplied
+        self.n_strains = pars.get('n_strains', 1) # Assume 1 strain if not supplied
         self.version       = cvv.__version__ # Store version info
 
         # Other initialization
@@ -76,11 +76,11 @@ class People(cvb.BasePeople):
         for key in self.meta.strain_states:
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.by_strain_states:
-            self[key] = np.full((self.total_strains, self.pop_size), False, dtype=bool)
+            self[key] = np.full((self.n_strains, self.pop_size), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self.total_strains, self.pop_size), dtype=cvd.default_float)
+            self[key] = np.zeros((self.n_strains, self.pop_size), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
@@ -121,7 +121,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         self.flows_strain = {}
         for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.zeros(self.total_strains, dtype=cvd.default_float)
+            self.flows_strain[key] = np.zeros(self.n_strains, dtype=cvd.default_float)
         return
 
 

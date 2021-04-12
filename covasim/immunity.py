@@ -88,6 +88,10 @@ class Strain(cvi.Intervention):
     def initialize(self, sim):
         super().initialize()
 
+        # Store the index of this strain, and increment the number of strains in the simulation
+        self.index = sim['n_strains']
+        sim['n_strains'] += 1
+
         if not hasattr(self, 'rel_imm'): # TODO: refactor
             self.rel_imm = 1
 
@@ -104,19 +108,12 @@ class Strain(cvi.Intervention):
 
 
     def apply(self, sim):
-
         if sim.t == self.days:  # Time to introduce strain # TODO: use find_day
-
-            # Check number of strains
-            prev_strains = sim['n_strains'] # TODO: refactor to be explicit
-            sim['n_strains'] += 1
-
             # Update strain-specific people attributes
-            #cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
             susceptible_inds = cvu.true(sim.people.susceptible)
             n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
-            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
+            sim.people.infect(inds=importation_inds, layer='importation', strain=self.index)
 
         return
 
@@ -145,7 +142,7 @@ class Vaccine(cvi.Intervention):
     def __init__(self, vaccine=None, label=None, **kwargs):
         super().__init__(**kwargs)
         self.label = label
-        self.rel_imm = None # list of length total_strains with relative immunity factor
+        self.rel_imm = None # list of length n_strains with relative immunity factor
         self.doses = None
         self.interval = None
         self.NAb_init = None
@@ -200,7 +197,7 @@ class Vaccine(cvi.Intervention):
     def initialize(self, sim):
         super().initialize()
 
-        ts = sim['total_strains']
+        ts = sim['n_strains']
         circulating_strains = ['wild'] # assume wild is circulating
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].label)
@@ -354,7 +351,7 @@ def init_immunity(sim, create=False):
     if not sim['use_waning']:
         return
 
-    ts = sim['total_strains']
+    ts = sim['n_strains']
     immunity = {}
 
     # Pull out all of the circulating strains for cross-immunity

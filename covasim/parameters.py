@@ -61,9 +61,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
 
     # Parameters that control settings and defaults for multi-strain runs
-    pars['n_imports']       = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['n_strains']       = 1 # The number of strains currently circulating in the population
-    pars['total_strains']   = 1 # Set during sim initialization, once strains have been specified and processed
+    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['n_strains'] = 1 # The number of strains circulating in the population
 
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity

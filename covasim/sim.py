@@ -315,7 +315,7 @@ class Sim(cvb.BaseSim):
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
 
         # Handle strains
-        ns = self['total_strains']
+        ns = self['n_strains']
         self.results['strain'] = {}
         self.results['strain']['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, n_strains=ns)
         self.results['strain']['incidence_by_strain']  = init_res('Incidence by strain', scale=False, n_strains=ns)
@@ -496,8 +496,6 @@ class Sim(cvb.BaseSim):
         for strain in self['strains']:
             strain.initialize(self)
 
-        # Calculate the total number of strains that will be active at some point in the sim
-        self['total_strains'] = self['n_strains'] + len(self['strains'])
         return
 
 
@@ -765,7 +763,7 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_flows.keys():
             self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:], axis=0)
         for key in cvd.result_flows_by_strain.keys():
-            for strain in range(self['total_strains']):
+            for strain in range(self['n_strains']):
                 self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
         for res in [self.results['cum_infections'], self.results['strain']['cum_infections_by_strain']]: # Include initially infected people
             res.values += self['pop_infected']*self.rescale_vec[0]
