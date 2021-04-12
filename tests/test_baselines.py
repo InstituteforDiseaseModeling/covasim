@@ -1,5 +1,6 @@
 """
-Compare current results to baseline
+Test that the current version of Covasim exactly matches
+the baseline results.
 """
 
 import numpy as np
@@ -92,20 +93,19 @@ def test_baseline():
     return new
 
 
-def test_benchmark(do_save=do_save):
+def test_benchmark(do_save=do_save, repeats=1):
     ''' Compare benchmark performance '''
 
     print('Running benchmark...')
     previous = sc.loadjson(benchmark_filename)
 
-    repeats = 5
     t_inits = []
     t_runs  = []
 
     def normalize_performance():
         ''' Normalize performance across CPUs -- simple Numpy calculation '''
         t_bls = []
-        bl_repeats = 5
+        bl_repeats = 3
         n_outer = 10
         n_inner = 1e6
         for r in range(bl_repeats):
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    json = test_benchmark(do_save=do_save) # Run this first so benchmarking is available even if results are different
+    json = test_benchmark(do_save=do_save, repeats=5) # Run this first so benchmarking is available even if results are different
     new  = test_baseline()
     make_sim(do_plot=do_plot)
 

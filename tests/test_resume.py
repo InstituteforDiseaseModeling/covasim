@@ -1,5 +1,5 @@
 '''
-Test resuming a simulation partway, as well as reproducing two simulations with
+Tests for resuming a simulation partway, as well as reproducing two simulations with
 different initialization states and after saving to disk.
 '''
 

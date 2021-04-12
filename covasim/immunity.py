@@ -19,7 +19,7 @@ class Strain(cvi.Intervention):
     Add a new strain to the sim
 
     Args:
-        day (int): day on which new variant is introduced.
+        day (int): day on which new variant is introduced. # TODO: update with correct name and find_day
         n_imports (int): the number of imports of the strain to be added
         strain (dict): dictionary of parameters specifying information about the strain
         kwargs (dict): passed to Intervention()
@@ -124,9 +124,8 @@ class Strain(cvi.Intervention):
             if hasattr(self, strain_key): # TODO: refactor
                 newval = getattr(self, strain_key)
                 sim['strain_pars'][strain_key].append(newval)
-            else:
-                # use default
-                print(f'{strain_key} not provided for this strain, using default value')
+            else: # use default
+                sc.printv(f'{strain_key} not provided for this strain, using default value', 1, sim['verbose'])
                 sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
 
         return
@@ -275,6 +274,7 @@ class Vaccine(cvi.Intervention):
 
         return vaccine_pars
 
+
     def initialize(self, sim):
         super().initialize()
 
@@ -287,8 +287,8 @@ class Vaccine(cvi.Intervention):
             errormsg = 'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
-        if self.rel_imm is None:
-            print('Did not provide rel_imm parameters for this vaccine, trying to find values')
+        if self.rel_imm is None: # TODO: refactor
+            sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
             self.rel_imm = []
             for strain in circulating_strains:
                 if strain in self.vaccine_strain_info['known_strains']:
@@ -452,7 +452,7 @@ def init_immunity(sim, create=False):
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
                 immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
 
-        known_strains = ['wild', 'b117', 'b1351', 'p1']
+        known_strains = ['wild', 'b117', 'b1351', 'p1'] # TODO: only appear once
         cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
         for i in range(ts):
             for j in range(ts):
@@ -682,7 +682,7 @@ def linear_growth(length, slope):
     return (slope * t)
 
 
-def create_cross_immunity(circulating_strains, rel_imms):
+def create_cross_immunity(circulating_strains, rel_imms): # TODO: refactor
     known_strains = ['wild', 'b117', 'b1351', 'p1']
     known_cross_immunity = dict()
     known_cross_immunity['wild'] = {} # cross-immunity to wild

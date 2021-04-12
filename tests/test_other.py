@@ -11,7 +11,7 @@ import sciris as sc
 import covasim as cv
 
 do_plot = 1
-verbose = 0
+verbose = -1
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
@@ -134,12 +134,12 @@ def test_basepeople():
     assert len(layer2.keys()) == 5
 
     # Test dynamic layers, plotting, and stories
-    pars = dict(pop_size=1000, n_days=50, verbose=verbose, pop_type='hybrid')
+    pars = dict(pop_size=100, n_days=10, verbose=verbose, pop_type='hybrid', beta=0.02)
     s1 = cv.Sim(pars, dynam_layer={'c':1})
     s1.run()
     s1.people.plot()
-    for person in [25, 79]:
-        sim.people.story(person)
+    for person in [0, 50]:
+        s1.people.story(person)
 
     # Run without dynamic layers and assert that the results are different
     s2 = cv.Sim(pars, dynam_layer={'c':0})

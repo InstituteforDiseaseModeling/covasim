@@ -1,5 +1,5 @@
 '''
-Execute analysis tools in order to broadly cover basic functionality of analysis.py
+Tests for the analyzers and other analysis tools.
 '''
 
 import numpy as np
@@ -80,8 +80,8 @@ def test_daily_age():
 
 def test_daily_stats():
     sc.heading('Testing daily stats analyzer')
-    ds = cv.daily_stats(days=['2020-04-04', '2020-04-14'], save_inds=True)
-    sim = cv.Sim(pars, analyzers=ds)
+    ds = cv.daily_stats(days=['2020-04-04'], save_inds=True)
+    sim = cv.Sim(pars, n_days=40, analyzers=ds)
     sim.run()
     daily = sim.get_analyzer()
     if do_plot:

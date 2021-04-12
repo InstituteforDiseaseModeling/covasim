@@ -11,7 +11,6 @@ from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
-from . import immunity as cvimm
 from . import plotting as cvplt
 from .settings import options as cvo
 
@@ -890,6 +889,7 @@ class Scenarios(cvb.ParsObj):
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
+        self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()

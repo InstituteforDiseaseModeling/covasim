@@ -29,16 +29,16 @@ class Sim(cvb.BaseSim):
     loading, exporting, etc.). Please see the BaseSim class for additional methods.
 
     Args:
-        pars         (dict):   parameters to modify from their default values
-        datafile     (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
-        datacols     (list):   list of column names of the data to load
-        label        (str):    the name of the simulation (useful to distinguish in batch runs)
-        simfile      (str):    the filename for this simulation, if it's saved (default: creation date)
-        popfile      (str):    the filename to load/save the population for this simulation
-        load_pop     (bool):   whether to load the population from the named file
-        save_pop     (bool):   whether to save the population to the named file
-        version      (str):    if supplied, use default parameters from this version of Covasim instead of the latest
-        kwargs       (dict):   passed to make_pars()
+        pars     (dict):   parameters to modify from their default values
+        datafile (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
+        datacols (list):   list of column names of the data to load
+        label    (str):    the name of the simulation (useful to distinguish in batch runs)
+        simfile  (str):    the filename for this simulation, if it's saved (default: creation date)
+        popfile  (str):    the filename to load/save the population for this simulation
+        load_pop (bool):   whether to load the population from the named file
+        save_pop (bool):   whether to save the population to the named file
+        version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
+        kwargs   (dict):   passed to make_pars()
 
     **Examples**::
 
@@ -109,7 +109,7 @@ class Sim(cvb.BaseSim):
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
         if self['use_waning']:
-            self.init_strains() # ...and the strains....
+            self.init_strains() # ...and the strains.... # TODO: move out of if?
             self.init_immunity() # ... and information about immunity/cross-immunity.
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
@@ -476,8 +476,7 @@ class Sim(cvb.BaseSim):
             self['strains'] = self._orig_pars.pop('strains') # Restore
 
         for strain in self['strains']:
-            if isinstance(strain, cvimm.Strain):
-                strain.initialize(self)
+            strain.initialize(self)
 
         # Calculate the total number of strains that will be active at some point in the sim
         self['total_strains'] = self['n_strains'] + len(self['strains'])
@@ -597,7 +596,7 @@ class Sim(cvb.BaseSim):
 
         # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
         if self['use_waning']:
-            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(people.exposed))
+            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(people.susceptible))
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
@@ -818,10 +817,11 @@ class Sim(cvb.BaseSim):
         the number removed, and recalculates susceptibles to handle scaling.
         '''
         res = self.results
+        count_recov = 1-self['use_waning'] # If waning is on, don't count recovered people as removed
         self.results['n_alive'][:]       = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
-        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_susceptible'][:] = res['n_alive'][:] - res['n_exposed'][:] - count_recov*res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
         self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
-        self.results['n_removed'][:]       = res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
+        self.results['n_removed'][:]       = count_recov*res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]    = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]     = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
 
