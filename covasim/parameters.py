@@ -72,7 +72,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
     pars['nab_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
-    pars['rel_imm']         = dict(asymptomatic=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm']         = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains

@@ -283,13 +283,13 @@ class People(cvb.BasePeople):
         if self.pars['use_waning']:
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
-            mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-            severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
+            mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+            severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
 
             # Reset additional states
-            self.susceptible[inds]      = True
-            self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']
+            self.susceptible[inds] = True
+            self.prior_symptoms[inds]        = self.pars['rel_imm']['asymp']
+            self.prior_symptoms[mild_inds]   = self.pars['rel_imm']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
