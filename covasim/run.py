@@ -955,7 +955,7 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
 
-            scen_sim.update_pars(scenpars, **kwargs)  # Update the parameters, if provided
+            scen_sim.update_pars(scenpars)  # Update the parameters, if provided
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)
