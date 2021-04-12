@@ -171,7 +171,7 @@ class Vaccine(cvi.Intervention):
 
             if normvacc in mapping:
                 vaccine_pars = pars[mapping[normvacc]]
-            else:
+            else: # pragma: no cover
                 errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
 
@@ -179,7 +179,7 @@ class Vaccine(cvi.Intervention):
         elif isinstance(vaccine, dict):
             vaccine_pars = vaccine
 
-        else:
+        else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 

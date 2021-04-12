@@ -130,9 +130,10 @@ def test_waning(do_plot=False):
 def test_strains(do_plot=False):
     sc.heading('Testing strains...')
 
-    b117 = cv.Strain('b117',       days=10, n_imports=20)
-    p1   = cv.Strain('sa variant', days=20, n_imports=20)
-    sim  = cv.Sim(use_waning=True, strains=[b117, p1], **base_pars)
+    b117 = cv.Strain('b117',         days=10, n_imports=20)
+    p1   = cv.Strain('sa variant',   days=20, n_imports=20)
+    cust = cv.Strain(label='Custom', days=40, n_imports=20, strain={'rel_beta': 2, 'rel_symp_prob': 1.6})
+    sim  = cv.Sim(base_pars, use_waning=True, strains=[b117, p1, cust])
     sim.run()
 
     if do_plot:
@@ -197,23 +198,6 @@ def test_strains(do_plot=False):
 #         scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_basic_immunity.png', to_plot=to_plot)
 
 #     return scens
-
-
-# def test_import1strain(do_plot=False, do_show=True, do_save=False):
-#     sc.heading('Test introducing a new strain partway through a sim')
-
-#     strain_pars = {
-#         'rel_beta': 1.5,
-#     }
-#     pars = {
-#         'beta': 0.01
-#     }
-#     strain = cv.Strain(strain_pars, days=1, n_imports=20, label='Strain 2: 1.5x more transmissible')
-#     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, analyzers=cv.snapshot(30, 60), **pars, **base_pars)
-#     sim.run()
-
-#     return sim
-
 
 
 
@@ -553,8 +537,8 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
     sim2   = test_strains(do_plot=do_plot)
 
     sc.toc(T)
