@@ -35,45 +35,26 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
         'baseline': {
             'name': 'Default Immunity (decay at log(2)/90)',
             'pars': {
-                'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250,
-                                                          'decay_decay_rate': 0.001}),
-            },
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250,decay_rate2= 0.001)
+            }
         },
-        # 'slower_immunity': {
-        #     'name': 'Slower Immunity (decay at log(2)/150)',
-        #     'pars': {
-        #         'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2) / 150, 'init_decay_time': 250,
-        #                                                   'decay_decay_rate': 0.001}),
-        #     },
-        # },
         'faster_immunity': {
             'name': 'Faster Immunity (decay at log(2)/30)',
             'pars': {
-                'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2) / 30, 'init_decay_time': 250,
-                                                          'decay_decay_rate': 0.001}),
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2) / 30, decay_time1= 250, decay_rate2=0.001),
             },
         },
         'baseline_b1351': {
             'name': 'Default Immunity (decay at log(2)/90), B1351 on day 100',
             'pars': {
-                'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250,
-                                                          'decay_decay_rate': 0.001}),
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250,decay_rate2=0.001),
                 'strains': [b1351],
             },
         },
-        # 'slower_immunity_b1351': {
-        #     'name': 'Slower Immunity (decay at log(2)/150), B1351 on day 100',
-        #     'pars': {
-        #         'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2) / 150, 'init_decay_time': 250,
-        #                                                   'decay_decay_rate': 0.001}),
-        #         'strains': [b1351],
-        #     },
-        # },
         'faster_immunity_b1351': {
             'name': 'Faster Immunity (decay at log(2)/30), B1351 on day 100',
             'pars': {
-                'NAb_decay': dict(form='nab_decay', pars={'init_decay_rate': np.log(2) / 30, 'init_decay_time': 250,
-                                                          'decay_decay_rate': 0.001}),
+                'nab_decay': dict(form='nab_decay', decay_rate1 = np.log(2) / 30, decay_time1= 250, decay_rate2= 0.001),
                 'strains': [b1351],
             },
         },
@@ -81,7 +62,7 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
+    scens.run(debug=True)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -299,7 +280,7 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
+    scens.run(debug=True)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -342,7 +323,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run()
+    scens.run(debug=True)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -523,13 +504,13 @@ if __name__ == '__main__':
     sim5 = test_vaccine_1strain()
 
     # Run multisim and scenario tests
-    scens0 = test_vaccine_1strain_scen() #TODO, NOT WORKING CURRENTLY
+    scens0 = test_vaccine_1strain_scen()
     scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
-    scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
     msim0 = test_msim()
 
     # Run immunity tests
-    sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
 
     # Run test to compare sims with and without waning
     scens3 = test_waning_vs_not(do_plot=do_plot, do_save=do_save, do_show=do_show)
