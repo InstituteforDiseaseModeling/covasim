@@ -20,18 +20,19 @@ class Strain(cvi.Intervention):
     Add a new strain to the sim
 
     Args:
-        day (int): day on which new variant is introduced. # TODO: update with correct name and find_day
-        n_imports (int): the number of imports of the strain to be added
-        strain (dict): dictionary of parameters specifying information about the strain
-        kwargs (dict): passed to Intervention()
+        strain (str/dict): name of strain, or dictionary of parameters specifying information about the strain
+        label       (str): if strain is supplied as a dict, the name of the strain
+        days   (int/list): day(s) on which new variant is introduced.
+        n_imports   (int): the number of imports of the strain to be added
+        rescale    (bool): whether the number of imports should be rescaled with the population
+        kwargs     (dict): passed to Intervention()
 
     **Example**::
 
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
-        # Make a custom strain active from day 20
         my_var  = cv.Strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
-        sim     = cv.Sim(strains=[b117, p1, my_var]) # Add them all to the sim
+        sim     = cv.Sim(strains=[b117, p1, my_var]).run() # Add them all to the sim
     '''
 
     def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True, **kwargs):
@@ -323,7 +324,7 @@ def init_immunity(sim, create=False):
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['NAb_kin'] = precompute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
+    sim['NAb_kin'] = precompute_waning(length=sim['n_days'], pars=sim['NAb_decay'])
 
     return
 
@@ -408,24 +409,23 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
 
 #%% Methods for computing waning
 
-def precompute_waning(length, form='nab_decay', pars=None):
+def precompute_waning(length, pars=None):
     '''
     Process functional form and parameters into values:
 
-        - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
-        - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-        - 'linear'          : linear decay
-        - others TBC!
+        - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
+        - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+        - 'linear_decay': linear decay
 
     Args:
         length (float): length of array to return, i.e., for how long waning is calculated
-        form (str):   the functional form to use
         pars (dict): passed to individual immunity functions
 
     Returns:
         array of length 'length' of values
     '''
 
+    form = pars.pop('form')
     choices = [
         'nab_decay', # Default if no form is provided
         'exp_decay',
