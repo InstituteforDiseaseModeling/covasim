@@ -143,6 +143,16 @@ def test_strains(do_plot=False):
 
 
 def test_vaccines(do_plot=False):
+    sc.heading('Testing vaccines...')
+
+    p1 = cv.Strain('sa variant',   days=20, n_imports=20)
+    pfizer = cv.vaccinate(days=30, vaccine_pars='pfizer')
+    sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
+    sim.run()
+
+    if do_plot:
+        sim.plot('overview-strain')
+
     pass
 
 # def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
@@ -507,7 +517,8 @@ if __name__ == '__main__':
 
     # sim1   = test_states()
     # msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_strains(do_plot=do_plot)
+    # sim2   = test_strains(do_plot=do_plot)
+    sim3   = test_vaccines(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

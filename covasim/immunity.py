@@ -63,7 +63,8 @@ class Strain(cvi.Intervention):
                 normstrain = normstrain.replace(txt, '')
 
             if normstrain in mapping:
-                strain_pars = pars[mapping[normstrain]]
+                normstrain = mapping[normstrain]
+                strain_pars = pars[normstrain]
             else:
                 errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
@@ -128,20 +129,22 @@ class Vaccine(cvi.Intervention):
 
     Args:
         vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
+        label (str): if supplying a dictionary, a label for the vaccine must be supplied
         kwargs (dict): passed to Intervention()
 
     **Example**::
 
         moderna    = cv.Vaccine('moderna') # Create Moderna vaccine
         pfizer     = cv.Vaccine('pfizer) # Create Pfizer vaccine
-        j&j        = cv.Vaccine('j&j') # Create J&J vaccine
+        j&j        = cv.Vaccine('jj') # Create J&J vaccine
         az         = cv.Vaccine('az) # Create AstraZeneca vaccine
         interventions += [cv.vaccinate(vaccines=[moderna, pfizer, j&j, az], days=[1, 10, 10, 30])] # Add them all to the sim
         sim = cv.Sim(interventions=interventions)
     '''
 
-    def __init__(self, vaccine=None, **kwargs):
+    def __init__(self, vaccine=None, label=None, **kwargs):
         super().__init__(**kwargs)
+        self.label = label
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
@@ -149,7 +152,7 @@ class Vaccine(cvi.Intervention):
         self.NAb_boost = None
         self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
         self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
-        self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
+        self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
             setattr(self, par, val)
         return
@@ -162,7 +165,8 @@ class Vaccine(cvi.Intervention):
         if isinstance(vaccine, str):
 
             choices, mapping = cvpar.get_vaccine_choices()
-            pars = cvpar.get_vaccine_strain_pars()
+            strain_pars = cvpar.get_vaccine_strain_pars()
+            dose_pars = cvpar.get_vaccine_dose_pars()
             choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
             normvacc = vaccine.lower()
@@ -170,20 +174,27 @@ class Vaccine(cvi.Intervention):
                 normvacc = normvacc.replace(txt, '')
 
             if normvacc in mapping:
-                vaccine_pars = pars[mapping[normvacc]]
+                normvacc = mapping[normvacc]
+                vaccine_pars = sc.mergedicts(strain_pars[normvacc], dose_pars[normvacc])
             else: # pragma: no cover
                 errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
 
+            if self.label is None:
+                self.label = normvacc
+
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(vaccine, dict):
             vaccine_pars = vaccine
+            if self.label is None:
+                self.label = 'Custom vaccine'
 
         else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
-        return vaccine_pars
+        self.vaccine_pars = vaccine_pars
+        return
 
 
     def initialize(self, sim):
@@ -194,7 +205,7 @@ class Vaccine(cvi.Intervention):
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].label)
 
-        if self.NAb_init is None :
+        if self.NAb_init is None : # TODO: refactor
             errormsg = 'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
@@ -202,10 +213,7 @@ class Vaccine(cvi.Intervention):
             sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
             self.rel_imm = []
             for strain in circulating_strains:
-                if strain in self.vaccine_strain_info['known_strains']:
-                    self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
-                else:
-                    self.rel_imm.append(1)
+                self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
 
         correct_size = len(self.rel_imm) == ts
         if not correct_size:
