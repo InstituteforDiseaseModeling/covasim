@@ -125,6 +125,18 @@ def test_states():
     return
 
 
+def test_strains(do_plot=False):
+    sc.heading('Testing strains...')
+
+    b117 = cv.Strain('b117',       days=10, n_imports=20)
+    p1   = cv.Strain('sa variant', days=20, n_imports=20)
+    sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
+    sim.run()
+
+    if do_plot:
+        sim.plot('overview-strain')
+
+    return sim
 
 # def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
 #     sc.heading('Test varying properties of immunity')
@@ -201,15 +213,7 @@ def test_states():
 #     return sim
 
 
-# def test_import2strains(do_plot=False, do_show=True, do_save=False):
-#     sc.heading('Test introducing 2 new strains partway through a sim')
 
-#     b117 = cv.Strain('b117', days=1, n_imports=20)
-#     p1 = cv.Strain('sa variant', days=2, n_imports=20)
-#     sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
-#     sim.run()
-
-#     return sim
 
 
 # def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
@@ -515,28 +519,28 @@ def test_states():
 
 #%% Plotting and utilities
 
-def vacc_subtarg(sim):
-    ''' Subtarget by age'''
+# def vacc_subtarg(sim):
+#     ''' Subtarget by age'''
 
-    # retrieves the first ind that is = or < sim.t
-    ind = get_ind_of_min_value(sim.vxsubtarg.days, sim.t)
-    age = sim.vxsubtarg.age[ind]
-    prob = sim.vxsubtarg.prob[ind]
-    inds = sc.findinds((sim.people.age>=age) * ~sim.people.vaccinated)
-    vals = prob*np.ones(len(inds))
-    return {'inds':inds, 'vals':vals}
+#     # retrieves the first ind that is = or < sim.t
+#     ind = get_ind_of_min_value(sim.vxsubtarg.days, sim.t)
+#     age = sim.vxsubtarg.age[ind]
+#     prob = sim.vxsubtarg.prob[ind]
+#     inds = sc.findinds((sim.people.age>=age) * ~sim.people.vaccinated)
+#     vals = prob*np.ones(len(inds))
+#     return {'inds':inds, 'vals':vals}
 
 
-def get_ind_of_min_value(list, time):
-    ind = None
-    for place, t in enumerate(list):
-        if time >= t:
-            ind = place
+# def get_ind_of_min_value(list, time):
+#     ind = None
+#     for place, t in enumerate(list):
+#         if time >= t:
+#             ind = place
 
-    if ind is None:
-        errormsg = f'{time} is not within the list of times'
-        raise ValueError(errormsg)
-    return ind
+#     if ind is None:
+#         errormsg = f'{time} is not within the list of times'
+#         raise ValueError(errormsg)
+#     return ind
 
 
 
@@ -547,8 +551,9 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    msims1 = test_waning(do_plot=do_plot)
-    sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim1   = test_states()
+    sim2 = test_strains(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

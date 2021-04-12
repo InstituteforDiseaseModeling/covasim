@@ -174,8 +174,8 @@ result_flows = {
 }
 
 result_flows_by_strain = {
-    'infections_by_strain': 'infections_by_strain',
-    'infectious_by_strain': 'infectious_by_strain',
+    'infections_by_strain': 'infections by strain',
+    'infectious_by_strain': 'infectious by strain',
 }
 
 result_imm = {

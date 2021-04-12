@@ -642,15 +642,14 @@ class Sim(cvb.BaseSim):
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
-                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
-                                  layer=lkey, strain=strain)  # Actually infect people
+                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
         for key in cvd.result_stocks_by_strain.keys():
             for strain in range(ns):
-                self.results['strain'][f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
+                self.results['strain'][f'n_{key}'][strain, t] = people.count_by_strain(key, strain)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
@@ -778,7 +777,10 @@ class Sim(cvb.BaseSim):
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:], axis=0)
+        for key in cvd.result_flows_by_strain.keys():
+            for strain in range(self['total_strains']):
+                self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
         self.results['strain']['cum_infections_by_strain'].values += self['pop_infected']*self.rescale_vec[0]
 
