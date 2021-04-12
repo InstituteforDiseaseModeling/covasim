@@ -454,7 +454,7 @@ def precompute_waning(length, pars=None):
     return output
 
 
-def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
+def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     '''
     Returns an array of length 'length' containing the evaluated function NAb decay
     function at each point.
@@ -464,21 +464,21 @@ def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
 
     Args:
         length (int): number of points
-        init_decay_rate (float): initial rate of exponential decay
-        init_decay_time (float): time on the first exponential decay
-        decay_decay_rate (float): the rate at which the decay decays
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate at which the decay decays
     '''
-    def f1(t, init_decay_rate):
+    def f1(t, decay_rate1):
         ''' Simple exponential decay '''
-        return np.exp(-t*init_decay_rate)
+        return np.exp(-t*decay_rate1)
 
-    def f2(t, init_decay_rate, init_decay_time, decay_decay_rate):
+    def f2(t, decay_rate1, decay_time1, decay_rate2):
         ''' Complex exponential decay '''
-        return np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
+        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
 
     t  = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t<=init_decay_time), init_decay_rate)
-    y2 = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
+    y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
+    y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([y1,y2])
 
     return y

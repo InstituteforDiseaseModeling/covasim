@@ -67,7 +67,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
     pars['NAb_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['NAb_decay']       = dict(form='nab_decay', init_decay_rate=np.log(2)/90, init_decay_time=250, decay_decay_rate=0.001) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['NAb_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_kin']         = None # Constructed during sim initialization using the NAb_decay parameters
     pars['NAb_boost']       = 1.5 # Multiplicative factor applied to a person's NAb levels if they get reinfected. # TODO: add source
     pars['NAb_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map NAbs to efficacy
