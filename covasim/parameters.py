@@ -61,20 +61,19 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
 
     # Parameters that control settings and defaults for multi-strain runs
-    pars['n_imports']       = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['n_strains']       = 1 # The number of strains currently circulating in the population
-    pars['total_strains']   = 1 # Set during sim initialization, once strains have been specified and processed
+    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['n_strains'] = 1 # The number of strains circulating in the population
 
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
-    pars['NAb_init']        = dict(dist='normal', par1= 0, par2= 2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['NAb_decay']       = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['NAb_kin']         = None # Constructed during sim initialization using the NAb_decay parameters
-    pars['NAb_boost']       = 1.5 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
-    pars['NAb_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map NAbs to efficacy
+    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
+    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+    pars['nab_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
-    pars['rel_imm']         = dict(asymptomatic=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
+    pars['rel_imm']         = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
@@ -142,7 +141,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Handle strain pars
     if 'strain_pars' not in pars:
         pars['strain_pars'] = {} # Populated just below
-        pars = listify_strain_pars(pars)  # Turn strain parameters into lists
+        for sp in cvd.strain_pars:
+            if sp in pars.keys():
+                pars['strain_pars'][sp] = [pars[sp]]
 
     return pars
 
@@ -333,6 +334,7 @@ def get_vaccine_choices():
     '''
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
+        'default': ['default', None],
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
         'moderna': ['moderna'],
         'az':      ['az', 'astrazeneca'],
@@ -351,6 +353,7 @@ def get_strain_pars():
         wild = sc.objdict(
             rel_imm         = 1.0,
             rel_beta        = 1.0,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.0,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
@@ -359,6 +362,7 @@ def get_strain_pars():
         b117 = sc.objdict(
             rel_imm         = 1.0,
             rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
@@ -367,6 +371,7 @@ def get_strain_pars():
         b1351 = sc.objdict(
             rel_imm         = 0.25,
             rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.4,
@@ -375,12 +380,50 @@ def get_strain_pars():
         p1 = sc.objdict(
             rel_imm         = 0.5,
             rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
             rel_crit_prob   = 1.0,
             rel_death_prob  = 2.0,
         )
     )
 
+    return pars
+
+
+def get_cross_immunity():
+    '''
+    Get the cross immunity between each strain and each other strain
+    '''
+    pars = sc.objdict(
+
+        wild = sc.objdict(
+            wild  = 1.0,
+            b117  = 0.5,
+            b1351 = 0.5,
+            p1    = 0.5,
+        ),
+
+        b117 = sc.objdict(
+            wild  = 0.5,
+            b117  = 1.0,
+            b1351 = 0.8,
+            p1    = 0.8,
+        ),
+
+        b1351 = sc.objdict(
+            wild  = 0.066,
+            b117  = 0.1,
+            b1351 = 1.0,
+            p1    = 0.1,
+        ),
+
+        p1 = sc.objdict(
+            wild  = 0.17,
+            b117  = 0.2,
+            b1351 = 0.2,
+            p1    = 1.0,
+        ),
+    )
     return pars
 
 
@@ -425,7 +468,6 @@ def get_vaccine_strain_pars():
             p1    = 1/8.6,
         ),
     )
-
     return pars
 
 
@@ -436,56 +478,45 @@ def get_vaccine_dose_pars():
     pars = sc.objdict(
 
         default = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 1,
             interval  = None,
         ),
 
         pfizer = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         moderna = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 28,
         ),
 
         az = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         jj = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 1,
             interval  = None,
         ),
     )
-
-    return pars
-
-
-def listify_strain_pars(pars):
-    '''
-    Helper function to turn strain parameters into lists
-    '''
-    for sp in cvd.strain_pars:
-        if sp in pars.keys():
-            pars['strain_pars'][sp] = sc.promotetolist(pars[sp])
     return pars
 
 

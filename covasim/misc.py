@@ -250,7 +250,7 @@ def migrate_strains(pars, verbose=True):
     '''
     pars['use_waning'] = False
     pars['n_strains'] = 1
-    pars['total_strains'] = 1
+    pars['n_strains'] = 1
     pars['strains'] = []
     return
 

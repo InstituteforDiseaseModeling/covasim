@@ -49,7 +49,7 @@ class People(cvb.BasePeople):
         self.pars          = pars # Equivalent to self.set_pars(pars)
         self.pop_size      = int(pars['pop_size'])
         self.location      = pars.get('location') # Try to get location, but set to None otherwise
-        self.total_strains = pars.get('total_strains', 1) # Assume 1 strain if not supplied
+        self.n_strains = pars.get('n_strains', 1) # Assume 1 strain if not supplied
         self.version       = cvv.__version__ # Store version info
 
         # Other initialization
@@ -76,11 +76,11 @@ class People(cvb.BasePeople):
         for key in self.meta.strain_states:
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.by_strain_states:
-            self[key] = np.full((self.total_strains, self.pop_size), False, dtype=bool)
+            self[key] = np.full((self.n_strains, self.pop_size), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self.total_strains, self.pop_size), dtype=cvd.default_float)
+            self[key] = np.zeros((self.n_strains, self.pop_size), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
@@ -121,7 +121,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         self.flows_strain = {}
         for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.zeros(self.total_strains, dtype=cvd.default_float)
+            self.flows_strain[key] = np.zeros(self.n_strains, dtype=cvd.default_float)
         return
 
 
@@ -282,14 +282,14 @@ class People(cvb.BasePeople):
         # Handle immunity aspects
         if self.pars['use_waning']:
 
-            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
-            mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-            severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
+            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
+            mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+            severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
 
             # Reset additional states
-            self.susceptible[inds]      = True
-            self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']
+            self.susceptible[inds] = True
+            self.prior_symptoms[inds]        = self.pars['rel_imm']['asymp']
+            self.prior_symptoms[mild_inds]   = self.pars['rel_imm']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)

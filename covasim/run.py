@@ -248,7 +248,7 @@ class MultiSim(cvb.FlexPretty):
                 vals = sim.results[reskey].values
                 raw[reskey][:, s] = vals
         for reskey in strainkeys:
-            raw[reskey] = np.zeros((reduced_sim['total_strains'], reduced_sim.npts, len(self.sims)))
+            raw[reskey] = np.zeros((reduced_sim['n_strains'], reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results['strain'][reskey].values
                 raw[reskey][:, :, s] = vals
@@ -972,7 +972,7 @@ class Scenarios(cvb.ParsObj):
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-            ns = scen_sims[0]['total_strains'] # Get number of strains
+            ns = scen_sims[0]['n_strains'] # Get number of strains
             scenraw = {}
             for reskey in mainkeys:
                 scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
@@ -1040,7 +1040,7 @@ class Scenarios(cvb.ParsObj):
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
                 if reskey in strainkeys:
-                    for strain in range(self.base_sim['total_strains']):
+                    for strain in range(self.base_sim['n_strains']):
                         val = self.results[reskey][scenkey].best[strain, day] # Only prints results for infections by first strain
                         strainkey = reskey + str(strain) # Add strain number to the summary output
                         x[scenkey][strainkey] = int(val)

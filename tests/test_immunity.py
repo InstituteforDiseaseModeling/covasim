@@ -94,7 +94,7 @@ def test_waning(do_plot=False):
         pars = dict(
             n_days    = 90,
             beta      = 0.008,
-            NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
+            nab_decay = dict(form='nab_decay', decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
         )
 
         # Optionally include rescaling
@@ -167,9 +167,9 @@ def test_decays(do_plot=False):
         nab_decay = dict(
             func = cv.immunity.nab_decay,
             length = n,
-            init_decay_rate = 0.05,
-            init_decay_time= 100,
-            decay_decay_rate = 0.002,
+            decay_rate1 = 0.05,
+            decay_time1= 100,
+            decay_rate2 = 0.002,
         ),
 
         exp_decay = dict(

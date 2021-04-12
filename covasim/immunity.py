@@ -20,31 +20,26 @@ class Strain(cvi.Intervention):
     Add a new strain to the sim
 
     Args:
-        day (int): day on which new variant is introduced. # TODO: update with correct name and find_day
-        n_imports (int): the number of imports of the strain to be added
-        strain (dict): dictionary of parameters specifying information about the strain
-        kwargs (dict): passed to Intervention()
+        strain (str/dict): name of strain, or dictionary of parameters specifying information about the strain
+        label       (str): if strain is supplied as a dict, the name of the strain
+        days   (int/list): day(s) on which new variant is introduced.
+        n_imports   (int): the number of imports of the strain to be added
+        rescale    (bool): whether the number of imports should be rescaled with the population
+        kwargs     (dict): passed to Intervention()
 
     **Example**::
 
         b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
         p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
-        # Make a custom strain active from day 20
         my_var  = cv.Strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
-        sim     = cv.Sim(strains=[b117, p1, my_var]) # Add them all to the sim
+        sim     = cv.Sim(strains=[b117, p1, my_var]).run() # Add them all to the sim
     '''
 
     def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-
-        # Handle inputs
-        self.days = days
+        self.days = days # Handle inputs
         self.n_imports = cvd.default_int(n_imports)
-
-        # Strains can be defined in different ways: process these here
-        self.strain_pars = self.parse_strain_pars(strain=strain, label=label)
-        for par, val in self.strain_pars.items():
-            setattr(self, par, val)
+        self.parse_strain_pars(strain=strain, label=label) # Strains can be defined in different ways: process these here
         return
 
 
@@ -81,43 +76,34 @@ class Strain(cvi.Intervention):
 
         # Set label
         self.label = label if label else normstrain
+        self.p = sc.objdict(strain_pars) # Convert to an objdict and save
 
-        return strain_pars
+        return
 
 
     def initialize(self, sim):
         super().initialize()
 
-        if not hasattr(self, 'rel_imm'): # TODO: refactor
-            self.rel_imm = 1
+        # Store the index of this strain, and increment the number of strains in the simulation
+        self.index = sim['n_strains']
+        sim['n_strains'] += 1
 
         # Update strain info
-        for strain_key in cvd.strain_pars:
-            if hasattr(self, strain_key): # TODO: refactor
-                newval = getattr(self, strain_key)
-                sim['strain_pars'][strain_key].append(newval)
-            else: # use default
-                sc.printv(f'{strain_key} not provided for this strain, using default value', 1, sim['verbose'])
-                sim['strain_pars'][strain_key].append(sim['strain_pars'][strain_key][0])
+        defaults = cvpar.get_strain_pars()['wild']
+        for key in cvd.strain_pars:
+            if key not in self.p:
+                self.p[key] = defaults[key]
+            sim['strain_pars'][key].append(self.p[key])
 
         return
 
 
     def apply(self, sim):
-
-        if sim.t == self.days:  # Time to introduce strain # TODO: use find_day
-
-            # Check number of strains
-            prev_strains = sim['n_strains'] # TODO: refactor to be explicit
-            sim['n_strains'] += 1
-
-            # Update strain-specific people attributes
-            #cvu.update_strain_attributes(sim.people) # don't think we need to do this if we just create people arrays with number of total strains in sim
+        for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce strain
             susceptible_inds = cvu.true(sim.people.susceptible)
             n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
-            sim.people.infect(inds=importation_inds, layer='importation', strain=prev_strains)
-
+            sim.people.infect(inds=importation_inds, layer='importation', strain=self.index)
         return
 
 
@@ -145,16 +131,16 @@ class Vaccine(cvi.Intervention):
     def __init__(self, vaccine=None, label=None, **kwargs):
         super().__init__(**kwargs)
         self.label = label
-        self.rel_imm = None # list of length total_strains with relative immunity factor
-        self.doses = None
-        self.interval = None
-        self.NAb_init = None
-        self.NAb_boost = None
-        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
+        # self.rel_imm = None # list of length n_strains with relative immunity factor
+        # self.doses = None
+        # self.interval = None
+        # self.nab_init = None
+        # self.nab_boost = None
+        # self.nab_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map nabs to efficacy
         self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
         self.parse_vaccine_pars(vaccine=vaccine)
-        for par, val in self.vaccine_pars.items():
-            setattr(self, par, val)
+        # for par, val in self.vaccine_pars.items():
+        #     setattr(self, par, val)
         return
 
 
@@ -193,95 +179,68 @@ class Vaccine(cvi.Intervention):
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
-        self.vaccine_pars = vaccine_pars
+        self.p = sc.objdict(vaccine_pars)
         return
 
 
-    def initialize(self, sim):
-        super().initialize()
-
-        ts = sim['total_strains']
-        circulating_strains = ['wild'] # assume wild is circulating
-        for strain in range(ts-1):
-            circulating_strains.append(sim['strains'][strain].label)
-
-        if self.NAb_init is None : # TODO: refactor
-            errormsg = 'Did not provide parameters for this vaccine'
-            raise ValueError(errormsg)
-
-        if self.rel_imm is None: # TODO: refactor
-            sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
-            self.rel_imm = []
-            for strain in circulating_strains:
-                self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
-
-        correct_size = len(self.rel_imm) == ts
-        if not correct_size:
-            errormsg = 'Did not provide relative immunity for each strain'
-            raise ValueError(errormsg)
-
-        return
-
-
-
-# %% NAb methods
+#%% nab methods
 
 def init_nab(people, inds, prior_inf=True, vacc_info=None):
     '''
-    Draws an initial NAb level for individuals.
+    Draws an initial nab level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
-    1) a natural infection. If individual has no existing NAb, draw from distribution
-    depending upon symptoms. If individual has existing NAb, multiply booster impact
-    2) Vaccination. If individual has no existing NAb, draw from distribution
-    depending upon vaccine source. If individual has existing NAb, multiply booster impact
+    1) a natural infection. If individual has no existing nab, draw from distribution
+    depending upon symptoms. If individual has existing nab, multiply booster impact
+    2) Vaccination. If individual has no existing nab, draw from distribution
+    depending upon vaccine source. If individual has existing nab, multiply booster impact
     '''
 
     if vacc_info is None:
         # print('Note: using default vaccine dosing information')
         vacc_info = cvpar.get_vaccine_dose_pars()['default']
 
-    NAb_arrays = people.NAb[inds]
-    prior_NAb_inds = cvu.idefined(NAb_arrays, inds) # Find people with prior NAbs
-    no_prior_NAb_inds = np.setdiff1d(inds, prior_NAb_inds) # Find people without prior NAbs
+    nab_arrays = people.nab[inds]
+    prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior nabs
+    no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior nabs
 
-    # prior_NAb = people.NAb[prior_NAb_inds] # Array of NAb levels on this timestep for people with some NAbs
-    peak_NAb = people.init_NAb[prior_NAb_inds]
+    # prior_nab = people.nab[prior_nab_inds] # Array of nab levels on this timestep for people with some nabs
+    peak_nab = people.init_nab[prior_nab_inds]
 
-    # NAbs from infection
+    # nabs from infection
     if prior_inf:
-        NAb_boost = people.pars['NAb_boost']  # Boosting factor for natural infection
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_NAb_inds):
-            init_NAb = cvu.sample(**people.pars['NAb_init'], size=len(no_prior_NAb_inds))
-            prior_symp = people.prior_symptoms[no_prior_NAb_inds]
-            no_prior_NAb = (2**init_NAb) * prior_symp
-            people.init_NAb[no_prior_NAb_inds] = no_prior_NAb
+        nab_boost = people.pars['nab_boost']  # Boosting factor for natural infection
+        # 1) No prior nab: draw nab from a distribution and compute
+        if len(no_prior_nab_inds):
+            init_nab = cvu.sample(**people.pars['nab_init'], size=len(no_prior_nab_inds))
+            prior_symp = people.prior_symptoms[no_prior_nab_inds]
+            no_prior_nab = (2**init_nab) * prior_symp
+            people.init_nab[no_prior_nab_inds] = no_prior_nab
 
-        # 2) Prior NAb: multiply existing NAb by boost factor
-        if len(prior_NAb_inds):
-            init_NAb = peak_NAb * NAb_boost
-            people.init_NAb[prior_NAb_inds] = init_NAb
+        # 2) Prior nab: multiply existing nab by boost factor
+        if len(prior_nab_inds):
+            init_nab = peak_nab * nab_boost
+            people.init_nab[prior_nab_inds] = init_nab
 
-    # NAbs from a vaccine
+    # nabs from a vaccine
     else:
-        NAb_boost = vacc_info['NAb_boost']  # Boosting factor for vaccination
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_NAb_inds):
-            init_NAb = cvu.sample(**vacc_info['NAb_init'], size=len(no_prior_NAb_inds))
-            people.init_NAb[no_prior_NAb_inds] = 2**init_NAb
+        nab_boost = vacc_info['nab_boost']  # Boosting factor for vaccination
+        # 1) No prior nab: draw nab from a distribution and compute
+        if len(no_prior_nab_inds):
+            init_nab = cvu.sample(**vacc_info['nab_init'], size=len(no_prior_nab_inds))
+            people.init_nab[no_prior_nab_inds] = 2**init_nab
 
-        # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
-        if len(prior_NAb_inds):
-            init_NAb = peak_NAb * NAb_boost
-            people.init_NAb[prior_NAb_inds] = init_NAb
+        # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
+        if len(prior_nab_inds):
+            init_nab = peak_nab * nab_boost
+            people.init_nab[prior_nab_inds] = init_nab
 
     return
 
 
 def check_nab(t, people, inds=None):
-    ''' Determines current NAbs based on date since recovered/vaccinated.'''
+    ''' Determines current nabs based on date since recovered/vaccinated.'''
 
-    # Indices of people who've had some NAb event
+    # Indices of people who've had some nab event
     rec_inds = cvu.defined(people.date_recovered[inds])
     vac_inds = cvu.defined(people.date_vaccinated[inds])
     both_inds = np.intersect1d(rec_inds, vac_inds)
@@ -292,19 +251,19 @@ def check_nab(t, people, inds=None):
     t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
-    # Set current NAbs
-    people.NAb[inds] = people.pars['NAb_kin'][t_since_boost] * people.init_NAb[inds]
+    # Set current nabs
+    people.nab[inds] = people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
 
     return
 
 
 def nab_to_efficacy(nab, ax, function_args):
     '''
-    Convert NAb levels to immunity protection factors, using the functional form
+    Convert nab levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
 
     Args:
-        nab (arr): an array of NAb levels
+        nab (arr): an array of nab levels
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
 
     Returns:
@@ -328,25 +287,6 @@ def nab_to_efficacy(nab, ax, function_args):
 
 # %% Immunity methods
 
-
-# def update_strain_attributes(people):
-#     for key in people.meta.person:
-#         if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
-#             rows,cols = people[key].shape
-#             people[key].resize(rows+1, cols, refcheck=False)
-
-#     # Set strain states, which store info about which strain a person is exposed to
-#     for key in people.meta.strain_states:
-#         if 'by' in key: # TODO: refactor
-#             rows,cols = people[key].shape
-#             people[key].resize(rows+1, cols, refcheck=False)
-
-#     for key in cvd.new_result_flows_by_strain:
-#         rows, = people[key].shape
-#         people.flows_strain[key].reshape(rows+1, refcheck=False)
-#     return
-
-
 def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
 
@@ -354,7 +294,7 @@ def init_immunity(sim, create=False):
     if not sim['use_waning']:
         return
 
-    ts = sim['total_strains']
+    ts = sim['n_strains']
     immunity = {}
 
     # Pull out all of the circulating strains for cross-immunity
@@ -362,21 +302,20 @@ def init_immunity(sim, create=False):
     rel_imms =  dict()
     for strain in sim['strains']:
         circulating_strains.append(strain.label)
-        rel_imms[strain.label] = strain.rel_imm
+        rel_imms[strain.label] = strain.p.rel_imm
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
         # Initialize immunity
         for ax in cvd.immunity_axes:
             if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
-                immunity[ax] = np.full((ts, ts), sim['cross_immunity'],
-                                       dtype=cvd.default_float)  # Default for off-diagnonals
+                immunity[ax] = np.full((ts, ts), sim['cross_immunity'], dtype=cvd.default_float)  # Default for off-diagnonals
                 np.fill_diagonal(immunity[ax], 1)  # Default for own-immunity
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
-                immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
+                immunity[ax] = np.ones(ts, dtype=cvd.default_float)
 
-        known_strains = ['wild', 'b117', 'b1351', 'p1'] # TODO: only appear once
-        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
+        cross_immunity = cvpar.get_cross_immunity()
+        known_strains = cross_immunity.keys()
         for i in range(ts):
             for j in range(ts):
                 if i != j:
@@ -384,8 +323,8 @@ def init_immunity(sim, create=False):
                         immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
         sim['immunity'] = immunity
 
-    # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['NAb_kin'] = pre_compute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
+    # Next, precompute the nab kinetics and store these for access during the sim
+    sim['nab_kin'] = precompute_waning(length=sim['n_days'], pars=sim['nab_decay'])
 
     return
 
@@ -411,13 +350,13 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
     was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
-    immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
-    nab_eff_pars = people.pars['NAb_eff']
+    immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to nab level before computing efficacy
+    nab_eff_pars = people.pars['nab_eff']
 
     # If vaccines are present, extract relevant information about them
     vacc_present = len(is_vacc)
     if vacc_present:
-        vx_nab_eff_pars = vacc_info['NAb_eff']
+        vx_nab_eff_pars = vacc_info['nab_eff']
 
     # PART 1: Immunity to infection for susceptible individuals
     if sus:
@@ -432,20 +371,20 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
         if len(is_sus_vacc):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
             vaccine_scale = vacc_strain[strain] # TODO: handle this better
-            current_NAbs = people.NAb[is_sus_vacc]
-            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus', vx_nab_eff_pars)
+            current_nabs = people.nab[is_sus_vacc]
+            people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'sus', vx_nab_eff_pars)
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
-            current_NAbs = people.NAb[is_sus_was_inf_same]
-            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, strain], 'sus', nab_eff_pars)
+            current_nabs = people.nab[is_sus_was_inf_same]
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_nabs * immunity['sus'][strain, strain], 'sus', nab_eff_pars)
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
             prior_strains_unique = cvd.default_int(np.unique(prior_strains))
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
-                current_NAbs = people.NAb[unique_inds]
-                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
+                current_nabs = people.nab[unique_inds]
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_nabs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
 
     # PART 2: Immunity to disease for currently-infected people
     else:
@@ -455,14 +394,14 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
         if len(is_inf_vacc):  # Immunity for infected people who've been vaccinated
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
             vaccine_scale = vacc_strain[strain] # TODO: handle this better
-            current_NAbs = people.NAb[is_inf_vacc]
-            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp', nab_eff_pars)
-            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev', nab_eff_pars)
+            current_nabs = people.nab[is_inf_vacc]
+            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale * immunity['symp'][strain], 'symp', nab_eff_pars)
+            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale * immunity['sev'][strain], 'sev', nab_eff_pars)
 
         if len(was_inf):  # Immunity for reinfected people
-            current_NAbs = people.NAb[was_inf]
-            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['symp'][strain], 'symp', nab_eff_pars)
-            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_NAbs * immunity['sev'][strain], 'sev', nab_eff_pars)
+            current_nabs = people.nab[was_inf]
+            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_nabs * immunity['symp'][strain], 'symp', nab_eff_pars)
+            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_nabs * immunity['sev'][strain], 'sev', nab_eff_pars)
 
     return
 
@@ -470,24 +409,23 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
 
 #%% Methods for computing waning
 
-def pre_compute_waning(length, form='nab_decay', pars=None):
+def precompute_waning(length, pars=None):
     '''
     Process functional form and parameters into values:
 
-        - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
-        - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-        - 'linear'          : linear decay
-        - others TBC!
+        - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
+        - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+        - 'linear_decay': linear decay
 
     Args:
         length (float): length of array to return, i.e., for how long waning is calculated
-        form (str):   the functional form to use
         pars (dict): passed to individual immunity functions
 
     Returns:
         array of length 'length' of values
     '''
 
+    form = pars.pop('form')
     choices = [
         'nab_decay', # Default if no form is provided
         'exp_decay',
@@ -516,9 +454,9 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
     return output
 
 
-def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
+def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     '''
-    Returns an array of length 'length' containing the evaluated function NAb decay
+    Returns an array of length 'length' containing the evaluated function nab decay
     function at each point.
 
     Uses exponential decay, with the rate of exponential decay also set to exponentially
@@ -526,21 +464,21 @@ def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
 
     Args:
         length (int): number of points
-        init_decay_rate (float): initial rate of exponential decay
-        init_decay_time (float): time on the first exponential decay
-        decay_decay_rate (float): the rate at which the decay decays
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate at which the decay decays
     '''
-    def f1(t, init_decay_rate):
+    def f1(t, decay_rate1):
         ''' Simple exponential decay '''
-        return np.exp(-t*init_decay_rate)
+        return np.exp(-t*decay_rate1)
 
-    def f2(t, init_decay_rate, init_decay_time, decay_decay_rate):
+    def f2(t, decay_rate1, decay_time1, decay_rate2):
         ''' Complex exponential decay '''
-        return np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
+        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
 
     t  = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t<=init_decay_time), init_decay_rate)
-    y2 = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
+    y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
+    y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([y1,y2])
 
     return y
@@ -574,37 +512,3 @@ def linear_growth(length, slope):
     ''' Calculate linear growth '''
     t = np.arange(length, dtype=cvd.default_int)
     return (slope * t)
-
-
-def create_cross_immunity(circulating_strains, rel_imms): # TODO: refactor
-    known_strains = ['wild', 'b117', 'b1351', 'p1']
-    known_cross_immunity = dict()
-    known_cross_immunity['wild'] = {} # cross-immunity to wild
-    known_cross_immunity['wild']['b117'] = 0.5
-    known_cross_immunity['wild']['b1351'] = 0.5
-    known_cross_immunity['wild']['p1'] = 0.5
-    known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else .5
-    known_cross_immunity['b117']['b1351'] = 0.8
-    known_cross_immunity['b117']['p1'] = 0.8
-    known_cross_immunity['b1351'] = {} # cross-immunity to b1351
-    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.066
-    known_cross_immunity['b1351']['b117'] = 0.1
-    known_cross_immunity['b1351']['p1'] = 0.1
-    known_cross_immunity['p1'] = {} # cross-immunity to p1
-    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.17
-    known_cross_immunity['p1']['b117'] = 0.2
-    known_cross_immunity['p1']['b1351'] = 0.2
-
-    cross_immunity = {}
-    cs = len(circulating_strains)
-    for i in range(cs):
-        cross_immunity[circulating_strains[i]] = {}
-        for j in range(cs):
-            if circulating_strains[j] in known_strains:
-                if i != j:
-                    if circulating_strains[i] in known_strains:
-                        cross_immunity[circulating_strains[i]][circulating_strains[j]] = \
-                            known_cross_immunity[circulating_strains[i]][circulating_strains[j]]
-
-    return cross_immunity

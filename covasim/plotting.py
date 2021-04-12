@@ -390,7 +390,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
             res_t = sim.results['t']
             if reskey in strain_keys:
                 res = sim.results['strain'][reskey]
-                ns = sim['total_strains']
+                ns = sim['n_strains']
                 strain_colors = sc.gridcolors(ns)
                 for strain in range(ns):
                     color = strain_colors[strain]  # Choose the color
@@ -440,7 +440,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
                 strain_keys = sim.result_keys('strain')
                 if reskey in strain_keys:
-                    ns = sim['total_strains']
+                    ns = sim['n_strains']
                     strain_colors = sc.gridcolors(ns)
                     for strain in range(ns):
                         res_y = scendata.best[strain,:]
