@@ -226,7 +226,7 @@ class Vaccine(cvi.Intervention):
 
 # %% NAb methods
 
-def init_nab(people, inds, prior_inf=True):
+def init_nab(people, inds, prior_inf=True, vacc_info=None):
     '''
     Draws an initial NAb level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
@@ -235,6 +235,10 @@ def init_nab(people, inds, prior_inf=True):
     2) Vaccination. If individual has no existing NAb, draw from distribution
     depending upon vaccine source. If individual has existing NAb, multiply booster impact
     '''
+
+    if vacc_info is None:
+        # print('Note: using default vaccine dosing information')
+        vacc_info = cvpar.get_vaccine_dose_pars()['default']
 
     NAb_arrays = people.NAb[inds]
     prior_NAb_inds = cvu.idefined(NAb_arrays, inds) # Find people with prior NAbs
@@ -260,10 +264,10 @@ def init_nab(people, inds, prior_inf=True):
 
     # NAbs from a vaccine
     else:
-        NAb_boost = people.pars['vaccine_info']['NAb_boost']  # Boosting factor for vaccination
+        NAb_boost = vacc_info['NAb_boost']  # Boosting factor for vaccination
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_NAb_inds):
-            init_NAb = cvu.sample(**people.pars['vaccine_info']['NAb_init'], size=len(no_prior_NAb_inds))
+            init_NAb = cvu.sample(**vacc_info['NAb_init'], size=len(no_prior_NAb_inds))
             people.init_NAb[no_prior_NAb_inds] = 2**init_NAb
 
         # 2) Prior NAb (from natural or vaccine dose 1): multiply existing NAb by boost factor
@@ -386,7 +390,7 @@ def init_immunity(sim, create=False):
     return
 
 
-def check_immunity(people, strain, sus=True, inds=None):
+def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
     '''
     Calculate people's immunity on this timestep from prior infections + vaccination
 
@@ -398,6 +402,12 @@ def check_immunity(people, strain, sus=True, inds=None):
     Gets called from sim before computing trans_sus, sus=True, inds=None
     Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
     '''
+    if vacc_info is None:
+        # print('Note: using default vaccine dosing information')
+        vacc_info   = cvpar.get_vaccine_dose_pars()['default']
+        vacc_strain = cvpar.get_vaccine_strain_pars()['default']
+
+
     was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
@@ -407,12 +417,10 @@ def check_immunity(people, strain, sus=True, inds=None):
     # If vaccines are present, extract relevant information about them
     vacc_present = len(is_vacc)
     if vacc_present:
-        vacc_info = people.pars['vaccine_info']
         vx_nab_eff_pars = vacc_info['NAb_eff']
 
+    # PART 1: Immunity to infection for susceptible individuals
     if sus:
-        ### PART 1:
-        #   Immunity to infection for susceptible individuals
         is_sus = cvu.true(people.susceptible)  # Currently susceptible
         was_inf_same = cvu.true((people.recovered_strain == strain) & (people.t >= date_rec))  # Had a previous exposure to the same strain, now recovered
         was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different strain, now recovered
@@ -423,7 +431,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
         if len(is_sus_vacc):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc])
-            vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
+            vaccine_scale = vacc_strain[strain] # TODO: handle this better
             current_NAbs = people.NAb[is_sus_vacc]
             people.sus_imm[strain, is_sus_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale, 'sus', vx_nab_eff_pars)
 
@@ -439,15 +447,14 @@ def check_immunity(people, strain, sus=True, inds=None):
                 current_NAbs = people.NAb[unique_inds]
                 people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_NAbs * immunity['sus'][strain, unique_strain], 'sus', nab_eff_pars)
 
+    # PART 2: Immunity to disease for currently-infected people
     else:
-        ### PART 2:
-        #   Immunity to disease for currently-infected people
         is_inf_vacc = np.intersect1d(inds, is_vacc)
         was_inf = np.intersect1d(inds, was_inf)
 
         if len(is_inf_vacc):  # Immunity for infected people who've been vaccinated
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])
-            vaccine_scale = vacc_info['rel_imm'][vaccine_source, strain]
+            vaccine_scale = vacc_strain[strain] # TODO: handle this better
             current_NAbs = people.NAb[is_inf_vacc]
             people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['symp'][strain], 'symp', nab_eff_pars)
             people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_NAbs * vaccine_scale * immunity['sev'][strain], 'sev', nab_eff_pars)

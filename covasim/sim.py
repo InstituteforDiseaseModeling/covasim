@@ -108,13 +108,12 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        if self['use_waning']:
-            self.init_strains() # ...and the strains.... # TODO: move out of if?
-            self.init_immunity() # ... and information about immunity/cross-immunity.
+        self.init_strains() # Initialize the strains
+        self.init_immunity() # initialize information about immunity (if use_waning=True)
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
-        self.init_vaccines() # Initialize vaccine information
+        # self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
@@ -198,8 +197,18 @@ class Sim(cvb.BaseSim):
             validate_layers (bool): whether to validate layer parameters as well via validate_layer_pars() -- usually yes, except during initialization
         '''
 
+        # Handle population size
+        pop_size   = self.pars.get('pop_size')
+        scaled_pop = self.pars.get('scaled_pop')
+        pop_scale  = self.pars.get('pop_scale')
+        if scaled_pop is not None: # If scaled_pop is supplied, try to use it
+            if pop_scale is not None: # Normal case, recalculate number of agents
+                self['pop_size'] = scaled_pop/pop_scale
+            else: # Special case, recalculate population scale
+                self['pop_scale'] = scaled_pop/pop_size
+
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size']:
+        for key in ['pop_size', 'pop_infected']:
             try:
                 self[key] = int(self[key])
             except Exception as E:
@@ -412,11 +421,15 @@ class Sim(cvb.BaseSim):
         self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
 
+        # Handle anyone who isn't susceptible
+        if self['frac_susceptible'] < 1:
+            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+            self.people.make_nonnaive(inds=inds)
+
         # Create the seed infections
-        pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains']) # TODO: refactor
-        for strain in range(self['n_strains']):
-            inds = cvu.choose(self['pop_size'], pop_infected_per_strain)
-            self.people.infect(inds=inds, layer='seed_infection', strain=strain)
+        inds = cvu.choose(self['pop_size'], self['pop_infected'])
+        self.people.infect(inds=inds, layer='seed_infection')
+
         return
 
 
@@ -490,32 +503,8 @@ class Sim(cvb.BaseSim):
 
     def init_immunity(self, create=False):
         ''' Initialize immunity matrices and precompute NAb waning for each strain '''
-        cvimm.init_immunity(self, create=create)
-        return
-
-
-    def init_vaccines(self): # TODO: refactor
-        ''' Check if there are any vaccines in simulation, if so initialize vaccine info param'''
-        print('TEMP')
-        # if len(self['vaccines']):
-        nv = max(1, len(self['vaccines']))
-        ns = self['total_strains']
-
-        self['vaccine_info'] = {}
-        self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
-        self['vaccine_info']['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
-        self['vaccine_info']['doses'] = 2
-        self['vaccine_info']['interval'] = 22
-        self['vaccine_info']['NAb_boost'] = 2
-        self['vaccine_info']['NAb_eff'] = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
-
-        for ind, vacc in enumerate(self['vaccines']):
-            self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
-            self['vaccine_info']['doses'] = vacc.doses
-            self['vaccine_info']['NAb_init'] = vacc.NAb_init
-            self['vaccine_info']['NAb_boost'] = vacc.NAb_boost
-            self['vaccine_info']['NAb_eff'] = vacc.NAb_eff
-
+        if self['use_waning']:
+            cvimm.init_immunity(self, create=create)
         return
 
 
@@ -766,14 +755,11 @@ class Sim(cvb.BaseSim):
 
         # Scale the results
         for reskey in self.result_keys():
-            if 'by_strain' in reskey:
-                # resize results to include only active strains
-                self.results[reskey].values = self.results[reskey].values[:self['n_strains'], :]
             if self.results[reskey].scale: # Scale the result dynamically
-                if 'by_strain' in reskey:
-                    self.results[reskey].values = np.einsum('ij,j->ij',self.results[reskey].values,self.rescale_vec)
-                else:
-                    self.results[reskey].values *= self.rescale_vec
+                self.results[reskey].values *= self.rescale_vec
+        for reskey in self.result_keys('strain'):
+            if self.results['strain'][reskey].scale: # Scale the result dynamically
+                self.results['strain'][reskey].values = np.einsum('ij,j->ij', self.results['strain'][reskey].values, self.rescale_vec)
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
@@ -781,8 +767,8 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_flows_by_strain.keys():
             for strain in range(self['total_strains']):
                 self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
-        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
-        self.results['strain']['cum_infections_by_strain'].values += self['pop_infected']*self.rescale_vec[0]
+        for res in [self.results['cum_infections'], self.results['strain']['cum_infections_by_strain']]: # Include initially infected people
+            res.values += self['pop_infected']*self.rescale_vec[0]
 
         # Finalize interventions and analyzers
         self.finalize_interventions()
@@ -1048,14 +1034,7 @@ class Sim(cvb.BaseSim):
 
         summary = sc.objdict()
         for key in self.result_keys():
-            if 'by_strain' in key:
-                summary[key] = self.results[key][:,t]
-                # TODO: the following line rotates the results - do we need this?
-                # TODO: the following line rotates the results - do we need this?
-                #if len(self.results[key]) < t:
-                #    self.results[key].values = np.rot90(self.results[key].values)
-            else:
-                summary[key] = self.results[key][t]
+            summary[key] = self.results[key][t]
 
         # Update the stored state
         if update:

@@ -25,7 +25,7 @@ def test_states():
 
     filename = 'state_diagram.xlsx'
     sheets   = ['Without waning', 'With waning']
-    indexcol = 'From ↓ to →'
+    indexcol = 'In ↓ you can be →'
 
     # Load state diagram
     dfs = sc.odict()
@@ -48,7 +48,7 @@ def test_states():
             interventions = [
                 cv.test_prob(symp_prob=0.4, asymp_prob=0.01),
                 cv.contact_tracing(trace_probs=0.1),
-                cv.vaccine(days=60, prob=0.1)
+                cv.simple_vaccine(days=60, prob=0.1)
             ]
         )
         sim = cv.Sim(pars).run()
@@ -74,7 +74,7 @@ def test_states():
                         print(f'× {n_true}/{n_inds} error!')
                     elif relation == -1 and n_false != n_inds:
                         errormsg = f'Being {s1}=True implies {s2}=False, but only {n_false}/{n_inds} people are'
-                        print(f'× {n_true}/{n_inds} error!')
+                        print(f'× {n_false}/{n_inds} error!')
                     else:
                         print(f'✓ {n_true}/{n_inds}')
                     if errormsg:
@@ -196,7 +196,6 @@ def test_decays(do_plot=False):
 
     # Calculate all the delays
     res = sc.objdict()
-    res.x = x
     for key,par in pars.items():
         func = par.pop('func')
         res[key] = func(**par)
@@ -208,8 +207,9 @@ def test_decays(do_plot=False):
         pl.legend()
         pl.show()
 
-    return res
+    res.x = x
 
+    return res
 
 
 

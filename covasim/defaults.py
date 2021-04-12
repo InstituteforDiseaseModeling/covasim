@@ -353,7 +353,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
 
     # Plot absolutely everything
     elif which.lower() == 'all': # pragma: no cover
-        plots = sim.result_keys(strain=True)
+        plots = sim.result_keys('all')
 
     # Show an overview plus strains
     elif 'overview' in which and 'strain' in which: # pragma: no cover

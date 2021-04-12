@@ -44,9 +44,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
+    pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
     pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
     pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
+    pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
 
     # Network parameters, generally initialized after the population has been constructed
     pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
@@ -73,7 +75,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']         = dict(asymptomatic=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
-    pars['vaccine_info']    = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
@@ -389,6 +390,13 @@ def get_vaccine_strain_pars():
     '''
     pars = sc.objdict(
 
+        default = sc.objdict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1.0,
+            p1    = 1.0,
+        ),
+
         pfizer = sc.objdict(
             wild  = 1.0,
             b117  = 1/2.0,
@@ -426,6 +434,14 @@ def get_vaccine_dose_pars():
     Define the dosing regimen for each vaccine
     '''
     pars = sc.objdict(
+
+        default = sc.objdict(
+            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
+            NAb_boost = 2,
+            doses     = 1,
+            interval  = None,
+        ),
 
         pfizer = sc.objdict(
             NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},

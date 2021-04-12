@@ -245,13 +245,29 @@ class BaseSim(ParsObj):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
+
+        # Merge everything together
         pars = sc.mergedicts(pars, kwargs)
         if pars:
+
+            # Define aliases
+            mapping = dict(
+                n_agents = 'pop_size',
+                init_infected = 'pop_infected',
+            )
+            for key1,key2 in mapping.items():
+                if key1 in pars:
+                    pars[key2] = pars.pop(key1)
+
+            # Handle other special parameters
             if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+
+            # Call update_pars() for ParsObj
+            super().update_pars(pars=pars, create=create)
+
         return
 
 
@@ -393,11 +409,23 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def result_keys(self, strain=False):
-        ''' Get the actual results objects, not other things stored in sim.results '''
-        keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
-        if strain:
-            keys += [key for key in self.results['strain'].keys() if isinstance(self.results['strain'][key], Result)]
+    def result_keys(self, which='main'):
+        '''
+        Get the actual results objects, not other things stored in sim.results.
+
+        If which is 'main', return only the main results keys. If 'strain', return
+        only strain keys. If 'all', return all keys.
+
+        '''
+        keys = []
+        choices = ['main', 'strain', 'all']
+        if which in ['main', 'all']:
+            keys += [key for key,res in self.results.items() if isinstance(res, Result)]
+        if which in ['strain', 'all'] and 'strain' in self.results:
+            keys += [key for key,res in self.results['strain'].items() if isinstance(res, Result)]
+        if which not in choices: # pragma: no cover
+            errormsg = f'Choice "which" not available; choices are: {sc.strjoin(choices)}'
+            raise ValueError(errormsg)
         return keys
 
 

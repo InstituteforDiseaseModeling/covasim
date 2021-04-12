@@ -91,8 +91,8 @@ def test_all_interventions(do_plot=False):
     i8d = cv.contact_tracing(start_day=40, trace_probs=dict(h=0.9, s=0.7, w=0.7, c=0.3), trace_time=dict(h=0, s=1, w=1, c=3)) # Start tracing for TTQ
 
     # 9. Vaccine
-    i9a = cv.vaccine(days=20, prob=1.0, rel_sus=1.0, rel_symp=0.0)
-    i9b = cv.vaccine(days=50, prob=1.0, rel_sus=0.0, rel_symp=0.0)
+    i9a = cv.simple_vaccine(days=20, prob=1.0, rel_sus=1.0, rel_symp=0.0)
+    i9b = cv.simple_vaccine(days=50, prob=1.0, rel_sus=0.0, rel_symp=0.0)
 
     #%% Create the simulations
     sims = sc.objdict()

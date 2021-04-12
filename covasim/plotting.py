@@ -100,11 +100,9 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
     if isinstance(to_plot, list):
         to_plot_list = to_plot # Store separately
         to_plot = sc.odict() # Create the dict
+        reskeys = sim.result_keys()
         for reskey in to_plot_list:
-            if 'strain' in sim.results and reskey in sim.results['strain']:
-                name = sim.results['strain'][reskey].name
-            else:
-                name = sim.results[reskey].name
+            name = sim.results[reskey].name if reskey in reskeys else sim.results['strain'][reskey].name
             to_plot[name] = [reskey] # Use the result name as the key and the reskey as the value
 
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
@@ -385,25 +383,21 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
+    strain_keys = sim.result_keys('strain')
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for resnum,reskey in enumerate(keylabels):
             res_t = sim.results['t']
-            if 'strain' in sim.results and reskey in sim.results['strain']:
+            if reskey in strain_keys:
                 res = sim.results['strain'][reskey]
                 ns = sim['total_strains']
                 strain_colors = sc.gridcolors(ns)
                 for strain in range(ns):
                     color = strain_colors[strain]  # Choose the color
-                    if strain == 0:
-                        label = 'wild type'
-                    else:
-                        label = sim['strains'][strain-1].label
+                    label = 'wild type' if strain == 0 else sim['strains'][strain-1].label
                     if res.low is not None and res.high is not None:
-                        ax.fill_between(res_t, res.low[strain,:], res.high[strain,:], color=color,
-                                        **args.fill)  # Create the uncertainty bound
+                        ax.fill_between(res_t, res.low[strain,:], res.high[strain,:], color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(res_t, res.values[strain,:], label=label, **args.plot, c=color)  # Actually plot the sim!
-
             else:
                 res = sim.results[reskey]
                 color = set_line_options(colors, reskey, resnum, res.color)  # Choose the color
@@ -444,16 +438,15 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
-                if 'by_strain' in reskey: # TODO: refactor
-                    for strain in range(sim['total_strains']):
+                strain_keys = sim.result_keys('strain')
+                if reskey in strain_keys:
+                    ns = sim['total_strains']
+                    strain_colors = sc.gridcolors(ns)
+                    for strain in range(ns):
                         res_y = scendata.best[strain,:]
-                        color = default_colors[strain]  # Choose the color
-                        if strain == 0:
-                            label = 'wild type'
-                        else:
-                            label = sim['strains'][strain - 1].label
-                        ax.fill_between(scens.tvec, scendata.low[strain,:], scendata.high[strain,:], color=color,
-                                        **args.fill)  # Create the uncertainty bound
+                        color = strain_colors[strain]  # Choose the color
+                        label = 'wild type' if strain == 0 else sim['strains'][strain - 1].label
+                        ax.fill_between(scens.tvec, scendata.low[strain,:], scendata.high[strain,:], color=color, **args.fill)  # Create the uncertainty bound
                         ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
@@ -461,8 +454,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                     res_y = scendata.best
                     color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
                     label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
-                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color,
-                                    **args.fill)  # Create the uncertainty bound
+                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                     if args.show['data']:
                         plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data

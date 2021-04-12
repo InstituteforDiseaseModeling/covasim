@@ -46,11 +46,11 @@ class People(cvb.BasePeople):
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars     = pars # Equivalent to self.set_pars(pars)
-        self.pop_size = int(pars['pop_size'])
-        self.location = pars.get('location') # Try to get location, but set to None otherwise
+        self.pars          = pars # Equivalent to self.set_pars(pars)
+        self.pop_size      = int(pars['pop_size'])
+        self.location      = pars.get('location') # Try to get location, but set to None otherwise
         self.total_strains = pars.get('total_strains', 1) # Assume 1 strain if not supplied
-        self.version  = cvv.__version__ # Store version info
+        self.version       = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -95,10 +95,7 @@ class People(cvb.BasePeople):
         self._lock = strict # If strict is true, stop further keys from being set (does not affect attributes)
 
         # Store flows to be computed during simulation
-        self.flows = {key:0 for key in cvd.new_result_flows}
-        self.flows_strain = {}
-        for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.full(self.total_strains, 0, dtype=cvd.default_float)
+        self.init_flows()
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
@@ -116,6 +113,15 @@ class People(cvb.BasePeople):
 
         self._pending_quarantine = defaultdict(list)  # Internal cache to record people that need to be quarantined on each timestep {t:(person, quarantine_end_day)}
 
+        return
+
+
+    def init_flows(self):
+        ''' Initialize flows to be zero '''
+        self.flows = {key:0 for key in cvd.new_result_flows}
+        self.flows_strain = {}
+        for key in cvd.new_result_flows_by_strain:
+            self.flows_strain[key] = np.zeros(self.total_strains, dtype=cvd.default_float)
         return
 
 
@@ -169,10 +175,7 @@ class People(cvb.BasePeople):
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        self.flows  = {key:0 for key in cvd.new_result_flows}
-        self.flows_strain = {}
-        for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.full(self.pars['total_strains'], 0, dtype=cvd.default_float)
+        self.init_flows()
         self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         self.flows['new_symptomatic'] += self.check_symptomatic()
         self.flows['new_severe']      += self.check_severe()
