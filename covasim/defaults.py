@@ -306,7 +306,7 @@ overview_strain_plots = [
     'pop_symp_protection',
 ]
 
-def get_sim_plots(which='default'):
+def get_sim_plots(which='default', sim=None):
     '''
     Specify which quantities to plot; used in sim.py.
 
@@ -333,11 +333,11 @@ def get_sim_plots(which='default'):
                 ],
         })
 
-    # Show everything
+    # Show an overview
     elif which == 'overview':
         plots = sc.dcp(overview_plots)
 
-    # Show everything plus strains
+    # Show an overview plus strains
     elif 'overview' in which and 'strain' in which:
         plots = sc.dcp(overview_plots) + sc.dcp(overview_strain_plots)
 
@@ -371,8 +371,12 @@ def get_sim_plots(which='default'):
                 ],
         })
 
+    # Plot absolutely everything
+    elif which.lower() == 'all':
+        plots = sim.result_keys(strain=True)
+
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "strain", "overview-strain", or "seir"'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "strain", "overview-strain", "seir", or "all"'
         raise ValueError(errormsg)
     return plots
 

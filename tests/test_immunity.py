@@ -141,6 +141,10 @@ def test_strains(do_plot=False):
 
     return sim
 
+
+def test_vaccines(do_plot=False):
+    pass
+
 # def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
 #     sc.heading('Test varying properties of immunity')
 
@@ -202,42 +206,6 @@ def test_strains(do_plot=False):
 
 
 
-# def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
-#     sc.heading('Test introducing a new strain with longer duration partway through a sim')
-
-#     pars = sc.mergedicts(base_pars, {
-#         'n_days': 120,
-#     })
-
-#     strain_pars = {
-#         'rel_beta': 1.5,
-#         'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
-#     }
-
-#     strain = cv.Strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
-#     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, label='With imported infections')
-#     sim.run()
-
-#     return sim
-
-
-# def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
-#     sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
-
-#     strain2 = {'rel_beta': 1.5,
-#                'rel_severe_prob': 1.3}
-
-#     strain3 = {'rel_beta': 2,
-#                'rel_symp_prob': 1.6}
-
-#     intervs  = cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6])
-#     strains  = [cv.Strain(strain=strain2, days=10, n_imports=20),
-#                 cv.Strain(strain=strain3, days=30, n_imports=20),
-#                ]
-#     sim = cv.Sim(use_waning=True, interventions=intervs, strains=strains, label='With imported infections', **base_pars)
-#     sim.run()
-
-#     return sim
 
 
 

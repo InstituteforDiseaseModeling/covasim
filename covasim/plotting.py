@@ -95,9 +95,9 @@ def handle_to_plot(which, to_plot, n_cols, sim, check_ready=True):
     # If not specified or specified as a string, load defaults
     if to_plot is None or isinstance(to_plot, str):
         if which == 'sim':
-            to_plot = cvd.get_sim_plots(to_plot)
+            to_plot = cvd.get_sim_plots(to_plot, sim=sim)
         elif which =='scens':
-            to_plot = cvd.get_scen_plots(to_plot)
+            to_plot = cvd.get_scen_plots(to_plot, sim=sim)
         else:
             errormsg = f'"which" must be "sim" or "scens", not "{which}"'
             raise NotImplementedError(errormsg)
