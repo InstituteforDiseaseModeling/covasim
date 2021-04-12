@@ -167,9 +167,9 @@ def test_decays(do_plot=False):
         nab_decay = dict(
             func = cv.immunity.nab_decay,
             length = n,
-            init_decay_rate = 0.01,
+            init_decay_rate = 0.05,
             init_decay_time= 100,
-            decay_decay_rate = 0.001,
+            decay_decay_rate = 0.01,
         ),
 
         exp_decay = dict(

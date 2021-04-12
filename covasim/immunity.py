@@ -567,8 +567,9 @@ def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=No
     if delay is not None:
         t = np.arange(length - delay, dtype=cvd.default_int)
         growth = linear_growth(delay, init_val / delay)
-        decay = (init_val + (lower_asymp - init_val) / (1 + (t / half_val)**decay_rate))
+        decay = lower_asymp + init_val / (1 + (t / half_val)**decay_rate)
         result = np.concatenate((growth, decay), axis=None)
+        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = (init_val + (lower_asymp - init_val) / (1 + (t / half_val)**decay_rate))
