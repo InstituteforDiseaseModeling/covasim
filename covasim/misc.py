@@ -424,7 +424,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
             old_info = sc.loadjson(filename, **kwargs)
         string = ''
         old_cv_info = old_info['covasim'] if 'covasim' in old_info else old_info
-        if cv_info != old_cv_info:
+        if cv_info != old_cv_info: # pragma: no cover
             string = f'Git information differs: {cv_info} vs. {old_cv_info}'
             if die:
                 raise ValueError(string)
@@ -617,7 +617,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Validate inputs: interval
     if interval is not None:
-        if len(interval) != 2:
+        if len(interval) != 2: # pragma: no cover
             sc.printv(f"Interval should be a list/array/tuple of length 2, not {len(interval)}. Resetting to length of series.", 1, verbose)
             interval = [0,len(series)]
         start_day, end_day = interval[0], interval[1]
@@ -629,12 +629,12 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Deal with moving window
     if moving_window is not None:
-        if not sc.isnumber(moving_window):
+        if not sc.isnumber(moving_window): # pragma: no cover
             sc.printv("Moving window should be an integer; ignoring and calculating single result", 1, verbose)
             doubling_time = get_doubling_time(sim, series=series, start_day=start_day, end_day=end_day, moving_window=None, exp_approx=exp_approx)
 
         else:
-            if not isinstance(moving_window,int):
+            if not isinstance(moving_window,int): # pragma: no cover
                 sc.printv(f"Moving window should be an integer; recasting {moving_window} the nearest integer... ", 1, verbose)
                 moving_window = int(moving_window)
             if moving_window < 2:

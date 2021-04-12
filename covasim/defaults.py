@@ -107,7 +107,6 @@ class PeopleMeta(sc.prettyobj):
         self.dates = [f'date_{state}' for state in self.states] # Convert each state into a date
         self.dates.append('date_pos_test') # Store the date when a person tested which will come back positive
         self.dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
-        # self.dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
         # Duration of different states: these are floats per person -- used in people.py
         self.durs = [
@@ -126,7 +125,7 @@ class PeopleMeta(sc.prettyobj):
             states = getattr(self, state_type)
             n_states        = len(states)
             n_unique_states = len(set(states))
-            if n_states != n_unique_states:
+            if n_states != n_unique_states: # pragma: no cover
                 errormsg = f'In {state_type}, only {n_unique_states} of {n_states} state names are unique'
                 raise ValueError(errormsg)
 
@@ -335,7 +334,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     ],
             })
 
-        elif kind == 'scens':
+        elif kind == 'scens': # pragma: no cover
             plots = sc.odict({
                 'Cumulative infections': [
                     'cum_infections',
@@ -349,19 +348,19 @@ def get_default_plots(which='default', kind='sim', sim=None):
             })
 
     # Show an overview
-    elif which == 'overview':
+    elif which == 'overview': # pragma: no cover
         plots = sc.dcp(overview_plots)
 
     # Plot absolutely everything
-    elif which.lower() == 'all':
+    elif which.lower() == 'all': # pragma: no cover
         plots = sim.result_keys(strain=True)
 
     # Show an overview plus strains
-    elif 'overview' in which and 'strain' in which:
+    elif 'overview' in which and 'strain' in which: # pragma: no cover
         plots = sc.dcp(overview_plots) + sc.dcp(overview_strain_plots)
 
     # Show default but with strains
-    elif 'strain' in which:
+    elif 'strain' in which: # pragma: no cover
         plots = sc.odict({
                 'Total counts': [
                     'cum_infections_by_strain',
@@ -380,7 +379,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         })
 
     # Plot SEIR compartments
-    elif which.lower() == 'seir':
+    elif which.lower() == 'seir': # pragma: no cover
         plots = [
             'n_susceptible',
             'n_preinfectious',
