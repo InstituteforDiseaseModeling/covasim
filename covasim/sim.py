@@ -413,10 +413,9 @@ class Sim(cvb.BaseSim):
         self.people.initialize() # Fully initialize the people
 
         # Create the seed infections
-        pop_infected_per_strain = cvd.default_int(self['pop_infected']/self['n_strains']) # TODO: refactor
-        for strain in range(self['n_strains']):
-            inds = cvu.choose(self['pop_size'], pop_infected_per_strain)
-            self.people.infect(inds=inds, layer='seed_infection', strain=strain)
+        inds = cvu.choose(self['pop_size'], self['pop_infected'])
+        self.people.infect(inds=inds, layer='seed_infection')
+
         return
 
 
