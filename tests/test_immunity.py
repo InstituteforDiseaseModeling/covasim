@@ -169,7 +169,7 @@ def test_decays(do_plot=False):
             length = n,
             init_decay_rate = 0.05,
             init_decay_time= 100,
-            decay_decay_rate = 0.01,
+            decay_decay_rate = 0.002,
         ),
 
         exp_decay = dict(
@@ -177,16 +177,6 @@ def test_decays(do_plot=False):
             length = n,
             init_val = 0.8,
             half_life= 100,
-            delay = 20,
-        ),
-
-        logistic_decay = dict(
-            func = cv.immunity.logistic_decay,
-            length = n,
-            init_val = 0.8,
-            decay_rate = 0.1,
-            half_val = 0.3,
-            lower_asymp = 0.01,
             delay = 20,
         ),
 

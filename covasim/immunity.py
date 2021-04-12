@@ -469,8 +469,7 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
 
         - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
         - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-        - 'logistic_decay'  : logistic decay (TODO fill in details)
-        - 'linear'          : linear decay (TODO fill in details)
+        - 'linear'          : linear decay
         - others TBC!
 
     Args:
@@ -485,7 +484,6 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
     choices = [
         'nab_decay', # Default if no form is provided
         'exp_decay',
-        'logistic_decay',
         'linear_growth',
         'linear_decay'
     ]
@@ -498,9 +496,6 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
         if pars['half_life'] is None: pars['half_life'] = np.nan
         output = exp_decay(length, **pars)
 
-    elif form == 'logistic_decay':
-        output = logistic_decay(length, **pars)
-
     elif form == 'linear_growth':
         output = linear_growth(length, **pars)
 
@@ -508,8 +503,7 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
         output = linear_decay(length, **pars)
 
     else:
-        choicestr = '\n'.join(choices)
-        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
+        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {sc.strjoin(choices)}'
         raise NotImplementedError(errormsg)
 
     return output
@@ -559,21 +553,6 @@ def exp_decay(length, init_val, half_life, delay=None):
         t = np.arange(length, dtype=cvd.default_int)
         result = init_val * np.exp(-decay_rate * t)
     return result
-
-
-def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=None):
-    ''' Calculate logistic decay '''
-
-    if delay is not None:
-        t = np.arange(length - delay, dtype=cvd.default_int)
-        growth = linear_growth(delay, init_val / delay)
-        decay = lower_asymp + init_val / (1 + (t / half_val)**decay_rate)
-        result = np.concatenate((growth, decay), axis=None)
-        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    else:
-        t = np.arange(length, dtype=cvd.default_int)
-        result = (init_val + (lower_asymp - init_val) / (1 + (t / half_val)**decay_rate))
-    return result  # TODO: make this robust to /0 errors
 
 
 def linear_decay(length, init_val, slope):
