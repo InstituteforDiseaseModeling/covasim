@@ -35,26 +35,26 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
         'baseline': {
             'name': 'Default Immunity (decay at log(2)/90)',
             'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250,decay_rate2= 0.001)
-            }
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
+            },
         },
         'faster_immunity': {
             'name': 'Faster Immunity (decay at log(2)/30)',
             'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2) / 30, decay_time1= 250, decay_rate2=0.001),
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
             },
         },
         'baseline_b1351': {
             'name': 'Default Immunity (decay at log(2)/90), B1351 on day 100',
             'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250,decay_rate2=0.001),
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
                 'strains': [b1351],
             },
         },
         'faster_immunity_b1351': {
             'name': 'Faster Immunity (decay at log(2)/30), B1351 on day 100',
             'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1 = np.log(2) / 30, decay_time1= 250, decay_rate2= 0.001),
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
                 'strains': [b1351],
             },
         },
