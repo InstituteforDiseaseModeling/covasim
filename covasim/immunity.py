@@ -317,22 +317,22 @@ def nab_to_efficacy(nab, ax, function_args):
 # %% Immunity methods
 
 
-def update_strain_attributes(people):
-    for key in people.meta.person:
-        if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
-            rows,cols = people[key].shape
-            people[key].resize(rows+1, cols, refcheck=False)
+# def update_strain_attributes(people):
+#     for key in people.meta.person:
+#         if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
+#             rows,cols = people[key].shape
+#             people[key].resize(rows+1, cols, refcheck=False)
 
-    # Set strain states, which store info about which strain a person is exposed to
-    for key in people.meta.strain_states:
-        if 'by' in key: # TODO: refactor
-            rows,cols = people[key].shape
-            people[key].resize(rows+1, cols, refcheck=False)
+#     # Set strain states, which store info about which strain a person is exposed to
+#     for key in people.meta.strain_states:
+#         if 'by' in key: # TODO: refactor
+#             rows,cols = people[key].shape
+#             people[key].resize(rows+1, cols, refcheck=False)
 
-    for key in cvd.new_result_flows_by_strain:
-        rows, = people[key].shape
-        people.flows_strain[key].reshape(rows+1, refcheck=False)
-    return
+#     for key in cvd.new_result_flows_by_strain:
+#         rows, = people[key].shape
+#         people.flows_strain[key].reshape(rows+1, refcheck=False)
+#     return
 
 
 def init_immunity(sim, create=False):
