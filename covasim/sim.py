@@ -276,7 +276,7 @@ class Sim(cvb.BaseSim):
             output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.get_colors() # Get default colors
+        dcols = cvd.get_default_colors() # Get default colors
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
@@ -642,15 +642,14 @@ class Sim(cvb.BaseSim):
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
                     source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
-                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds,
-                                  layer=lkey, strain=strain)  # Actually infect people
+                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
         for key in cvd.result_stocks_by_strain.keys():
             for strain in range(ns):
-                self.results['strain'][f'n_{key}'][strain][t] = people.count_by_strain(key, strain)
+                self.results['strain'][f'n_{key}'][strain, t] = people.count_by_strain(key, strain)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
@@ -778,7 +777,10 @@ class Sim(cvb.BaseSim):
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:],axis=0)
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:], axis=0)
+        for key in cvd.result_flows_by_strain.keys():
+            for strain in range(self['total_strains']):
+                self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
         self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
         self.results['strain']['cum_infections_by_strain'].values += self['pop_infected']*self.rescale_vec[0]
 
@@ -1226,7 +1228,7 @@ class Sim(cvb.BaseSim):
         Plot the results of a single simulation.
 
         Args:
-            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            to_plot      (dict): Dict of results to plot; see get_default_plots() for structure
             do_save      (bool): Whether or not to save the figure
             fig_path     (str):  Path to save the figure
             fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -1422,13 +1424,13 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     return
 
 
-def demo(preset=None, overview=False, scens=None, run_args=None, plot_args=None, **kwargs):
+def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, **kwargs):
     '''
     Shortcut for ``cv.Sim().run().plot()``.
 
     Args:
         preset (str): use a preset run configuration; currently the only option is "full"
-        overview (bool): whether to show the overview plot (all results)
+        to_plot (str): what to plot
         scens (dict): dictionary of scenarios to run as a multisim, if preset='full'
         kwargs (dict): passed to Sim()
         run_args (dict): passed to sim.run()
@@ -1446,8 +1448,8 @@ def demo(preset=None, overview=False, scens=None, run_args=None, plot_args=None,
 
     run_args = sc.mergedicts(run_args)
     plot_args = sc.mergedicts(plot_args)
-    if overview:
-        plot_args = sc.mergedicts(plot_args, {'to_plot':'overview'})
+    if to_plot:
+        plot_args = sc.mergedicts(plot_args, {'to_plot':to_plot})
 
     if not preset:
         sim = Sim(**kwargs)

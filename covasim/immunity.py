@@ -6,6 +6,7 @@ import numpy as np
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
+from . import parameters as cvpar
 from . import interventions as cvi
 
 
@@ -50,49 +51,20 @@ class Strain(cvi.Intervention):
     def parse_strain_pars(self, strain=None, label=None):
         ''' Unpack strain information, which may be given in different ways'''
 
-        # List of choices currently available: new ones can be added to the list along with their aliases
-        choices = {
-            'wild': ['wild', 'default', 'pre-existing', 'original'],
-            'b117': ['b117', 'uk'],
-            'b1351': ['b1351', 'sa'],
-            'p1': ['p1', 'b11248', 'brazil'],
-        }
-        choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
-        reversemap = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
-
-        mapping = dict( # TODO: move to parameters.py
-            wild = dict(),
-
-            b117 = dict(
-                rel_beta        = 1.5,  # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-                rel_severe_prob = 1.8,  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-            ),
-
-            b1351 = dict(
-                rel_imm         = 0.25,
-                rel_beta        = 1.4,
-                rel_severe_prob = 1.4,
-                rel_death_prob  = 1.4,
-            ),
-
-            p1 = dict(
-                rel_imm         = 0.5,
-                rel_beta        = 1.4,
-                rel_severe_prob = 1.4,
-                rel_death_prob  = 2,
-            )
-        )
-
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
 
-            # Normalize input: lowrcase and remove
+            choices, mapping = cvpar.get_strain_choices()
+            pars = cvpar.get_strain_pars()
+            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
+
             normstrain = strain.lower()
             for txt in ['.', ' ', 'strain', 'variant', 'voc']:
                 normstrain = normstrain.replace(txt, '')
 
-            if normstrain in reversemap:
-                strain_pars = mapping[reversemap[normstrain]]
+            if normstrain in mapping:
+                normstrain = mapping[normstrain]
+                strain_pars = pars[normstrain]
             else:
                 errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
@@ -157,56 +129,34 @@ class Vaccine(cvi.Intervention):
 
     Args:
         vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
+        label (str): if supplying a dictionary, a label for the vaccine must be supplied
         kwargs (dict): passed to Intervention()
 
     **Example**::
 
         moderna    = cv.Vaccine('moderna') # Create Moderna vaccine
         pfizer     = cv.Vaccine('pfizer) # Create Pfizer vaccine
-        j&j        = cv.Vaccine('j&j') # Create J&J vaccine
+        j&j        = cv.Vaccine('jj') # Create J&J vaccine
         az         = cv.Vaccine('az) # Create AstraZeneca vaccine
         interventions += [cv.vaccinate(vaccines=[moderna, pfizer, j&j, az], days=[1, 10, 10, 30])] # Add them all to the sim
         sim = cv.Sim(interventions=interventions)
     '''
 
-    def __init__(self, vaccine=None, **kwargs):
+    def __init__(self, vaccine=None, label=None, **kwargs):
         super().__init__(**kwargs)
+        self.label = label
         self.rel_imm = None # list of length total_strains with relative immunity factor
         self.doses = None
         self.interval = None
         self.NAb_init = None
         self.NAb_boost = None
         self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
-        self.vaccine_strain_info = self.init_strain_vaccine_info()
-        self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
+        self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
+        self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
             setattr(self, par, val)
         return
 
-    def init_strain_vaccine_info(self):
-        # TODO-- populate this with data!
-        rel_imm = {}
-        rel_imm['known_vaccines'] = ['pfizer', 'moderna', 'az', 'j&j']
-        rel_imm['known_strains'] = ['wild', 'b117', 'b1351', 'p1']
-        for vx in rel_imm['known_vaccines']:
-            rel_imm[vx] = {}
-            rel_imm[vx]['wild'] = 1
-
-        rel_imm['pfizer']['b117'] = 1/2
-        rel_imm['pfizer']['b1351'] = 1/6.7
-        rel_imm['pfizer']['p1'] = 1/6.5
-
-        rel_imm['moderna']['b117'] = 1/1.8
-        rel_imm['moderna']['b1351'] = 1/4.5
-        rel_imm['moderna']['p1'] = 1/8.6
-
-        rel_imm['az']['b1351'] = .5
-        rel_imm['az']['p1'] = .5
-
-        rel_imm['j&j']['b1351'] = 1/6.7
-        rel_imm['j&j']['p1'] = 1/8.6
-
-        return rel_imm
 
     def parse_vaccine_pars(self, vaccine=None):
         ''' Unpack vaccine information, which may be given in different ways'''
@@ -214,65 +164,37 @@ class Vaccine(cvi.Intervention):
         # Option 1: vaccines can be chosen from a list of pre-defined strains
         if isinstance(vaccine, str):
 
-            # List of choices currently available: new ones can be added to the list along with their aliases
-            choices = {
-                'pfizer': ['pfizer', 'Pfizer', 'Pfizer-BionTech'],
-                'moderna': ['moderna', 'Moderna'],
-                'az': ['az', 'AstraZeneca', 'astrazeneca'],
-                'j&j': ['j&j', 'johnson & johnson', 'Johnson & Johnson'],
-            }
+            choices, mapping = cvpar.get_vaccine_choices()
+            strain_pars = cvpar.get_vaccine_strain_pars()
+            dose_pars = cvpar.get_vaccine_dose_pars()
+            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
-            # (TODO: link to actual evidence)
-            # Known parameters on pfizer
-            if vaccine in choices['pfizer']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
+            normvacc = vaccine.lower()
+            for txt in ['.', ' ', '&', '-', 'vaccine']:
+                normvacc = normvacc.replace(txt, '')
 
-            # Known parameters on moderna
-            elif vaccine in choices['moderna']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 29
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            # Known parameters on az
-            elif vaccine in choices['az']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            # Known parameters on j&j
-            elif vaccine in choices['j&j']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 1
-                vaccine_pars['interval'] = None
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            else:
-                choicestr = '\n'.join(choices.values())
-                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are: {choicestr}'
+            if normvacc in mapping:
+                normvacc = mapping[normvacc]
+                vaccine_pars = sc.mergedicts(strain_pars[normvacc], dose_pars[normvacc])
+            else: # pragma: no cover
+                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
                 raise NotImplementedError(errormsg)
+
+            if self.label is None:
+                self.label = normvacc
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(vaccine, dict):
             vaccine_pars = vaccine
+            if self.label is None:
+                self.label = 'Custom vaccine'
 
-        else:
+        else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
-        return vaccine_pars
+        self.vaccine_pars = vaccine_pars
+        return
 
 
     def initialize(self, sim):
@@ -283,7 +205,7 @@ class Vaccine(cvi.Intervention):
         for strain in range(ts-1):
             circulating_strains.append(sim['strains'][strain].label)
 
-        if self.NAb_init is None :
+        if self.NAb_init is None : # TODO: refactor
             errormsg = 'Did not provide parameters for this vaccine'
             raise ValueError(errormsg)
 
@@ -291,10 +213,7 @@ class Vaccine(cvi.Intervention):
             sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
             self.rel_imm = []
             for strain in circulating_strains:
-                if strain in self.vaccine_strain_info['known_strains']:
-                    self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
-                else:
-                    self.rel_imm.append(1)
+                self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
 
         correct_size = len(self.rel_imm) == ts
         if not correct_size:
@@ -406,22 +325,22 @@ def nab_to_efficacy(nab, ax, function_args):
 # %% Immunity methods
 
 
-def update_strain_attributes(people):
-    for key in people.meta.person:
-        if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
-            rows,cols = people[key].shape
-            people[key].resize(rows+1, cols, refcheck=False)
+# def update_strain_attributes(people):
+#     for key in people.meta.person:
+#         if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
+#             rows,cols = people[key].shape
+#             people[key].resize(rows+1, cols, refcheck=False)
 
-    # Set strain states, which store info about which strain a person is exposed to
-    for key in people.meta.strain_states:
-        if 'by' in key: # TODO: refactor
-            rows,cols = people[key].shape
-            people[key].resize(rows+1, cols, refcheck=False)
+#     # Set strain states, which store info about which strain a person is exposed to
+#     for key in people.meta.strain_states:
+#         if 'by' in key: # TODO: refactor
+#             rows,cols = people[key].shape
+#             people[key].resize(rows+1, cols, refcheck=False)
 
-    for key in cvd.new_result_flows_by_strain:
-        rows, = people[key].shape
-        people.flows_strain[key].reshape(rows+1, refcheck=False)
-    return
+#     for key in cvd.new_result_flows_by_strain:
+#         rows, = people[key].shape
+#         people.flows_strain[key].reshape(rows+1, refcheck=False)
+#     return
 
 
 def init_immunity(sim, create=False):
@@ -460,28 +379,6 @@ def init_immunity(sim, create=False):
                     if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
                         immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
         sim['immunity'] = immunity
-
-    else:
-        # if we know all the circulating strains, then update, otherwise use defaults
-        known_strains = ['wild', 'b117', 'b1351', 'p1']
-        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
-        if sc.checktype(sim['immunity']['sus'], 'arraylike'):
-            correct_size = sim['immunity']['sus'].shape == (ts, ts)
-            if not correct_size:
-                errormsg = f'Wrong dimensions for immunity["sus"]: you provided a matrix sized {sim["immunity"]["sus"].shape}, but it should be sized {(ts, ts)}'
-                raise ValueError(errormsg)
-            for i in range(ts):
-                for j in range(ts):
-                    if i != j:
-                        if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
-                            sim['immunity']['sus'][j][i] = cross_immunity[circulating_strains[j]][
-                                circulating_strains[i]]
-
-        elif sc.checktype(sim['immunity']['sus'], dict):
-            raise NotImplementedError
-        else:
-            errormsg = f'Type of immunity["sus"] not understood: you provided {type(sim["immunity"]["sus"])}, but it should be an array or dict.'
-            raise ValueError(errormsg)
 
     # Next, precompute the NAb kinetics and store these for access during the sim
     sim['NAb_kin'] = pre_compute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
@@ -564,8 +461,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
 
 
-# %% Methods for computing waning
-# __all__ += ['pre_compute_waning']
+#%% Methods for computing waning
 
 def pre_compute_waning(length, form='nab_decay', pars=None):
     '''
@@ -573,8 +469,7 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
 
         - 'nab_decay'       : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
         - 'exp_decay'       : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-        - 'logistic_decay'  : logistic decay (TODO fill in details)
-        - 'linear'          : linear decay (TODO fill in details)
+        - 'linear'          : linear decay
         - others TBC!
 
     Args:
@@ -589,7 +484,6 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
     choices = [
         'nab_decay', # Default if no form is provided
         'exp_decay',
-        'logistic_decay',
         'linear_growth',
         'linear_decay'
     ]
@@ -602,9 +496,6 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
         if pars['half_life'] is None: pars['half_life'] = np.nan
         output = exp_decay(length, **pars)
 
-    elif form == 'logistic_decay':
-        output = logistic_decay(length, **pars)
-
     elif form == 'linear_growth':
         output = linear_growth(length, **pars)
 
@@ -612,8 +503,7 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
         output = linear_decay(length, **pars)
 
     else:
-        choicestr = '\n'.join(choices)
-        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {choicestr}'
+        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {sc.strjoin(choices)}'
         raise NotImplementedError(errormsg)
 
     return output
@@ -622,16 +512,30 @@ def pre_compute_waning(length, form='nab_decay', pars=None):
 def nab_decay(length, init_decay_rate, init_decay_time, decay_decay_rate):
     '''
     Returns an array of length 'length' containing the evaluated function NAb decay
-    function at each point
-    Uses exponential decay, with the rate of exponential decay also set to exponentilly decay (!) after 250 days
-    '''
+    function at each point.
 
-    f1  = lambda t, init_decay_rate: np.exp(-t*init_decay_rate)
-    f2  = lambda t, init_decay_rate, init_decay_time, decay_decay_rate: np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
-    t   = np.arange(length, dtype=cvd.default_int)
-    y1  = f1(cvu.true(t<init_decay_time), init_decay_rate)
-    y2  = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
-    y   = np.concatenate([y1,y2])
+    Uses exponential decay, with the rate of exponential decay also set to exponentially
+    decay (!) after 250 days.
+
+    Args:
+        length (int): number of points
+        init_decay_rate (float): initial rate of exponential decay
+        init_decay_time (float): time on the first exponential decay
+        decay_decay_rate (float): the rate at which the decay decays
+    '''
+    def f1(t, init_decay_rate):
+        ''' Simple exponential decay '''
+        return np.exp(-t*init_decay_rate)
+
+    def f2(t, init_decay_rate, init_decay_time, decay_decay_rate):
+        ''' Complex exponential decay '''
+        return np.exp(-t*(init_decay_rate*np.exp(-(t-init_decay_time)*decay_decay_rate)))
+
+    t  = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t<=init_decay_time), init_decay_rate)
+    y2 = f2(cvu.true(t>init_decay_time), init_decay_rate, init_decay_time, decay_decay_rate)
+    y  = np.concatenate([y1,y2])
+
     return y
 
 
@@ -644,35 +548,18 @@ def exp_decay(length, init_val, half_life, delay=None):
         t = np.arange(length-delay, dtype=cvd.default_int)
         growth = linear_growth(delay, init_val/delay)
         decay = init_val * np.exp(-decay_rate * t)
-        result = np.concatenate(growth, decay, axis=None)
+        result = np.concatenate([growth, decay], axis=None)
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = init_val * np.exp(-decay_rate * t)
     return result
 
 
-def logistic_decay(length, init_val, decay_rate, half_val, lower_asymp, delay=None):
-    ''' Calculate logistic decay '''
-
-    if delay is not None:
-        t = np.arange(length - delay, dtype=cvd.default_int)
-        growth = linear_growth(delay, init_val / delay)
-        decay = (init_val + (lower_asymp - init_val) / (
-                1 + (t / half_val) ** decay_rate))
-        result = np.concatenate((growth, decay), axis=None)
-    else:
-        t = np.arange(length, dtype=cvd.default_int)
-        result = (init_val + (lower_asymp - init_val) / (
-                1 + (t / half_val) ** decay_rate))
-    return result  # TODO: make this robust to /0 errors
-
-
 def linear_decay(length, init_val, slope):
     ''' Calculate linear decay '''
     t = np.arange(length, dtype=cvd.default_int)
     result = init_val - slope*t
-    if result < 0:
-        result = 0
+    result = np.maximum(result, 0)
     return result
 
 

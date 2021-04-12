@@ -221,8 +221,10 @@ class People(cvb.BasePeople):
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
         for strain in range(self.pars['n_strains']):
-            n_this_strain_inds = (self.infectious_strain[inds] == strain).sum()
+            this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
+            n_this_strain_inds = len(this_strain_inds)
             self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
+            self.infectious_by_strain[strain, this_strain_inds] = True
         return len(inds)
 
 
@@ -268,19 +270,21 @@ class People(cvb.BasePeople):
         self.severe[inds]           = False
         self.critical[inds]         = False
         self.recovered[inds]        = True
+        self.recovered_strain[inds] = self.exposed_strain[inds]
+        self.infectious_strain[inds] = np.nan
+        self.exposed_strain[inds]    = np.nan
+        self.exposed_by_strain[:, inds] = False
+        self.infectious_by_strain[:, inds] = False
 
         # Handle immunity aspects
         if self.pars['use_waning']:
 
             # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
-            self.recovered_strain[inds] = self.exposed_strain[inds]
             mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
             severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
 
             # Reset additional states
             self.susceptible[inds]      = True
-            self.infectious_strain[inds] = np.nan
-            self.exposed_strain[inds]    = np.nan
             self.prior_symptoms[inds] = self.pars['rel_imm']['asymptomatic']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']

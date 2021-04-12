@@ -12,7 +12,7 @@ import sciris as sc
 from .settings import options as cvo # To set options
 
 # Specify all externally visible functions this file defines -- other things are available as e.g. cv.defaults.default_int
-__all__ = ['default_float', 'default_int', 'get_colors', 'get_sim_plots', 'get_scen_plots']
+__all__ = ['default_float', 'default_int', 'get_default_colors', 'get_default_plots']
 
 
 #%% Specify what data types to use
@@ -107,7 +107,6 @@ class PeopleMeta(sc.prettyobj):
         self.dates = [f'date_{state}' for state in self.states] # Convert each state into a date
         self.dates.append('date_pos_test') # Store the date when a person tested which will come back positive
         self.dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
-        # self.dates.append('date_vaccinated') # Store the date when a person is vaccinated
 
         # Duration of different states: these are floats per person -- used in people.py
         self.durs = [
@@ -126,7 +125,7 @@ class PeopleMeta(sc.prettyobj):
             states = getattr(self, state_type)
             n_states        = len(states)
             n_unique_states = len(set(states))
-            if n_states != n_unique_states:
+            if n_states != n_unique_states: # pragma: no cover
                 errormsg = f'In {state_type}, only {n_unique_states} of {n_states} state names are unique'
                 raise ValueError(errormsg)
 
@@ -174,8 +173,8 @@ result_flows = {
 }
 
 result_flows_by_strain = {
-    'infections_by_strain': 'infections_by_strain',
-    'infectious_by_strain': 'infectious_by_strain',
+    'infections_by_strain': 'infections by strain',
+    'infectious_by_strain': 'infectious by strain',
 }
 
 result_imm = {
@@ -232,7 +231,7 @@ default_age_data = np.array([
 ])
 
 
-def get_colors():
+def get_default_colors():
     '''
     Specify plot colors -- used in sim.py.
 
@@ -306,7 +305,7 @@ overview_strain_plots = [
     'pop_symp_protection',
 ]
 
-def get_sim_plots(which='default'):
+def get_default_plots(which='default', kind='sim', sim=None):
     '''
     Specify which quantities to plot; used in sim.py.
 
@@ -314,35 +313,54 @@ def get_sim_plots(which='default'):
         which (str): either 'default' or 'overview'
     '''
 
-    # Default plots
+    # Default plots -- different for sims and scenarios
     if which in [None, 'default']:
-        plots = sc.odict({
-                'Total counts': [
+
+        if kind == 'sim':
+            plots = sc.odict({
+                    'Total counts': [
+                        'cum_infections',
+                        'n_infectious',
+                        'cum_diagnoses',
+                    ],
+                    'Daily counts': [
+                        'new_infections',
+                        'new_diagnoses',
+                    ],
+                    'Health outcomes': [
+                        'cum_severe',
+                        'cum_critical',
+                        'cum_deaths',
+                    ],
+            })
+
+        elif kind == 'scens': # pragma: no cover
+            plots = sc.odict({
+                'Cumulative infections': [
                     'cum_infections',
-                    'n_infectious',
-                    'cum_diagnoses',
                 ],
-                'Daily counts': [
+                'New infections per day': [
                     'new_infections',
-                    'new_diagnoses',
                 ],
-                'Health outcomes': [
-                    'cum_severe',
-                    'cum_critical',
+                'Cumulative deaths': [
                     'cum_deaths',
                 ],
-        })
+            })
 
-    # Show everything
-    elif which == 'overview':
+    # Show an overview
+    elif which == 'overview': # pragma: no cover
         plots = sc.dcp(overview_plots)
 
-    # Show everything plus strains
-    elif 'overview' in which and 'strain' in which:
+    # Plot absolutely everything
+    elif which.lower() == 'all': # pragma: no cover
+        plots = sim.result_keys(strain=True)
+
+    # Show an overview plus strains
+    elif 'overview' in which and 'strain' in which: # pragma: no cover
         plots = sc.dcp(overview_plots) + sc.dcp(overview_strain_plots)
 
     # Show default but with strains
-    elif 'strain' in which:
+    elif 'strain' in which: # pragma: no cover
         plots = sc.odict({
                 'Total counts': [
                     'cum_infections_by_strain',
@@ -361,40 +379,16 @@ def get_sim_plots(which='default'):
         })
 
     # Plot SEIR compartments
-    elif which.lower() == 'seir':
-        plots = sc.odict({
-                'SEIR states': [
-                    'n_susceptible',
-                    'n_preinfectious',
-                    'n_infectious',
-                    'n_removed',
-                ],
-        })
+    elif which.lower() == 'seir': # pragma: no cover
+        plots = [
+            'n_susceptible',
+            'n_preinfectious',
+            'n_infectious',
+            'n_removed',
+        ],
 
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "strain", "overview-strain", or "seir"'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "strain", "overview-strain", or "seir"'
         raise ValueError(errormsg)
+
     return plots
-
-
-def get_scen_plots(which='default'):
-    ''' Default scenario plots -- used in run.py '''
-    if which in [None, 'default']:
-        plots = sc.odict({
-            'Cumulative infections': [
-                'cum_infections',
-            ],
-            'New infections per day': [
-                'new_infections',
-            ],
-            'Cumulative deaths': [
-                'cum_deaths',
-            ],
-        })
-    elif which == 'overview':
-        plots = sc.dcp(overview_plots)
-    else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported'
-        raise ValueError(errormsg)
-    return plots
-

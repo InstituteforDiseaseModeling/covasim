@@ -137,7 +137,7 @@ class Result(object):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
-            color = cvd.get_colors()['default']
+            color = cvd.get_default_colors()['default']
         self.color = color # Default color
         if npts is None:
             npts = 0
@@ -393,9 +393,11 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def result_keys(self):
+    def result_keys(self, strain=False):
         ''' Get the actual results objects, not other things stored in sim.results '''
         keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
+        if strain:
+            keys += [key for key in self.results['strain'].keys() if isinstance(self.results['strain'][key], Result)]
         return keys
 
 
