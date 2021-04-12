@@ -66,11 +66,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
-    pars['NAb_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(NAb) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['NAb_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['NAb_kin']         = None # Constructed during sim initialization using the NAb_decay parameters
-    pars['NAb_boost']       = 1.5 # Multiplicative factor applied to a person's NAb levels if they get reinfected. # TODO: add source
-    pars['NAb_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map NAbs to efficacy
+    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
+    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+    pars['nab_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']         = dict(asymptomatic=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
@@ -478,41 +478,41 @@ def get_vaccine_dose_pars():
     pars = sc.objdict(
 
         default = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 1,
             interval  = None,
         ),
 
         pfizer = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         moderna = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 28,
         ),
 
         az = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         jj = sc.objdict(
-            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
-            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
-            NAb_boost = 2,
+            nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
             doses     = 1,
             interval  = None,
         ),

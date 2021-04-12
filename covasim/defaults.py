@@ -93,8 +93,8 @@ class PeopleMeta(sc.prettyobj):
         # Neutralizing antibody states, not by strain
         self.nab_states = [
             'prior_symptoms',   # Float
-            'init_NAb',         # Float, initial neutralization titre relative to convalescent plasma
-            'NAb',              # Float, current neutralization titre relative to convalescent plasma
+            'init_nab',         # Float, initial neutralization titre relative to convalescent plasma
+            'nab',              # Float, current neutralization titre relative to convalescent plasma
         ]
 
         # Additional vaccination states
@@ -178,7 +178,7 @@ result_flows_by_strain = {
 }
 
 result_imm = {
-    'pop_nabs': 'Population average NAbs',
+    'pop_nabs': 'Population average nabs',
     'pop_protection': 'Population average protective immunity'
 }
 

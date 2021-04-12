@@ -282,7 +282,7 @@ class People(cvb.BasePeople):
         # Handle immunity aspects
         if self.pars['use_waning']:
 
-            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute NAbs array
+            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
             mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
             severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
 

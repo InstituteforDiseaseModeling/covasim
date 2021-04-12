@@ -310,7 +310,7 @@ class Sim(cvb.BaseSim):
         self.results['test_yield']          = init_res('Testing yield', scale=False)
         self.results['rel_test_yield']      = init_res('Relative testing yield', scale=False)
         self.results['frac_vaccinated']     = init_res('Proportion vaccinated', scale=False)
-        self.results['pop_nabs']            = init_res('Population NAb levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_nabs']            = init_res('Population nab levels', scale=False, color=dcols.pop_nabs)
         self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
 
@@ -500,7 +500,7 @@ class Sim(cvb.BaseSim):
 
 
     def init_immunity(self, create=False):
-        ''' Initialize immunity matrices and precompute NAb waning for each strain '''
+        ''' Initialize immunity matrices and precompute nab waning for each strain '''
         if self['use_waning']:
             cvimm.init_immunity(self, create=create)
         return
@@ -594,9 +594,9 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus = people.rel_sus
 
-        # Check NAbs. Take set difference so we don't compute NAbs for anyone currently infected
+        # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
         if self['use_waning']:
-            has_nabs = np.setdiff1d(cvu.defined(people.init_NAb), cvu.false(people.susceptible))
+            has_nabs = np.setdiff1d(cvu.defined(people.init_nab), cvu.false(people.susceptible))
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
@@ -645,8 +645,8 @@ class Sim(cvb.BaseSim):
             for strain in range(ns):
                 self.results['strain'][key][strain][t] += count[strain]
 
-        # Update NAb and immunity for this time step
-        self.results['pop_nabs'][t]            = np.sum(people.NAb[cvu.defined(people.NAb)])/len(people)
+        # Update nab and immunity for this time step
+        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/len(people)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
