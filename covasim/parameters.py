@@ -8,7 +8,7 @@ from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_strain_choices', 'get_vaccine_choices']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
@@ -69,19 +69,18 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['NAb_decay']       = dict(form='nab_decay', pars={'init_decay_rate': np.log(2)/90, 'init_decay_time': 250, 'decay_decay_rate': 0.001}) # Parameters describing the kinetics of decay of NAbs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['NAb_kin']         = None # Constructed during sim initialization using the NAb_decay parameters
     pars['NAb_boost']       = 1.5 # Multiplicative factor applied to a person's NAb levels if they get reinfected. TODO, add source
-    pars['NAb_eff']         = {'sus': {'slope': 2.7, 'n_50': 0.03},
-                               'symp': 0.1, 'sev': 0.52} # Parameters to map NAbs to efficacy
+    pars['NAb_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map NAbs to efficacy
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
-    pars['rel_imm']         = {'asymptomatic': 0.85, 'mild': 1, 'severe': 1.5} # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm']         = dict(asymptomatic=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in Immunity.py
     pars['vaccine_info']    = None  # Vaccine info in a more easily accessible format
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['dur'] = {}
 
     # Duration parameters: time for disease progression
+    pars['dur'] = {}
     pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
     pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
     pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
@@ -310,8 +309,180 @@ def absolute_prognoses(prognoses):
     return out
 
 
+#%% Strain, vaccine, and immunity parameters and functions
+
+def get_strain_choices(strain=None):
+    '''
+    Define valid pre-defined strain names
+    '''
+    # List of choices currently available: new ones can be added to the list along with their aliases
+    choices = {
+        'wild':  ['wild', 'default', 'pre-existing', 'original'],
+        'b117':  ['b117', 'uk', 'united kingdom'],
+        'b1351': ['b1351', 'sa', 'south africa'],
+        'p1':    ['p1', 'b11248', 'brazil'],
+    }
+    mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
+
+    def normalizer(strain):
+        ''' Normalize a strain string '''
+        normstrain = strain.lower()
+        for txt in ['.', ' ', 'strain', 'variant', 'voc']:
+            normstrain = normstrain.replace(txt, '')
+        return normstrain
+
+    if strain is None:
+        return choices, mapping, normalizer
+    else:
+        normstrain = normalizer(strain)
+        if normstrain in mapping:
+            strain_pars = pars[mapping[normstrain]]
+        else:
+            errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
+            raise NotImplementedError(errormsg)
+
+
+def get_vaccine_choices():
+    '''
+    Define valid pre-defined vaccine names
+    '''
+    # List of choices currently available: new ones can be added to the list along with their aliases
+    choices = {
+        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
+        'moderna': ['moderna'],
+        'az':      ['az', 'astrazeneca'],
+        'jj':      ['jj', 'johnson & johnson', 'janssen'],
+    }
+    mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
+    return choices, mapping
+
+
+def get_strain_pars():
+    '''
+    Define the default parameters for the different strains
+    '''
+    pars = sc.objdict(
+
+        wild = sc.objdict(
+            rel_imm         = 1.0,
+            rel_beta        = 1.0,
+            rel_severe_prob = 1.0,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
+        ),
+
+        b117 = sc.objdict(
+            rel_imm         = 1.0,
+            rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+            rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
+        ),
+
+        b1351 = sc.objdict(
+            rel_imm         = 0.25,
+            rel_beta        = 1.4,
+            rel_severe_prob = 1.4,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.4,
+        ),
+
+        p1 = sc.objdict(
+            rel_imm         = 0.5,
+            rel_beta        = 1.4,
+            rel_severe_prob = 1.4,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 2.0,
+        )
+    )
+
+    return pars
+
+
+def get_vaccine_strain_pars():
+    '''
+    Define the effectiveness of each vaccine against each strain
+    '''
+    pars = sc.objdict(
+
+        pfizer = sc.objdict(
+            wild  = 1.0,
+            b117  = 1/2.0,
+            b1351 = 1/6.7,
+            p1    = 1/6.5,
+        ),
+
+        moderna = sc.objdict(
+            wild  = 1.0,
+            b117  = 1/1.8,
+            b1351 = 1/4.5,
+            p1    = 1/8.6,
+        ),
+
+        az = sc.objdict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1/2,
+            p1    = 1/2,
+        ),
+
+        jj = sc.objdict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1/6.7,
+            p1    = 1/8.6,
+        ),
+    )
+
+    return pars
+
+
+def get_vaccine_dose_pars():
+    '''
+    Define the dosing regimen for each vaccine
+    '''
+    pars = sc.objdict(
+
+        pfizer = sc.objdict(
+            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
+            NAb_boost = 2,
+            doses     = 2,
+            interval  = 21,
+        ),
+
+        moderna = sc.objdict(
+            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
+            NAb_boost = 2,
+            doses     = 2,
+            interval  = 28,
+        ),
+
+        az = sc.objdict(
+            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
+            NAb_boost = 2,
+            doses     = 2,
+            interval  = 21,
+        ),
+
+        jj = sc.objdict(
+            NAb_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
+            NAb_init  = dict(dist='normal', par1=0.5, par2= 2),
+            NAb_boost = 2,
+            doses     = 1,
+            interval  = None,
+        ),
+    )
+
+    return pars
+
+
 def listify_strain_pars(pars):
-    ''' Helper function to turn strain parameters into lists '''
+    '''
+    Helper function to turn strain parameters into lists
+    '''
     for sp in cvd.strain_pars:
         if sp in pars.keys():
             pars['strain_pars'][sp] = sc.promotetolist(pars[sp])

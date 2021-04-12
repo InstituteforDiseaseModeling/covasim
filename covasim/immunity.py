@@ -6,6 +6,7 @@ import numpy as np
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
+from . import parameters as cvpar
 from . import interventions as cvi
 
 
@@ -50,52 +51,17 @@ class Strain(cvi.Intervention):
     def parse_strain_pars(self, strain=None, label=None):
         ''' Unpack strain information, which may be given in different ways'''
 
-        # List of choices currently available: new ones can be added to the list along with their aliases
-        choices = {
-            'wild': ['wild', 'default', 'pre-existing', 'original'],
-            'b117': ['b117', 'uk'],
-            'b1351': ['b1351', 'sa'],
-            'p1': ['p1', 'b11248', 'brazil'],
-        }
+        choices, mapping = cvpar.get_strain_choices()
+        pars = cvpar.get_strain_pars()
         choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
-        reversemap = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
-
-        mapping = dict( # TODO: move to parameters.py
-            wild = dict(),
-
-            b117 = dict(
-                rel_beta        = 1.5,  # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-                rel_severe_prob = 1.8,  # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-            ),
-
-            b1351 = dict(
-                rel_imm         = 0.25,
-                rel_beta        = 1.4,
-                rel_severe_prob = 1.4,
-                rel_death_prob  = 1.4,
-            ),
-
-            p1 = dict(
-                rel_imm         = 0.5,
-                rel_beta        = 1.4,
-                rel_severe_prob = 1.4,
-                rel_death_prob  = 2,
-            )
-        )
 
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
 
-            # Normalize input: lowrcase and remove
-            normstrain = strain.lower()
-            for txt in ['.', ' ', 'strain', 'variant', 'voc']:
-                normstrain = normstrain.replace(txt, '')
+            # Normalize input: lowercase and remove extra characters
 
-            if normstrain in reversemap:
-                strain_pars = mapping[reversemap[normstrain]]
-            else:
-                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
-                raise NotImplementedError(errormsg)
+
+
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(strain, dict):
@@ -177,36 +143,12 @@ class Vaccine(cvi.Intervention):
         self.NAb_init = None
         self.NAb_boost = None
         self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
-        self.vaccine_strain_info = self.init_strain_vaccine_info()
+        self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
         self.vaccine_pars = self.parse_vaccine_pars(vaccine=vaccine)
         for par, val in self.vaccine_pars.items():
             setattr(self, par, val)
         return
 
-    def init_strain_vaccine_info(self):
-        # TODO-- populate this with data!
-        rel_imm = {}
-        rel_imm['known_vaccines'] = ['pfizer', 'moderna', 'az', 'j&j']
-        rel_imm['known_strains'] = ['wild', 'b117', 'b1351', 'p1']
-        for vx in rel_imm['known_vaccines']:
-            rel_imm[vx] = {}
-            rel_imm[vx]['wild'] = 1
-
-        rel_imm['pfizer']['b117'] = 1/2
-        rel_imm['pfizer']['b1351'] = 1/6.7
-        rel_imm['pfizer']['p1'] = 1/6.5
-
-        rel_imm['moderna']['b117'] = 1/1.8
-        rel_imm['moderna']['b1351'] = 1/4.5
-        rel_imm['moderna']['p1'] = 1/8.6
-
-        rel_imm['az']['b1351'] = .5
-        rel_imm['az']['p1'] = .5
-
-        rel_imm['j&j']['b1351'] = 1/6.7
-        rel_imm['j&j']['p1'] = 1/8.6
-
-        return rel_imm
 
     def parse_vaccine_pars(self, vaccine=None):
         ''' Unpack vaccine information, which may be given in different ways'''
@@ -224,40 +166,6 @@ class Vaccine(cvi.Intervention):
 
             # (TODO: link to actual evidence)
             # Known parameters on pfizer
-            if vaccine in choices['pfizer']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            # Known parameters on moderna
-            elif vaccine in choices['moderna']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 29
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            # Known parameters on az
-            elif vaccine in choices['az']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 2
-                vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
-
-            # Known parameters on j&j
-            elif vaccine in choices['j&j']:
-                vaccine_pars = dict()
-                vaccine_pars['NAb_init'] = dict(dist='normal', par1=0.5, par2=2)
-                vaccine_pars['doses'] = 1
-                vaccine_pars['interval'] = None
-                vaccine_pars['NAb_boost'] = 2
-                vaccine_pars['label'] = vaccine
 
             else:
                 choicestr = '\n'.join(choices.values())
