@@ -3,10 +3,8 @@ Tests for immune waning, strains, and vaccine intervention.
 '''
 
 #%% Imports and settings
-# import pytest
 import sciris as sc
 import covasim as cv
-import numpy as np
 import pandas as pd
 
 do_plot = 1
@@ -20,51 +18,6 @@ base_pars = dict(
 
 
 #%% Define the tests
-
-def test_waning(do_plot=False):
-    sc.heading('Testing with and without waning')
-    msims = dict()
-
-    for rescale in [0, 1]:
-        print(f'Checking with rescale = {rescale}...')
-
-        # Define more parameters specific to this test
-        pars = dict(
-            n_days    = 90,
-            beta      = 0.008,
-            NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
-        )
-
-        # Optionally include rescaling
-        if rescale:
-            pars.update(
-                pop_scale      = 10,
-                rescale_factor = 2.0, # Use a large rescale factor to make differences more obvious
-            )
-
-        # Run the simulations and pull out the results
-        s0 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
-        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
-        res0 = s0.summary
-        res1 = s1.summary
-        msim = cv.MultiSim([s0,s1])
-        msims[rescale] = msim
-
-
-        # Check results
-        for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
-            v0 = res0[key]
-            v1 = res1[key]
-            print(f'Checking {key:20s} ... ', end='')
-            assert v1 > v0, f'Expected {key} to be higher with waning than without'
-            print(f'✓ ({v1} > {v0})')
-
-        # Optionally plot
-        if do_plot:
-            msim.plot('overview-strain', rotation=30)
-
-    return msims
-
 
 def test_states():
     ''' Test state consistency against state_diagram.xlsx '''
@@ -127,6 +80,51 @@ def test_states():
                         raise RuntimeError(errormsg)
 
     return
+
+
+def test_waning(do_plot=False):
+    sc.heading('Testing with and without waning')
+    msims = dict()
+
+    for rescale in [0, 1]:
+        print(f'Checking with rescale = {rescale}...')
+
+        # Define more parameters specific to this test
+        pars = dict(
+            n_days    = 90,
+            beta      = 0.008,
+            NAb_decay = dict(form='nab_decay', pars={'init_decay_rate': 0.1, 'init_decay_time': 250, 'decay_decay_rate': 0.001})
+        )
+
+        # Optionally include rescaling
+        if rescale:
+            pars.update(
+                pop_scale      = 10,
+                rescale_factor = 2.0, # Use a large rescale factor to make differences more obvious
+            )
+
+        # Run the simulations and pull out the results
+        s0 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
+        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+        res0 = s0.summary
+        res1 = s1.summary
+        msim = cv.MultiSim([s0,s1])
+        msims[rescale] = msim
+
+
+        # Check results
+        for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
+            v0 = res0[key]
+            v1 = res1[key]
+            print(f'Checking {key:20s} ... ', end='')
+            assert v1 > v0, f'Expected {key} to be higher with waning than without'
+            print(f'✓ ({v1} > {v0})')
+
+        # Optionally plot
+        if do_plot:
+            msim.plot('overview-strain', rotation=30)
+
+    return msims
 
 
 def test_strains(do_plot=False):
@@ -555,9 +553,9 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # msims1 = test_waning(do_plot=do_plot)
-    # sim1   = test_states()
-    sim2 = test_strains(do_plot=do_plot)
+    sim1   = test_states()
+    msims1 = test_waning(do_plot=do_plot)
+    sim2   = test_strains(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')
