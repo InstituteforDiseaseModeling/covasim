@@ -108,13 +108,12 @@ class Sim(cvb.BaseSim):
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        if self['use_waning']:
-            self.init_strains() # ...and the strains.... # TODO: move out of if?
-            self.init_immunity() # ... and information about immunity/cross-immunity.
+        self.init_strains() # Initialize the strains
+        self.init_immunity() # initialize information about immunity (if use_waning=True)
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
-        self.init_vaccines() # Initialize vaccine information
+        # self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
@@ -504,32 +503,8 @@ class Sim(cvb.BaseSim):
 
     def init_immunity(self, create=False):
         ''' Initialize immunity matrices and precompute NAb waning for each strain '''
-        cvimm.init_immunity(self, create=create)
-        return
-
-
-    def init_vaccines(self): # TODO: refactor
-        ''' Check if there are any vaccines in simulation, if so initialize vaccine info param'''
-        print('TEMP')
-        # if len(self['vaccines']):
-        nv = max(1, len(self['vaccines']))
-        ns = self['total_strains']
-
-        self['vaccine_info'] = {}
-        self['vaccine_info']['rel_imm'] = np.full((nv, ns), np.nan, dtype=cvd.default_float)
-        self['vaccine_info']['NAb_init'] = dict(dist='normal', par1=0.5, par2= 2)
-        self['vaccine_info']['doses'] = 2
-        self['vaccine_info']['interval'] = 22
-        self['vaccine_info']['NAb_boost'] = 2
-        self['vaccine_info']['NAb_eff'] = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
-
-        for ind, vacc in enumerate(self['vaccines']):
-            self['vaccine_info']['rel_imm'][ind,:] = vacc.rel_imm
-            self['vaccine_info']['doses'] = vacc.doses
-            self['vaccine_info']['NAb_init'] = vacc.NAb_init
-            self['vaccine_info']['NAb_boost'] = vacc.NAb_boost
-            self['vaccine_info']['NAb_eff'] = vacc.NAb_eff
-
+        if self['use_waning']:
+            cvimm.init_immunity(self, create=create)
         return
 
 

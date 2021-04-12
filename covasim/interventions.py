@@ -1223,7 +1223,7 @@ class vaccinate(Intervention):
 
     **Examples**::
 
-        interv = cv.vaccine(days=50, prob=0.3, )
+        interv = cv.vaccinate(days=50, prob=0.3, )
     '''
     def __init__(self, days, prob=1.0, vaccine_pars=None, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
@@ -1235,20 +1235,21 @@ class vaccinate(Intervention):
         self.vaccine_ind = None
         return
 
+
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
+        super().initialize()
         self.first_dose_eligible = process_days(sim, self.days) # days that group becomes eligible
-        self.second_dose_days = [None] * (sim['n_days']+1)  # inds who get second dose (if relevant)
-        self.vaccinated = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
+        self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
+        self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates   = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
+        self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
         self.vaccine_ind = len(sim['vaccines'])
         vaccine = cvi.Vaccine(self.vaccine_pars)
         vaccine.initialize(sim)
         sim['vaccines'].append(vaccine)
         self.doses = vaccine.doses
         self.interval = vaccine.interval
-        self.initialized = True
         return
 
 
@@ -1284,16 +1285,13 @@ class vaccinate(Intervention):
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
-            self.update_vaccine_info(sim, vacc_inds)
+            self.vaccinations[vacc_inds] += 1
+            self.vaccination_dates[vacc_inds] = sim.t
+
+            # Update vaccine attributes in sim
+            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
+            sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+            cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
 
         return
 
-    def update_vaccine_info(self, sim, vacc_inds):
-        self.vaccinations[vacc_inds] += 1
-        self.vaccination_dates[vacc_inds] = sim.t
-
-        # Update vaccine attributes in sim
-        sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-        sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
-        cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
-        return
