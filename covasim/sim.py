@@ -1424,13 +1424,13 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
     return
 
 
-def demo(preset=None, overview=False, scens=None, run_args=None, plot_args=None, **kwargs):
+def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, **kwargs):
     '''
     Shortcut for ``cv.Sim().run().plot()``.
 
     Args:
         preset (str): use a preset run configuration; currently the only option is "full"
-        overview (bool): whether to show the overview plot (all results)
+        to_plot (str): what to plot
         scens (dict): dictionary of scenarios to run as a multisim, if preset='full'
         kwargs (dict): passed to Sim()
         run_args (dict): passed to sim.run()
@@ -1448,8 +1448,8 @@ def demo(preset=None, overview=False, scens=None, run_args=None, plot_args=None,
 
     run_args = sc.mergedicts(run_args)
     plot_args = sc.mergedicts(plot_args)
-    if overview:
-        plot_args = sc.mergedicts(plot_args, {'to_plot':'overview'})
+    if to_plot:
+        plot_args = sc.mergedicts(plot_args, {'to_plot':to_plot})
 
     if not preset:
         sim = Sim(**kwargs)
