@@ -220,11 +220,11 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # sim1   = test_states()
-    # msims1 = test_waning(do_plot=do_plot)
+    sim1   = test_states()
+    msims1 = test_waning(do_plot=do_plot)
     sim2   = test_strains(do_plot=do_plot)
-    # sim3   = test_vaccines(do_plot=do_plot)
-    # res    = test_decays(do_plot=do_plot)
+    sim3   = test_vaccines(do_plot=do_plot)
+    res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

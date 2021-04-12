@@ -141,7 +141,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Handle strain pars
     if 'strain_pars' not in pars:
         pars['strain_pars'] = {} # Populated just below
-        pars = listify_strain_pars(pars)  # Turn strain parameters into lists
+        for sp in cvd.strain_pars:
+            if sp in pars.keys():
+                pars['strain_pars'][sp] = [pars[sp]]
 
     return pars
 
@@ -475,16 +477,6 @@ def get_vaccine_dose_pars():
         ),
     )
 
-    return pars
-
-
-def listify_strain_pars(pars):
-    '''
-    Helper function to turn strain parameters into lists
-    '''
-    for sp in cvd.strain_pars:
-        if sp in pars.keys():
-            pars['strain_pars'][sp] = sc.promotetolist(pars[sp])
     return pars
 
 
