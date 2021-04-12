@@ -1245,11 +1245,11 @@ class vaccinate(Intervention):
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
         self.vaccine_ind = len(sim['vaccines'])
-        vaccine = cvi.Vaccine(self.vaccine_pars)
-        vaccine.initialize(sim)
-        sim['vaccines'].append(vaccine)
-        self.doses = vaccine.doses
-        self.interval = vaccine.interval
+        self.vaccine = cvi.Vaccine(self.vaccine_pars)
+        self.vaccine.initialize(sim)
+        sim['vaccines'].append(self.vaccine)
+        self.doses = self.vaccine.p.doses
+        self.interval = self.vaccine.p.interval
         return
 
 

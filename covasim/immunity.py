@@ -130,16 +130,16 @@ class Vaccine(cvi.Intervention):
     def __init__(self, vaccine=None, label=None, **kwargs):
         super().__init__(**kwargs)
         self.label = label
-        self.rel_imm = None # list of length n_strains with relative immunity factor
-        self.doses = None
-        self.interval = None
-        self.NAb_init = None
-        self.NAb_boost = None
-        self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
+        # self.rel_imm = None # list of length n_strains with relative immunity factor
+        # self.doses = None
+        # self.interval = None
+        # self.NAb_init = None
+        # self.NAb_boost = None
+        # self.NAb_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map NAbs to efficacy
         self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
         self.parse_vaccine_pars(vaccine=vaccine)
-        for par, val in self.vaccine_pars.items():
-            setattr(self, par, val)
+        # for par, val in self.vaccine_pars.items():
+        #     setattr(self, par, val)
         return
 
 
@@ -178,38 +178,11 @@ class Vaccine(cvi.Intervention):
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
-        self.vaccine_pars = vaccine_pars
+        self.p = sc.objdict(vaccine_pars)
         return
 
 
-    def initialize(self, sim):
-        super().initialize()
-
-        ts = sim['n_strains']
-        circulating_strains = ['wild'] # assume wild is circulating
-        for strain in range(ts-1):
-            circulating_strains.append(sim['strains'][strain].label)
-
-        if self.NAb_init is None : # TODO: refactor
-            errormsg = 'Did not provide parameters for this vaccine'
-            raise ValueError(errormsg)
-
-        if self.rel_imm is None: # TODO: refactor
-            sc.printv('Did not provide rel_imm parameters for this vaccine, trying to find values', 1, sim['verbose'])
-            self.rel_imm = []
-            for strain in circulating_strains:
-                self.rel_imm.append(self.vaccine_strain_info[self.label][strain])
-
-        correct_size = len(self.rel_imm) == ts
-        if not correct_size:
-            errormsg = 'Did not provide relative immunity for each strain'
-            raise ValueError(errormsg)
-
-        return
-
-
-
-# %% NAb methods
+#%% NAb methods
 
 def init_nab(people, inds, prior_inf=True, vacc_info=None):
     '''
@@ -313,25 +286,6 @@ def nab_to_efficacy(nab, ax, function_args):
 
 # %% Immunity methods
 
-
-# def update_strain_attributes(people):
-#     for key in people.meta.person:
-#         if 'imm' in key:  # everyone starts out with no immunity to either strain. # TODO: refactor
-#             rows,cols = people[key].shape
-#             people[key].resize(rows+1, cols, refcheck=False)
-
-#     # Set strain states, which store info about which strain a person is exposed to
-#     for key in people.meta.strain_states:
-#         if 'by' in key: # TODO: refactor
-#             rows,cols = people[key].shape
-#             people[key].resize(rows+1, cols, refcheck=False)
-
-#     for key in cvd.new_result_flows_by_strain:
-#         rows, = people[key].shape
-#         people.flows_strain[key].reshape(rows+1, refcheck=False)
-#     return
-
-
 def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all strains that will eventually be in the sim'''
 
@@ -354,14 +308,13 @@ def init_immunity(sim, create=False):
         # Initialize immunity
         for ax in cvd.immunity_axes:
             if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
-                immunity[ax] = np.full((ts, ts), sim['cross_immunity'],
-                                       dtype=cvd.default_float)  # Default for off-diagnonals
+                immunity[ax] = np.full((ts, ts), sim['cross_immunity'], dtype=cvd.default_float)  # Default for off-diagnonals
                 np.fill_diagonal(immunity[ax], 1)  # Default for own-immunity
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
-                immunity[ax] = np.full(ts, 1, dtype=cvd.default_float)
+                immunity[ax] = np.ones(ts, dtype=cvd.default_float)
 
-        known_strains = ['wild', 'b117', 'b1351', 'p1'] # TODO: only appear once
-        cross_immunity = create_cross_immunity(circulating_strains, rel_imms)
+        cross_immunity = cvpar.get_cross_immunity()
+        known_strains = cross_immunity.keys()
         for i in range(ts):
             for j in range(ts):
                 if i != j:
@@ -370,7 +323,7 @@ def init_immunity(sim, create=False):
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['NAb_kin'] = pre_compute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
+    sim['NAb_kin'] = precompute_waning(length=sim['n_days'], form=sim['NAb_decay']['form'], pars=sim['NAb_decay']['pars'])
 
     return
 
@@ -455,7 +408,7 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
 
 #%% Methods for computing waning
 
-def pre_compute_waning(length, form='nab_decay', pars=None):
+def precompute_waning(length, form='nab_decay', pars=None):
     '''
     Process functional form and parameters into values:
 
@@ -559,37 +512,3 @@ def linear_growth(length, slope):
     ''' Calculate linear growth '''
     t = np.arange(length, dtype=cvd.default_int)
     return (slope * t)
-
-
-def create_cross_immunity(circulating_strains, rel_imms): # TODO: refactor
-    known_strains = ['wild', 'b117', 'b1351', 'p1']
-    known_cross_immunity = dict()
-    known_cross_immunity['wild'] = {} # cross-immunity to wild
-    known_cross_immunity['wild']['b117'] = 0.5
-    known_cross_immunity['wild']['b1351'] = 0.5
-    known_cross_immunity['wild']['p1'] = 0.5
-    known_cross_immunity['b117'] = {} # cross-immunity to b117
-    known_cross_immunity['b117']['wild'] = rel_imms['b117'] if 'b117' in circulating_strains else .5
-    known_cross_immunity['b117']['b1351'] = 0.8
-    known_cross_immunity['b117']['p1'] = 0.8
-    known_cross_immunity['b1351'] = {} # cross-immunity to b1351
-    known_cross_immunity['b1351']['wild'] = rel_imms['b1351'] if 'b1351' in circulating_strains else 0.066
-    known_cross_immunity['b1351']['b117'] = 0.1
-    known_cross_immunity['b1351']['p1'] = 0.1
-    known_cross_immunity['p1'] = {} # cross-immunity to p1
-    known_cross_immunity['p1']['wild'] = rel_imms['p1'] if 'p1' in circulating_strains else 0.17
-    known_cross_immunity['p1']['b117'] = 0.2
-    known_cross_immunity['p1']['b1351'] = 0.2
-
-    cross_immunity = {}
-    cs = len(circulating_strains)
-    for i in range(cs):
-        cross_immunity[circulating_strains[i]] = {}
-        for j in range(cs):
-            if circulating_strains[j] in known_strains:
-                if i != j:
-                    if circulating_strains[i] in known_strains:
-                        cross_immunity[circulating_strains[i]][circulating_strains[j]] = \
-                            known_cross_immunity[circulating_strains[i]][circulating_strains[j]]
-
-    return cross_immunity

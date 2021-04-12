@@ -334,6 +334,7 @@ def get_vaccine_choices():
     '''
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
+        'default': ['default', None],
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
         'moderna': ['moderna'],
         'az':      ['az', 'astrazeneca'],
@@ -389,6 +390,43 @@ def get_strain_pars():
     return pars
 
 
+def get_cross_immunity():
+    '''
+    Get the cross immunity between each strain and each other strain
+    '''
+    pars = sc.objdict(
+
+        wild = sc.objdict(
+            wild  = 1.0,
+            b117  = 0.5,
+            b1351 = 0.5,
+            p1    = 0.5,
+        ),
+
+        b117 = sc.objdict(
+            wild  = 0.5,
+            b117  = 1.0,
+            b1351 = 0.8,
+            p1    = 0.8,
+        ),
+
+        b1351 = sc.objdict(
+            wild  = 0.066,
+            b117  = 0.1,
+            b1351 = 1.0,
+            p1    = 0.1,
+        ),
+
+        p1 = sc.objdict(
+            wild  = 0.17,
+            b117  = 0.2,
+            b1351 = 0.2,
+            p1    = 1.0,
+        ),
+    )
+    return pars
+
+
 def get_vaccine_strain_pars():
     '''
     Define the effectiveness of each vaccine against each strain
@@ -430,7 +468,6 @@ def get_vaccine_strain_pars():
             p1    = 1/8.6,
         ),
     )
-
     return pars
 
 
@@ -480,7 +517,6 @@ def get_vaccine_dose_pars():
             interval  = None,
         ),
     )
-
     return pars
 
 
