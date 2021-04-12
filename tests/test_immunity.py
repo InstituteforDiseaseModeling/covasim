@@ -23,8 +23,9 @@ base_pars = dict(
 
 def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
+    msims = dict()
 
-    for rescale in [False, True]:
+    for rescale in [0, 1]:
         print(f'Checking with rescale = {rescale}...')
 
         # Define more parameters specific to this test
@@ -46,6 +47,9 @@ def test_waning(do_plot=False):
         s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
         res0 = s0.summary
         res1 = s1.summary
+        msim = cv.MultiSim([s0,s1])
+        msims[rescale] = msim
+
 
         # Check results
         for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
@@ -57,10 +61,9 @@ def test_waning(do_plot=False):
 
         # Optionally plot
         if do_plot:
-            msim = cv.MultiSim([s0,s1])
             msim.plot('overview-strain', rotation=30)
 
-    return msim
+    return msims
 
 
 def test_states():
@@ -544,8 +547,8 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    msim1 = test_waning(do_plot=do_plot)
-    # sim1  = test_states()
+    msims1 = test_waning(do_plot=do_plot)
+    sim1   = test_states()
 
     sc.toc(T)
     print('Done.')
