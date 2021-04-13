@@ -104,7 +104,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Efficacy of protection measures
     pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
     pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
+    pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
 
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
@@ -140,10 +140,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Handle strain pars
     if 'strain_pars' not in pars:
-        pars['strain_pars'] = {} # Populated just below
+        pars['strain_map']  = {0:'wild'} # Reverse mapping from number to strain key
+        pars['strain_pars'] = dict(wild={}) # Populated just below
         for sp in cvd.strain_pars:
             if sp in pars.keys():
-                pars['strain_pars'][sp] = [pars[sp]]
+                pars['strain_pars']['wild'][sp] = pars[sp]
 
     return pars
 
@@ -344,7 +345,7 @@ def get_vaccine_choices():
     return choices, mapping
 
 
-def get_strain_pars():
+def get_strain_pars(default=False):
     '''
     Define the default parameters for the different strains
     '''
@@ -387,10 +388,13 @@ def get_strain_pars():
         )
     )
 
-    return pars
+    if default:
+        return pars['wild']
+    else:
+        return pars
 
 
-def get_cross_immunity():
+def get_cross_immunity(default=False):
     '''
     Get the cross immunity between each strain and each other strain
     '''
@@ -424,10 +428,14 @@ def get_cross_immunity():
             p1    = 1.0,
         ),
     )
-    return pars
+
+    if default:
+        return pars['wild']
+    else:
+        return pars
 
 
-def get_vaccine_strain_pars():
+def get_vaccine_strain_pars(default=False):
     '''
     Define the effectiveness of each vaccine against each strain
     '''
@@ -468,10 +476,14 @@ def get_vaccine_strain_pars():
             p1    = 1/8.6,
         ),
     )
-    return pars
+
+    if default:
+        return pars['default']
+    else:
+        return pars
 
 
-def get_vaccine_dose_pars():
+def get_vaccine_dose_pars(default=False):
     '''
     Define the dosing regimen for each vaccine
     '''
@@ -517,6 +529,10 @@ def get_vaccine_dose_pars():
             interval  = None,
         ),
     )
-    return pars
+
+    if default:
+        return pars['default']
+    else:
+        return pars
 
 

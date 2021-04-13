@@ -131,9 +131,9 @@ def test_waning(do_plot=False):
 def test_strains(do_plot=False):
     sc.heading('Testing strains...')
 
-    b117 = cv.Strain('b117',         days=10, n_imports=20)
-    p1   = cv.Strain('sa variant',   days=20, n_imports=20)
-    cust = cv.Strain(label='Custom', days=40, n_imports=20, strain={'rel_beta': 2, 'rel_symp_prob': 1.6})
+    b117 = cv.strain('b117',         days=10, n_imports=20)
+    p1   = cv.strain('sa variant',   days=20, n_imports=20)
+    cust = cv.strain(label='Custom', days=40, n_imports=20, strain={'rel_beta': 2, 'rel_symp_prob': 1.6})
     sim  = cv.Sim(base_pars, use_waning=True, strains=[b117, p1, cust])
     sim.run()
 
@@ -146,7 +146,7 @@ def test_strains(do_plot=False):
 def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
-    p1 = cv.Strain('sa variant',   days=20, n_imports=20)
+    p1 = cv.strain('sa variant',   days=20, n_imports=20)
     pfizer = cv.vaccinate(days=30, vaccine_pars='pfizer')
     sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
     sim.run()

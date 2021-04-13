@@ -495,9 +495,13 @@ class Sim(cvb.BaseSim):
         if self._orig_pars and 'strains' in self._orig_pars:
             self['strains'] = self._orig_pars.pop('strains') # Restore
 
-        for strain in self['strains']:
-            if not strain.initialized:
-                strain.initialize(self)
+        for i,strain in enumerate(self['strains']):
+            if isinstance(strain, cvimm.strain):
+                if not strain.initialized:
+                    strain.initialize(self)
+            else: # pragma: no cover
+                errormsg = f'Strain {i} ({strain}) is not a cv.strain object; please create using cv.strain()'
+                raise TypeError(errormsg)
 
         return
 
@@ -561,7 +565,7 @@ class Sim(cvb.BaseSim):
 
         # Add strains
         for strain in self['strains']:
-            if isinstance(strain, cvimm.Strain):
+            if isinstance(strain, cvimm.strain):
                 strain.apply(self)
 
         # Apply interventions
@@ -575,7 +579,7 @@ class Sim(cvb.BaseSim):
                 intervention(self) # If it's a function, call it directly
             else: # pragma: no cover
                 errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
-                raise ValueError(errormsg)
+                raise TypeError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
 

@@ -12,10 +12,10 @@ from . import interventions as cvi
 
 # %% Define strain class
 
-__all__ = ['Strain', 'Vaccine']
+__all__ = ['strain', 'Vaccine']
 
 
-class Strain(sc.prettyobj):
+class strain(sc.prettyobj):
     '''
     Add a new strain to the sim
 
@@ -29,9 +29,9 @@ class Strain(sc.prettyobj):
 
     **Example**::
 
-        b117    = cv.Strain('b117', days=10) # Make strain B117 active from day 10
-        p1      = cv.Strain('p1', days=15) # Make strain P1 active from day 15
-        my_var  = cv.Strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
+        b117    = cv.strain('b117', days=10) # Make strain B117 active from day 10
+        p1      = cv.strain('p1', days=15) # Make strain P1 active from day 15
+        my_var  = cv.strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
         sim     = cv.Sim(strains=[b117, p1, my_var]).run() # Add them all to the sim
     '''
 
@@ -51,7 +51,6 @@ class Strain(sc.prettyobj):
 
             choices, mapping = cvpar.get_strain_choices()
             pars = cvpar.get_strain_pars()
-            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
             normstrain = strain.lower()
             for txt in ['.', ' ', 'strain', 'variant', 'voc']:
@@ -61,17 +60,27 @@ class Strain(sc.prettyobj):
                 normstrain = mapping[normstrain]
                 strain_pars = pars[normstrain]
             else:
-                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choicestr}'
+                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choices}'
                 raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(strain, dict):
             strain_pars = strain
+            label = strain_pars.pop('label', label) # Allow including the label in the parameters
             if label is None:
-                label = 'Custom strain'
+                label = 'custom'
+
+            # Check that valid keys have been supplied:
+            invalid = []
+            for key in strain_pars.keys():
+                if key not in cvd.strain_pars:
+                    invalid.append(key)
+            if len(invalid):
+                errormsg = f'Could not parse strain keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.strain_pars)}"'
+                raise sc.KeyNotFoundError(errormsg)
 
         else:
-            errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{choicestr}'
+            errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{choices}'
             raise ValueError(errormsg)
 
         # Set label
@@ -83,16 +92,29 @@ class Strain(sc.prettyobj):
 
     def initialize(self, sim):
 
+        # Check we haven't already initialized
+        if self.initialized:
+            errormsg = 'Strains cannot be re-initialized since the change the state of the sim'
+            raise RuntimeError(errormsg)
+
         # Store the index of this strain, and increment the number of strains in the simulation
         self.index = sim['n_strains']
         sim['n_strains'] += 1
 
+        # Store the mapping of this strain
+        existing = list(sim['strain_map'].values())
+        if self.label in existing:
+            errormsg = f'Cannot add new strain with label "{self.label}"; already exists in strains: {sc.strjoin(existing)}'
+            raise ValueError(errormsg)
+        else:
+            sim['strain_map'][self.index] = self.label
+
         # Update strain info
-        defaults = cvpar.get_strain_pars()['wild']
+        defaults = cvpar.get_strain_pars(default=True)
         for key in cvd.strain_pars:
             if key not in self.p:
                 self.p[key] = defaults[key]
-            sim['strain_pars'][key].append(self.p[key])
+            sim['strain_pars'][self.label][key] = self.p[key]
 
         self.initialized = True
 

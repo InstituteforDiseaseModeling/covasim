@@ -31,7 +31,7 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
     pars = {
         'beta': 0.01
     }
-    strain = cv.Strain(strain_pars, days=1, n_imports=20, label='Strain 2: 1.5x more transmissible')
+    strain = cv.strain(strain_pars, days=1, n_imports=20, label='Strain 2: 1.5x more transmissible')
     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, analyzers=cv.snapshot(30, 60), **pars, **base_pars)
     sim.run()
 
@@ -41,8 +41,8 @@ def test_import1strain(do_plot=False, do_show=True, do_save=False):
 def test_import2strains(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test introducing 2 new strains partway through a sim')
 
-    b117 = cv.Strain('b117', days=1, n_imports=20)
-    p1 = cv.Strain('sa variant', days=2, n_imports=20)
+    b117 = cv.strain('b117', days=1, n_imports=20)
+    p1 = cv.strain('sa variant', days=2, n_imports=20)
     sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
     sim.run()
 
@@ -61,7 +61,7 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
         'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
     }
 
-    strain = cv.Strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
+    strain = cv.strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
     sim = cv.Sim(use_waning=True, pars=pars, strains=strain, label='With imported infections')
     sim.run()
 
@@ -78,8 +78,8 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
                'rel_symp_prob': 1.6}
 
     intervs  = cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6])
-    strains  = [cv.Strain(strain=strain2, days=10, n_imports=20),
-                cv.Strain(strain=strain3, days=30, n_imports=20),
+    strains  = [cv.strain(strain=strain2, days=10, n_imports=20),
+                cv.strain(strain=strain3, days=30, n_imports=20),
                ]
     sim = cv.Sim(use_waning=True, interventions=intervs, strains=strains, label='With imported infections', **base_pars)
     sim.run()
@@ -195,8 +195,8 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
     base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
     jnj = cv.vaccinate(days=subtarg_days, vaccine_pars='j&j', subtarget=vacc_subtarg)
-    b1351 = cv.Strain('b1351', days=10, n_imports=20)
-    p1 = cv.Strain('p1', days=100, n_imports=100)
+    b1351 = cv.strain('b1351', days=10, n_imports=20)
+    p1 = cv.strain('p1', days=100, n_imports=100)
 
     # Define the scenarios
 
@@ -243,7 +243,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
 
     strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
-    strains = cv.Strain(strain=strain_pars, label='10 days til symptoms', days=10, n_imports=30)
+    strains = cv.strain(strain=strain_pars, label='10 days til symptoms', days=10, n_imports=30)
     tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
 
     pars = sc.mergedicts(base_pars, {
@@ -286,7 +286,7 @@ def test_msim(do_plot=False):
     sc.heading('Testing multisim...')
 
     # basic test for vaccine
-    b117 = cv.Strain('b117', days=0)
+    b117 = cv.strain('b117', days=0)
     sim = cv.Sim(use_waning=True, strains=[b117], **base_pars)
     msim = cv.MultiSim(sim, n_runs=2)
     msim.run()
@@ -312,7 +312,7 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
     base_sim = cv.Sim(use_waning=True, n_days=400, pars=base_pars)
 
     # Define the scenarios
-    b1351 = cv.Strain('b1351', days=100, n_imports=20)
+    b1351 = cv.strain('b1351', days=100, n_imports=20)
 
     scenarios = {
         'baseline': {
