@@ -15,7 +15,7 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Expanded tutorials (health care workers, vaccination, calibration, exercises, etc.)
+- Expanded tutorials (health care workers, calibration, exercises, etc.)
 - Multi-region and geographical support
 - Economics and costing analysis
 

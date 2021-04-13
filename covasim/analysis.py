@@ -56,7 +56,7 @@ class Analyzer(sc.prettyobj):
         final operations after the simulation is complete (e.g. rescaling)
         '''
         if self.finalized:
-            raise Exception('Analyzer already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+            raise RuntimeError('Analyzer already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
 
@@ -251,6 +251,7 @@ class age_histogram(Analyzer):
 
 
     def initialize(self, sim):
+        super().initialize()
 
         # Handle days
         self.start_day = sc.date(sim['start_day'], as_date=False) # Get the start day, as a string
@@ -283,8 +284,6 @@ class age_histogram(Analyzer):
             else:
                 self.data = self.datafile # Use it directly
                 self.datafile = None
-
-        self.initialized = True
 
         return
 
@@ -434,6 +433,7 @@ class daily_age_stats(Analyzer):
 
 
     def initialize(self, sim):
+        super().initialize()
 
         if self.states is None:
             self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
@@ -444,7 +444,7 @@ class daily_age_stats(Analyzer):
         self.bins = self.edges[:-1]  # Don't include the last edge in the bins
 
         self.start_day = sim['start_day']
-        self.initialized = True
+
         return
 
 
@@ -591,6 +591,7 @@ class daily_stats(Analyzer):
 
 
     def initialize(self, sim):
+        super().initialize()
         if self.days is None:
             self.days = sc.dcp(sim.tvec)
         else:
@@ -599,7 +600,6 @@ class daily_stats(Analyzer):
         self.keys =  ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'known_contact', 'quarantined', 'diagnosed', 'recovered', 'dead']
         self.basekeys = ['stocks', 'trans', 'source', 'test', 'quar'] # Categories of things to plot
         self.extrakeys = ['layer_counts', 'extra']
-        self.initialized = True
         return
 
 

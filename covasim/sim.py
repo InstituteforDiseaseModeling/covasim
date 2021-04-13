@@ -255,6 +255,8 @@ class Sim(cvb.BaseSim):
                 self['interventions'][i] = cvi.InterventionDict(**interv)
         self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
         self['strains'] = sc.promotetolist(self['strains'], keepnone=False)
+        for key in ['interventions', 'analyzers', 'strains']:
+            self[key] = sc.dcp(self[key]) # All of these have initialize functions that run into issues if they're reused
 
         # Optionally handle layer parameters
         if validate_layers:
@@ -494,7 +496,8 @@ class Sim(cvb.BaseSim):
             self['strains'] = self._orig_pars.pop('strains') # Restore
 
         for strain in self['strains']:
-            strain.initialize(self)
+            if not strain.initialized:
+                strain.initialize(self)
 
         return
 

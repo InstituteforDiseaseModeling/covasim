@@ -146,7 +146,6 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
 
 def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test vaccination with a single strain')
-    sc.heading('Setting up...')
 
     pars = sc.mergedicts(base_pars, {
         'beta': 0.015,
@@ -490,21 +489,21 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
-    # Run simplest possible test
-    test_simple(do_plot=do_plot)
+    # # Run simplest possible test
+    # test_simple(do_plot=do_plot)
 
-    # Run more complex single-sim tests
-    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # # Run more complex single-sim tests
+    # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Run Vaccine tests
-    sim4 = test_synthpops()
-    sim5 = test_vaccine_1strain()
+    # # Run Vaccine tests
+    # sim4 = test_synthpops()
+    # sim5 = test_vaccine_1strain()
 
     # Run multisim and scenario tests
-    scens0 = test_vaccine_1strain_scen()
+    # scens0 = test_vaccine_1strain_scen()
     scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
     scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
     msim0 = test_msim()

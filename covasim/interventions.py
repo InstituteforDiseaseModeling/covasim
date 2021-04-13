@@ -272,6 +272,10 @@ class Intervention:
         f1 = inspect.getouterframes(f0) # The list of outer frames
         parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
         _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
+        print('DEBUG')
+        print(f0)
+        print(f1)
+        print(values)
         if values:
             self.input_args = {}
             for key,value in values.items():
