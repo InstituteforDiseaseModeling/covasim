@@ -31,7 +31,7 @@ This version introduces fully featured vaccines, variants, and immunity. **Note:
 Highlights
 ^^^^^^^^^^
 - **Model structure**: The model now follows an "SEIS"-type structure, instead of the previous "SEIR" structure. This means that after recovering from an infection, agents return to the "susceptible" compartment. Each agent in the simulation has properties ``sus_imm``, ``trans_imm`` and ``prog_imm``, which respectively determine their immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19. All these immunity levels are initially zero. They can be boosted by either natural infection or vaccination, and thereafter they can wane over time or remain permanently elevated. 
-- **Multi-strain modeling**: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g. ``b117 = cv.Strain('b117', days=1, n_imports=20)`` followed by ``sim = cv.Sim(strains=b117)`` to import strain B117. Further examples are contained in ``devtests/test_variants.py``.
+- **Multi-strain modeling**: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g. ``b117 = cv.strain('b117', days=1, n_imports=20)`` followed by ``sim = cv.Sim(strains=b117)`` to import strain B117. Further examples are contained in ``tests/test_immunity.py`` and in Tutorial 8.
 - **New methods for vaccine modeling**: A new ``cv.vaccinate()`` intervention has been added, which allows more flexible modeling of vaccinations. Vaccines, like natural infections, are assumed to boost agents' immunity.
 - **Consistency**: By default, results from Covasim 3.0.0 should exactly match Covasim 2.1.2. To use the new features, you will need to manually specify ``cv.Sim(use_waning=True)``.
 
@@ -63,7 +63,7 @@ Changes to results
 
 New functions, methods and classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- The newly-added file ``immunity.py`` contains functions, methods, and classes related to calculating immunity. This includes the ``Strain`` class, the ``Vaccine`` class. 
+- The newly-added file ``immunity.py`` contains functions, methods, and classes related to calculating immunity. This includes the ``strain`` class (which uses lowercase convention like Covasim interventions, which are also technically classes).
 - A new ``cv.vaccinate()`` intervention has been added. Compared to the previous ``vaccine`` intervention (now renamed ``cv.simple_vaccine()``), this new intervention allows vaccination to boost agents' immunity against infection, transmission, and progression.
 - A new function ``cv.demo()`` has been added as a shortcut to ``cv.Sim().run().plot()``.
 - There is a new ``sim.people.make_nonnaive()`` method, as the opposite of ``sim.people.make_naive()``.
