@@ -10,9 +10,9 @@ from . import parameters as cvpar
 from . import interventions as cvi
 
 
-# %% Define strain class
+# %% Define strain class -- all other functions are for internal use only
 
-__all__ = ['strain', 'Vaccine']
+__all__ = ['strain']
 
 
 class strain(sc.prettyobj):
@@ -132,90 +132,18 @@ class strain(sc.prettyobj):
         return
 
 
-class Vaccine(sc.prettyobj):
-    '''
-    Add a new vaccine to the sim (called by interventions.py vaccinate()
-
-    stores number of doses for vaccine and a dictionary to pass to init_immunity for each dose
-
-    Args:
-        vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
-        label (str): if supplying a dictionary, a label for the vaccine must be supplied
-
-    **Example**::
-
-        moderna    = cv.Vaccine('moderna') # Create Moderna vaccine
-        pfizer     = cv.Vaccine('pfizer) # Create Pfizer vaccine
-        j&j        = cv.Vaccine('jj') # Create J&J vaccine
-        az         = cv.Vaccine('az) # Create AstraZeneca vaccine
-        interventions += [cv.vaccinate(vaccines=[moderna, pfizer, j&j, az], days=[1, 10, 10, 30])] # Add them all to the sim
-        sim = cv.Sim(interventions=interventions)
-    '''
-
-    def __init__(self, vaccine=None, label=None):
-        self.label = label
-        # self.rel_imm = None # list of length n_strains with relative immunity factor
-        # self.doses = None
-        # self.interval = None
-        # self.nab_init = None
-        # self.nab_boost = None
-        # self.nab_eff = {'sus': {'slope': 2.5, 'n_50': 0.55}} # Parameters to map nabs to efficacy
-        self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
-        self.parse_vaccine_pars(vaccine=vaccine)
-        # for par, val in self.vaccine_pars.items():
-        #     setattr(self, par, val)
-        return
 
 
-    def parse_vaccine_pars(self, vaccine=None):
-        ''' Unpack vaccine information, which may be given in different ways'''
-
-        # Option 1: vaccines can be chosen from a list of pre-defined strains
-        if isinstance(vaccine, str):
-
-            choices, mapping = cvpar.get_vaccine_choices()
-            strain_pars = cvpar.get_vaccine_strain_pars()
-            dose_pars = cvpar.get_vaccine_dose_pars()
-            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
-
-            normvacc = vaccine.lower()
-            for txt in ['.', ' ', '&', '-', 'vaccine']:
-                normvacc = normvacc.replace(txt, '')
-
-            if normvacc in mapping:
-                normvacc = mapping[normvacc]
-                vaccine_pars = sc.mergedicts(strain_pars[normvacc], dose_pars[normvacc])
-            else: # pragma: no cover
-                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
-                raise NotImplementedError(errormsg)
-
-            if self.label is None:
-                self.label = normvacc
-
-        # Option 2: strains can be specified as a dict of pars
-        elif isinstance(vaccine, dict):
-            vaccine_pars = vaccine
-            if self.label is None:
-                self.label = 'Custom vaccine'
-
-        else: # pragma: no cover
-            errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
-            raise ValueError(errormsg)
-
-        self.p = sc.objdict(vaccine_pars)
-        return
-
-
-#%% nab methods
+#%% Neutralizing antibody methods
 
 def init_nab(people, inds, prior_inf=True, vacc_info=None):
     '''
-    Draws an initial nab level for individuals.
+    Draws an initial neutralizing antibody (NAb) level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
-    1) a natural infection. If individual has no existing nab, draw from distribution
-    depending upon symptoms. If individual has existing nab, multiply booster impact
-    2) Vaccination. If individual has no existing nab, draw from distribution
-    depending upon vaccine source. If individual has existing nab, multiply booster impact
+    1) a natural infection. If individual has no existing NAb, draw from distribution
+    depending upon symptoms. If individual has existing NAb, multiply booster impact
+    2) Vaccination. If individual has no existing NAb, draw from distribution
+    depending upon vaccine source. If individual has existing NAb, multiply booster impact
     '''
 
     if vacc_info is None:
@@ -223,31 +151,29 @@ def init_nab(people, inds, prior_inf=True, vacc_info=None):
         vacc_info = cvpar.get_vaccine_dose_pars()['default']
 
     nab_arrays = people.nab[inds]
-    prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior nabs
-    no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior nabs
-
-    # prior_nab = people.nab[prior_nab_inds] # Array of nab levels on this timestep for people with some nabs
+    prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior NAb
+    no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
     peak_nab = people.init_nab[prior_nab_inds]
 
-    # nabs from infection
+    # NAb from infection
     if prior_inf:
         nab_boost = people.pars['nab_boost']  # Boosting factor for natural infection
-        # 1) No prior nab: draw nab from a distribution and compute
+        # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**people.pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
             people.init_nab[no_prior_nab_inds] = no_prior_nab
 
-        # 2) Prior nab: multiply existing nab by boost factor
+        # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
             init_nab = peak_nab * nab_boost
             people.init_nab[prior_nab_inds] = init_nab
 
-    # nabs from a vaccine
+    # NAb from a vaccine
     else:
         nab_boost = vacc_info['nab_boost']  # Boosting factor for vaccination
-        # 1) No prior nab: draw nab from a distribution and compute
+        # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**vacc_info['nab_init'], size=len(no_prior_nab_inds))
             people.init_nab[no_prior_nab_inds] = 2**init_nab
@@ -261,7 +187,7 @@ def init_nab(people, inds, prior_inf=True, vacc_info=None):
 
 
 def check_nab(t, people, inds=None):
-    ''' Determines current nabs based on date since recovered/vaccinated.'''
+    ''' Determines current NAb based on date since recovered/vaccinated.'''
 
     # Indices of people who've had some nab event
     rec_inds = cvu.defined(people.date_recovered[inds])
@@ -274,7 +200,7 @@ def check_nab(t, people, inds=None):
     t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
-    # Set current nabs
+    # Set current NAb
     people.nab[inds] = people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
 
     return
@@ -282,15 +208,15 @@ def check_nab(t, people, inds=None):
 
 def nab_to_efficacy(nab, ax, function_args):
     '''
-    Convert nab levels to immunity protection factors, using the functional form
+    Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
 
     Args:
-        nab (arr): an array of nab levels
+        nab (arr): an array of NAb levels
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
 
     Returns:
-        an array the same size as nab, containing the immunity protection factors for the specified axis
+        an array the same size as NAb, containing the immunity protection factors for the specified axis
      '''
 
     if ax not in ['sus', 'symp', 'sev']:
@@ -346,7 +272,7 @@ def init_immunity(sim, create=False):
                         immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
         sim['immunity'] = immunity
 
-    # Next, precompute the nab kinetics and store these for access during the sim
+    # Next, precompute the NAb kinetics and store these for access during the sim
     sim['nab_kin'] = precompute_waning(length=sim['n_days'], pars=sim['nab_decay'])
 
     return
@@ -373,7 +299,7 @@ def check_immunity(people, strain, sus=True, inds=None, vacc_info=None):
     was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
-    immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to nab level before computing efficacy
+    immunity = people.pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff_pars = people.pars['nab_eff']
 
     # If vaccines are present, extract relevant information about them
