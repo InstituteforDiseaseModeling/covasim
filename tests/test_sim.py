@@ -1,5 +1,5 @@
 '''
-Simple example usage for the Covid-19 agent-based model
+Tests for single simulations
 '''
 
 #%% Imports and settings

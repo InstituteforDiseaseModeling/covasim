@@ -1,5 +1,5 @@
 '''
-Test run options (multisims and scenarios)
+Tests for run options (multisims and scenarios)
 '''
 
 #%% Imports and settings

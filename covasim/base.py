@@ -123,6 +123,7 @@ class Result(object):
         npts (int): if values is None, precreate it to be of this length
         scale (bool): whether or not the value scales by population scale factor
         color (str/arr): default color for plotting (hex or RGB notation)
+        n_strains (int): the number of strains the result is for (0 for results not by strain)
 
     **Example**::
 
@@ -132,15 +133,21 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None):
+    def __init__(self, name=None, npts=None, scale=True, color=None, n_strains=0):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
-            color = cvd.get_colors()['default']
+            color = cvd.get_default_colors()['default']
         self.color = color # Default color
         if npts is None:
             npts = 0
-        self.values = np.array(np.zeros(int(npts)), dtype=cvd.result_float)
+        npts = int(npts)
+
+        if n_strains>0:
+            self.values = np.zeros((n_strains, npts), dtype=cvd.result_float)
+        else:
+            self.values = np.zeros(npts, dtype=cvd.result_float)
+
         self.low    = None
         self.high   = None
         return
@@ -238,13 +245,29 @@ class BaseSim(ParsObj):
 
     def update_pars(self, pars=None, create=False, **kwargs):
         ''' Ensure that metaparameters get used properly before being updated '''
+
+        # Merge everything together
         pars = sc.mergedicts(pars, kwargs)
         if pars:
+
+            # Define aliases
+            mapping = dict(
+                n_agents = 'pop_size',
+                init_infected = 'pop_infected',
+            )
+            for key1,key2 in mapping.items():
+                if key1 in pars:
+                    pars[key2] = pars.pop(key1)
+
+            # Handle other special parameters
             if pars.get('pop_type'):
                 cvpar.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
+
+            # Call update_pars() for ParsObj
+            super().update_pars(pars=pars, create=create)
+
         return
 
 
@@ -386,9 +409,23 @@ class BaseSim(ParsObj):
         return dates
 
 
-    def result_keys(self):
-        ''' Get the actual results objects, not other things stored in sim.results '''
-        keys = [key for key in self.results.keys() if isinstance(self.results[key], Result)]
+    def result_keys(self, which='main'):
+        '''
+        Get the actual results objects, not other things stored in sim.results.
+
+        If which is 'main', return only the main results keys. If 'strain', return
+        only strain keys. If 'all', return all keys.
+
+        '''
+        keys = []
+        choices = ['main', 'strain', 'all']
+        if which in ['main', 'all']:
+            keys += [key for key,res in self.results.items() if isinstance(res, Result)]
+        if which in ['strain', 'all'] and 'strain' in self.results:
+            keys += [key for key,res in self.results['strain'].items() if isinstance(res, Result)]
+        if which not in choices: # pragma: no cover
+            errormsg = f'Choice "which" not available; choices are: {sc.strjoin(choices)}'
+            raise ValueError(errormsg)
         return keys
 
 
@@ -526,23 +563,28 @@ class BaseSim(ParsObj):
         return output
 
 
-    def to_excel(self, filename=None):
+    def to_excel(self, filename=None, skip_pars=None):
         '''
-        Export results as XLSX
+        Export parameters and results as Excel format
 
         Args:
-            filename (str): if None, return string; else, write to file
+            filename  (str): if None, return string; else, write to file
+            skip_pars (list): if provided, a custom list parameters to exclude
 
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
 
         '''
+        if skip_pars is None:
+            skip_pars = ['strain_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
+
         resdict = self.export_results(for_json=False)
         result_df = pd.DataFrame.from_dict(resdict)
         result_df.index = self.datevec
         result_df.index.name = 'date'
 
-        par_df = pd.DataFrame.from_dict(sc.flattendict(self.pars, sep='_'), orient='index', columns=['Value'])
+        pars = {k:v for k,v in self.pars.items() if k not in skip_pars}
+        par_df = pd.DataFrame.from_dict(sc.flattendict(pars, sep='_'), orient='index', columns=['Value'])
         par_df.index.name = 'Parameter'
 
         spreadsheet = sc.Spreadsheet()
@@ -828,8 +870,17 @@ class BasePeople(FlexPretty):
     def __add__(self, people2):
         ''' Combine two people arrays '''
         newpeople = sc.dcp(self)
-        for key in self.keys():
-            newpeople.set(key, np.concatenate([newpeople[key], people2[key]]), die=False) # Allow size mismatch
+        keys = list(self.keys())
+        for key in keys:
+            npval = newpeople[key]
+            p2val = people2[key]
+            if npval.ndim == 1:
+                newpeople.set(key, np.concatenate([npval, p2val], axis=0), die=False) # Allow size mismatch
+            elif npval.ndim == 2:
+                newpeople.set(key, np.concatenate([npval, p2val], axis=1), die=False)
+            else:
+                errormsg = f'Not sure how to combine arrays of {npval.ndim} dimensions for {key}'
+                raise NotImplementedError(errormsg)
 
         # Validate
         newpeople.pop_size += people2.pop_size
@@ -906,6 +957,10 @@ class BasePeople(FlexPretty):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
 
+    def count_by_strain(self, key, strain):
+        ''' Count the number of people for a given key '''
+        return (self[key][strain,:]>0).sum()
+
 
     def count_not(self, key):
         ''' Count the number of people who do not have a property for a given key '''
@@ -976,6 +1031,9 @@ class BasePeople(FlexPretty):
         expected_len = len(self)
         for key in self.keys():
             actual_len = len(self[key])
+            # check if it's 2d
+            if self[key].ndim > 1:
+                actual_len = len(self[key][0])
             if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
@@ -1026,7 +1084,15 @@ class BasePeople(FlexPretty):
         ''' Method to create person from the people '''
         p = Person()
         for key in self.meta.all_states:
-            setattr(p, key, self[key][ind])
+            data = self[key]
+            if data.ndim == 1:
+                val = data[ind]
+            elif data.ndim == 2:
+                val = data[:,ind]
+            else:
+                errormsg = f'Cannot extract data from {key}: unexpected dimensionality ({data.ndim})'
+                raise ValueError(errormsg)
+            setattr(p, key, val)
 
         contacts = {}
         for lkey, layer in self.contacts.items():

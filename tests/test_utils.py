@@ -1,5 +1,5 @@
 '''
-Tests of the utilies for the model.
+Tests of the numerical utilities for the model.
 '''
 
 #%% Imports and settings
@@ -198,9 +198,39 @@ def test_choose_w():
     return x1
 
 
+def test_indexing():
+
+    # Definitions
+    farr = np.array([1.5,0,0,1,1,0]) # Float array
+    barr = np.array(farr, dtype=bool) # Boolean array
+    darr = np.array([0,np.nan,1,np.nan,0,np.nan]) # Defined/undefined array
+    inds = np.array([0,10,20,30,40,50]) # Indices
+    inds2 = np.array([1,2,3,4]) # Skip first and last index
+
+    # Test true, false, defined, and undefined
+    assert cv.true(farr).tolist()      == [0,3,4]
+    assert cv.false(farr).tolist()     == [1,2,5]
+    assert cv.defined(darr).tolist()   == [0,2,4]
+    assert cv.undefined(darr).tolist() == [1,3,5]
+
+    # Test with indexing
+    assert cv.itrue(barr, inds).tolist()      == [0,30,40]
+    assert cv.ifalse(barr, inds).tolist()     == [10,20,50]
+    assert cv.idefined(darr, inds).tolist()   == [0,20,40]
+    assert cv.iundefined(darr, inds).tolist() == [10,30,50]
+
+    # Test with double indexing
+    assert cv.itruei(barr, inds2).tolist()      == [3,4]
+    assert cv.ifalsei(barr, inds2).tolist()     == [1,2]
+    assert cv.idefinedi(darr, inds2).tolist()   == [2,4]
+    assert cv.iundefinedi(darr, inds2).tolist() == [1,3]
+
+    return
+
+
 def test_doubling_time():
 
-    sim = cv.Sim()
+    sim = cv.Sim(pop_size=1000)
     sim.run(verbose=0)
 
     d = sc.objdict()
@@ -231,6 +261,7 @@ if __name__ == '__main__':
     samples = test_samples(do_plot=do_plot)
     people1 = test_choose()
     people2 = test_choose_w()
+    inds    = test_indexing()
     dt      = test_doubling_time()
 
     print('\n'*2)

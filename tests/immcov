@@ -2,7 +2,7 @@
 # Note that although the script runs when parallelized, the coverage results are wrong.
 
 echo 'Running tests...'
-pytest -v test_*.py --cov-config=.coveragerc --cov=../covasim --workers auto --durations=0
+pytest -v test_immunity.py --cov-config=.coveragerc --cov=../covasim --durations=0
 
 echo 'Creating HTML report...'
 coverage html

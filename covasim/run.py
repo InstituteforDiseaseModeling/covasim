@@ -240,27 +240,36 @@ class MultiSim(cvb.FlexPretty):
 
         # Perform the statistics
         raw = {}
-        reskeys = reduced_sim.result_keys()
-        for reskey in reskeys:
+        mainkeys = reduced_sim.result_keys('main')
+        strainkeys = reduced_sim.result_keys('strain')
+        for reskey in mainkeys:
             raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
-                if len(vals) != reduced_sim.npts:
-                    errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
-                    raise ValueError(errormsg)
-                raw[reskey][:,s] = vals
+                raw[reskey][:, s] = vals
+        for reskey in strainkeys:
+            raw[reskey] = np.zeros((reduced_sim['n_strains'], reduced_sim.npts, len(self.sims)))
+            for s,sim in enumerate(self.sims):
+                vals = sim.results['strain'][reskey].values
+                raw[reskey][:, :, s] = vals
 
-        for reskey in reskeys:
-            if use_mean:
-                r_mean = np.mean(raw[reskey], axis=1)
-                r_std = np.std(raw[reskey], axis=1)
-                reduced_sim.results[reskey].values[:] = r_mean
-                reduced_sim.results[reskey].low       = r_mean - bounds*r_std
-                reduced_sim.results[reskey].high      = r_mean + bounds*r_std
+        for reskey in mainkeys + strainkeys:
+            if reskey in mainkeys:
+                axis = 1
+                results = reduced_sim.results
             else:
-                reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1)
-                reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-                reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+                axis = 2
+                results = reduced_sim.results['strain']
+            if use_mean:
+                r_mean = np.mean(raw[reskey], axis=axis)
+                r_std = np.std(raw[reskey], axis=axis)
+                results[reskey].values[:] = r_mean
+                results[reskey].low = r_mean - bounds * r_std
+                results[reskey].high = r_mean + bounds * r_std
+            else:
+                results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=axis)
+                results[reskey].low = np.quantile(raw[reskey], q=quantiles['low'], axis=axis)
+                results[reskey].high = np.quantile(raw[reskey], q=quantiles['high'], axis=axis)
 
         # Compute and store final results
         reduced_sim.compute_summary()
@@ -413,7 +422,7 @@ class MultiSim(cvb.FlexPretty):
         other options.
 
         Args:
-            to_plot      (list) : list or dict of which results to plot; see cv.get_sim_plots() for structure
+            to_plot      (list) : list or dict of which results to plot; see cv.get_default_plots() for structure
             inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
             plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
             color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
@@ -466,10 +475,8 @@ class MultiSim(cvb.FlexPretty):
 
             # Handle what to plot
             if to_plot is None:
-                if color_by_sim:
-                    to_plot = cvd.get_scen_plots()
-                else:
-                    to_plot = cvd.get_sim_plots()
+                kind = 'scens' if color_by_sim else 'sim'
+                to_plot = cvd.get_default_plots(kind=kind)
 
             # Handle colors
             if colors is None:
@@ -865,21 +872,25 @@ class Scenarios(cvb.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        self.metapars = sc.mergedicts({}, metapars)
+        self.metapars = sc.dcp(sc.mergedicts(metapars))
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvs.Sim()
-        self.base_sim = sim
-        self.basepars = sc.mergedicts({}, basepars)
+        self.base_sim = sc.dcp(sim)
+        self.basepars = sc.dcp(sc.mergedicts(basepars))
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
-        self.base_sim.init_results()
+        if not self.base_sim.initialized:
+            self.base_sim.init_strains()
+            self.base_sim.init_immunity()
+            self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
+        self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
@@ -893,10 +904,10 @@ class Scenarios(cvb.ParsObj):
         return
 
 
-    def result_keys(self):
+    def result_keys(self, which='all'):
         ''' Attempt to retrieve the results keys from the base sim '''
         try:
-            keys = self.base_sim.result_keys()
+            keys = self.base_sim.result_keys(which=which)
         except Exception as E:
             errormsg = f'Could not retrieve result keys since base sim not accessible: {str(E)}'
             raise ValueError(errormsg)
@@ -927,7 +938,8 @@ class Scenarios(cvb.ParsObj):
                 print(string)
             return
 
-        reskeys = self.result_keys() # Shorten since used extensively
+        mainkeys   = self.result_keys('main')
+        strainkeys = self.result_keys('strain')
 
         # Loop over scenarios
         for scenkey,scen in self.scenarios.items():
@@ -940,11 +952,18 @@ class Scenarios(cvb.ParsObj):
                 raise ValueError(errormsg)
 
             # Create and run the simulations
-
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            scen_sim.update_pars(scenpars)
+
+            scen_sim.update_pars(scenpars)  # Update the parameters, if provided
+            scen_sim.validate_pars()
+            if 'strains' in scenpars: # Process strains
+                scen_sim.init_strains()
+                scen_sim.init_immunity(create=True)
+            elif 'imm_pars' in scenpars: # Process immunity
+                scen_sim.init_immunity(create=True) # TODO: refactor
+
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
@@ -955,23 +974,28 @@ class Scenarios(cvb.ParsObj):
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-
+            ns = scen_sims[0]['n_strains'] # Get number of strains
             scenraw = {}
-            for reskey in reskeys:
+            for reskey in mainkeys:
                 scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
+            for reskey in strainkeys:
+                scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
+                for s,sim in enumerate(scen_sims):
+                    scenraw[reskey][:,:,s] = sim.results['strain'][reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
             scenres.low = {}
             scenres.high = {}
-            for reskey in reskeys:
-                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+            for reskey in mainkeys + strainkeys:
+                axis = 1 if reskey in mainkeys else 2
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
-            for reskey in reskeys:
+            for reskey in mainkeys + strainkeys:
                 self.results[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
                     self.results[reskey][scenkey][blh] = scenres[blh][reskey]
@@ -1014,12 +1038,19 @@ class Scenarios(cvb.ParsObj):
 
         # Compute dataframe
         x = defaultdict(dict)
+        strainkeys = self.result_keys('strain')
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
-                val = self.results[reskey][scenkey].best[day]
-                if reskey not in ['r_eff', 'doubling_time']:
-                    val = int(val)
-                x[scenkey][reskey] = val
+                if reskey in strainkeys:
+                    for strain in range(self.base_sim['n_strains']):
+                        val = self.results[reskey][scenkey].best[strain, day] # Only prints results for infections by first strain
+                        strainkey = reskey + str(strain) # Add strain number to the summary output
+                        x[scenkey][strainkey] = int(val)
+                else:
+                    val = self.results[reskey][scenkey].best[day]
+                    if reskey not in ['r_eff', 'doubling_time']:
+                        val = int(val)
+                    x[scenkey][reskey] = val
         df = pd.DataFrame.from_dict(x).astype(object)
 
         if not output:
@@ -1089,7 +1120,7 @@ class Scenarios(cvb.ParsObj):
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            for key in self.result_keys():
+            for key in self.result_keys('main'): # Multidimensional strain keys can't be exported
                 result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
                 result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()

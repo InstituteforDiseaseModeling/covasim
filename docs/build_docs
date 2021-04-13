@@ -1,23 +1,42 @@
 #!/bin/bash
 #
-# To rebuild notebooks, type
-#  ./build_docs auto
+# To run in debug mode (serial), type
+#  ./build_docs debug
 #
-# Otherwise, Jupyter notebooks will not be rebuilt.
+# To not rebuild notebooks, type
+#  ./build_docs never
+#
+# Otherwise, Jupyter notebooks will be rebuilt in parallel.
 
-start=$SECONDS
-export NBSPHINX_EXECUTE=$1
 
 echo 'Building docs...'
+start=$SECONDS
 make clean # Delete
-make html # Actually make
-duration=$(( SECONDS - start ))
+
+
+# Handle notebook build options
+if [[ "$*" == *"never"* ]]; then
+    export NBSPHINX_EXECUTE=never
+else
+    export NBSPHINX_EXECUTE=auto
+fi
+
+
+# Handle notebook build options
+if [[ "$*" == *"debug"* ]]; then
+    make debug # Actually make
+else
+    make html # Actually make
+fi
+
 
 echo 'Cleaning up tutorial files...'
 cd tutorials
 ./clean_outputs
 cd ..
 
+
+duration=$(( SECONDS - start ))
 echo "Docs built after $duration seconds."
 echo "Index:"
 echo "`pwd`/_build/html/index.html"

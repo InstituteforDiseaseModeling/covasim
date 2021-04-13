@@ -1,5 +1,5 @@
 '''
-Execute analysis tools in order to broadly cover basic functionality of analysis.py
+Tests for the analyzers and other analysis tools.
 '''
 
 import numpy as np
@@ -51,7 +51,7 @@ def test_age_hist():
     agehist.compute_windows()
     agehist.get() # Not used, but check get
     agehist.get(day_list[1])
-    assert len(age_analyzer.window_hists) == len(day_list), "Number of histograms should equal number of days"
+    assert len(agehist.window_hists) == len(day_list), "Number of histograms should equal number of days"
 
     # Check plot()
     if do_plot:
@@ -62,7 +62,6 @@ def test_age_hist():
     daily_age = cv.daily_age_stats()
     sim = cv.Sim(pars, analyzers=daily_age)
     sim.run()
-
 
     return agehist
 
@@ -80,8 +79,8 @@ def test_daily_age():
 
 def test_daily_stats():
     sc.heading('Testing daily stats analyzer')
-    ds = cv.daily_stats(days=['2020-04-04', '2020-04-14'], save_inds=True)
-    sim = cv.Sim(pars, analyzers=ds)
+    ds = cv.daily_stats(days=['2020-04-04'], save_inds=True)
+    sim = cv.Sim(pars, n_days=40, analyzers=ds)
     sim.run()
     daily = sim.get_analyzer()
     if do_plot:

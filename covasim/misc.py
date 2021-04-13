@@ -23,7 +23,7 @@ date_range = sc.daterange
 
 #%% Loading/saving functions
 
-__all__ += ['load_data', 'load', 'save', 'migrate', 'savefig']
+__all__ += ['load_data', 'load', 'save', 'savefig']
 
 
 def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
@@ -154,6 +154,59 @@ def save(*args, **kwargs):
     return filepath
 
 
+def savefig(filename=None, comments=None, **kwargs):
+    '''
+    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
+    metadata in the figure. By default, saves (git) information from both the Covasim
+    version and the calling function. Additional comments can be added to the saved
+    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
+    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
+
+    Args:
+        filename (str): name of the file to save to (default, timestamp)
+        comments (str): additional metadata to save to the figure
+        kwargs (dict): passed to savefig()
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        filename = cv.savefig()
+    '''
+
+    # Handle inputs
+    dpi = kwargs.pop('dpi', 150)
+    metadata = kwargs.pop('metadata', {})
+
+    if filename is None: # pragma: no cover
+        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+        filename = f'covasim_{now}.png'
+
+    metadata = {}
+    metadata['Covasim version'] = cvv.__version__
+    gitinfo = git_info()
+    for key,value in gitinfo['covasim'].items():
+        metadata[f'Covasim {key}'] = value
+    for key,value in gitinfo['called_by'].items():
+        metadata[f'Covasim caller {key}'] = value
+    metadata['Covasim current time'] = sc.getdate()
+    metadata['Covasim calling file'] = sc.getcaller()
+    if comments:
+        metadata['Covasim comments'] = comments
+
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
+    # Save the figure
+    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+    return filename
+
+
+#%% Migration functions
+
+__all__ += ['migrate']
+
 def migrate_lognormal(pars, revert=False, verbose=True):
     '''
     Small helper function to automatically migrate the standard deviation of lognormal
@@ -188,6 +241,17 @@ def migrate_lognormal(pars, revert=False, verbose=True):
     else:
         pars.pop('migrated_lognormal', None)
 
+    return
+
+
+def migrate_strains(pars, verbose=True):
+    '''
+    Small helper function to add necessary strain parameters.
+    '''
+    pars['use_waning'] = False
+    pars['n_strains'] = 1
+    pars['n_strains'] = 1
+    pars['strains'] = []
     return
 
 
@@ -244,11 +308,18 @@ def migrate(obj, update=True, verbose=True, die=False):
                     pass
 
         # Migration from <2.1.0 to 2.1.0
-        if sc.compareversions(sim.version, '2.1.0') == -1: # Migrate from <2.0 to 2.0
+        if sc.compareversions(sim.version, '2.1.0') == -1:
             if verbose:
                 print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                 print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
             migrate_lognormal(sim.pars, verbose=verbose)
+
+        # Migration from <3.0.0 to 3.0.0
+        if sc.compareversions(sim.version, '3.0.0') == -1:
+            if verbose:
+                print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+                print('Adding strain parameters')
+            migrate_strains(sim.pars, verbose=verbose)
 
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover
@@ -293,55 +364,6 @@ def migrate(obj, update=True, verbose=True, die=False):
         obj.version = cvv.__version__
 
     return obj
-
-
-def savefig(filename=None, comments=None, **kwargs):
-    '''
-    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-    metadata in the figure. By default, saves (git) information from both the Covasim
-    version and the calling function. Additional comments can be added to the saved
-    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
-    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
-
-    Args:
-        filename (str): name of the file to save to (default, timestamp)
-        comments (str): additional metadata to save to the figure
-        kwargs (dict): passed to savefig()
-
-    **Example**::
-
-        cv.Sim().run(do_plot=True)
-        filename = cv.savefig()
-    '''
-
-    # Handle inputs
-    dpi = kwargs.pop('dpi', 150)
-    metadata = kwargs.pop('metadata', {})
-
-    if filename is None: # pragma: no cover
-        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-        filename = f'covasim_{now}.png'
-
-    metadata = {}
-    metadata['Covasim version'] = cvv.__version__
-    gitinfo = git_info()
-    for key,value in gitinfo['covasim'].items():
-        metadata[f'Covasim {key}'] = value
-    for key,value in gitinfo['called_by'].items():
-        metadata[f'Covasim caller {key}'] = value
-    metadata['Covasim current time'] = sc.getdate()
-    metadata['Covasim calling file'] = sc.getcaller()
-    if comments:
-        metadata['Covasim comments'] = comments
-
-    # Handle different formats
-    lcfn = filename.lower() # Lowercase filename
-    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
-        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
-
-    # Save the figure
-    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
-    return filename
 
 
 
@@ -402,7 +424,7 @@ def git_info(filename=None, check=False, comments=None, old_info=None, die=False
             old_info = sc.loadjson(filename, **kwargs)
         string = ''
         old_cv_info = old_info['covasim'] if 'covasim' in old_info else old_info
-        if cv_info != old_cv_info:
+        if cv_info != old_cv_info: # pragma: no cover
             string = f'Git information differs: {cv_info} vs. {old_cv_info}'
             if die:
                 raise ValueError(string)
@@ -503,6 +525,7 @@ def get_version_pars(version, verbose=True):
         '1.5.0': [f'1.5.{i}' for i in range(4)] + [f'1.6.{i}' for i in range(2)] + [f'1.7.{i}' for i in range(7)],
         '2.0.0': [f'2.0.{i}' for i in range(5)] + ['2.1.0'],
         '2.1.1': [f'2.1.{i}' for i in range(1,3)],
+        '3.0.0': ['3.0.0'],
     }
 
     # Find and check the match
@@ -559,6 +582,7 @@ def get_png_metadata(filename, output=False):
         return
 
 
+
 #%% Simulation/statistics functions
 
 __all__ += ['get_doubling_time', 'poisson_test', 'compute_gof']
@@ -593,7 +617,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Validate inputs: interval
     if interval is not None:
-        if len(interval) != 2:
+        if len(interval) != 2: # pragma: no cover
             sc.printv(f"Interval should be a list/array/tuple of length 2, not {len(interval)}. Resetting to length of series.", 1, verbose)
             interval = [0,len(series)]
         start_day, end_day = interval[0], interval[1]
@@ -605,12 +629,12 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Deal with moving window
     if moving_window is not None:
-        if not sc.isnumber(moving_window):
+        if not sc.isnumber(moving_window): # pragma: no cover
             sc.printv("Moving window should be an integer; ignoring and calculating single result", 1, verbose)
             doubling_time = get_doubling_time(sim, series=series, start_day=start_day, end_day=end_day, moving_window=None, exp_approx=exp_approx)
 
         else:
-            if not isinstance(moving_window,int):
+            if not isinstance(moving_window,int): # pragma: no cover
                 sc.printv(f"Moving window should be an integer; recasting {moving_window} the nearest integer... ", 1, verbose)
                 moving_window = int(moving_window)
             if moving_window < 2:

@@ -11,6 +11,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
+from . import immunity as cvi
 
 
 __all__ = ['People']
@@ -45,10 +46,11 @@ class People(cvb.BasePeople):
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars     = pars # Equivalent to self.set_pars(pars)
-        self.pop_size = int(pars['pop_size'])
-        self.location = pars.get('location') # Try to get location, but set to None otherwise
-        self.version  = cvv.__version__ # Store version info
+        self.pars          = pars # Equivalent to self.set_pars(pars)
+        self.pop_size      = int(pars['pop_size'])
+        self.location      = pars.get('location') # Try to get location, but set to None otherwise
+        self.n_strains = pars.get('n_strains', 1) # Assume 1 strain if not supplied
+        self.version       = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -65,12 +67,24 @@ class People(cvb.BasePeople):
             else:
                 self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
 
-        # Set health states -- only susceptible is true by default -- booleans
+        # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
-            if key == 'susceptible':
-                self[key] = np.full(self.pop_size, True, dtype=bool)
-            else:
-                self[key] = np.full(self.pop_size, False, dtype=bool)
+            val = (key in ['susceptible', 'naive']) # Default value is True for susceptible and naive, false otherwise
+            self[key] = np.full(self.pop_size, val, dtype=bool)
+
+        # Set strain states, which store info about which strain a person is exposed to
+        for key in self.meta.strain_states:
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+        for key in self.meta.by_strain_states:
+            self[key] = np.full((self.n_strains, self.pop_size), False, dtype=bool)
+
+        # Set immunity and antibody states
+        for key in self.meta.imm_states:  # Everyone starts out with no immunity
+            self[key] = np.zeros((self.n_strains, self.pop_size), dtype=cvd.default_float)
+        for key in self.meta.nab_states:  # Everyone starts out with no antibodies
+            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+        for key in self.meta.vacc_states:
+            self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
@@ -81,7 +95,7 @@ class People(cvb.BasePeople):
         self._lock = strict # If strict is true, stop further keys from being set (does not affect attributes)
 
         # Store flows to be computed during simulation
-        self.flows = {key:0 for key in cvd.new_result_flows}
+        self.init_flows()
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
@@ -98,6 +112,16 @@ class People(cvb.BasePeople):
                 self[key] = value
 
         self._pending_quarantine = defaultdict(list)  # Internal cache to record people that need to be quarantined on each timestep {t:(person, quarantine_end_day)}
+
+        return
+
+
+    def init_flows(self):
+        ''' Initialize flows to be zero '''
+        self.flows = {key:0 for key in cvd.new_result_flows}
+        self.flows_strain = {}
+        for key in cvd.new_result_flows_by_strain:
+            self.flows_strain[key] = np.zeros(self.n_strains, dtype=cvd.default_float)
         return
 
 
@@ -116,8 +140,8 @@ class People(cvb.BasePeople):
         '''
 
         pars = self.pars # Shorten
-        if 'prognoses' not in pars:
-            errormsg = 'This people object does not have the required parameters ("prognoses"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
+        if 'prognoses' not in pars or 'rand_seed' not in pars:
+            errormsg = 'This people object does not have the required parameters ("prognoses" and "rand_seed"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
             raise sc.KeyNotFoundError(errormsg)
 
         def find_cutoff(age_cutoffs, age):
@@ -137,8 +161,8 @@ class People(cvb.BasePeople):
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
-        self.rel_sus[:]     = progs['sus_ORs'][inds] # Default susceptibilities
-        self.rel_trans[:]   = progs['trans_ORs'][inds]*cvu.sample(**self.pars['beta_dist'], size=len(inds)) # Default transmissibilities, with viral load drawn from a distribution
+        self.rel_sus[:]     = progs['sus_ORs'][inds]  # Default susceptibilities
+        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -151,15 +175,16 @@ class People(cvb.BasePeople):
         self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
-        self.flows  = {key:0 for key in cvd.new_result_flows}
+        self.init_flows()
         self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
         self.flows['new_symptomatic'] += self.check_symptomatic()
         self.flows['new_severe']      += self.check_severe()
         self.flows['new_critical']    += self.check_critical()
         self.flows['new_deaths']      += self.check_death()
-        self.flows['new_recoveries']  += self.check_recovery()
+        self.flows['new_recoveries']  += self.check_recovery() # TODO: check logic here
 
         return
+
 
     def update_states_post(self):
         ''' Perform post-timestep updates '''
@@ -197,6 +222,12 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
+        self.infectious_strain[inds] = self.exposed_strain[inds]
+        for strain in range(self.pars['n_strains']):
+            this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
+            n_this_strain_inds = len(this_strain_inds)
+            self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
+            self.infectious_by_strain[strain, this_strain_inds] = True
         return len(inds)
 
 
@@ -221,28 +252,66 @@ class People(cvb.BasePeople):
         return len(inds)
 
 
-    def check_recovery(self):
-        ''' Check for recovery '''
-        inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=self.is_exp)
-        self.exposed[inds]     = False
-        self.infectious[inds]  = False
-        self.symptomatic[inds] = False
-        self.severe[inds]      = False
-        self.critical[inds]    = False
-        self.recovered[inds]   = True
+    def check_recovery(self, inds=None, filter_inds='is_exp'):
+        '''
+        Check for recovery.
+
+        More complex than other functions to allow for recovery to be manually imposed
+        for a specified set of indices.
+        '''
+
+        # Handle more flexible options for setting indices
+        if filter_inds == 'is_exp':
+            filter_inds = self.is_exp
+        if inds is None:
+            inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=filter_inds)
+
+        # Now reset all disease states
+        self.exposed[inds]          = False
+        self.infectious[inds]       = False
+        self.symptomatic[inds]      = False
+        self.severe[inds]           = False
+        self.critical[inds]         = False
+        self.recovered[inds]        = True
+        self.recovered_strain[inds] = self.exposed_strain[inds]
+        self.infectious_strain[inds] = np.nan
+        self.exposed_strain[inds]    = np.nan
+        self.exposed_by_strain[:, inds] = False
+        self.infectious_by_strain[:, inds] = False
+
+        # Handle immunity aspects
+        if self.pars['use_waning']:
+
+            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
+            mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+            severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
+
+            # Reset additional states
+            self.susceptible[inds] = True
+            self.prior_symptoms[inds]        = self.pars['rel_imm']['asymp']
+            self.prior_symptoms[mild_inds]   = self.pars['rel_imm']['mild']
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
+            if len(inds):
+                cvi.init_nab(self, inds, prior_inf=True)
         return len(inds)
 
 
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
         inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
-        self.exposed[inds]     = False
-        self.infectious[inds]  = False
-        self.symptomatic[inds] = False
-        self.severe[inds]      = False
-        self.critical[inds]    = False
-        self.recovered[inds]   = False
-        self.dead[inds]        = True
+        self.susceptible[inds]   = False
+        self.exposed[inds]       = False
+        self.infectious[inds]    = False
+        self.symptomatic[inds]   = False
+        self.severe[inds]        = False
+        self.critical[inds]      = False
+        self.known_contact[inds] = False
+        self.quarantined[inds]   = False
+        self.recovered[inds]     = False
+        self.dead[inds]          = True
+        self.infectious_strain[inds] = np.nan
+        self.exposed_strain[inds]    = np.nan
+        self.recovered_strain[inds]  = np.nan
         return len(inds)
 
 
@@ -276,7 +345,7 @@ class People(cvb.BasePeople):
         for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here
+            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
@@ -291,23 +360,59 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
-    def make_susceptible(self, inds):
+    def make_naive(self, inds):
         '''
-        Make a set of people susceptible. This is used during dynamic resampling.
+        Make a set of people naive. This is used during dynamic resampling.
         '''
         for key in self.meta.states:
-            if key == 'susceptible':
+            if key in ['susceptible', 'naive']:
                 self[key][inds] = True
             else:
                 self[key][inds] = False
 
+        # Reset strain states
+        for key in self.meta.strain_states:
+            self[key][inds] = np.nan
+        for key in self.meta.by_strain_states:
+            self[key][:, inds] = False
+
+        # Reset immunity and antibody states
+        for key in self.meta.imm_states:
+            self[key][:, inds] = 0
+        for key in self.meta.nab_states:
+            self[key][inds] = np.nan
+        for key in self.meta.vacc_states:
+            self[key][inds] = 0
+
+        # Reset dates
         for key in self.meta.dates + self.meta.durs:
             self[key][inds] = np.nan
 
         return
 
 
-    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None):
+    def make_nonnaive(self, inds, set_recovered=False, date_recovered=0):
+        '''
+        Make a set of people non-naive.
+
+        This can be done either by setting only susceptible and naive states,
+        or else by setting them as if they have been infected and recovered.
+        '''
+        self.make_naive(inds) # First make them naive and reset all other states
+
+        # Make them non-naive
+        for key in ['susceptible', 'naive']:
+            self[key][inds] = False
+
+        if set_recovered:
+            self.date_recovered[inds] = date_recovered # Reset date recovered
+            self.check_recovered(inds=inds, filter_inds=None) # Set recovered
+
+        return
+
+
+
+    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0):
         '''
         Infect people and determine their eventual outcomes.
 
@@ -325,14 +430,14 @@ class People(cvb.BasePeople):
             icu_max  (bool):  whether or not there is an ICU bed available for this person
             source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
+            strain   (int):   the strain people are being infected by
 
         Returns:
             count (int): number of people infected
         '''
 
         # Remove duplicates
-        unique = np.unique(inds, return_index=True)[1]
-        inds = inds[unique]
+        inds, unique = np.unique(inds, return_index=True)
         if source is not None:
             source = source[unique]
 
@@ -342,14 +447,33 @@ class People(cvb.BasePeople):
         if source is not None:
             source = source[keep]
 
+        if self.pars['use_waning']:
+            cvi.check_immunity(self, strain, sus=False, inds=inds)
+
+        # Deal with strain parameters
+        strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
+        infect_pars = {k:self.pars[k] for k in strain_keys}
+        if strain:
+            strain_label = self.pars['strain_map'][strain]
+            for k in strain_keys:
+                infect_pars[k] *= self.pars['strain_pars'][strain_label][k]
+
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
-        # Set states
-        self.susceptible[inds]   = False
-        self.exposed[inds]       = True
-        self.date_exposed[inds]  = self.t
-        self.flows['new_infections'] += len(inds)
+        # Update states, strain info, and flows
+        self.susceptible[inds]    = False
+        self.naive[inds]          = False
+        self.recovered[inds]      = False
+        self.diagnosed[inds]      = False
+        self.exposed[inds]        = True
+        self.exposed_strain[inds] = strain
+        self.exposed_by_strain[strain, inds] = True
+        self.flows['new_infections']   += len(inds)
+        self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
+        self.flows_strain['new_infections_by_strain'][strain] += len(inds)
+        # print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
+        # self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -357,10 +481,15 @@ class People(cvb.BasePeople):
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        self.date_exposed[inds]   = self.t
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
+        # Reset all other dates
+        for key in ['date_symptomatic', 'date_severe', 'date_critical', 'date_diagnosed', 'date_recovered']:
+            self[key][inds] = np.nan
+
         # Use prognosis probabilities to determine what happens to them
-        symp_probs = self.pars['rel_symp_prob']*self.symp_prob[inds] # Calculate their actual probability of being symptomatic
+        symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[strain, inds]) # Calculate their actual probability of being symptomatic
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
@@ -374,7 +503,8 @@ class People(cvb.BasePeople):
         n_symp_inds = len(symp_inds)
         self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
-        sev_probs = self.pars['rel_severe_prob'] * self.severe_prob[symp_inds] # Probability of these people being severe
+        sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[strain, symp_inds]) # Probability of these people being severe
+        # print(self.sev_imm[strain, inds])
         is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
@@ -387,7 +517,7 @@ class People(cvb.BasePeople):
         # CASE 2.2: Severe cases: hospitalization required, may become critical
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
-        crit_probs = self.pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.)# Probability of these people becoming critical - higher if no beds available
+        crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) # Probability of these people becoming critical - higher if no beds available
         is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
@@ -400,7 +530,7 @@ class People(cvb.BasePeople):
         # CASE 2.2.2: Critical cases: ICU required, may die
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
-        death_probs = self.pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.) # Probability they'll die
+        death_probs = infect_pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.)# Probability they'll die
         is_dead = cvu.binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
@@ -414,6 +544,7 @@ class People(cvb.BasePeople):
         dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
+        self.date_recovered[dead_inds] = np.nan # If they did die, remove them from recovered
 
         return n_infections # For incrementing counters
 
@@ -462,7 +593,7 @@ class People(cvb.BasePeople):
         Args:
             inds (int): indices of who to quarantine, specified by check_quar()
             start_date (int): day to begin quarantine (defaults to the current day, `sim.t`)
-            period (int): quarantine duration (defaults to `pars['quar_period']`)
+            period (int): quarantine duration (defaults to ``pars['quar_period']``)
         '''
 
         start_date = self.t if start_date is None else int(start_date)
@@ -563,18 +694,18 @@ class People(cvb.BasePeople):
             events = []
 
             dates = {
-            'date_critical'       : 'became critically ill and needed ICU care',
-            'date_dead'           : 'died ☹',
-            'date_diagnosed'      : 'was diagnosed with COVID',
-            'date_end_quarantine' : 'ended quarantine',
-            'date_infectious'     : 'became infectious',
-            'date_known_contact'  : 'was notified they may have been exposed to COVID',
-            'date_pos_test'       : 'recieved their positive test result',
-            'date_quarantined'    : 'entered quarantine',
-            'date_recovered'      : 'recovered',
-            'date_severe'         : 'developed severe symptoms and needed hospitalization',
-            'date_symptomatic'    : 'became symptomatic',
-            'date_tested'         : 'was tested for COVID',
+                'date_critical'       : 'became critically ill and needed ICU care',
+                'date_dead'           : 'died ☹',
+                'date_diagnosed'      : 'was diagnosed with COVID',
+                'date_end_quarantine' : 'ended quarantine',
+                'date_infectious'     : 'became infectious',
+                'date_known_contact'  : 'was notified they may have been exposed to COVID',
+                'date_pos_test'       : 'recieved their positive test result',
+                'date_quarantined'    : 'entered quarantine',
+                'date_recovered'      : 'recovered',
+                'date_severe'         : 'developed severe symptoms and needed hospitalization',
+                'date_symptomatic'    : 'became symptomatic',
+                'date_tested'         : 'was tested for COVID',
             }
 
             for attribute, message in dates.items():
@@ -589,7 +720,7 @@ class People(cvb.BasePeople):
                     if lkey:
                         events.append((infection['date'], f'was infected with COVID by {infection["source"]} via the {llabel} layer'))
                     else:
-                        events.append((infection['date'], f'was infected with COVID as a seed infection'))
+                        events.append((infection['date'], 'was infected with COVID as a seed infection'))
 
                 if infection['source'] == uid:
                     x = len([a for a in self.infection_log if a['source'] == infection['target']])
@@ -601,3 +732,4 @@ class People(cvb.BasePeople):
             else:
                 print(f'Nothing happened to {uid} during the simulation.')
         return
+

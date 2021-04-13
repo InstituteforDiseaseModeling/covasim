@@ -6,8 +6,9 @@ import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
 from . import misc as cvm
+from . import defaults as cvd
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_strain_choices', 'get_vaccine_choices']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
@@ -43,24 +44,40 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
+    pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
     pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
     pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
+    pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
 
-    # Basic disease transmission
-    pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
-    pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer'] = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']  = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['n_imports']   = 0     # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['beta_dist']   = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']  = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    # Network parameters, generally initialized after the population has been constructed
+    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
+    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
+    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
 
-    # Efficacy of protection measures
-    pars['asymp_factor'] = 1.0 # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14  # Number of days to quarantine for; assumption based on standard policies
+    # Basic disease transmission parameters
+    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
+    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
+
+    # Parameters that control settings and defaults for multi-strain runs
+    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['n_strains'] = 1 # The number of strains circulating in the population
+
+    # Parameters used to calculate immunity
+    pars['use_waning']      = False # Whether to use dynamically calculated immunity
+    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
+    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+    pars['nab_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
+    pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
+    pars['rel_imm']         = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+
+    # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
+    pars['rel_beta']        = 1.0
+    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -84,6 +101,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
     pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
 
+    # Efficacy of protection measures
+    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
+    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
+    pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
+
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
@@ -95,6 +117,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
     pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
     pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+
+    # Handle vaccine and strain parameters
+    pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
+    pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
+    pars['strains']      = [] # Additional strains of the virus; populated by the user, see immunity.py
+    pars['strain_map']   = {0:'wild'} # Reverse mapping from number to strain key
+    pars['strain_pars']  = dict(wild={}) # Populated just below
+    for sp in cvd.strain_pars:
+        if sp in pars.keys():
+            pars['strain_pars']['wild'][sp] = pars[sp]
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
@@ -277,3 +309,229 @@ def absolute_prognoses(prognoses):
     out['crit_probs']   *= out['severe_probs'] # Absolute probability of critical symptoms
     out['death_probs']  *= out['crit_probs']   # Absolute probability of dying
     return out
+
+
+#%% Strain, vaccine, and immunity parameters and functions
+
+def get_strain_choices():
+    '''
+    Define valid pre-defined strain names
+    '''
+    # List of choices currently available: new ones can be added to the list along with their aliases
+    choices = {
+        'wild':  ['wild', 'default', 'pre-existing', 'original'],
+        'b117':  ['b117', 'uk', 'united kingdom'],
+        'b1351': ['b1351', 'sa', 'south africa'],
+        'p1':    ['p1', 'b11248', 'brazil'],
+    }
+    mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
+    return choices, mapping
+
+
+def get_vaccine_choices():
+    '''
+    Define valid pre-defined vaccine names
+    '''
+    # List of choices currently available: new ones can be added to the list along with their aliases
+    choices = {
+        'default': ['default', None],
+        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
+        'moderna': ['moderna'],
+        'az':      ['az', 'astrazeneca'],
+        'jj':      ['jj', 'jnj', 'johnson & johnson', 'janssen'],
+    }
+    mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
+    return choices, mapping
+
+
+def get_strain_pars(default=False):
+    '''
+    Define the default parameters for the different strains
+    '''
+    pars = dict(
+
+        wild = dict(
+            rel_imm         = 1.0,
+            rel_beta        = 1.0,
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 1.0,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
+        ),
+
+        b117 = dict(
+            rel_imm         = 1.0,
+            rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
+        ),
+
+        b1351 = dict(
+            rel_imm         = 0.25,
+            rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 1.4,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.4,
+        ),
+
+        p1 = dict(
+            rel_imm         = 0.5,
+            rel_beta        = 1.4,
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 1.4,
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 2.0,
+        )
+    )
+
+    if default:
+        return pars['wild']
+    else:
+        return pars
+
+
+def get_cross_immunity(default=False):
+    '''
+    Get the cross immunity between each strain and each other strain
+    '''
+    pars = dict(
+
+        wild = dict(
+            wild  = 1.0,
+            b117  = 0.5,
+            b1351 = 0.5,
+            p1    = 0.5,
+        ),
+
+        b117 = dict(
+            wild  = 0.5,
+            b117  = 1.0,
+            b1351 = 0.8,
+            p1    = 0.8,
+        ),
+
+        b1351 = dict(
+            wild  = 0.066,
+            b117  = 0.1,
+            b1351 = 1.0,
+            p1    = 0.1,
+        ),
+
+        p1 = dict(
+            wild  = 0.17,
+            b117  = 0.2,
+            b1351 = 0.2,
+            p1    = 1.0,
+        ),
+    )
+
+    if default:
+        return pars['wild']
+    else:
+        return pars
+
+
+def get_vaccine_strain_pars(default=False):
+    '''
+    Define the effectiveness of each vaccine against each strain
+    '''
+    pars = dict(
+
+        default = dict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1.0,
+            p1    = 1.0,
+        ),
+
+        pfizer = dict(
+            wild  = 1.0,
+            b117  = 1/2.0,
+            b1351 = 1/6.7,
+            p1    = 1/6.5,
+        ),
+
+        moderna = dict(
+            wild  = 1.0,
+            b117  = 1/1.8,
+            b1351 = 1/4.5,
+            p1    = 1/8.6,
+        ),
+
+        az = dict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1/2,
+            p1    = 1/2,
+        ),
+
+        jj = dict(
+            wild  = 1.0,
+            b117  = 1.0,
+            b1351 = 1/6.7,
+            p1    = 1/8.6,
+        ),
+    )
+
+    if default:
+        return pars['default']
+    else:
+        return pars
+
+
+def get_vaccine_dose_pars(default=False):
+    '''
+    Define the dosing regimen for each vaccine
+    '''
+    pars = dict(
+
+        default = dict(
+            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
+            doses     = 1,
+            interval  = None,
+        ),
+
+        pfizer = dict(
+            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
+            doses     = 2,
+            interval  = 21,
+        ),
+
+        moderna = dict(
+            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
+            doses     = 2,
+            interval  = 28,
+        ),
+
+        az = dict(
+            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
+            doses     = 2,
+            interval  = 21,
+        ),
+
+        jj = dict(
+            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
+            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_boost = 2,
+            doses     = 1,
+            interval  = None,
+        ),
+    )
+
+    if default:
+        return pars['default']
+    else:
+        return pars
+
+

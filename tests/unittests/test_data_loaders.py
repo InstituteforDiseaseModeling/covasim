@@ -19,4 +19,5 @@ class TestDataLoaders(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    unittest.TestCase.run = lambda self,*args,**kw: unittest.TestCase.debug(self)
     unittest.main()

@@ -1,5 +1,8 @@
 '''
-Numerical utilities for running Covasim
+Numerical utilities for running Covasim.
+
+These include the viral load, transmissibility, and infection calculations
+at the heart of the integration loop.
 '''
 
 #%% Housekeeping
@@ -76,14 +79,14 @@ def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time,
     return load
 
 
-@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat), cache=cache, parallel=safe_parallel)
-def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor): # pragma: no cover
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbfloat,    nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=cache, parallel=safe_parallel)
+def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, viral_load, symp,      diag,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
     ''' Calculate relative transmissibility and susceptibility '''
     f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor, changes e.g. [0,1] with a factor of 0.8 to [0.8,1.0]
     f_iso     = ~diag +  diag * iso_factor # Isolation factor, changes e.g. [0,1] with a factor of 0.2 to [1,0.2]
     f_quar    = ~quar +  quar * quar_factor # Quarantine, changes e.g. [0,1] with a factor of 0.5 to [1,0.5]
     rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso * beta_layer * viral_load # Recalculate transmissibility
-    rel_sus   = rel_sus   * sus * f_quar # Recalculate susceptibility
+    rel_sus   = rel_sus * sus * f_quar * (1-immunity_factors) # Recalculate susceptibility
     return rel_trans, rel_sus
 
 
@@ -127,6 +130,7 @@ def find_contacts(p1, p2, inds): # pragma: no cover
         if p2[i] in inds:
             pairing_partners.add(p1[i])
     return pairing_partners
+
 
 
 #%% Sampling and seed methods
@@ -216,6 +220,7 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         raise NotImplementedError(errormsg)
 
     return samples
+
 
 
 def get_pdf(dist=None, par1=None, par2=None):
@@ -466,9 +471,9 @@ def choose_w(probs, n, unique=True): # No performance gain from Numba
 
 #%% Simple array operations
 
-__all__ += ['true',   'false',   'defined', 'undefined',
-            'itrue',  'ifalse',  'idefined',
-            'itruei', 'ifalsei', 'idefinedi']
+__all__ += ['true',   'false',   'defined',   'undefined',
+            'itrue',  'ifalse',  'idefined',  'iundefined',
+            'itruei', 'ifalsei', 'idefinedi', 'iundefinedi']
 
 
 def true(arr):
@@ -481,7 +486,7 @@ def true(arr):
 
     **Example**::
 
-        inds = cv.true(np.array([1,0,0,1,1,0,1]))
+        inds = cv.true(np.array([1,0,0,1,1,0,1])) # Returns array([0, 3, 4, 6])
     '''
     return arr.nonzero()[0]
 
@@ -497,7 +502,7 @@ def false(arr):
 
         inds = cv.false(np.array([1,0,0,1,1,0,1]))
     '''
-    return (~arr).nonzero()[0]
+    return np.logical_not(arr).nonzero()[0]
 
 
 def defined(arr):
@@ -555,7 +560,7 @@ def ifalse(arr, inds):
 
         inds = cv.ifalse(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
     '''
-    return inds[~arr]
+    return inds[np.logical_not(arr)]
 
 
 def idefined(arr, inds):
@@ -571,6 +576,22 @@ def idefined(arr, inds):
         inds = cv.idefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
     '''
     return inds[~np.isnan(arr)]
+
+
+def iundefined(arr, inds):
+    '''
+    Returns the indices that are undefined in the array -- name is short for indices[undefined]
+
+    Args:
+        arr (array): any array, used as a filter
+        inds (array): any other array (usually, an array of indices) of the same size
+
+    **Example**::
+
+        inds = cv.iundefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+    '''
+    return inds[np.isnan(arr)]
+
 
 
 def itruei(arr, inds):
@@ -600,7 +621,7 @@ def ifalsei(arr, inds):
 
         inds = cv.ifalsei(np.array([True,False,True,True,False,False,True,False]), inds=np.array([0,1,3,5]))
     '''
-    return inds[~arr[inds]]
+    return inds[np.logical_not(arr[inds])]
 
 
 def idefinedi(arr, inds):
@@ -616,3 +637,18 @@ def idefinedi(arr, inds):
         inds = cv.idefinedi(np.array([4,np.nan,0,np.nan,np.nan,4,7,4,np.nan]), inds=np.array([0,1,3,5]))
     '''
     return inds[~np.isnan(arr[inds])]
+
+
+def iundefinedi(arr, inds):
+    '''
+    Returns the indices that are undefined in the array -- name is short for indices[defined[indices]]
+
+    Args:
+        arr (array): any array, used as a filter
+        inds (array): an array of indices for the original array
+
+    **Example**::
+
+        inds = cv.iundefinedi(np.array([4,np.nan,0,np.nan,np.nan,4,7,4,np.nan]), inds=np.array([0,1,3,5]))
+    '''
+    return inds[np.isnan(arr[inds])]
