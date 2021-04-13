@@ -348,9 +348,9 @@ def get_strain_pars():
     '''
     Define the default parameters for the different strains
     '''
-    pars = sc.objdict(
+    pars = dict(
 
-        wild = sc.objdict(
+        wild = dict(
             rel_imm         = 1.0,
             rel_beta        = 1.0,
             rel_symp_prob   = 1.0,
@@ -359,7 +359,7 @@ def get_strain_pars():
             rel_death_prob  = 1.0,
         ),
 
-        b117 = sc.objdict(
+        b117 = dict(
             rel_imm         = 1.0,
             rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
             rel_symp_prob   = 1.0,
@@ -368,7 +368,7 @@ def get_strain_pars():
             rel_death_prob  = 1.0,
         ),
 
-        b1351 = sc.objdict(
+        b1351 = dict(
             rel_imm         = 0.25,
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
@@ -377,7 +377,7 @@ def get_strain_pars():
             rel_death_prob  = 1.4,
         ),
 
-        p1 = sc.objdict(
+        p1 = dict(
             rel_imm         = 0.5,
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
@@ -394,30 +394,30 @@ def get_cross_immunity():
     '''
     Get the cross immunity between each strain and each other strain
     '''
-    pars = sc.objdict(
+    pars = dict(
 
-        wild = sc.objdict(
+        wild = dict(
             wild  = 1.0,
             b117  = 0.5,
             b1351 = 0.5,
             p1    = 0.5,
         ),
 
-        b117 = sc.objdict(
+        b117 = dict(
             wild  = 0.5,
             b117  = 1.0,
             b1351 = 0.8,
             p1    = 0.8,
         ),
 
-        b1351 = sc.objdict(
+        b1351 = dict(
             wild  = 0.066,
             b117  = 0.1,
             b1351 = 1.0,
             p1    = 0.1,
         ),
 
-        p1 = sc.objdict(
+        p1 = dict(
             wild  = 0.17,
             b117  = 0.2,
             b1351 = 0.2,
@@ -431,37 +431,37 @@ def get_vaccine_strain_pars():
     '''
     Define the effectiveness of each vaccine against each strain
     '''
-    pars = sc.objdict(
+    pars = dict(
 
-        default = sc.objdict(
+        default = dict(
             wild  = 1.0,
             b117  = 1.0,
             b1351 = 1.0,
             p1    = 1.0,
         ),
 
-        pfizer = sc.objdict(
+        pfizer = dict(
             wild  = 1.0,
             b117  = 1/2.0,
             b1351 = 1/6.7,
             p1    = 1/6.5,
         ),
 
-        moderna = sc.objdict(
+        moderna = dict(
             wild  = 1.0,
             b117  = 1/1.8,
             b1351 = 1/4.5,
             p1    = 1/8.6,
         ),
 
-        az = sc.objdict(
+        az = dict(
             wild  = 1.0,
             b117  = 1.0,
             b1351 = 1/2,
             p1    = 1/2,
         ),
 
-        jj = sc.objdict(
+        jj = dict(
             wild  = 1.0,
             b117  = 1.0,
             b1351 = 1/6.7,
@@ -475,9 +475,9 @@ def get_vaccine_dose_pars():
     '''
     Define the dosing regimen for each vaccine
     '''
-    pars = sc.objdict(
+    pars = dict(
 
-        default = sc.objdict(
+        default = dict(
             nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
             nab_init  = dict(dist='normal', par1=0.5, par2= 2),
             nab_boost = 2,
@@ -485,7 +485,7 @@ def get_vaccine_dose_pars():
             interval  = None,
         ),
 
-        pfizer = sc.objdict(
+        pfizer = dict(
             nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
             nab_init  = dict(dist='normal', par1=0.5, par2= 2),
             nab_boost = 2,
@@ -493,7 +493,7 @@ def get_vaccine_dose_pars():
             interval  = 21,
         ),
 
-        moderna = sc.objdict(
+        moderna = dict(
             nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
             nab_init  = dict(dist='normal', par1=0.5, par2= 2),
             nab_boost = 2,
@@ -501,7 +501,7 @@ def get_vaccine_dose_pars():
             interval  = 28,
         ),
 
-        az = sc.objdict(
+        az = dict(
             nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
             nab_init  = dict(dist='normal', par1=0.5, par2= 2),
             nab_boost = 2,
@@ -509,7 +509,7 @@ def get_vaccine_dose_pars():
             interval  = 21,
         ),
 
-        jj = sc.objdict(
+        jj = dict(
             nab_eff   = {'sus': {'slope': 2.5, 'n_50': 0.55}},
             nab_init  = dict(dist='normal', par1=0.5, par2= 2),
             nab_boost = 2,
