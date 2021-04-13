@@ -1311,7 +1311,7 @@ class vaccinate(Intervention):
                     if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and strain {key}, setting to 1.0')
                 self.p[key] = val
 
-        self.first_dose_eligible = process_days(sim, self.days) # days that group becomes eligible
+        self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
@@ -1326,14 +1326,14 @@ class vaccinate(Intervention):
     def apply(self, sim):
         ''' Perform vaccination '''
 
-        if sim.t >= min(self.first_dose_eligible):
+        if sim.t >= np.min(self.days):
             # Determine who gets first dose of vaccine today
             vacc_probs = np.zeros(sim.n)
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
-                for _ in find_day(self.first_dose_eligible, sim.t):
+                for ind in find_day(self.days, sim.t, interv=self, sim=sim):
                     unvacc_inds = sc.findinds(~sim.people.vaccinated)
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated

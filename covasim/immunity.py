@@ -105,6 +105,7 @@ class strain(sc.prettyobj):
 
     def initialize(self, sim):
         ''' Update strain info in sim '''
+        self.days = cvi.process_days(sim, self.days) # Convert days into correct format
         sim['strain_pars'][self.label] = self.p  # Store the parameters
         self.index = list(sim['strain_pars'].keys()).index(self.label) # Find where we are in the list
         sim['strain_map'][self.index]  = self.label # Use that to populate the reverse mapping

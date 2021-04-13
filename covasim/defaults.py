@@ -363,13 +363,14 @@ def get_default_plots(which='default', kind='sim', sim=None):
     # Show default but with strains
     elif 'strain' in which: # pragma: no cover
         plots = sc.odict({
-                'Total counts': [
+                'Cumulative infections by strain': [
                     'cum_infections_by_strain',
-                    'n_infectious_by_strain',
-                    'cum_diagnoses',
                 ],
-                'Daily counts': [
+                'New infections by strain': [
                     'new_infections_by_strain',
+                ],
+                'Diagnoses': [
+                    'cum_diagnoses',
                     'new_diagnoses',
                 ],
                 'Health outcomes': [
