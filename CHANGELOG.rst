@@ -79,6 +79,7 @@ Bugfixes
 ^^^^^^^^
 - ``n_imports`` now scales correctly with population scale (previously they were unscaled).
 - ``cv.ifalse()`` and related functions now work correctly with non-boolean arrays (previously they used the ``~`` operator instead of ``np.logical_not()``, which gave incorrect results for int or float arrays).
+- Interventions and analyzers are now deep-copied when supplied to a sim; this means that the same ones can be created and then used in multiple sims. Scenarios also now deep-copy their inputs.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^

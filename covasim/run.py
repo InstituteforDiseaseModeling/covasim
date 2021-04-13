@@ -872,14 +872,14 @@ class Scenarios(cvb.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        self.metapars = sc.mergedicts({}, metapars)
+        self.metapars = sc.dcp(sc.mergedicts(metapars))
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvs.Sim()
-        self.base_sim = sim
-        self.basepars = sc.mergedicts({}, basepars)
+        self.base_sim = sc.dcp(sim)
+        self.basepars = sc.dcp(sc.mergedicts(basepars))
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
         if not self.base_sim.initialized:

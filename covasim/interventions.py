@@ -272,10 +272,6 @@ class Intervention:
         f1 = inspect.getouterframes(f0) # The list of outer frames
         parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
         _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
-        print('DEBUG')
-        print(f0)
-        print(f1)
-        print(values)
         if values:
             self.input_args = {}
             for key,value in values.items():
@@ -1231,7 +1227,6 @@ class vaccinate(Intervention):
     '''
     def __init__(self, days, prob=1.0, vaccine_pars=None, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
-        self._store_args() # Store the input arguments so the intervention can be recreated
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.subtarget = subtarget
@@ -1250,7 +1245,7 @@ class vaccinate(Intervention):
         self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
         self.vaccine_ind = len(sim['vaccines'])
         self.vaccine = cvi.Vaccine(self.vaccine_pars)
-        self.vaccine.initialize(sim)
+        # self.vaccine.initialize(sim)
         sim['vaccines'].append(self.vaccine)
         self.doses = self.vaccine.p.doses
         self.interval = self.vaccine.p.interval

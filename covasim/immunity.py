@@ -15,7 +15,7 @@ from . import interventions as cvi
 __all__ = ['Strain', 'Vaccine']
 
 
-class Strain(cvi.Intervention):
+class Strain(sc.prettyobj):
     '''
     Add a new strain to the sim
 
@@ -35,11 +35,11 @@ class Strain(cvi.Intervention):
         sim     = cv.Sim(strains=[b117, p1, my_var]).run() # Add them all to the sim
     '''
 
-    def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
+    def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True):
         self.days = days # Handle inputs
         self.n_imports = cvd.default_int(n_imports)
         self.parse_strain_pars(strain=strain, label=label) # Strains can be defined in different ways: process these here
+        self.initialized = False
         return
 
 
@@ -82,7 +82,6 @@ class Strain(cvi.Intervention):
 
 
     def initialize(self, sim):
-        super().initialize()
 
         # Store the index of this strain, and increment the number of strains in the simulation
         self.index = sim['n_strains']
@@ -94,6 +93,8 @@ class Strain(cvi.Intervention):
             if key not in self.p:
                 self.p[key] = defaults[key]
             sim['strain_pars'][key].append(self.p[key])
+
+        self.initialized = True
 
         return
 
@@ -107,7 +108,7 @@ class Strain(cvi.Intervention):
         return
 
 
-class Vaccine(cvi.Intervention):
+class Vaccine(sc.prettyobj):
     '''
     Add a new vaccine to the sim (called by interventions.py vaccinate()
 
@@ -116,7 +117,6 @@ class Vaccine(cvi.Intervention):
     Args:
         vaccine (dict or str): dictionary of parameters specifying information about the vaccine or label for loading pre-defined vaccine
         label (str): if supplying a dictionary, a label for the vaccine must be supplied
-        kwargs (dict): passed to Intervention()
 
     **Example**::
 
@@ -128,8 +128,7 @@ class Vaccine(cvi.Intervention):
         sim = cv.Sim(interventions=interventions)
     '''
 
-    def __init__(self, vaccine=None, label=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, vaccine=None, label=None):
         self.label = label
         # self.rel_imm = None # list of length n_strains with relative immunity factor
         # self.doses = None

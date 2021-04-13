@@ -3,9 +3,10 @@ import sciris as sc
 import numpy as np
 
 
-do_plot   = 0
-do_show   = 0
-do_save   = 0
+do_plot = 0
+do_show = 0
+do_save = 0
+debug   = 0
 
 base_pars = dict(
     pop_size = 10e3,
@@ -62,7 +63,7 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
+    scens.run(debug=debug)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -279,7 +280,7 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
+    scens.run(debug=debug)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -322,7 +323,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
+    scens.run(debug=debug)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -489,21 +490,21 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
-    # # Run simplest possible test
-    # test_simple(do_plot=do_plot)
+    # Run simplest possible test
+    test_simple(do_plot=do_plot)
 
-    # # Run more complex single-sim tests
-    # sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    # sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    # Run more complex single-sim tests
+    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # # Run Vaccine tests
-    # sim4 = test_synthpops()
-    # sim5 = test_vaccine_1strain()
+    # Run Vaccine tests
+    sim4 = test_synthpops()
+    sim5 = test_vaccine_1strain()
 
     # Run multisim and scenario tests
-    # scens0 = test_vaccine_1strain_scen()
+    scens0 = test_vaccine_1strain_scen()
     scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
     scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
     msim0 = test_msim()
