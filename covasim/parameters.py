@@ -109,9 +109,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Events and interventions
     pars['interventions'] = []   # The interventions present in this simulation; populated by the user
     pars['analyzers']     = []   # Custom analysis functions; populated by the user
-    pars['strains']       = []   # Additional strains of the virus; populated by the user, see immunity.py
-    pars['vaccines']      = []   # Vaccines that are being used; populated by user
-
     pars['timelimit']     = None # Time limit for the simulation (seconds)
     pars['stopping_func'] = None # A function to call to stop the sim partway through
 
@@ -120,6 +117,16 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
     pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
     pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+
+    # Handle vaccine and strain parameters
+    pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
+    pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
+    pars['strains']      = [] # Additional strains of the virus; populated by the user, see immunity.py
+    pars['strain_map']   = {0:'wild'} # Reverse mapping from number to strain key
+    pars['strain_pars']  = dict(wild={}) # Populated just below
+    for sp in cvd.strain_pars:
+        if sp in pars.keys():
+            pars['strain_pars']['wild'][sp] = pars[sp]
 
     # Update with any supplied parameter values and generate things that need to be generated
     pars.update(kwargs)
@@ -137,14 +144,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
         # Handle code change migration
         if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
             cvm.migrate_lognormal(pars, verbose=pars['verbose'])
-
-    # Handle strain pars
-    if 'strain_pars' not in pars:
-        pars['strain_map']  = {0:'wild'} # Reverse mapping from number to strain key
-        pars['strain_pars'] = dict(wild={}) # Populated just below
-        for sp in cvd.strain_pars:
-            if sp in pars.keys():
-                pars['strain_pars']['wild'][sp] = pars[sp]
 
     return pars
 

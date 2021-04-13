@@ -21,11 +21,10 @@ class strain(sc.prettyobj):
 
     Args:
         strain (str/dict): name of strain, or dictionary of parameters specifying information about the strain
+        days   (int/list): day(s) on which new variant is introduced
         label       (str): if strain is supplied as a dict, the name of the strain
-        days   (int/list): day(s) on which new variant is introduced.
         n_imports   (int): the number of imports of the strain to be added
         rescale    (bool): whether the number of imports should be rescaled with the population
-        kwargs     (dict): passed to Intervention()
 
     **Example**::
 
@@ -36,16 +35,19 @@ class strain(sc.prettyobj):
         sim2    = cv.Sim(strains=cv.strain('b117', days=0, n_imports=20), pop_infected=0).run() # Replace default strain with b117
     '''
 
-    def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True):
+    def __init__(self, strain, days, label=None, n_imports=1, rescale=True):
         self.days = days # Handle inputs
-        self.n_imports = cvd.default_int(n_imports)
-        self.parse_strain_pars(strain=strain, label=label) # Strains can be defined in different ways: process these here
+        self.n_imports = int(n_imports)
+        self.index     = None # Index of the strain in the sim; set later
+        self.label     = None # Strain label (used as a dict key)
+        self.p         = None # This is where the parameters will be stored
+        self.parse(strain=strain, label=label) # Strains can be defined in different ways: process these here
         self.initialized = False
         return
 
 
-    def parse_strain_pars(self, strain=None, label=None):
-        ''' Unpack strain information, which may be given in different ways'''
+    def parse(self, strain=None, label=None):
+        ''' Unpack strain information, which may be given in different ways '''
 
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
@@ -53,40 +55,49 @@ class strain(sc.prettyobj):
             choices, mapping = cvpar.get_strain_choices()
             known_strain_pars = cvpar.get_strain_pars()
 
-            normstrain = strain.lower()
+            label = strain.lower()
             for txt in ['.', ' ', 'strain', 'variant', 'voc']:
-                normstrain = normstrain.replace(txt, '')
+                label = label.replace(txt, '')
 
-            if normstrain in mapping:
-                normstrain = mapping[normstrain]
-                strain_pars = known_strain_pars[normstrain]
+            if label in mapping:
+                label = mapping[label]
+                strain_pars = known_strain_pars[label]
             else:
                 errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(strain, dict):
+
+            default_strain_pars = cvpar.get_strain_pars(default=True)
+            default_keys = list(default_strain_pars.keys())
+
             strain_pars = strain
             label = strain_pars.pop('label', label) # Allow including the label in the parameters
             if label is None:
                 label = 'custom'
 
-            # Check that valid keys have been supplied:
+            # Check that valid keys have been supplied...
             invalid = []
             for key in strain_pars.keys():
-                if key not in cvd.strain_pars:
+                if key not in default_keys:
                     invalid.append(key)
             if len(invalid):
                 errormsg = f'Could not parse strain keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.strain_pars)}"'
                 raise sc.KeyNotFoundError(errormsg)
 
+            # ...and populate any that are missing
+            for key in default_keys:
+                if key not in strain_pars:
+                    strain_pars[key] = default_strain_pars[key]
+
         else:
             errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{sc.pp(choices, doprint=False)}'
             raise ValueError(errormsg)
 
-        # Set label
-        self.label = label if label else normstrain
-        self.p = sc.objdict(strain_pars) # Convert to an objdict and save
+        # Set label and parameters
+        self.label = label
+        self.p = sc.objdict(strain_pars)
 
         return
 
@@ -111,13 +122,7 @@ class strain(sc.prettyobj):
             sim['strain_map'][self.index] = self.label
 
         # Update strain info
-        defaults = cvpar.get_strain_pars(default=True)
-        sim['strain_pars'][self.label] = {}
-        for key in cvd.strain_pars:
-            if key not in self.p:
-                self.p[key] = defaults[key]
-            sim['strain_pars'][self.label][key] = self.p[key]
-
+        sim['strain_pars'][self.label] = self.p
         self.initialized = True
 
         return

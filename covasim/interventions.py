@@ -1133,6 +1133,7 @@ class simple_vaccine(Intervention):
         kwargs     (dict): passed to Intervention()
 
     Note: this intervention is still under development and should be used with caution.
+    It is intended for use with use_waning=False.
 
     **Examples**::
 
@@ -1218,6 +1219,7 @@ class vaccinate(Intervention):
 
     Args:
         vaccine (dict/str): which vaccine to use
+        label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
@@ -1225,22 +1227,25 @@ class vaccinate(Intervention):
 
     **Examples**::
 
-        interv = cv.vaccinate(days=50, prob=0.3, )
+        pfizer = cv.vaccinate(vaccine='pfizer', days=50, prob=0.3)
+        custom = cv.vaccinate(vaccine=)
     '''
-    def __init__(self, vaccine, days, prob=1.0, subtarget=None, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.subtarget = subtarget
-        self.vaccine_pars  = vaccine
-        self.vaccine_ind = None
-        self.vaccine_strain_info = cvpar.get_vaccine_strain_pars()
-        self.parse_vaccine_pars(vaccine=vaccine)
+        self.index     = None # Index of the vaccine in the sim; set later
+        self.label     = None # Vacine label (used as a dict key)
+        self.p         = None # Vaccine parameters
+        self.parse(vaccine=vaccine, label=label) # Populate
         return
 
 
-    def parse_vaccine_pars(self, vaccine=None):
+    def parse(self, vaccine=None, label=None):
         ''' Unpack vaccine information, which may be given in different ways'''
+
+
 
         # Option 1: vaccines can be chosen from a list of pre-defined strains
         if isinstance(vaccine, str):
@@ -1248,21 +1253,20 @@ class vaccinate(Intervention):
             choices, mapping = cvpar.get_vaccine_choices()
             strain_pars = cvpar.get_vaccine_strain_pars()
             dose_pars = cvpar.get_vaccine_dose_pars()
-            choicestr = sc.newlinejoin(sc.mergelists(*choices.values()))
 
-            normvacc = vaccine.lower()
+            label = vaccine.lower()
             for txt in ['.', ' ', '&', '-', 'vaccine']:
-                normvacc = normvacc.replace(txt, '')
+                label = label.replace(txt, '')
 
-            if normvacc in mapping:
-                normvacc = mapping[normvacc]
-                vaccine_pars = sc.mergedicts(strain_pars[normvacc], dose_pars[normvacc])
+            if label in mapping:
+                label = mapping[label]
+                vaccine_pars = sc.mergedicts(strain_pars[label], dose_pars[label])
             else: # pragma: no cover
-                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{choicestr}'
+                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
 
             if self.label is None:
-                self.label = normvacc
+                self.label = label
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(vaccine, dict):
@@ -1270,11 +1274,27 @@ class vaccinate(Intervention):
             if self.label is None:
                 self.label = 'Custom vaccine'
 
+            label = vaccine_pars.pop('label', label) # Allow including the label in the parameters
+            if label is None:
+                label = 'custom'
+
+            # Check that valid keys have been supplied:
+            invalid = []
+            for key in vaccine_pars.keys():
+                if key not in list(strain_pars.keys()):
+                    invalid.append(key)
+            if len(invalid):
+                errormsg = f'Could not parse strain keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.strain_pars)}"'
+                raise sc.KeyNotFoundError(errormsg)
+
         else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
+        # Set label and parameters
+        self.label = label
         self.p = sc.objdict(vaccine_pars)
+
         return
 
 
@@ -1286,12 +1306,10 @@ class vaccinate(Intervention):
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
-        self.vaccine_ind = len(sim['vaccines'])
-        self.vaccine = cvi.Vaccine(self.vaccine_pars)
+        self.index = len(sim['vaccines']) # Set the index based on the current number included
+        # self.vaccine = cvi.Vaccine(self.vaccine_pars)
         # self.vaccine.initialize(sim)
-        sim['vaccines'].append(self.vaccine)
-        self.doses = self.vaccine.p.doses
-        self.interval = self.vaccine.p.interval
+        sim['vaccines'].append(self.vaccine) # Add into the sim
         return
 
 

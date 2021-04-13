@@ -98,7 +98,7 @@ def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
         'n_days': 120,
     })
 
-    pfizer = cv.vaccinate(days=[20], vaccine_pars='pfizer')
+    pfizer = cv.vaccinate(days=[20], vaccine='pfizer')
     sim = cv.Sim(
         use_waning=True,
         pars=pars,
@@ -127,7 +127,7 @@ def test_synthpops():
     sim.vxsubtarg.age = [75, 65, 50, 18]
     sim.vxsubtarg.prob = [.05, .05, .05, .05]
     sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
     sim['interventions'] += [pfizer]
 
     sim.run()
@@ -149,7 +149,7 @@ def test_vaccine_1strain_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.age = [75, 65, 50, 18]
     base_sim.vxsubtarg.prob = [.05, .05, .05, .05]
     base_sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine_pars='pfizer', subtarget=vacc_subtarg)
+    pfizer = cv.vaccinate(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
 
     # Define the scenarios
 
@@ -194,7 +194,7 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.age = [75, 65, 50, 18]
     base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
     base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
-    jnj = cv.vaccinate(days=subtarg_days, vaccine_pars='j&j', subtarget=vacc_subtarg)
+    jnj = cv.vaccinate(days=subtarg_days, vaccine='j&j', subtarget=vacc_subtarg)
     b1351 = cv.strain('b1351', days=10, n_imports=20)
     p1 = cv.strain('p1', days=100, n_imports=100)
 
