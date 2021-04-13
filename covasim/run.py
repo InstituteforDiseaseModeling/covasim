@@ -882,9 +882,10 @@ class Scenarios(cvb.ParsObj):
         self.basepars = sc.mergedicts({}, basepars)
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
-        self.base_sim.init_strains()
-        self.base_sim.init_immunity()
-        self.base_sim.init_results()
+        if not self.base_sim.initialized:
+            self.base_sim.init_strains()
+            self.base_sim.init_immunity()
+            self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
@@ -955,7 +956,7 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
 
-            scen_sim.update_pars(scenpars, **kwargs)  # Update the parameters, if provided
+            scen_sim.update_pars(scenpars)  # Update the parameters, if provided
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)

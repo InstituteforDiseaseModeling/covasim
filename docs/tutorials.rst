@@ -3,13 +3,15 @@
 .. toctree::
     :maxdepth: 1
 
-    tutorials/t01
-    tutorials/t02
-    tutorials/t03
-    tutorials/t04
-    tutorials/t05
-    tutorials/t06
-    tutorials/t07
-    tutorials/t08
-    tutorials/t09
-    tutorials/t10
+    tutorials/tut_intro.ipynb
+    tutorials/tut_plotting.ipynb
+    tutorials/tut_running.ipynb
+    tutorials/tut_people.ipynb
+    tutorials/tut_interventions.ipynb
+    tutorials/tut_analyzers.ipynb
+    tutorials/tut_calibration.ipynb
+    tutorials/tut_immunity.ipynb
+    tutorials/tut_deployment.ipynb
+    tutorials/tut_tips.ipynb
+    tutorials/tut_advanced.ipynb
+    

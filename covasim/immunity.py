@@ -425,6 +425,7 @@ def precompute_waning(length, pars=None):
         array of length 'length' of values
     '''
 
+    pars = sc.dcp(pars)
     form = pars.pop('form')
     choices = [
         'nab_decay', # Default if no form is provided
