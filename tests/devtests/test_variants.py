@@ -3,9 +3,10 @@ import sciris as sc
 import numpy as np
 
 
-do_plot   = 0
-do_show   = 0
-do_save   = 0
+do_plot = 0
+do_show = 0
+do_save = 0
+debug   = 0
 
 base_pars = dict(
     pop_size = 10e3,
@@ -19,61 +20,6 @@ def test_simple(do_plot=False):
         s1.plot()
         s2.plot()
     return
-
-
-def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test varying properties of immunity')
-
-    # Define baseline parameters
-    n_runs = 3
-    base_sim = cv.Sim(use_waning=True, n_days=400, pars=base_pars)
-
-    # Define the scenarios
-    b1351 = cv.Strain('b1351', days=100, n_imports=20)
-
-    scenarios = {
-        'baseline': {
-            'name': 'Default Immunity (decay at log(2)/90)',
-            'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
-            },
-        },
-        'faster_immunity': {
-            'name': 'Faster Immunity (decay at log(2)/30)',
-            'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
-            },
-        },
-        'baseline_b1351': {
-            'name': 'Default Immunity (decay at log(2)/90), B1351 on day 100',
-            'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
-                'strains': [b1351],
-            },
-        },
-        'faster_immunity_b1351': {
-            'name': 'Faster Immunity (decay at log(2)/30), B1351 on day 100',
-            'pars': {
-                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
-                'strains': [b1351],
-            },
-        },
-    }
-
-    metapars = {'n_runs': n_runs}
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'New re-infections': ['new_reinfections'],
-        'Population Nabs': ['pop_nabs'],
-        'Population Immunity': ['pop_protection'],
-    })
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_basic_immunity.png', to_plot=to_plot)
-
-    return scens
 
 
 def test_import1strain(do_plot=False, do_show=True, do_save=False):
@@ -146,7 +92,6 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
 
 def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
     sc.heading('Test vaccination with a single strain')
-    sc.heading('Setting up...')
 
     pars = sc.mergedicts(base_pars, {
         'beta': 0.015,
@@ -280,7 +225,7 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
+    scens.run(debug=debug)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -323,7 +268,7 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
 
     metapars = {'n_runs': n_runs}
     scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=True)
+    scens.run(debug=debug)
 
     to_plot = sc.objdict({
         'New infections': ['new_infections'],
@@ -333,6 +278,83 @@ def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
     })
     if do_plot:
         scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_strainduration.png', to_plot=to_plot)
+
+    return scens
+
+
+def test_msim(do_plot=False):
+    sc.heading('Testing multisim...')
+
+    # basic test for vaccine
+    b117 = cv.Strain('b117', days=0)
+    sim = cv.Sim(use_waning=True, strains=[b117], **base_pars)
+    msim = cv.MultiSim(sim, n_runs=2)
+    msim.run()
+    msim.reduce()
+
+    to_plot = sc.objdict({
+        'Total infections': ['cum_infections'],
+        'New infections per day': ['new_infections'],
+        'New Re-infections per day': ['new_reinfections'],
+    })
+
+    if do_plot:
+        msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
+
+    return msim
+
+
+def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test varying properties of immunity')
+
+    # Define baseline parameters
+    n_runs = 3
+    base_sim = cv.Sim(use_waning=True, n_days=400, pars=base_pars)
+
+    # Define the scenarios
+    b1351 = cv.Strain('b1351', days=100, n_imports=20)
+
+    scenarios = {
+        'baseline': {
+            'name': 'Default Immunity (decay at log(2)/90)',
+            'pars': {
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
+            },
+        },
+        'faster_immunity': {
+            'name': 'Faster Immunity (decay at log(2)/30)',
+            'pars': {
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
+            },
+        },
+        'baseline_b1351': {
+            'name': 'Default Immunity (decay at log(2)/90), B1351 on day 100',
+            'pars': {
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
+                'strains': [b1351],
+            },
+        },
+        'faster_immunity_b1351': {
+            'name': 'Faster Immunity (decay at log(2)/30), B1351 on day 100',
+            'pars': {
+                'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
+                'strains': [b1351],
+            },
+        },
+    }
+
+    metapars = {'n_runs': n_runs}
+    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
+    scens.run(debug=debug)
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'New re-infections': ['new_reinfections'],
+        'Population Nabs': ['pop_nabs'],
+        'Population Immunity': ['pop_protection'],
+    })
+    if do_plot:
+        scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_basic_immunity.png', to_plot=to_plot)
 
     return scens
 
@@ -382,85 +404,7 @@ def test_waning_vs_not(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_msim(do_plot=False):
-    sc.heading('Testing multisim...')
-
-    # basic test for vaccine
-    b117 = cv.Strain('b117', days=0)
-    sim = cv.Sim(use_waning=True, strains=[b117], **base_pars)
-    msim = cv.MultiSim(sim, n_runs=2)
-    msim.run()
-    msim.reduce()
-
-    to_plot = sc.objdict({
-        'Total infections': ['cum_infections'],
-        'New infections per day': ['new_infections'],
-        'New Re-infections per day': ['new_reinfections'],
-    })
-
-    if do_plot:
-        msim.plot(to_plot=to_plot, do_save=0, do_show=1, legend_args={'loc': 'upper left'}, axis_args={'hspace': 0.4}, interval=35)
-
-    return msim
-
-
-#%% Plotting and utilities
-
-# def plot_results(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
-
-#     results = sim.results
-#     results_to_plot = results[key]
-
-#     # extract data for plotting
-#     x = sim.results['t']
-#     y = results_to_plot.values
-#     y = np.transpose(y)
-
-#     fig, ax = plt.subplots()
-#     ax.plot(x, y)
-
-#     ax.set(xlabel='Day of simulation', ylabel=results_to_plot.name, title=title)
-
-#     if labels is None:
-#         labels = [0]*len(y[0])
-#         for strain in range(len(y[0])):
-#             labels[strain] = f'Strain {strain +1}'
-#     ax.legend(labels)
-
-#     if do_show:
-#         plt.show()
-#     if do_save:
-#         cv.savefig(f'results/{filename}.png')
-
-#     return
-
-
-# def plot_shares(sim, key, title, filename=None, do_show=True, do_save=False, labels=None):
-
-#     results = sim.results
-#     n_strains = sim.results['new_infections_by_strain'].values.shape[0] # TODO: this should be stored in the sim somewhere more intuitive!
-#     prop_new = {f'Strain {s}': sc.safedivide(results[key+'_by_strain'].values[s,:], results[key].values, 0) for s in range(n_strains)}
-#     num_new = {f'Strain {s}': results[key+'_by_strain'].values[s,:] for s in range(n_strains)}
-
-#     # extract data for plotting
-#     x = sim.results['t']
-#     fig, ax = plt.subplots(2,1,sharex=True)
-#     ax[0].stackplot(x, prop_new.values(),
-#                  labels=prop_new.keys())
-#     ax[0].legend(loc='upper left')
-#     ax[0].set_title(title)
-#     ax[1].stackplot(sim.results['t'], num_new.values(),
-#                  labels=num_new.keys())
-#     ax[1].legend(loc='upper left')
-#     ax[1].set_title(title)
-
-#     if do_show:
-#         plt.show()
-#     if do_save:
-#         cv.savefig(f'results/{filename}.png')
-
-#     return
-
+#%% Utilities
 
 def vacc_subtarg(sim):
     ''' Subtarget by age'''
@@ -490,14 +434,17 @@ def get_ind_of_min_value(list, time):
 if __name__ == '__main__':
     sc.tic()
 
+    # Gather keywords
+    kw = dict(do_plot=do_plot, do_save=do_save, do_show=do_show)
+
     # Run simplest possible test
     test_simple(do_plot=do_plot)
 
     # Run more complex single-sim tests
-    sim0 = test_import1strain(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim1 = test_import2strains(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim2 = test_importstrain_longerdur(do_plot=do_plot, do_save=do_save, do_show=do_show)
-    sim3 = test_import2strains_changebeta(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim0 = test_import1strain(**kw)
+    sim1 = test_import2strains(**kw)
+    sim2 = test_importstrain_longerdur(**kw)
+    sim3 = test_import2strains_changebeta(**kw)
 
     # Run Vaccine tests
     sim4 = test_synthpops()
@@ -505,15 +452,15 @@ if __name__ == '__main__':
 
     # Run multisim and scenario tests
     scens0 = test_vaccine_1strain_scen()
-    scens1 = test_vaccine_2strains_scen() #TODO, NOT WORKING CURRENTLY
-    scens2 = test_strainduration_scen(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
-    msim0 = test_msim()
+    scens1 = test_vaccine_2strains_scen()
+    scens2 = test_strainduration_scen(**kw)
+    msim0  = test_msim()
 
     # Run immunity tests
-    sim_immunity0 = test_varyingimmunity(do_plot=do_plot, do_save=do_save, do_show=do_show)#TODO, NOT WORKING CURRENTLY
+    sim_immunity0 = test_varyingimmunity(**kw)
 
     # Run test to compare sims with and without waning
-    scens3 = test_waning_vs_not(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    scens3 = test_waning_vs_not(**kw)
 
     sc.toc()
 

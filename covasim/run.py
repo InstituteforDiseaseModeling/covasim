@@ -872,14 +872,14 @@ class Scenarios(cvb.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        self.metapars = sc.mergedicts({}, metapars)
+        self.metapars = sc.dcp(sc.mergedicts(metapars))
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvs.Sim()
-        self.base_sim = sim
-        self.basepars = sc.mergedicts({}, basepars)
+        self.base_sim = sc.dcp(sim)
+        self.basepars = sc.dcp(sc.mergedicts(basepars))
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
         if not self.base_sim.initialized:
@@ -957,11 +957,12 @@ class Scenarios(cvb.ParsObj):
             scen_sim.label = scenkey
 
             scen_sim.update_pars(scenpars)  # Update the parameters, if provided
+            scen_sim.validate_pars()
             if 'strains' in scenpars: # Process strains
                 scen_sim.init_strains()
                 scen_sim.init_immunity(create=True)
-            if 'imm_pars' in scenpars: # Process immunity
-                scen_sim.init_immunity(create=True)
+            elif 'imm_pars' in scenpars: # Process immunity
+                scen_sim.init_immunity(create=True) # TODO: refactor
 
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:

@@ -338,7 +338,7 @@ def get_vaccine_choices():
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
         'moderna': ['moderna'],
         'az':      ['az', 'astrazeneca'],
-        'jj':      ['jj', 'johnson & johnson', 'janssen'],
+        'jj':      ['jj', 'jnj', 'johnson & johnson', 'janssen'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
