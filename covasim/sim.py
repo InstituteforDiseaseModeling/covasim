@@ -495,9 +495,18 @@ class Sim(cvb.BaseSim):
         if self._orig_pars and 'strains' in self._orig_pars:
             self['strains'] = self._orig_pars.pop('strains') # Restore
 
-        for strain in self['strains']:
-            if not strain.initialized:
-                strain.initialize(self)
+        for i,strain in enumerate(self['strains']):
+            if isinstance(strain, cvimm.strain):
+                if not strain.initialized:
+                    strain.initialize(self)
+            else: # pragma: no cover
+                errormsg = f'Strain {i} ({strain}) is not a cv.strain object; please create using cv.strain()'
+                raise TypeError(errormsg)
+
+        len_pars = len(self['strain_pars'])
+        len_map = len(self['strain_map'])
+        assert len_pars == len_map, f"strain_pars and strain_map must be the same length, but they're not: {len_pars} ≠ {len_map}"
+        self['n_strains'] = len_pars # Each strain has an entry in strain_pars
 
         return
 
@@ -561,7 +570,7 @@ class Sim(cvb.BaseSim):
 
         # Add strains
         for strain in self['strains']:
-            if isinstance(strain, cvimm.Strain):
+            if isinstance(strain, cvimm.strain):
                 strain.apply(self)
 
         # Apply interventions
@@ -575,7 +584,7 @@ class Sim(cvb.BaseSim):
                 intervention(self) # If it's a function, call it directly
             else: # pragma: no cover
                 errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
-                raise ValueError(errormsg)
+                raise TypeError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
 
@@ -613,7 +622,8 @@ class Sim(cvb.BaseSim):
             rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
             if strain:
-                rel_beta *= self['strain_pars']['rel_beta'][strain]
+                strain_label = self.pars['strain_map'][strain]
+                rel_beta *= self['strain_pars'][strain_label]['rel_beta']
             beta = cvd.default_float(self['beta'] * rel_beta)
 
             for lkey, layer in contacts.items():

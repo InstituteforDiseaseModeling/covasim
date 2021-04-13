@@ -1132,6 +1132,9 @@ class simple_vaccine(Intervention):
         cumulative (bool): whether cumulative doses have cumulative effects (default false); can also be an array for efficacy per dose, with the last entry used for multiple doses; thus True = [1] and False = [1,0]
         kwargs     (dict): passed to Intervention()
 
+    Note: this intervention is still under development and should be used with caution.
+    It is intended for use with use_waning=False.
+
     **Examples**::
 
         interv = cv.simple_vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
@@ -1157,11 +1160,12 @@ class simple_vaccine(Intervention):
         super().initialize()
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.date_vaccinated   = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
         self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
+        self.vacc_inds         = None
         return
 
 
@@ -1194,12 +1198,11 @@ class simple_vaccine(Intervention):
             self.mod_symp_prob[vacc_inds] *= rel_symp_eff
             self.vaccinations[vacc_inds] += 1
             for v_ind in vacc_inds:
-                self.date_vaccinated[v_ind].append(sim.t)
+                self.vaccination_dates[v_ind].append(sim.t)
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccinations[vacc_inds] += 1
-            sim.people.vaccination_dates = self.date_vaccinated # TODO: refactor
 
         return
 
@@ -1215,54 +1218,122 @@ class vaccinate(Intervention):
         - ``pars``:             vaccine pars that are given to Vaccine() class
 
     Args:
-        days (int or array): the day or array of days to apply the interventions
-        prob      (float): probability of being vaccinated (i.e., fraction of the population)
-        vaccine_pars (dict or label): passed to Vaccine()
+        vaccine (dict/str): which vaccine to use
+        label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        days     (int/arr): the day or array of days to apply the interventions
+        prob       (float): probability of being vaccinated (i.e., fraction of the population)
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         kwargs     (dict): passed to Intervention()
 
     **Examples**::
 
-        interv = cv.vaccinate(days=50, prob=0.3, )
+        pfizer = cv.vaccinate(vaccine='pfizer', days=50, prob=0.3)
+        custom = cv.vaccinate(vaccine=)
     '''
-    def __init__(self, days, prob=1.0, vaccine_pars=None, subtarget=None, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.subtarget = subtarget
-        self.vaccine_pars  = vaccine_pars
-        self.vaccine_ind = None
+        self.index     = None # Index of the vaccine in the sim; set later
+        self.label     = None # Vacine label (used as a dict key)
+        self.p         = None # Vaccine parameters
+        self.parse(vaccine=vaccine, label=label) # Populate
+        return
+
+
+    def parse(self, vaccine=None, label=None):
+        ''' Unpack vaccine information, which may be given as a string or dict '''
+
+        # Option 1: vaccines can be chosen from a list of pre-defined strains
+        if isinstance(vaccine, str):
+
+            choices, mapping = cvpar.get_vaccine_choices()
+            strain_pars = cvpar.get_vaccine_strain_pars()
+            dose_pars = cvpar.get_vaccine_dose_pars()
+
+            label = vaccine.lower()
+            for txt in ['.', ' ', '&', '-', 'vaccine']:
+                label = label.replace(txt, '')
+
+            if label in mapping:
+                label = mapping[label]
+                vaccine_pars = sc.mergedicts(strain_pars[label], dose_pars[label])
+            else: # pragma: no cover
+                errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
+                raise NotImplementedError(errormsg)
+
+            if self.label is None:
+                self.label = label
+
+        # Option 2: strains can be specified as a dict of pars
+        elif isinstance(vaccine, dict):
+
+            # Parse label
+            vaccine_pars = vaccine
+            label = vaccine_pars.pop('label', label) # Allow including the label in the parameters
+            if label is None:
+                label = 'custom'
+
+        else: # pragma: no cover
+            errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
+            raise ValueError(errormsg)
+
+        # Set label and parameters
+        self.label = label
+        self.p = sc.objdict(vaccine_pars)
+
         return
 
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         super().initialize()
-        self.first_dose_eligible = process_days(sim, self.days) # days that group becomes eligible
+
+        # Populate any missing keys -- must be here, after strains are initialized
+        default_strain_pars = cvpar.get_vaccine_strain_pars(default=True)
+        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        strain_labels       = list(sim['strain_pars'].keys())
+        dose_keys           = list(default_dose_pars.keys())
+
+        # Handle dose keys
+        for key in dose_keys:
+            if key not in self.p:
+                self.p[key] = default_dose_pars[key]
+
+        # Handle strains
+        for key in strain_labels:
+            if key not in self.p:
+                if key in default_strain_pars:
+                    val = default_strain_pars[key]
+                else:
+                    val = 1.0
+                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and strain {key}, setting to 1.0')
+                self.p[key] = val
+
+        self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
-        self.vaccine_ind = len(sim['vaccines'])
-        self.vaccine = cvi.Vaccine(self.vaccine_pars)
-        # self.vaccine.initialize(sim)
-        sim['vaccines'].append(self.vaccine)
-        self.doses = self.vaccine.p.doses
-        self.interval = self.vaccine.p.interval
+        sim['vaccine_pars'][self.label] = self.p # Store the parameters
+        self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
+        sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
+
         return
 
 
     def apply(self, sim):
         ''' Perform vaccination '''
 
-        if sim.t >= min(self.first_dose_eligible):
+        if sim.t >= np.min(self.days):
             # Determine who gets first dose of vaccine today
             vacc_probs = np.zeros(sim.n)
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
-                for _ in find_day(self.first_dose_eligible, sim.t):
+                for ind in find_day(self.days, sim.t, interv=self, sim=sim):
                     unvacc_inds = sc.findinds(~sim.people.vaccinated)
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
@@ -1271,8 +1342,8 @@ class vaccinate(Intervention):
                 self.vaccinated[sim.t] = vacc_inds
                 sim.people.flows['new_vaccinations'] += len(vacc_inds)
                 sim.people.flows['new_vaccinated'] += len(vacc_inds)
-                if self.interval is not None:
-                    next_dose_day = sim.t + self.interval
+                if self.p.interval is not None:
+                    next_dose_day = sim.t + self.p.interval
                     if next_dose_day < sim['n_days']:
                         self.second_dose_days[next_dose_day] = vacc_inds
 
@@ -1283,7 +1354,7 @@ class vaccinate(Intervention):
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
+            sim.people.vaccine_source[vacc_inds] = self.index
             self.vaccinations[vacc_inds] += 1
             self.vaccination_dates[vacc_inds] = sim.t
 

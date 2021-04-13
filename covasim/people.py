@@ -454,8 +454,9 @@ class People(cvb.BasePeople):
         strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = {k:self.pars[k] for k in strain_keys}
         if strain:
+            strain_label = self.pars['strain_map'][strain]
             for k in strain_keys:
-                infect_pars[k] *= self.pars['strain_pars'][k][strain]
+                infect_pars[k] *= self.pars['strain_pars'][strain_label][k]
 
         n_infections = len(inds)
         durpars      = self.pars['dur']
