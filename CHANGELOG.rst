@@ -24,7 +24,7 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Version 3.0.0 (2021-04-12)
+Version 3.0.0 (2021-04-13)
 --------------------------
 This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
 
