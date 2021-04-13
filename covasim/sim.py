@@ -202,10 +202,10 @@ class Sim(cvb.BaseSim):
         scaled_pop = self.pars.get('scaled_pop')
         pop_scale  = self.pars.get('pop_scale')
         if scaled_pop is not None: # If scaled_pop is supplied, try to use it
-            if pop_scale is not None: # Normal case, recalculate number of agents
-                self['pop_size'] = scaled_pop/pop_scale
-            else: # Special case, recalculate population scale
+            if pop_scale in [None, 1.0]: # Normal case, recalculate population scale
                 self['pop_scale'] = scaled_pop/pop_size
+            else: # Special case, recalculate number of agents
+                self['pop_size'] = int(scaled_pop/pop_scale)
 
         # Handle types
         for key in ['pop_size', 'pop_infected']:
@@ -1070,7 +1070,7 @@ class Sim(cvb.BaseSim):
         labelstr = f' "{self.label}"' if self.label else ''
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
-            if full or key.startswith('cum_') and 'by_strain' not in key:
+            if full or key.startswith('cum_'):
                 string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
 
         # Print or return string
