@@ -9,9 +9,11 @@
   "rand_seed": 1,
   "verbose": 0.1,
   "pop_scale": 1,
+  "scaled_pop": null,
   "rescale": true,
   "rescale_threshold": 0.05,
   "rescale_factor": 1.2,
+  "frac_susceptible": 1.0,
   "contacts": {
     "a": 20
   },
@@ -35,24 +37,21 @@
   "beta": 0.016,
   "n_imports": 0,
   "n_strains": 1,
-  "total_strains": 1,
   "use_waning": false,
-  "NAb_init": {
+  "nab_init": {
     "dist": "normal",
     "par1": 0,
     "par2": 2
   },
-  "NAb_decay": {
+  "nab_decay": {
     "form": "nab_decay",
-    "pars": {
-      "init_decay_rate": 0.007701635339554948,
-      "init_decay_time": 250,
-      "decay_decay_rate": 0.001
-    }
+    "decay_rate1": 0.007701635339554948,
+    "decay_time1": 250,
+    "decay_rate2": 0.001
   },
-  "NAb_kin": null,
-  "NAb_boost": 1.5,
-  "NAb_eff": {
+  "nab_kin": null,
+  "nab_boost": 1.5,
+  "nab_eff": {
     "sus": {
       "slope": 2.7,
       "n_50": 0.03
@@ -62,12 +61,11 @@
   },
   "cross_immunity": 0.5,
   "rel_imm": {
-    "asymptomatic": 0.85,
+    "asymp": 0.85,
     "mild": 1,
     "severe": 1.5
   },
   "immunity": null,
-  "vaccine_info": null,
   "rel_beta": 1.0,
   "asymp_factor": 1.0,
   "dur": {
@@ -229,29 +227,30 @@
   "quar_period": 14,
   "interventions": [],
   "analyzers": [],
-  "strains": [],
-  "vaccines": [],
   "timelimit": null,
   "stopping_func": null,
   "n_beds_hosp": null,
   "n_beds_icu": null,
   "no_hosp_factor": 2.0,
   "no_icu_factor": 2.0,
+  "vaccine_pars": {},
+  "vaccine_map": {},
+  "strains": [],
+  "strain_map": {
+    "0": "wild"
+  },
   "strain_pars": {
-    "rel_beta": [
-      1.0
-    ],
-    "rel_symp_prob": [
-      1.0
-    ],
-    "rel_severe_prob": [
-      1.0
-    ],
-    "rel_crit_prob": [
-      1.0
-    ],
-    "rel_death_prob": [
-      1.0
-    ]
+    "wild": {
+      "rel_imm": {
+        "asymp": 0.85,
+        "mild": 1,
+        "severe": 1.5
+      },
+      "rel_beta": 1.0,
+      "rel_symp_prob": 1.0,
+      "rel_severe_prob": 1.0,
+      "rel_crit_prob": 1.0,
+      "rel_death_prob": 1.0
+    }
   }
 }
