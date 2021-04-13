@@ -243,33 +243,33 @@ def init_immunity(sim, create=False):
     if not sim['use_waning']:
         return
 
-    ts = sim['n_strains']
+    ns = sim['n_strains']
     immunity = {}
 
     # Pull out all of the circulating strains for cross-immunity
-    circulating_strains = ['wild']
+    strain_labels = sim['strain_map'].values()
     rel_imms =  dict()
-    for strain in sim['strains']:
-        circulating_strains.append(strain.label)
-        rel_imms[strain.label] = strain.p.rel_imm
+    for label in strain_labels:
+        rel_imms[label] = sim['strain_pars'][label]['rel_imm']
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
         # Initialize immunity
         for ax in cvd.immunity_axes:
             if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
-                immunity[ax] = np.full((ts, ts), sim['cross_immunity'], dtype=cvd.default_float)  # Default for off-diagnonals
-                np.fill_diagonal(immunity[ax], 1)  # Default for own-immunity
+                immunity[ax] = np.full((ns, ns), sim['cross_immunity'], dtype=cvd.default_float)  # Default for off-diagnonals
+                np.fill_diagonal(immunity[ax], 1.0)  # Default for own-immunity
             else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
-                immunity[ax] = np.ones(ts, dtype=cvd.default_float)
+                immunity[ax] = np.ones(ns, dtype=cvd.default_float)
 
-        cross_immunity = cvpar.get_cross_immunity()
-        known_strains = cross_immunity.keys()
-        for i in range(ts):
-            for j in range(ts):
+        default_cross_immunity = cvpar.get_cross_immunity()
+        for i in range(ns):
+            for j in range(ns):
                 if i != j:
-                    if circulating_strains[i] in known_strains and circulating_strains[j] in known_strains:
-                        immunity['sus'][j][i] = cross_immunity[circulating_strains[j]][circulating_strains[i]]
+                    label_i = sim['strain_map'][i]
+                    label_j = sim['strain_map'][j]
+                    if label_i in default_cross_immunity and label_j in default_cross_immunity:
+                        immunity['sus'][j][i] = default_cross_immunity[label_j][label_i]
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
