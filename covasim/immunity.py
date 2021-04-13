@@ -51,7 +51,7 @@ class strain(sc.prettyobj):
         if isinstance(strain, str):
 
             choices, mapping = cvpar.get_strain_choices()
-            pars = cvpar.get_strain_pars()
+            known_strain_pars = cvpar.get_strain_pars()
 
             normstrain = strain.lower()
             for txt in ['.', ' ', 'strain', 'variant', 'voc']:
@@ -59,7 +59,7 @@ class strain(sc.prettyobj):
 
             if normstrain in mapping:
                 normstrain = mapping[normstrain]
-                strain_pars = pars[normstrain]
+                strain_pars = known_strain_pars[normstrain]
             else:
                 errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
