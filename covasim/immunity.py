@@ -33,6 +33,7 @@ class strain(sc.prettyobj):
         p1      = cv.strain('p1', days=15) # Make strain P1 active from day 15
         my_var  = cv.strain(strain={'rel_beta': 2.5}, label='My strain', days=20)
         sim     = cv.Sim(strains=[b117, p1, my_var]).run() # Add them all to the sim
+        sim2    = cv.Sim(strains=cv.strain('b117', days=0, n_imports=20), pop_infected=0).run() # Replace default strain with b117
     '''
 
     def __init__(self, strain=None, label=None, days=None, n_imports=1, rescale=True):
@@ -60,7 +61,7 @@ class strain(sc.prettyobj):
                 normstrain = mapping[normstrain]
                 strain_pars = pars[normstrain]
             else:
-                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{choices}'
+                errormsg = f'The selected variant "{strain}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
 
         # Option 2: strains can be specified as a dict of pars
@@ -80,7 +81,7 @@ class strain(sc.prettyobj):
                 raise sc.KeyNotFoundError(errormsg)
 
         else:
-            errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{choices}'
+            errormsg = f'Could not understand {type(strain)}, please specify as a dict or a predefined strain:\n{sc.pp(choices, doprint=False)}'
             raise ValueError(errormsg)
 
         # Set label
@@ -104,13 +105,14 @@ class strain(sc.prettyobj):
         # Store the mapping of this strain
         existing = list(sim['strain_map'].values())
         if self.label in existing:
-            errormsg = f'Cannot add new strain with label "{self.label}"; already exists in strains: {sc.strjoin(existing)}'
+            errormsg = f'Cannot add new strain with label "{self.label}", it already exists in the list of strains: {sc.strjoin(existing)}'
             raise ValueError(errormsg)
         else:
             sim['strain_map'][self.index] = self.label
 
         # Update strain info
         defaults = cvpar.get_strain_pars(default=True)
+        sim['strain_pars'][self.label] = {}
         for key in cvd.strain_pars:
             if key not in self.p:
                 self.p[key] = defaults[key]

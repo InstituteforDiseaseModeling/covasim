@@ -617,7 +617,8 @@ class Sim(cvb.BaseSim):
             rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
             if strain:
-                rel_beta *= self['strain_pars']['rel_beta'][strain]
+                strain_label = self.pars['strain_map'][strain]
+                rel_beta *= self['strain_pars'][strain_label]['rel_beta']
             beta = cvd.default_float(self['beta'] * rel_beta)
 
             for lkey, layer in contacts.items():
