@@ -503,6 +503,11 @@ class Sim(cvb.BaseSim):
                 errormsg = f'Strain {i} ({strain}) is not a cv.strain object; please create using cv.strain()'
                 raise TypeError(errormsg)
 
+        len_pars = len(self['strain_pars'])
+        len_map = len(self['strain_map'])
+        assert len_pars == len_map, f"strain_pars and strain_map must be the same length, but they're not: {len_pars} ≠ {len_map}"
+        self['n_strains'] = len_pars # Each strain has an entry in strain_pars
+
         return
 
 

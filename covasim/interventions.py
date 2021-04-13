@@ -1243,9 +1243,7 @@ class vaccinate(Intervention):
 
 
     def parse(self, vaccine=None, label=None):
-        ''' Unpack vaccine information, which may be given in different ways'''
-
-
+        ''' Unpack vaccine information, which may be given as a string or dict '''
 
         # Option 1: vaccines can be chosen from a list of pre-defined strains
         if isinstance(vaccine, str):
@@ -1270,22 +1268,12 @@ class vaccinate(Intervention):
 
         # Option 2: strains can be specified as a dict of pars
         elif isinstance(vaccine, dict):
-            vaccine_pars = vaccine
-            if self.label is None:
-                self.label = 'Custom vaccine'
 
+            # Parse label
+            vaccine_pars = vaccine
             label = vaccine_pars.pop('label', label) # Allow including the label in the parameters
             if label is None:
                 label = 'custom'
-
-            # Check that valid keys have been supplied:
-            invalid = []
-            for key in vaccine_pars.keys():
-                if key not in list(strain_pars.keys()):
-                    invalid.append(key)
-            if len(invalid):
-                errormsg = f'Could not parse strain keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.strain_pars)}"'
-                raise sc.KeyNotFoundError(errormsg)
 
         else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
@@ -1301,15 +1289,37 @@ class vaccinate(Intervention):
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         super().initialize()
+
+        # Populate any missing keys -- must be here, after strains are initialized
+        default_strain_pars = cvpar.get_vaccine_strain_pars(default=True)
+        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        strain_labels       = list(sim['strain_pars'].keys())
+        dose_keys           = list(default_dose_pars.keys())
+
+        # Handle dose keys
+        for key in dose_keys:
+            if key not in self.p:
+                self.p[key] = default_dose_pars[key]
+
+        # Handle strains
+        for key in strain_labels:
+            if key not in self.p:
+                if key in default_strain_pars:
+                    val = default_strain_pars[key]
+                else:
+                    val = 1.0
+                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and strain {key}, setting to 1.0')
+                self.p[key] = val
+
         self.first_dose_eligible = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
-        self.index = len(sim['vaccines']) # Set the index based on the current number included
-        # self.vaccine = cvi.Vaccine(self.vaccine_pars)
-        # self.vaccine.initialize(sim)
-        sim['vaccines'].append(self.vaccine) # Add into the sim
+        sim['vaccine_pars'][self.label] = self.p # Store the parameters
+        self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
+        sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
+
         return
 
 

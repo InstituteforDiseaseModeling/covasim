@@ -47,7 +47,7 @@ class strain(sc.prettyobj):
 
 
     def parse(self, strain=None, label=None):
-        ''' Unpack strain information, which may be given in different ways '''
+        ''' Unpack strain information, which may be given as either a string or a dict '''
 
         # Option 1: strains can be chosen from a list of pre-defined strains
         if isinstance(strain, str):
@@ -72,6 +72,7 @@ class strain(sc.prettyobj):
             default_strain_pars = cvpar.get_strain_pars(default=True)
             default_keys = list(default_strain_pars.keys())
 
+            # Parse label
             strain_pars = strain
             label = strain_pars.pop('label', label) # Allow including the label in the parameters
             if label is None:
@@ -103,32 +104,16 @@ class strain(sc.prettyobj):
 
 
     def initialize(self, sim):
-
-        # Check we haven't already initialized
-        if self.initialized:
-            errormsg = 'Strains cannot be re-initialized since the change the state of the sim'
-            raise RuntimeError(errormsg)
-
-        # Store the index of this strain, and increment the number of strains in the simulation
-        self.index = sim['n_strains']
-        sim['n_strains'] += 1
-
-        # Store the mapping of this strain
-        existing = list(sim['strain_map'].values())
-        if self.label in existing:
-            errormsg = f'Cannot add new strain with label "{self.label}", it already exists in the list of strains: {sc.strjoin(existing)}'
-            raise ValueError(errormsg)
-        else:
-            sim['strain_map'][self.index] = self.label
-
-        # Update strain info
-        sim['strain_pars'][self.label] = self.p
+        ''' Update strain info in sim '''
+        sim['strain_pars'][self.label] = self.p  # Store the parameters
+        self.index = list(sim['strain_pars'].keys()).index(self.label) # Find where we are in the list
+        sim['strain_map'][self.index]  = self.label # Use that to populate the reverse mapping
         self.initialized = True
-
         return
 
 
     def apply(self, sim):
+        ''' Introduce new infections with this strain '''
         for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce strain
             susceptible_inds = cvu.true(sim.people.susceptible)
             n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
