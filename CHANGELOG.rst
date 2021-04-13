@@ -35,12 +35,8 @@ Highlights
 - **New methods for vaccine modeling**: A new ``cv.vaccinate()`` intervention has been added, which allows more flexible modeling of vaccinations. Vaccines, like natural infections, are assumed to boost agents' immunity.
 - **Consistency**: By default, results from Covasim 3.0.0 should exactly match Covasim 2.1.2. To use the new features, you will need to manually specify ``cv.Sim(use_waning=True)``.
 
-State changes
-^^^^^^^^^^^^^
-- Several new states have been added, such as ``people.naive``, which stores whether or not a person has ever been exposed to COVID before.
-
-Parameter changes
-^^^^^^^^^^^^^^^^^
+Immunity-related parameter changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - A new control parameter, ``use_waning``, has been added that controls whether to use new waning immunity dynamics ("SEIS" structure) or the old dynamics where post-infection immunity was perfect and did not wane ("SEIR" structure). By default, ``use_waning=False``.
 - A subset of existing parameters have been made strain-specific, meaning that they are allowed to differ by strain. These include: ``rel_beta``, which specifies the relative transmissibility of a new strain compared to the wild strain; ``rel_symp_prob``, ``rel_severe_prob``, ``rel_crit_prob``, and the newly-added immunity parameters ``rel_imm`` (see next point). The list of parameters that can vary by strain is specified in ``defaults.py``. 
 - The parameter ``n_strains`` is an integer that specifies how many strains will be in circulation at some point during the course of the simulation. 
@@ -52,22 +48,27 @@ Parameter changes
    - The parameter ``cross_immunity``. By default, infection with one strain of SARS-CoV-2 is assumed to grant 50% immunity to infection with a different strain. This default assumption of 50% cross-immunity can be modified via this parameter (which will then apply to all strains in the simulation), or it can be modified on a per-strain basis using the ``immunity`` parameter described below.
    - The parameter ``immunity`` is a matrix of size ``total_strains`` by ``total_strains``. Row ``i`` specifies the immunity levels that people who have been infected with strain ``i`` have to other strains.
    - The parameter ``rel_imm`` is a dictionary with keys ``asymp``, ``mild`` and ``severe``. These contain scalars specifying the relative immunity levels for someone who had an asymptomatic, mild, or severe infection. By default, values of 0.98, 0.99, and 1.0 are used.
-- The parameter ``strains`` contains information about any circulating strains that have been specified as additional to the default strain, and the parameter ``vaccines`` contains information about any vaccines in use. These are initialized as ``None`` and then populated by the user. 
+- The parameter ``strains`` contains information about any circulating strains that have been specified as additional to the default strain. This is initialized as an empty list and then populated by the user. 
+
+Other parameter changes
+^^^^^^^^^^^^^^^^^^^^^^^
 - The parameter ``frac_susceptible`` will initialize the simulation with less than 100% of the population to be susceptible to COVID (to represent, for example, a baseline level of population immunity). Note that this is intended for quick explorations only, since people are selected at random, whereas in reality higher-risk people will typically be infected first and preferentially be immune. This is primarily designed for use with ``use_waning=False``.
 - The parameter ``scaled_pop``, if supplied, can be used in place of ``pop_scale`` or ``pop_size``. For example, if you specify ``cv.Sim(pop_size=100e3, scaled_pop=550e3)``, it will automatically calculate ``pop_scale=5.5``.
 - Aliases have been added for several parameters: ``pop_size`` can also be supplied as ``n_agents``, and ``pop_infected`` can also be supplied as ``init_infected``. This only applies when creating a sim; otherwise, the default names will be used for these parameters.
 
-Changes to results
-^^^^^^^^^^^^^^^^^^
+Changes to states and results
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Several new states have been added, such as ``people.naive``, which stores whether or not a person has ever been exposed to COVID before.
 - New results have been added to store information by strain, as well as population immunity levels. In addition to new entries in ``sim.results``, such as ``pop_nabs`` (population level neutralizing antibodies) and ``new_reinfections``, there is a new set of results ``sim.results.strain``: ``cum_infections_by_strain``, ``cum_infectious_by_strain``, ``new_infections_by_strain``, ``new_infectious_by_strain``, ``prevalence_by_strain``, ``incidence_by_strain``. 
 
 New functions, methods and classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - The newly-added file ``immunity.py`` contains functions, methods, and classes related to calculating immunity. This includes the ``strain`` class (which uses lowercase convention like Covasim interventions, which are also technically classes).
 - A new ``cv.vaccinate()`` intervention has been added. Compared to the previous ``vaccine`` intervention (now renamed ``cv.simple_vaccine()``), this new intervention allows vaccination to boost agents' immunity against infection, transmission, and progression.
-- A new function ``cv.demo()`` has been added as a shortcut to ``cv.Sim().run().plot()``.
 - There is a new ``sim.people.make_nonnaive()`` method, as the opposite of ``sim.people.make_naive()``.
 - New functions ``cv.iundefined()`` and ``cv.iundefinedi()`` have been added for completeness.
+- A new function ``cv.demo()`` has been added as a shortcut to ``cv.Sim().run().plot()``.
+- There are now additional shortcut plotting methods, including ``sim.plot('strain')`` and ``sim.plot('all')``.
 
 Renamed functions and methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -139,6 +139,7 @@ The structure of the ``covasim`` folder is as follows, roughly in the order in w
 * ``people.py``: The ``People`` class, for handling updates of state for each person.
 * ``population.py``: Functions for creating populations of people, including age, contacts, etc.
 * ``interventions.py``: The ``Intervention`` class, for adding interventions and dynamically modifying parameters, and classes for each of the specific interventions derived from it.
+* ``immunity.py``: The ``strain`` class, and functions for computing waning immunity and neutralizing antibodies.
 * ``sim.py``: The ``Sim`` class, which performs most of the heavy lifting: initializing the model, running, and plotting.
 * ``run.py``: Functions for running simulations (e.g. parallel runs and the ``Scenarios`` and ``MultiSim`` classes).
 * ``analysis.py``: The ``Analyzers`` class (for performing analyses on the sim while it's running), the ``Fit`` class (for calculating the fit between the model and the data), the ``TransTree`` class, and other classes and functions for analyzing simulations.
