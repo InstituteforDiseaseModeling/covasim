@@ -58,7 +58,6 @@ def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
 
     strain_pars = {
         'rel_beta': 1.5,
-        'dur': {'exp2inf':dict(dist='lognormal_int', par1=6.0,  par2=2.0)}
     }
 
     strain = cv.strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
@@ -239,49 +238,6 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_strainduration_scen(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a sim with 2 strains, one of which has a much longer period before symptoms develop')
-
-    strain_pars = {'dur':{'inf2sym': {'dist': 'lognormal_int', 'par1': 10.0, 'par2': 0.9}}}
-    strains = cv.strain(strain=strain_pars, label='10 days til symptoms', days=10, n_imports=30)
-    tp = cv.test_prob(symp_prob=0.2) # Add an efficient testing program
-
-    pars = sc.mergedicts(base_pars, {
-        'beta': 0.015, # Make beta higher than usual so people get infected quickly
-        'n_days': 120,
-        'interventions': tp
-    })
-    n_runs = 1
-    base_sim = cv.Sim(use_waning=True, pars=pars)
-
-    # Define the scenarios
-    scenarios = {
-        'baseline': {
-            'name':'1 day to symptoms',
-            'pars': {}
-        },
-        'slowsymp': {
-            'name':'10 days to symptoms',
-            'pars': {'strains': [strains]}
-        }
-    }
-
-    metapars = {'n_runs': n_runs}
-    scens = cv.Scenarios(sim=base_sim, metapars=metapars, scenarios=scenarios)
-    scens.run(debug=debug)
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New diagnoses': ['new_diagnoses'],
-        'Cumulative diagnoses': ['cum_diagnoses'],
-    })
-    if do_plot:
-        scens.plot(do_save=do_save, do_show=do_show, fig_path='results/test_strainduration.png', to_plot=to_plot)
-
-    return scens
-
-
 def test_msim(do_plot=False):
     sc.heading('Testing multisim...')
 
@@ -453,14 +409,13 @@ if __name__ == '__main__':
     # Run multisim and scenario tests
     scens0 = test_vaccine_1strain_scen()
     scens1 = test_vaccine_2strains_scen()
-    scens2 = test_strainduration_scen(**kw)
     msim0  = test_msim()
 
     # Run immunity tests
     sim_immunity0 = test_varyingimmunity(**kw)
 
     # Run test to compare sims with and without waning
-    scens3 = test_waning_vs_not(**kw)
+    scens2 = test_waning_vs_not(**kw)
 
     sc.toc()
 

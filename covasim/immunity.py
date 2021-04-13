@@ -307,7 +307,7 @@ def check_immunity(people, strain, sus=True, inds=None):
     vacc_present = len(is_vacc)
     if vacc_present:
         vx_nab_eff_pars = vaccine_pars['nab_eff']
-        vacc_mapping = np.array([vaccine_pars[label] for label in pars['strain_map'].values()])
+        vacc_mapping = np.array([vaccine_pars.get(label, 1.0) for label in pars['strain_map'].values()]) # TODO: make more robust
 
     # PART 1: Immunity to infection for susceptible individuals
     if sus:

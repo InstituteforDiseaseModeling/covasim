@@ -1342,8 +1342,8 @@ class vaccinate(Intervention):
                 self.vaccinated[sim.t] = vacc_inds
                 sim.people.flows['new_vaccinations'] += len(vacc_inds)
                 sim.people.flows['new_vaccinated'] += len(vacc_inds)
-                if self.interval is not None:
-                    next_dose_day = sim.t + self.interval
+                if self.p.interval is not None:
+                    next_dose_day = sim.t + self.p.interval
                     if next_dose_day < sim['n_days']:
                         self.second_dose_days[next_dose_day] = vacc_inds
 
@@ -1354,7 +1354,7 @@ class vaccinate(Intervention):
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccine_source[vacc_inds] = self.vaccine_ind
+            sim.people.vaccine_source[vacc_inds] = self.index
             self.vaccinations[vacc_inds] += 1
             self.vaccination_dates[vacc_inds] = sim.t
 

@@ -147,7 +147,7 @@ def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
     p1 = cv.strain('sa variant',   days=20, n_imports=20)
-    pfizer = cv.vaccinate(days=30, vaccine_pars='pfizer')
+    pfizer = cv.vaccinate(vaccine='pfizer', days=30)
     sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
     sim.run()
 
