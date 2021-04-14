@@ -598,7 +598,8 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten useful parameters
-        ns = self['n_strains']  # Shorten number of strains
+        ns = self.people.n_strains
+        # ns = self['n_strains']  # Shorten number of strains
         sus = people.susceptible
         symp = people.symptomatic
         diag = people.diagnosed

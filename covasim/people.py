@@ -76,11 +76,11 @@ class People(cvb.BasePeople):
         for key in self.meta.strain_states:
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.by_strain_states:
-            self[key] = np.full((self.n_strains, self.pop_size), False, dtype=bool)
+            self[key] = np.full((self['n_strains'], self.pop_size), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self.n_strains, self.pop_size), dtype=cvd.default_float)
+            self[key] = np.zeros((self['n_strains'], self.pop_size), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
             self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
@@ -223,7 +223,7 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
-        for strain in range(self.pars['n_strains']):
+        for strain in range(self.n_strains):
             this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
             n_this_strain_inds = len(this_strain_inds)
             self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
