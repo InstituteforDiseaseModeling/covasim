@@ -1351,17 +1351,17 @@ class vaccinate(Intervention):
             if vacc_inds_dose2 is not None:
                 vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
                 sim.people.flows['new_vaccinations'] += len(vacc_inds_dose2)
+            if len(vacc_inds):
+                # Update vaccine attributes in sim
+                sim.people.vaccinated[vacc_inds] = True
+                sim.people.vaccine_source[vacc_inds] = self.index
+                self.vaccinations[vacc_inds] += 1
+                self.vaccination_dates[vacc_inds] = sim.t
 
-            # Update vaccine attributes in sim
-            sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccine_source[vacc_inds] = self.index
-            self.vaccinations[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = sim.t
-
-            # Update vaccine attributes in sim
-            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-            sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
-            cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
+                # Update vaccine attributes in sim
+                sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
+                sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+                cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
 
         return
 
