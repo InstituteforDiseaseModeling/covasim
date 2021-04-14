@@ -225,7 +225,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=2, par2= 2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on moderna
@@ -234,7 +234,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=2, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 29
-                vaccine_pars['NAb_boost'] = 2
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on az
@@ -243,7 +243,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=-1, par2=2)
                 vaccine_pars['doses'] = 2
                 vaccine_pars['interval'] = 22
-                vaccine_pars['NAb_boost'] = 2
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             # Known parameters on j&j
@@ -252,7 +252,7 @@ class Vaccine():
                 vaccine_pars['NAb_init'] = dict(dist='normal', par1=-1, par2=2)
                 vaccine_pars['doses'] = 1
                 vaccine_pars['interval'] = None
-                vaccine_pars['NAb_boost'] = 2
+                vaccine_pars['NAb_boost'] = 3
                 vaccine_pars['label'] = vaccine
 
             else:

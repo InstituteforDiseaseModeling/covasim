@@ -1180,7 +1180,8 @@ class vaccinate(Intervention):
             vacc_probs = np.zeros(sim.n)
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+                if len(subtarget_inds):
+                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
                 for _ in find_day(self.first_dose_eligible, sim.t):
                     unvacc_inds = sc.findinds(~sim.people.vaccinated)
