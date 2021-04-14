@@ -1029,11 +1029,17 @@ class BasePeople(FlexPretty):
 
         # Check that the length of each array is consistent
         expected_len = len(self)
+        expected_strains = self.pars['n_strains']
         for key in self.keys():
             actual_len = len(self[key])
             # check if it's 2d
             if self[key].ndim > 1:
-                actual_len = len(self[key][0])
+                actual_len = np.shape(self[key])[1]
+                actual_strains = np.shape(self[key])[0]
+                if actual_strains != expected_strains:
+                    if verbose:
+                        print(f'Resizing "{key}" from {actual_strains} to {expected_strains}')
+                    self._resize_arrays(keys=key, pop_size=(expected_strains, expected_len))
             if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
