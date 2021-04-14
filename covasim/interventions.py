@@ -1314,8 +1314,8 @@ class vaccinate(Intervention):
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
-        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
+        self.vaccinations      = np.zeros(sim.pars['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = np.full(sim.pars['pop_size'], np.nan) # Store the dates when people are vaccinated
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
