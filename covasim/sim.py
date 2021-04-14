@@ -659,7 +659,8 @@ class Sim(cvb.BaseSim):
                 self.results['strain'][key][strain][t] += count[strain]
 
         # Update nab and immunity for this time step
-        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/self['pop_size']
+        inds_alive = cvu.false(people.dead)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.defined(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
