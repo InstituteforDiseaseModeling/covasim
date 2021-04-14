@@ -117,7 +117,8 @@ class strain(sc.prettyobj):
         ''' Introduce new infections with this strain '''
         for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce strain
             susceptible_inds = cvu.true(sim.people.susceptible)
-            n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
+            # n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
+            n_imports = sc.randround(self.n_imports)
             importation_inds = np.random.choice(susceptible_inds, n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=self.index)
         return
