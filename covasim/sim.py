@@ -526,7 +526,7 @@ class Sim(cvb.BaseSim):
             if current_scale < pop_scale: # We have room to rescale
                 not_naive_inds = self.people.false('naive') # Find everyone not naive
                 n_not_naive = len(not_naive_inds) # Number of people who are not naive
-                n_people = len(self.people) # Number of people overall
+                n_people = self['pop_size'] # Number of people overall
                 current_ratio = n_not_naive/n_people # Current proportion not naive
                 threshold = self['rescale_threshold'] # Threshold to trigger rescaling
                 if current_ratio > threshold: # Check if we've reached point when we want to rescale
@@ -565,7 +565,7 @@ class Sim(cvb.BaseSim):
         if self['n_imports']:
             n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
             if n_imports>0:
-                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Add strains
@@ -660,7 +660,7 @@ class Sim(cvb.BaseSim):
                 self.results['strain'][key][strain][t] += count[strain]
 
         # Update nab and immunity for this time step
-        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/len(people)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/self['pop_size']
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 

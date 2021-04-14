@@ -49,7 +49,6 @@ class People(cvb.BasePeople):
         self.pars          = pars # Equivalent to self.set_pars(pars)
         self.pop_size      = int(pars['pop_size'])
         self.location      = pars.get('location') # Try to get location, but set to None otherwise
-        self.n_strains = pars.get('n_strains', 1) # Assume 1 strain if not supplied
         self.version       = cvv.__version__ # Store version info
 
         # Other initialization
@@ -121,7 +120,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         self.flows_strain = {}
         for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.zeros(self.n_strains, dtype=cvd.default_float)
+            self.flows_strain[key] = np.zeros(self.pars['n_strains'], dtype=cvd.default_float)
         return
 
 
@@ -223,7 +222,7 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
-        for strain in range(self.n_strains):
+        for strain in range(self['n_strains']):
             this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
             n_this_strain_inds = len(this_strain_inds)
             self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
