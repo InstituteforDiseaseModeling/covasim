@@ -48,6 +48,7 @@ class People(cvb.BasePeople):
             pars = {'pop_size':pars} # Ensure it's a dictionary
         self.pars = pars # Equivalent to self.set_pars(pars)
         self.pars['pop_size'] = int(pars['pop_size'])
+        self.pars.setdefault('n_strains', 1)
         self.pars.setdefault('location', None)
         self.version = cvv.__version__ # Store version info
 
