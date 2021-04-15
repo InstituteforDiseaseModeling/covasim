@@ -1,5 +1,5 @@
 '''
-Tests of the utilies for the model.
+Tests of the numerical utilities for the model.
 '''
 
 #%% Imports and settings
@@ -10,8 +10,8 @@ import pylab as pl
 import sciris as sc
 import covasim as cv
 
-
-doplot = 0
+do_plot = 0
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 #%% Define the tests
@@ -64,18 +64,18 @@ def test_poisson():
     assert s1 == l1
     assert s2 > l2
     assert s3 < l3
-    print(f'Poisson assertions passed:')
+    print('Poisson assertions passed:')
     print(f'f(10,10) {s1} == {l1}')
     print(f'f(10,15) {s2} > {l2}')
     print(f'f(0,100) {s3} < {l3}')
     return s3
 
 
-def test_samples(doplot=False):
+def test_samples(do_plot=False, verbose=True):
     sc.heading('Samples distribution')
 
-    n = 10000
-    nbins = 40
+    n = 200_000
+    nbins = 100
 
     # Warning, must match utils.py!
     choices = [
@@ -85,35 +85,83 @@ def test_samples(doplot=False):
         'normal_pos',
         'normal_int',
         'lognormal_int',
+        'poisson',
         'neg_binomial'
         ]
 
-    if doplot:
+    if do_plot:
         pl.figure(figsize=(20,14))
 
     # Run the samples
     nchoices = len(choices)
-    nsqr = np.ceil(np.sqrt(nchoices))
-    results = {}
+    nsqr, _ = sc.get_rows_cols(nchoices)
+    results = sc.objdict()
+    mean = 11
+    std = 7
+    low = 3
+    high = 9
+    normal_dists = ['normal', 'normal_pos', 'normal_int', 'lognormal', 'lognormal_int']
     for c,choice in enumerate(choices):
-        if choice == 'neg_binomial':
-            par1 = 10
-            par2 = 0.5
-        elif choice in ['lognormal', 'lognormal_int']:
-            par1 = 1
-            par2 = 0.5
+        kw = {}
+        if choice in normal_dists:
+            par1 = mean
+            par2 = std
+        elif choice == 'neg_binomial':
+            par1 = mean
+            par2 = 1.2
+            kw['step'] = 0.1
+        elif choice == 'poisson':
+            par1 = mean
+            par2 = 0
+        elif choice == 'uniform':
+            par1 = low
+            par2 = high
         else:
-            par1 = 0
-            par2 = 5
-        results[choice] = cv.sample(dist=choice, par1=par1, par2=par2, size=n)
+            errormsg = f'Choice "{choice}" not implemented'
+            raise NotImplementedError(errormsg)
 
-        if doplot:
+        # Compute
+        results[choice] = cv.sample(dist=choice, par1=par1, par2=par2, size=n, **kw)
+
+        # Optionally plot
+        if do_plot:
             pl.subplot(nsqr, nsqr, c+1)
-            pl.hist(x=results[choice], bins=nbins)
+            plotbins = np.unique(results[choice]) if (choice=='poisson' or '_int' in choice) else nbins
+            pl.hist(x=results[choice], bins=plotbins, width=0.8)
             pl.title(f'dist={choice}, par1={par1}, par2={par2}')
 
     with pytest.raises(NotImplementedError):
         cv.sample(dist='not_found')
+
+    # Do statistical tests
+    tol = 1/np.sqrt(n/50/len(choices)) # Define acceptable tolerance -- broad to avoid false positives
+
+    def isclose(choice, tol=tol, **kwargs):
+        key = list(kwargs.keys())[0]
+        ref = list(kwargs.values())[0]
+        npfunc = getattr(np, key)
+        value = npfunc(results[choice])
+        msg = f'Test for {choice:14s}: expecting {key:4s} = {ref:8.4f} ± {tol*ref:8.4f} and got {value:8.4f}'
+        if verbose:
+            print(msg)
+        assert np.isclose(value, ref, rtol=tol), msg
+        return True
+
+    # Normal
+    for choice in normal_dists:
+        isclose(choice, mean=mean)
+        if all([k not in choice for k in ['_pos', '_int']]): # These change the variance
+            isclose(choice, std=std)
+
+    # Negative binomial
+    isclose('neg_binomial', mean=mean)
+
+    # Poisson
+    isclose('poisson', mean=mean)
+    isclose('poisson', var=mean)
+
+    # Uniform
+    isclose('uniform', mean=(low+high)/2)
 
     return results
 
@@ -150,9 +198,39 @@ def test_choose_w():
     return x1
 
 
+def test_indexing():
+
+    # Definitions
+    farr = np.array([1.5,0,0,1,1,0]) # Float array
+    barr = np.array(farr, dtype=bool) # Boolean array
+    darr = np.array([0,np.nan,1,np.nan,0,np.nan]) # Defined/undefined array
+    inds = np.array([0,10,20,30,40,50]) # Indices
+    inds2 = np.array([1,2,3,4]) # Skip first and last index
+
+    # Test true, false, defined, and undefined
+    assert cv.true(farr).tolist()      == [0,3,4]
+    assert cv.false(farr).tolist()     == [1,2,5]
+    assert cv.defined(darr).tolist()   == [0,2,4]
+    assert cv.undefined(darr).tolist() == [1,3,5]
+
+    # Test with indexing
+    assert cv.itrue(barr, inds).tolist()      == [0,30,40]
+    assert cv.ifalse(barr, inds).tolist()     == [10,20,50]
+    assert cv.idefined(darr, inds).tolist()   == [0,20,40]
+    assert cv.iundefined(darr, inds).tolist() == [10,30,50]
+
+    # Test with double indexing
+    assert cv.itruei(barr, inds2).tolist()      == [3,4]
+    assert cv.ifalsei(barr, inds2).tolist()     == [1,2]
+    assert cv.idefinedi(darr, inds2).tolist()   == [2,4]
+    assert cv.iundefinedi(darr, inds2).tolist() == [1,3]
+
+    return
+
+
 def test_doubling_time():
 
-    sim = cv.Sim()
+    sim = cv.Sim(pop_size=1000)
     sim.run(verbose=0)
 
     d = sc.objdict()
@@ -174,13 +252,16 @@ def test_doubling_time():
 #%% Run as a script
 if __name__ == '__main__':
 
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     rnd1    = test_rand()
     rnd2    = test_poisson()
-    samples = test_samples(doplot=doplot)
+    samples = test_samples(do_plot=do_plot)
     people1 = test_choose()
     people2 = test_choose_w()
+    inds    = test_indexing()
     dt      = test_doubling_time()
 
     print('\n'*2)

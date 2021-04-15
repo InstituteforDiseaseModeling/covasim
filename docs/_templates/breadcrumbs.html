@@ -1,31 +1,9 @@
-{# Support for Sphinx 1.3+ page_source_suffix, but don't break old builds. #}
-
-{% if page_source_suffix %}
-{% set suffix = page_source_suffix %}
-{% else %}
-{% set suffix = source_suffix %}
-{% endif %}
-
-<div aria-label="breadcrumbs navigation" role="navigation">
-    <ul class="wy-breadcrumbs">
-        <li><a href="http://covasim.org">Covasim website</a> &raquo;</li>
-        <li><a href="{{ pathto(master_doc) }}">Documentation</a> &raquo;</li>
-        {% for doc in parents %}
+{% extends '!breadcrumbs.html' %}
+{% block breadcrumbs %}
+    <li><a href="//covasim.org">Covasim website</a> &raquo;</li>
+    <li><a href="{{ pathto(master_doc) }}">Documentation</a> &raquo;</li>
+    {% for doc in parents %}
         <li><a href="{{ doc.link|e }}">{{ doc.title }}</a> &raquo;</li>
-        {% endfor %}
-        <li>{{ title }}</li>
-        <li class="wy-breadcrumbs-aside">
-            {% if pagename != "search" %}
-            {% if display_github %}
-            <a github.comhref="https://{{ github_host|default("") }}/{{ github_user }}/{{ github_repo }}/blob/{{
-            github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}" class="fa fa-github"> Edit on GitHub</a>
-            {% elif show_source and source_url_prefix %}
-            <a href="{{ source_url_prefix }}{{ pagename }}{{ suffix }}">View page source</a>
-            {% elif show_source and has_source and sourcename %}
-            <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow"> View page source</a>
-            {% endif %}
-            {% endif %}
-        </li>
-    </ul>
-    <hr/>
-</div>
+    {% endfor %}
+    <li>{{ title }}</li>
+{% endblock %}

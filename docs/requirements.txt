@@ -1,6 +1,10 @@
+pytest
 sphinx-rtd-theme
 sphinxcontrib-napoleon
-beautifulsoup4
 sphinx
 plantweb
-pytest
+ipykernel
+nbsphinx
+pandoc
+pypandoc
+optuna

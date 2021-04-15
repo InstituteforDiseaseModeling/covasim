@@ -4,8 +4,8 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np
+import pandas as pd
 import sciris as sc
-from . import version as cvv
 from . import utils as cvu
 from . import misc as cvm
 from . import base as cvb
@@ -14,16 +14,19 @@ from . import parameters as cvpar
 from . import population as cvpop
 from . import plotting as cvplt
 from . import interventions as cvi
+from . import immunity as cvimm
 from . import analysis as cva
 
-# Everything in this file is contained in the Sim class
-__all__ = ['Sim']
+# Almost everything in this file is contained in the Sim class
+__all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
 
 
 class Sim(cvb.BaseSim):
     '''
-    The Sim class handles the running of the simulation: the number of children,
-    number of time points, and the parameters of the simulation.
+    The Sim class handles the running of the simulation: the creation of the
+    population and the dynamics of the epidemic. This class handles the mechanics
+    of the actual simulation, while BaseSim takes care of housekeeping (saving,
+    loading, exporting, etc.). Please see the BaseSim class for additional methods.
 
     Args:
         pars     (dict):   parameters to modify from their default values
@@ -34,6 +37,7 @@ class Sim(cvb.BaseSim):
         popfile  (str):    the filename to load/save the population for this simulation
         load_pop (bool):   whether to load the population from the named file
         save_pop (bool):   whether to save the population to the named file
+        version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
         kwargs   (dict):   passed to make_pars()
 
     **Examples**::
@@ -42,10 +46,8 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None, popfile=None, load_pop=False, save_pop=False, **kwargs):
-        # Create the object
-        default_pars = cvpar.make_pars() # Start with default pars
-        super().__init__(default_pars) # Initialize and set the parameters as attributes
+    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
+                 popfile=None, load_pop=False, save_pop=False, version=None, **kwargs):
 
         # Set attributes
         self.label         = label    # The label/name of the simulation
@@ -57,43 +59,27 @@ class Sim(cvb.BaseSim):
         self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
         self.popdict       = None     # The population dictionary
-        self.t             = None     # The current time in the simulation
+        self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.results       = {}       # For storing results
+        self.summary       = None     # For storing a summary of the results
         self.initialized   = False    # Whether or not initialization is complete
+        self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
+        self._default_ver  = version  # Default version of parameters used
+        self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
+
+        # Make default parameters (using values from parameters.py)
+        default_pars = cvpar.make_pars(version=version) # Start with default pars
+        super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Now update everything
-        self.set_metadata(simfile, label)  # Set the simulation date and filename
+        self.set_metadata(simfile)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
         if self.load_pop:
-            self.load_population(popfile)      # Load the population, if provided
-        return
+            self.load_population(popfile)  # Load the population, if provided
 
-
-    def update_pars(self, pars=None, create=False, **kwargs):
-        ''' Ensure that metaparameters get used properly before being updated '''
-        pars = sc.mergedicts(pars, kwargs)
-        if pars:
-            if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars, force=False)
-            if pars.get('prog_by_age'):
-                pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age']) # Reset prognoses
-            super().update_pars(pars=pars, create=create) # Call update_pars() for ParsObj
-        return
-
-
-    def set_metadata(self, simfile, label):
-        ''' Set the metadata for the simulation -- creation time and filename '''
-        self.created = sc.now()
-        self.version = cvv.__version__
-        self.git_info = cvm.git_info()
-        if simfile is None:
-            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.simfile = f'covasim_{datestr}.sim'
-        if label is not None:
-            self.label = label
         return
 
 
@@ -103,12 +89,12 @@ class Sim(cvb.BaseSim):
             verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, **kwargs)
+            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
 
 
-    def initialize(self, **kwargs):
+    def initialize(self, reset=False, **kwargs):
         '''
         Perform all initializations, including validating the parameters, setting
         the random number seed, creating the results structure, initializing the
@@ -116,19 +102,25 @@ class Sim(cvb.BaseSim):
         and initializing the interventions.
 
         Args:
+            reset (bool): whether or not to reset people even if they already exist
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
         self.validate_pars() # Ensure parameters have valid values
         self.set_seed() # Reset the random seed before the population is created
-        self.init_results() # Create the results stucture
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, **kwargs) # Create all the people (slow)
+        self.init_strains() # Initialize the strains
+        self.init_immunity() # initialize information about immunity (if use_waning=True)
+        self.init_results() # After initializing the strain, create the results structure
+        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
+        self.init_interventions()  # Initialize the interventions...
+        # self.init_vaccines() # Initialize vaccine information
+        self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
-        self.init_interventions() # Initialize the interventions
-        self.init_analyzers() # ...and the interventions
         self.set_seed() # Reset the random seed again so the random number stream is consistent
-        self.initialized = True
-        return
+        self.initialized   = True
+        self.complete      = False
+        self.results_ready = False
+        return self
 
 
     def layer_keys(self):
@@ -141,7 +133,7 @@ class Sim(cvb.BaseSim):
         '''
         try:
             keys = list(self['beta_layer'].keys()) # Get keys from beta_layer since the "most required" layer parameter
-        except:
+        except: # pragma: no cover
             keys = []
         return keys
 
@@ -177,19 +169,20 @@ class Sim(cvb.BaseSim):
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts
                 self[lp] = {k:val for k in layer_keys}
 
-        # Handle key mismaches
+        # Handle key mismatches
         for lp in layer_pars:
             lp_keys = set(self.pars[lp].keys())
             if not lp_keys == set(layer_keys):
-                errormsg = f'Layer parameters have inconsistent keys with the layer keys {layer_keys}:'
+                errormsg = 'At least one layer parameter is inconsistent with the layer keys; all parameters must have the same keys:'
+                errormsg += f'\nsim.layer_keys() = {layer_keys}'
                 for lp2 in layer_pars: # Fail on first error, but re-loop to list all of them
-                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp].keys())
+                    errormsg += f'\n{lp2} = ' + ', '.join(self.pars[lp2].keys())
                 raise sc.KeyNotFoundError(errormsg)
 
         # Handle mismatches with the population
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
-            if pop_keys != set(layer_keys):
+            if pop_keys != set(layer_keys): # pragma: no cover
                 errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                 raise sc.KeyNotFoundError(errormsg)
 
@@ -204,8 +197,18 @@ class Sim(cvb.BaseSim):
             validate_layers (bool): whether to validate layer parameters as well via validate_layer_pars() -- usually yes, except during initialization
         '''
 
+        # Handle population size
+        pop_size   = self.pars.get('pop_size')
+        scaled_pop = self.pars.get('scaled_pop')
+        pop_scale  = self.pars.get('pop_scale')
+        if scaled_pop is not None: # If scaled_pop is supplied, try to use it
+            if pop_scale in [None, 1.0]: # Normal case, recalculate population scale
+                self['pop_scale'] = scaled_pop/pop_size
+            else: # Special case, recalculate number of agents
+                self['pop_size'] = int(scaled_pop/pop_scale)
+
         # Handle types
-        for key in ['pop_size', 'pop_infected', 'pop_size']:
+        for key in ['pop_size', 'pop_infected']:
             try:
                 self[key] = int(self[key])
             except Exception as E:
@@ -216,14 +219,14 @@ class Sim(cvb.BaseSim):
         start_day = self['start_day'] # Shorten
         if start_day in [None, 0]: # Use default start day
             start_day = '2020-03-01'
-        self['start_day'] = cvm.date(start_day)
+        self['start_day'] = sc.date(start_day)
 
         # Handle end day and n_days
         end_day = self['end_day']
         n_days = self['n_days']
         if end_day:
-            self['end_day'] = cvm.date(end_day)
-            n_days = cvm.daydiff(self['start_day'], self['end_day'])
+            self['end_day'] = sc.date(end_day)
+            n_days = sc.daydiff(self['start_day'], self['end_day'])
             if n_days <= 0:
                 errormsg = f"Number of days must be >0, but you supplied start={str(self['start_day'])} and end={str(self['end_day'])}, which gives n_days={n_days}"
                 raise ValueError(errormsg)
@@ -240,21 +243,31 @@ class Sim(cvb.BaseSim):
         # Handle population data
         popdata_choices = ['random', 'hybrid', 'clustered', 'synthpops']
         choice = self['pop_type']
-        if choice and choice not in popdata_choices:
+        if choice and choice not in popdata_choices: # pragma: no cover
             choicestr = ', '.join(popdata_choices)
             errormsg = f'Population type "{choice}" not available; choices are: {choicestr}'
             raise ValueError(errormsg)
 
-        # Handle interventions and analyzers
+        # Handle interventions, analyzers, and strains
         self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
         self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
+        self['strains'] = sc.promotetolist(self['strains'], keepnone=False)
+        for key in ['interventions', 'analyzers', 'strains']:
+            self[key] = sc.dcp(self[key]) # All of these have initialize functions that run into issues if they're reused
 
         # Optionally handle layer parameters
         if validate_layers:
             self.validate_layer_pars()
+
+        # Handle verbose
+        if self['verbose'] == 'brief':
+            self['verbose'] = -1
+        if not sc.isnumber(self['verbose']): # pragma: no cover
+            errormsg = f'Verbose argument should be either "brief", -1, or a float, not {type(self["verbose"])} "{self["verbose"]}"'
+            raise ValueError(errormsg)
 
         return
 
@@ -274,11 +287,11 @@ class Sim(cvb.BaseSim):
             output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.get_colors() # Get default colors
+        dcols = cvd.get_default_colors() # Get default colors
 
         # Flows and cumulative flows
         for key,label in cvd.result_flows.items():
-            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}',    color=dcols[key]) # Cumulative variables -- e.g. "Cumulative infections"
+            self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key])  # Cumulative variables -- e.g. "Cumulative infections"
 
         for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
             self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
@@ -286,14 +299,34 @@ class Sim(cvb.BaseSim):
         # Stock variables
         for key,label in cvd.result_stocks.items():
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
-        self.results['n_susceptible'].scale = 'static'
 
         # Other variables
-        self.results['prevalence']    = init_res('Prevalence', scale=False)
-        self.results['incidence']     = init_res('Incidence', scale=False)
-        self.results['r_eff']         = init_res('Effective reproductive number', scale=False)
-        self.results['doubling_time'] = init_res('Doubling time', scale=False)
-        self.results['test_yield']    = init_res('Testing yield', scale=False)
+        self.results['n_alive']             = init_res('Number alive', scale=False)
+        self.results['n_naive']             = init_res('Number never infected', scale=False)
+        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
+        self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['prevalence']          = init_res('Prevalence', scale=False)
+        self.results['incidence']           = init_res('Incidence', scale=False)
+        self.results['r_eff']               = init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']       = init_res('Doubling time', scale=False)
+        self.results['test_yield']          = init_res('Testing yield', scale=False)
+        self.results['rel_test_yield']      = init_res('Relative testing yield', scale=False)
+        self.results['frac_vaccinated']     = init_res('Proportion vaccinated', scale=False)
+        self.results['pop_nabs']            = init_res('Population nab levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
+        self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
+
+        # Handle strains
+        ns = self['n_strains']
+        self.results['strain'] = {}
+        self.results['strain']['prevalence_by_strain'] = init_res('Prevalence by strain', scale=False, n_strains=ns)
+        self.results['strain']['incidence_by_strain']  = init_res('Incidence by strain', scale=False, n_strains=ns)
+        for key,label in cvd.result_flows_by_strain.items():
+            self.results['strain'][f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], n_strains=ns)  # Cumulative variables -- e.g. "Cumulative infections"
+        for key,label in cvd.result_flows_by_strain.items():
+            self.results['strain'][f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], n_strains=ns) # Flow variables -- e.g. "Number of new infections"
+        for key,label in cvd.result_stocks_by_strain.items():
+            self.results['strain'][f'n_{key}'] = init_res(label, color=dcols[key], n_strains=ns)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -301,8 +334,8 @@ class Sim(cvb.BaseSim):
         else:
             scale = self['pop_scale']
         self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
-        self.results['t']    = self.tvec
         self.results['date'] = self.datevec
+        self.results['t']    = self.tvec
         self.results_ready   = False
 
         return
@@ -347,7 +380,7 @@ class Sim(cvb.BaseSim):
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
                 n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
@@ -362,51 +395,126 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, save_pop=False, load_pop=False, popfile=None, verbose=None, **kwargs):
+    def init_people(self, save_pop=False, load_pop=False, popfile=None, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
             save_pop (bool): if true, save the population dictionary to popfile
             load_pop (bool): if true, load the population dictionary from popfile
-            popfile (str): filename to load/save the population
-            verbose (int): detail to print
-            kwargs (dict): passed to cv.make_people()
+            popfile   (str): filename to load/save the population
+            reset    (bool): whether to regenerate the people even if they already exist
+            verbose   (int): detail to print
+            kwargs   (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
         if verbose is None:
             verbose = self['verbose']
-        if verbose:
-            print(f'Initializing sim with {self["pop_size"]:0n} people for {self["n_days"]} days')
+        if verbose>0:
+            resetstr= ''
+            if self.people:
+                resetstr = ' (resetting people)' if reset else ' (warning: not resetting sim.people)'
+            print(f'Initializing sim{resetstr} with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if load_pop and self.popdict is None:
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, verbose=verbose, **kwargs)
+        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
+
+        # Handle anyone who isn't susceptible
+        if self['frac_susceptible'] < 1:
+            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+            self.people.make_nonnaive(inds=inds)
 
         # Create the seed infections
         inds = cvu.choose(self['pop_size'], self['pop_infected'])
         self.people.infect(inds=inds, layer='seed_infection')
+
         return
 
 
     def init_interventions(self):
-        ''' Initialize the interventions '''
+        ''' Initialize and validate the interventions '''
+
+        # Initialization
+        if self._orig_pars and 'interventions' in self._orig_pars:
+            self['interventions'] = self._orig_pars.pop('interventions') # Restore
+
+        for i,intervention in enumerate(self['interventions']):
+            if isinstance(intervention, cvi.Intervention):
+                intervention.initialize(self)
+
+        # Validation
+        trace_ind = np.nan # Index of the tracing intervention(s)
+        test_ind = np.nan # Index of the tracing intervention(s)
+        for i,intervention in enumerate(self['interventions']):
+            if isinstance(intervention, (cvi.contact_tracing)):
+                trace_ind = np.fmin(trace_ind, i) # Find the earliest-scheduled tracing intervention
+            elif isinstance(intervention, (cvi.test_num, cvi.test_prob)):
+                test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
+
+        if not np.isnan(trace_ind): # pragma: no cover
+            warningmsg = ''
+            if np.isnan(test_ind):
+                warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
+            elif trace_ind < test_ind:
+                warningmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
+            if self['verbose'] and warningmsg:
+                print(warningmsg)
+
+        return
+
+
+    def finalize_interventions(self):
         for intervention in self['interventions']:
             if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized:
-                    intervention.initialize(self)
-        return
+                intervention.finalize(self)
 
 
     def init_analyzers(self):
         ''' Initialize the analyzers '''
+        if self._orig_pars and 'analyzers' in self._orig_pars:
+            self['analyzers'] = self._orig_pars.pop('analyzers') # Restore
+
         for analyzer in self['analyzers']:
             if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized:
-                    analyzer.initialize(self)
+                analyzer.initialize(self)
+        return
+
+
+    def finalize_analyzers(self):
+        for analyzer in self['analyzers']:
+            if isinstance(analyzer, cva.Analyzer):
+                analyzer.finalize(self)
+
+
+    def init_strains(self):
+        ''' Initialize the strains '''
+        if self._orig_pars and 'strains' in self._orig_pars:
+            self['strains'] = self._orig_pars.pop('strains') # Restore
+
+        for i,strain in enumerate(self['strains']):
+            if isinstance(strain, cvimm.strain):
+                if not strain.initialized:
+                    strain.initialize(self)
+            else: # pragma: no cover
+                errormsg = f'Strain {i} ({strain}) is not a cv.strain object; please create using cv.strain()'
+                raise TypeError(errormsg)
+
+        len_pars = len(self['strain_pars'])
+        len_map = len(self['strain_map'])
+        assert len_pars == len_map, f"strain_pars and strain_map must be the same length, but they're not: {len_pars} ≠ {len_map}"
+        self['n_strains'] = len_pars # Each strain has an entry in strain_pars
+
+        return
+
+
+    def init_immunity(self, create=False):
+        ''' Initialize immunity matrices and precompute nab waning for each strain '''
+        if self['use_waning']:
+            cvimm.init_immunity(self, create=create)
         return
 
 
@@ -416,20 +524,20 @@ class Sim(cvb.BaseSim):
             pop_scale = self['pop_scale']
             current_scale = self.rescale_vec[self.t]
             if current_scale < pop_scale: # We have room to rescale
-                not_sus_inds = self.people.false('susceptible') # Find everyone not susceptible
-                n_not_sus = len(not_sus_inds) # Number of people who are not susceptible
+                not_naive_inds = self.people.false('naive') # Find everyone not naive
+                n_not_naive = len(not_naive_inds) # Number of people who are not naive
                 n_people = len(self.people) # Number of people overall
-                current_ratio = n_not_sus/n_people # Current proportion not susceptible
+                current_ratio = n_not_naive/n_people # Current proportion not naive
                 threshold = self['rescale_threshold'] # Threshold to trigger rescaling
                 if current_ratio > threshold: # Check if we've reached point when we want to rescale
                     max_ratio = pop_scale/current_scale # We don't want to exceed the total population size
                     proposed_ratio = max(current_ratio/threshold, self['rescale_factor']) # The proposed ratio to rescale: the rescale factor, unless we've exceeded it
                     scaling_ratio = min(proposed_ratio, max_ratio) # We don't want to scale by more than the maximum ratio
                     self.rescale_vec[self.t:] *= scaling_ratio # Update the rescaling factor from here on
-                    n = int(round(n_not_sus*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_sus_inds
-                    choices = cvu.choose(max_n=n_not_sus, n=n) # Choose who to make susceptible again
-                    new_sus_inds = not_sus_inds[choices] # Convert these back into indices for people
-                    self.people.make_susceptible(new_sus_inds) # Make people susceptible again
+                    n = int(round(n_not_naive*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_naive_inds
+                    choices = cvu.choose(max_n=n_not_naive, n=n) # Choose who to make naive again
+                    new_naive_inds = not_naive_inds[choices] # Convert these back into indices for people
+                    self.people.make_naive(new_naive_inds) # Make people naive again
         return
 
 
@@ -440,9 +548,10 @@ class Sim(cvb.BaseSim):
         '''
 
         # Set the time and if we have reached the end of the simulation, then do nothing
+        if self.complete:
+            raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
+
         t = self.t
-        if t >= self.npts:
-            return
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
@@ -453,218 +562,304 @@ class Sim(cvb.BaseSim):
         icu_max  = people.count('critical') > self['n_beds_icu']  if self['n_beds_icu']  else False # Check for ICU bed constraint
 
         # Randomly infect some people (imported infections)
-        n_imports = cvu.poisson(self['n_imports']) # Imported cases
-        if n_imports>0:
-            importation_inds = cvu.choose(max_n=len(people), n=n_imports)
-            people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+        if self['n_imports']:
+            n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
+            if n_imports>0:
+                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+
+        # Add strains
+        for strain in self['strains']:
+            if isinstance(strain, cvimm.strain):
+                strain.apply(self)
 
         # Apply interventions
-        for intervention in self['interventions']:
+        for i,intervention in enumerate(self['interventions']):
             if isinstance(intervention, cvi.Intervention):
+                if not intervention.initialized: # pragma: no cover
+                    errormsg = f'Intervention {i} (label={intervention.label}, {type(intervention)}) has not been initialized'
+                    raise RuntimeError(errormsg)
                 intervention.apply(self) # If it's an intervention, call the apply() method
             elif callable(intervention):
                 intervention(self) # If it's a function, call it directly
-            else:
-                errormsg = f'Intervention {intervention} is neither callable nor an Intervention object'
-                raise ValueError(errormsg)
+            else: # pragma: no cover
+                errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
+                raise TypeError(errormsg)
 
         people.update_states_post() # Check for state changes after interventions
 
-        # Compute the probability of transmission
-        beta         = cvd.default_float(self['beta'])
-        asymp_factor = cvd.default_float(self['asymp_factor'])
-        frac_time    = cvd.default_float(self['viral_dist']['frac_time'])
-        load_ratio   = cvd.default_float(self['viral_dist']['load_ratio'])
-        high_cap     = cvd.default_float(self['viral_dist']['high_cap'])
-        date_inf     = people.date_infectious
-        date_rec     = people.date_recovered
-        date_dead    = people.date_dead
+        # Compute viral loads
+        frac_time = cvd.default_float(self['viral_dist']['frac_time'])
+        load_ratio = cvd.default_float(self['viral_dist']['load_ratio'])
+        high_cap = cvd.default_float(self['viral_dist']['high_cap'])
+        date_inf = people.date_infectious
+        date_rec = people.date_recovered
+        date_dead = people.date_dead
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
-        for lkey,layer in contacts.items():
-            p1 = layer['p1']
-            p2 = layer['p2']
-            betas   = layer['beta']
+        # Shorten useful parameters
+        ns = self['n_strains']  # Shorten number of strains
+        sus = people.susceptible
+        symp = people.symptomatic
+        diag = people.diagnosed
+        quar = people.quarantined
+        prel_trans = people.rel_trans
+        prel_sus = people.rel_sus
 
-            # Compute relative transmission and susceptibility
-            rel_trans   = people.rel_trans
-            rel_sus     = people.rel_sus
-            inf         = people.infectious
-            sus         = people.susceptible
-            symp        = people.symptomatic
-            diag        = people.diagnosed
-            quar        = people.quarantined
-            iso_factor  = cvd.default_float(self['iso_factor'][lkey])
-            quar_factor = cvd.default_float(self['quar_factor'][lkey])
-            beta_layer  = cvd.default_float(self['beta_layer'][lkey])
-            rel_trans, rel_sus = cvu.compute_trans_sus(rel_trans, rel_sus, inf, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor)
+        # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
+        if self['use_waning']:
+            has_nabs = np.setdiff1d(cvu.defined(people.init_nab), cvu.false(people.susceptible))
+            if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
-            # Calculate actual transmission
-            for sources,targets in [[p1,p2], [p2,p1]]: # Loop over the contact network from p1->p2 and p2->p1
-                source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus) # Calculate transmission!
-                people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey) # Actually infect people
+        # Iterate through n_strains to calculate infections
+        for strain in range(ns):
+
+            # Check immunity
+            if self['use_waning']:
+                cvimm.check_immunity(people, strain, sus=True)
+
+            # Deal with strain parameters
+            rel_beta = self['rel_beta']
+            asymp_factor = self['asymp_factor']
+            if strain:
+                strain_label = self.pars['strain_map'][strain]
+                rel_beta *= self['strain_pars'][strain_label]['rel_beta']
+            beta = cvd.default_float(self['beta'] * rel_beta)
+
+            for lkey, layer in contacts.items():
+                p1 = layer['p1']
+                p2 = layer['p2']
+                betas = layer['beta']
+
+                # Compute relative transmission and susceptibility
+                inf_strain = people.infectious * (people.infectious_strain == strain) # TODO: move out of loop?
+                sus_imm = people.sus_imm[strain,:]
+                iso_factor  = cvd.default_float(self['iso_factor'][lkey])
+                quar_factor = cvd.default_float(self['quar_factor'][lkey])
+                beta_layer  = cvd.default_float(self['beta_layer'][lkey])
+                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_strain, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+
+                # Calculate actual transmission
+                for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
+                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, strain=strain)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
+        for key in cvd.result_stocks_by_strain.keys():
+            for strain in range(ns):
+                self.results['strain'][f'n_{key}'][strain, t] = people.count_by_strain(key, strain)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
             self.results[key][t] += count
+        for key,count in people.flows_strain.items():
+            for strain in range(ns):
+                self.results['strain'][key][strain][t] += count[strain]
+
+        # Update nab and immunity for this time step
+        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/len(people)
+        self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
+        self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
         # Apply analyzers -- same syntax as interventions
-        for analyzer in self['analyzers']:
+        for i,analyzer in enumerate(self['analyzers']):
             if isinstance(analyzer, cva.Analyzer):
+                if not analyzer.initialized: # pragma: no cover
+                    errormsg = f'Analyzer {i} (label={analyzer.label}, {type(analyzer)}) has not been initialized'
+                    raise RuntimeError(errormsg)
                 analyzer.apply(self) # If it's an intervention, call the apply() method
             elif callable(analyzer):
                 analyzer(self) # If it's a function, call it directly
-            else:
-                errormsg = f'Analyzer {analyzer} is neither callable nor an Analyzer object'
+            else: # pragma: no cover
+                errormsg = f'Analyzer {i} ({analyzer}) is neither callable nor an Analyzer object'
                 raise ValueError(errormsg)
 
         # Tidy up
         self.t += 1
+        if self.t == self.npts:
+            self.complete = True
+
         return
 
 
-    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None, **kwargs):
+    def run(self, do_plot=False, until=None, restore_pars=True, reset_seed=True, verbose=None):
         '''
         Run the simulation.
 
         Args:
             do_plot (bool): whether to plot
-            until (int): day to run until
+            until (int/str): day or date to run until
             restore_pars (bool): whether to make a copy of the parameters before the run and restore it after, so runs are repeatable
             reset_seed (bool): whether to reset the random number stream immediately before run
-            verbose (float): level of detail to print, e.g. 0 = no output, 0.2 = print every 5th day, 1 = print every day
-            kwargs (dict): passed to sim.plot()
+            verbose (float): level of detail to print, e.g. -1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day
 
         Returns:
-            results (dict): the results object (also modifies in-place)
+            A pointer to the sim object (with results modified in-place)
         '''
 
-        # Initialize
+        # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.tic()
+
         if not self.initialized:
             self.initialize()
-        else:
-            self.validate_pars() # We always want to validate the parameters before running
-            self.init_interventions() # And interventions
-            if reset_seed:
-                self.set_seed() # Ensure the random number generator is freshly initialized
-        if restore_pars:
-            orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+            self._orig_pars = sc.dcp(self.pars) # Create a copy of the parameters, to restore after the run, in case they are dynamically modified
+
         if verbose is None:
             verbose = self['verbose']
-        if until:
-            until = self.day(until)
+
+        if reset_seed:
+            # Reset the RNG. If the simulation is newly created, then the RNG will be reset by sim.initialize() so the use case
+            # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
+            self.set_seed()
+
+        until = self.npts if until is None else self.day(until)
+        if until > self.npts:
+            raise AlreadyRunError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
+
+        if self.complete:
+            raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
+
+        if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
+            raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
 
         # Main simulation loop
-        for t in self.tvec:
-
-            # Print progress
-            if verbose:
-                elapsed = sc.toc(output=True)
-                simlabel = f'"{self.label}": ' if self.label else ''
-                string = f'  Running {simlabel}{self.datevec[t]} ({t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
-                if verbose >= 2:
-                    sc.heading(string)
-                else:
-                    if not (t % int(1.0/verbose)):
-                        sc.progressbar(t+1, self.npts, label=string, length=20, newline=True)
-
-            # Do the heavy lifting -- actually run the model!
-            self.step()
+        while self.t < until:
 
             # Check if we were asked to stop
             elapsed = sc.toc(T, output=True)
             if self['timelimit'] and elapsed > self['timelimit']:
-                sc.printv(f"Time limit ({self['timelimit']} s) exceeded", 1, verbose)
-                break
+                sc.printv(f"Time limit ({self['timelimit']} s) exceeded; call sim.finalize() to compute results if desired", 1, verbose)
+                return
             elif self['stopping_func'] and self['stopping_func'](self):
-                sc.printv("Stopping function terminated the simulation", 1, verbose)
-                break
-            if self.t == until: # If until is specified, just stop here
+                sc.printv("Stopping function terminated the simulation; call sim.finalize() to compute results if desired", 1, verbose)
                 return
 
-        # End of time loop; compute cumulative results outside of the time loop
-        self.finalize(verbose=verbose) # Finalize the results
-        sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
-        if restore_pars:
-            self.restore_pars(orig_pars)
-        if do_plot: # Optionally plot
-            self.plot(**kwargs)
+            # Print progress
+            if verbose:
+                simlabel = f'"{self.label}": ' if self.label else ''
+                string = f'  Running {simlabel}{self.datevec[self.t]} ({self.t:2.0f}/{self.pars["n_days"]}) ({elapsed:0.2f} s) '
+                if verbose >= 2:
+                    sc.heading(string)
+                elif verbose>0:
+                    if not (self.t % int(1.0/verbose)):
+                        sc.progressbar(self.t+1, self.npts, label=string, length=20, newline=True)
 
-        return self.results
+            # Do the heavy lifting -- actually run the model!
+            self.step()
+
+        # If simulation reached the end, finalize the results
+        if self.complete:
+            self.finalize(verbose=verbose, restore_pars=restore_pars)
+            sc.printv(f'Run finished after {elapsed:0.2f} s.\n', 1, verbose)
+        return self
 
 
-    def restore_pars(self, orig_pars):
-        ''' Restore the original parameter values, except for the analyzers '''
-        analyzers = self['analyzers'] # Make a copy so these don't get wiped
-        for key,val in orig_pars.items():
-            self.pars[key] = val # So pointers, e.g. in sim.people, get updated as well
-        self['analyzers'] = analyzers # Restore the analyzers
-        return
-
-
-    def finalize(self, verbose=None):
+    def finalize(self, verbose=None, restore_pars=True):
         ''' Compute final results '''
+
+        if self.results_ready:
+            # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
+            # otherwise the scale factor will be applied multiple times
+            raise AlreadyRunError('Simulation has already been finalized')
 
         # Scale the results
         for reskey in self.result_keys():
-            if self.results[reskey].scale == 'dynamic':
+            if self.results[reskey].scale: # Scale the result dynamically
                 self.results[reskey].values *= self.rescale_vec
-            elif self.results[reskey].scale == 'static':
-                self.results[reskey].values *= self['pop_scale']
+        for reskey in self.result_keys('strain'):
+            if self.results['strain'][reskey].scale: # Scale the result dynamically
+                self.results['strain'][reskey].values = np.einsum('ij,j->ij', self.results['strain'][reskey].values, self.rescale_vec)
 
         # Calculate cumulative results
         for key in cvd.result_flows.keys():
-            self.results[f'cum_{key}'].values[:] = np.cumsum(self.results[f'new_{key}'].values)
-        self.results['cum_infections'].values += self['pop_infected']*self.rescale_vec[0] # Include initially infected people
+            self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:], axis=0)
+        for key in cvd.result_flows_by_strain.keys():
+            for strain in range(self['n_strains']):
+                self.results['strain'][f'cum_{key}'][strain, :] = np.cumsum(self.results['strain'][f'new_{key}'][strain, :], axis=0)
+        for res in [self.results['cum_infections'], self.results['strain']['cum_infections_by_strain']]: # Include initially infected people
+            res.values += self['pop_infected']*self.rescale_vec[0]
+
+        # Finalize interventions and analyzers
+        self.finalize_interventions()
+        self.finalize_analyzers()
 
         # Final settings
-        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
         self.results_ready = True # Set this first so self.summary() knows to print the results
-        self.initialized = False # To enable re-running
+        self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
 
         # Perform calculations on results
         self.compute_results(verbose=verbose) # Calculate the rest of the results
         self.results = sc.objdict(self.results) # Convert results to a odicts/objdict to allow e.g. sim.results.diagnoses
+
+        if restore_pars and self._orig_pars:
+            preserved = ['analyzers', 'interventions']
+            orig_pars_keys = list(self._orig_pars.keys()) # Get a list of keys so we can iterate over them
+            for key in orig_pars_keys:
+                if key not in preserved:
+                    self.pars[key] = self._orig_pars.pop(key) # Restore everything except for the analyzers and interventions
+
+        # Optionally print summary output
+        if verbose: # Verbose is any non-zero value
+            if verbose>0: # Verbose is any positive number
+                self.summarize() # Print medium-length summary of the sim
+            else:
+                self.brief() # Print brief summary of the sim
 
         return
 
 
     def compute_results(self, verbose=None):
         ''' Perform final calculations on the results '''
-        self.compute_prev_inci()
+        self.compute_states()
         self.compute_yield()
         self.compute_doubling()
         self.compute_r_eff()
-        self.compute_summary(verbose=verbose)
+        self.compute_summary()
         return
 
 
-    def compute_prev_inci(self):
+    def compute_states(self):
         '''
-        Compute prevalence and incidence. Prevalence is the current number of infected
-        people divided by the number of people who are alive. Incidence is the number
-        of new infections per day divided by the susceptible population.
+        Compute prevalence, incidence, and other states. Prevalence is the current
+        number of infected people divided by the number of people who are alive.
+        Incidence is the number of new infections per day divided by the susceptible
+        population. Also calculates the number of people alive, the number preinfectious,
+        the number removed, and recalculates susceptibles to handle scaling.
         '''
-        n_exposed = self.results['n_exposed'].values # Number of people currently infected
-        n_alive = self.scaled_pop_size - self.results['cum_deaths'].values # Number of people still alive
-        n_susceptible = self.results['n_susceptible'].values # Number of people still susceptible
-        new_infections = self.results['new_infections'].values # Number of new infections
-        self.results['prevalence'][:] = n_exposed/n_alive # Calculate the prevalence
-        self.results['incidence'][:] = new_infections/n_susceptible # Calculate the incidence
+        res = self.results
+        count_recov = 1-self['use_waning'] # If waning is on, don't count recovered people as removed
+        self.results['n_alive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] # Number of people still alive
+        self.results['n_naive'][:]         = self.scaled_pop_size - res['cum_deaths'][:] - res['n_recovered'][:] - res['n_exposed'][:] # Number of people naive
+        self.results['n_susceptible'][:]   = res['n_alive'][:] - res['n_exposed'][:] - count_recov*res['cum_recoveries'][:] # Recalculate the number of susceptible people, not agents
+        self.results['n_preinfectious'][:] = res['n_exposed'][:] - res['n_infectious'][:] # Calculate the number not yet infectious: exposed minus infectious
+        self.results['n_removed'][:]       = count_recov*res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
+        self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
+        self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+
+        self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
+        self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
+        self.results['frac_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
         return
 
 
     def compute_yield(self):
-        ''' Compute test yield -- number of positive tests divided by the total number of tests '''
-        n_diags = self.results['new_diagnoses'].values # Number of positive tests
-        n_tests = self.results['new_tests'].values # Total number of tests
-        inds = cvu.true(n_tests) # Pull out non-zero numbers of tests
-        self.results['test_yield'].values[inds] = n_diags[inds]/n_tests[inds] # Calculate the yield
+        '''
+        Compute test yield -- number of positive tests divided by the total number
+        of tests, also called test positivity rate. Relative yield is with respect
+        to prevalence: i.e., how the yield compares to what the yield would be from
+        choosing a person at random from the population.
+        '''
+        # Absolute yield
+        res = self.results
+        inds = cvu.true(res['new_tests'][:]) # Pull out non-zero numbers of tests
+        self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
+
+        # Relative yield
+        inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
+        denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
+        self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
         return
 
 
@@ -683,25 +878,23 @@ class Sim(cvb.BaseSim):
         Returns:
             doubling_time (array): the doubling time results array
         '''
+
         cum_infections = self.results['cum_infections'].values
-        self.results['doubling_time'][:window] = np.nan
-        for t in range(window, self.npts):
-            infections_now = cum_infections[t]
-            infections_prev = cum_infections[t-window]
-            r = infections_now/infections_prev
-            if r > 1:  # Avoid divide by zero
-                doubling_time = window*np.log(2)/np.log(r)
-                doubling_time = min(doubling_time, max_doubling_time) # Otherwise, it's unbounded
-                self.results['doubling_time'][t] = doubling_time
+        infections_now = cum_infections[window:]
+        infections_prev = cum_infections[:-window]
+        use = (infections_prev > 0) & (infections_now > infections_prev)
+        doubling_time = window * np.log(2) / np.log(infections_now[use] / infections_prev[use])
+        self.results['doubling_time'][:] = np.nan
+        self.results['doubling_time'][window:][use] = np.minimum(doubling_time, max_doubling_time)
         return self.results['doubling_time'].values
 
 
     def compute_r_eff(self, method='daily', smoothing=2, window=7):
         '''
-        Effective reproductive number based on number of people each person infected.
+        Effective reproduction number based on number of people each person infected.
 
         Args:
-            method (str): 'instant' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
+            method (str): 'daily' uses daily infections, 'infectious' counts from the date infectious, 'outcome' counts from the date recovered/dead
             smoothing (int): the number of steps to smooth over for the 'daily' method
             window (int): the size of the window used for 'infectious' and 'outcome' calculations (larger values are more accurate but less precise)
 
@@ -730,8 +923,10 @@ class Sim(cvb.BaseSim):
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
             len_raw = len(raw_values) # Calculate the number of raw values
+            if sc.checktype(self['dur'], list): dur_pars = self['dur'][0] # TODO: fix this, need to somehow take all strains into account
+            else: dur_pars = self['dur']
             if len_raw >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
-                initial_period = self['dur']['exp2inf']['par1'] + self['dur']['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
+                initial_period = dur_pars['exp2inf']['par1'] + dur_pars['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
                 initial_period = int(min(len_raw, initial_period)) # Ensure we don't have too many points
                 for ind in range(initial_period): # Loop over each of the initial inds
                     raw_values[ind] = raw_values[ind:initial_period].mean() # Replace these values with their average
@@ -783,8 +978,8 @@ class Sim(cvb.BaseSim):
             values = np.divide(num, den, out=np.full(self.npts, np.nan), where=den > 0)
 
         # Method not recognized
-        else:
-            errormsg = f'Method must be "daily", "infected", or "outcome", not "{method}"'
+        else: # pragma: no cover
+            errormsg = f'Method must be "daily", "infectious", or "outcome", not "{method}"'
             raise ValueError(errormsg)
 
         # Set the values and return
@@ -828,64 +1023,113 @@ class Sim(cvb.BaseSim):
         return self.results['gen_time']
 
 
-    def compute_summary(self, verbose=None):
-        ''' Compute the summary statistics to display at the end of a run '''
+    def compute_summary(self, full=None, t=None, update=True, output=False, require_run=False):
+        '''
+        Compute the summary dict and string for the sim. Used internally; see
+        sim.summarize() for the user version.
 
-        if verbose is None:
-            verbose = self['verbose']
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+            t (int/str): day or date to compute summary for (by default, the last point)
+            update (bool): whether to update the stored sim.summary
+            output (bool): whether to return the summary
+            require_run (bool): whether to raise an exception if simulations have not been run yet
+        '''
+        if t is None:
+            t = self.day(self.t)
 
-        self.summary = sc.objdict()
+        # Compute the summary
+        if require_run and not self.results_ready:
+            errormsg = 'Simulation not yet run'
+            raise RuntimeError(errormsg)
+
+        summary = sc.objdict()
         for key in self.result_keys():
-            self.summary[key] = self.results[key][-1]
+            summary[key] = self.results[key][t]
 
-        if verbose:
-            self.summarize()
+        # Update the stored state
+        if update:
+            self.summary = summary
 
-        return self.summary
-
-
-    def summarize(self, output=False):
-        ''' Print a brief summary of the simulation '''
-        if self.results_ready:
-            summary_str = 'Simulation summary:\n'
-            for key in self.result_keys():
-                if key.startswith('cum_'):
-                    summary_str += f'   {self.summary[key]:5.0f} {self.results[key].name.lower()}\n'
-
-            if not output:
-                print(summary_str)
-            else:
-                return summary_str
+        # Optionally return
+        if output:
+            return summary
         else:
-            return self.brief(output=output) # If the simulation hasn't been run, default to the brief summary
+            return
 
+
+    def summarize(self, full=False, t=None, output=False):
+        '''
+        Print a medium-length summary of the simulation, drawing from the last time
+        point in the simulation by default. Called by default at the end of a sim run.
+        See also sim.disp() (detailed output) and sim.brief() (short output).
+
+        Args:
+            full (bool): whether or not to print all results (by default, only cumulative)
+            t (int/str): day or date to compute summary for (by default, the last point)
+            output (bool): whether to return the summary instead of printing it
+
+        **Examples**::
+
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.summarize() # Print medium-length summary of the sim
+            sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24
+        '''
+        # Compute the summary
+        summary = self.compute_summary(full=full, t=t, update=False, output=True)
+
+        # Construct the output string
+        labelstr = f' "{self.label}"' if self.label else ''
+        string = f'Simulation{labelstr} summary:\n'
+        for key in self.result_keys():
+            if full or key.startswith('cum_'):
+                string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
+
+        # Print or return string
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def disp(self, output=False):
+        '''
+        Display a verbose description of a sim. See also sim.summarize() (medium
+        length output) and sim.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.disp() # Displays detailed output
+        '''
+        string = self._disp()
+        if not output:
+            print(string)
+        else:
+            return string
 
 
     def brief(self, output=False):
-        ''' Return a one-line description of a sim '''
+        '''
+        Print a one-line description of a sim. See also sim.disp() (detailed output)
+        and sim.summarize() (medium length output). The symbol "⚙" is used to show
+        infections, and "☠" is used to show deaths.
 
-        if self.results_ready:
-            infections = self.summary['cum_infections']
-            deaths = self.summary['cum_deaths']
-            results = f'{infections:n}⚙, {deaths:n}☠'
-        else:
-            results = 'not run'
+        Args:
+            output (bool): if true, return a string instead of printing output
 
-        if self.label:
-            label = f'"{self.label}"'
-        else:
-            label = '<no label>'
+        **Example**::
 
-        start = cvm.date(self['start_day'], as_date=False)
-        if self['end_day']:
-            end = cvm.date(self['end_day'], as_date=False)
-        else:
-            end = cvm.date(self['n_days'], start_date=start)
-
-        pop_size = self['pop_size']
-        pop_type = self['pop_type']
-        string   = f'Sim({label}; {start}—{end}; pop: {pop_size:n} {pop_type}; epi: {results})'
-
+            sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
+            sim.run() # Run the sim
+            sim.brief() # Prints one-line output
+        '''
+        string = self._brief()
         if not output:
             print(string)
         else:
@@ -917,7 +1161,7 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def make_age_histogram(self, output=True, *args, **kwargs):
+    def make_age_histogram(self, *args, output=True, **kwargs):
         '''
         Calculate the age histograms of infections, deaths, diagnoses, etc. See
         cv.age_histogram() for more information. This can be used alternatively
@@ -940,12 +1184,12 @@ class Sim(cvb.BaseSim):
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
-        else:
+        else: # pragma: no cover
             self.results.agehist = agehist
             return
 
 
-    def make_transtree(self, output=True, *args, **kwargs):
+    def make_transtree(self, *args, output=True, **kwargs):
         '''
         Create a TransTree (transmission tree) object, for analyzing the pattern
         of transmissions in the simulation. See cv.TransTree() for more information.
@@ -964,7 +1208,7 @@ class Sim(cvb.BaseSim):
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
-        else:
+        else: # pragma: no cover
             self.results.transtree = tt
             return
 
@@ -974,7 +1218,7 @@ class Sim(cvb.BaseSim):
         Plot the results of a single simulation.
 
         Args:
-            to_plot      (dict): Dict of results to plot; see get_sim_plots() for structure
+            to_plot      (dict): Dict of results to plot; see get_default_plots() for structure
             do_save      (bool): Whether or not to save the figure
             fig_path     (str):  Path to save the figure
             fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
@@ -982,7 +1226,9 @@ class Sim(cvb.BaseSim):
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
+            mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
             as_dates     (bool): Whether to plot the x-axis as dates or time points
             dateformat   (str):  Date string format, e.g. '%B %d'
             interval     (int):  Interval between tick marks
@@ -997,6 +1243,18 @@ class Sim(cvb.BaseSim):
             colors       (dict): Custom color for each result, must be a dictionary with one entry per result key in to_plot
             sep_figs     (bool): Whether to show separate figures for different results instead of subplots
             fig          (fig):  Handle of existing figure to plot into
+            ax           (axes): Axes instance to plot into
+            kwargs       (dict): Parsed among figure, plot, scatter, date, and other settings (will raise an error if not recognized)
+
+        The optional dictionary "date_args" allows several settings for controlling
+        how the x-axis of plots are shown, if this axis is dates. These options are:
+
+            - ``as_dates``:   whether to format them as dates (else, format them as days since the start)
+            - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
+            - ``interval``:   the number of days between tick marks
+            - ``rotation``:   whether to rotate labels
+            - ``start_day``:  the first day to plot
+            - ``end_day``:    the last day to plot
 
         Returns:
             fig: Figure handle
@@ -1006,6 +1264,8 @@ class Sim(cvb.BaseSim):
             sim = cv.Sim()
             sim.run()
             sim.plot()
+
+        New in version 2.1.0: argument passing, date_args, and mpl_args
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
@@ -1019,9 +1279,216 @@ class Sim(cvb.BaseSim):
         Args:
             key (str): the key of the result to plot
 
-        **Examples**::
+        Returns:
+            fig: Figure handle
 
+        **Example**::
+
+            sim = cv.Sim().run()
             sim.plot_result('r_eff')
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
+
+
+def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
+    '''
+    Compute the difference of the summaries of two simulations, and print any
+    values which differ.
+
+    Args:
+        sim1 (sim/dict): either a simulation object or the sim.summary dictionary
+        sim2 (sim/dict): ditto
+        skip_key_diffs (bool): whether to skip keys that don't match between sims
+        output (bool): whether to return the output as a string (otherwise print)
+        die (bool): whether to raise an exception if the sims don't match
+        require_run (bool): require that the simulations have been run
+
+    **Example**::
+
+        s1 = cv.Sim(beta=0.01)
+        s2 = cv.Sim(beta=0.02)
+        s1.run()
+        s2.run()
+        cv.diff_sims(s1, s2)
+    '''
+
+    if isinstance(sim1, Sim):
+        sim1 = sim1.compute_summary(update=False, output=True, require_run=True)
+    if isinstance(sim2, Sim):
+        sim2 = sim2.compute_summary(update=False, output=True, require_run=True)
+    for sim in [sim1, sim2]:
+        if not isinstance(sim, dict): # pragma: no cover
+            errormsg = f'Cannot compare object of type {type(sim)}, must be a sim or a sim.summary dict'
+            raise TypeError(errormsg)
+
+    # Compare keys
+    keymatchmsg = ''
+    sim1_keys = set(sim1.keys())
+    sim2_keys = set(sim2.keys())
+    if sim1_keys != sim2_keys and not skip_key_diffs: # pragma: no cover
+        keymatchmsg = "Keys don't match!\n"
+        missing = list(sim1_keys - sim2_keys)
+        extra   = list(sim2_keys - sim1_keys)
+        if missing:
+            keymatchmsg += f'  Missing sim1 keys: {missing}\n'
+        if extra:
+            keymatchmsg += f'  Extra sim2 keys: {extra}\n'
+
+    # Compare values
+    valmatchmsg = ''
+    mismatches = {}
+    for key in sim2.keys(): # To ensure order
+        if key in sim1_keys: # If a key is missing, don't count it as a mismatch
+            sim1_val = sim1[key] if key in sim1 else 'not present'
+            sim2_val = sim2[key] if key in sim2 else 'not present'
+            both_nan = sc.isnumber(sim1_val, isnan=True) and sc.isnumber(sim2_val, isnan=True)
+            if sim1_val != sim2_val and not both_nan:
+                mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
+
+    if len(mismatches):
+        valmatchmsg = '\nThe following values differ between the two simulations:\n'
+        df = pd.DataFrame.from_dict(mismatches).transpose()
+        diff   = []
+        ratio  = []
+        change = []
+        small_change = 1e-3 # Define a small change, e.g. a rounding error
+        for mdict in mismatches.values():
+            old = mdict['sim1']
+            new = mdict['sim2']
+            numeric = sc.isnumber(sim1_val) and sc.isnumber(sim2_val)
+            if numeric and old>0:
+                this_diff  = new - old
+                this_ratio = new/old
+                abs_ratio  = max(this_ratio, 1.0/this_ratio)
+
+                # Set the character to use
+                if abs_ratio<small_change:
+                    change_char = '≈'
+                elif new > old:
+                    change_char = '↑'
+                elif new < old:
+                    change_char = '↓'
+                else:
+                    errormsg = f'Could not determine relationship between sim1={old} and sim2={new}'
+                    raise ValueError(errormsg)
+
+                # Set how many repeats it should have
+                repeats = 1
+                if abs_ratio >= 1.1:
+                    repeats = 2
+                if abs_ratio >= 2:
+                    repeats = 3
+                if abs_ratio >= 10:
+                    repeats = 4
+
+                this_change = change_char*repeats
+            else: # pragma: no cover
+                this_diff   = np.nan
+                this_ratio  = np.nan
+                this_change = 'N/A'
+
+            diff.append(this_diff)
+            ratio.append(this_ratio)
+            change.append(this_change)
+
+        df['diff'] = diff
+        df['ratio'] = ratio
+        for col in ['sim1', 'sim2', 'diff', 'ratio']:
+            df[col] = df[col].round(decimals=3)
+        df['change'] = change
+        valmatchmsg += str(df)
+
+    # Raise an error if mismatches were found
+    mismatchmsg = keymatchmsg + valmatchmsg
+    if mismatchmsg: # pragma: no cover
+        if die:
+            raise ValueError(mismatchmsg)
+        elif output:
+            return mismatchmsg
+        else:
+            print(mismatchmsg)
+    else:
+        if not output:
+            print('Sims match')
+    return
+
+
+def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, **kwargs):
+    '''
+    Shortcut for ``cv.Sim().run().plot()``.
+
+    Args:
+        preset (str): use a preset run configuration; currently the only option is "full"
+        to_plot (str): what to plot
+        scens (dict): dictionary of scenarios to run as a multisim, if preset='full'
+        kwargs (dict): passed to Sim()
+        run_args (dict): passed to sim.run()
+        plot_args (dict): passed to sim.plot()
+
+    **Examples**::
+
+        cv.demo() # Simplest example
+        cv.demo('full') # Full example
+        cv.demo('full', overview=True) # Plot all results
+        cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values
+    '''
+    from . import interventions as cvi
+    from . import run as cvr
+
+    run_args = sc.mergedicts(run_args)
+    plot_args = sc.mergedicts(plot_args)
+    if to_plot:
+        plot_args = sc.mergedicts(plot_args, {'to_plot':to_plot})
+
+    if not preset:
+        sim = Sim(**kwargs)
+        sim.run(**run_args)
+        sim.plot(**plot_args)
+        return sim
+
+    elif preset == 'full':
+
+            # Define interventions
+            cb = cvi.change_beta(days=40, changes=0.5)
+            tp = cvi.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)
+            ct = cvi.contact_tracing(trace_probs=0.3, start_day=50)
+
+            # Define the parameters
+            pars = dict(
+                pop_size      = 20e3,         # Population size
+                pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
+                pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
+                n_days        = 60,           # Number of days to simulate
+                verbose       = 0,            # Don't print details of the run
+                rand_seed     = 2,            # Set a non-default seed
+                interventions = [cb, tp, ct], # Include the most common interventions
+            )
+            pars = sc.mergedicts(pars, kwargs)
+            if scens is None:
+                scens = ('beta', {'Low beta':0.012, 'Medium beta':0.016, 'High beta':0.020})
+            scenpar = scens[0]
+            scenval = scens[1]
+
+            # Run the simulations
+            sims = [Sim(pars, **{scenpar:val}, label=label) for label,val in scenval.items()]
+            msim = cvr.MultiSim(sims)
+            msim.run(**run_args)
+            msim.plot(**plot_args)
+            msim.median()
+            msim.plot(**plot_args)
+            return msim
+
+    else:
+        errormsg = f'Could not understand preset argument "{preset}"; must be None or "full"'
+        raise NotImplementedError(errormsg)
+
+
+class AlreadyRunError(RuntimeError):
+    '''
+    This error is raised if a simulation is run in such a way that no timesteps
+    will be taken. This error is a distinct type so that it can be safely caught
+    and ignored if required, but it is anticipated that most of the time, calling
+    sim.run() and not taking any timesteps, would be an inadvertent error.
+    '''
+    pass

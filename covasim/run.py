@@ -12,6 +12,7 @@ from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
+from .settings import options as cvo
 
 
 # Specify all externally visible functions this file defines
@@ -27,21 +28,22 @@ def make_metapars():
         noisepar  = 'beta',
         rand_seed = 1,
         quantiles = {'low':0.1, 'high':0.9},
-        verbose   = 1,
+        verbose   = cvo.verbose,
     )
     return metapars
 
 
-class MultiSim(sc.prettyobj):
+class MultiSim(cvb.FlexPretty):
     '''
     Class for running multiple copies of a simulation. The parameter n_runs
     controls how many copies of the simulation there will be, if a list of sims
-    is not provided.
+    is not provided. This is the main class that's used to run multiple versions
+    of a simulation (e.g., with different random seeds).
 
     Args:
         sims      (Sim/list) : a single sim or a list of sims
         base_sim  (Sim)      : the sim used for shared properties; if not supplied, the first of the sims provided
-        quantiles (dict)     : the quantiles to use with reduce(), e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+        label      (str)     : the name of the multisim
         initialize (bool)    : whether or not to initialize the sims (otherwise, initialize them during run)
         kwargs    (dict)     : stored in run_args and passed to run()
 
@@ -68,7 +70,7 @@ class MultiSim(sc.prettyobj):
         msim.plot() # Plot as single sim
     '''
 
-    def __init__(self, sims=None, base_sim=None, quantiles=None, initialize=False, **kwargs):
+    def __init__(self, sims=None, base_sim=None, label=None, initialize=False, **kwargs):
 
         # Handle inputs
         if base_sim is None:
@@ -78,19 +80,17 @@ class MultiSim(sc.prettyobj):
             elif isinstance(sims, list):
                 base_sim = sims[0]
             else:
-                errormsg = f'If base_sim is not supplied, sims must be either a sims or a list of sims, not {type(sims)}'
+                errormsg = f'If base_sim is not supplied, sims must be either a single sim (treated as base_sim) or a list of sims, not {type(sims)}'
                 raise TypeError(errormsg)
-
-        if quantiles is None:
-            quantiles = make_metapars()['quantiles']
 
         # Set properties
         self.sims      = sims
         self.base_sim  = base_sim
-        self.quantiles = quantiles
+        self.label     = label
         self.run_args  = sc.mergedicts(kwargs)
         self.results   = None
         self.which     = None # Whether the multisim is to be reduced, combined, etc.
+        cvb.set_metadata(self) # Set version, date, and git info
 
         # Optionally initialize
         if initialize:
@@ -146,10 +146,15 @@ class MultiSim(sc.prettyobj):
         Args:
             reduce  (bool): whether or not to reduce after running (see reduce())
             combine (bool): whether or not to combine after running (see combine(), not compatible with reduce)
-            kwargs  (dict): passed to multi_run()
+            kwargs  (dict): passed to multi_run(); use run_args to pass arguments to sim.run()
 
         Returns:
             None (modifies MultiSim object in place)
+
+        **Examples**::
+
+            msim.run()
+            msim.run(run_args=dict(until='2020-0601', restore_pars=False))
         '''
         # Handle which sims to use -- same as init_sims()
         if self.sims is None:
@@ -167,6 +172,20 @@ class MultiSim(sc.prettyobj):
         elif combine:
             self.combine()
 
+        return self
+
+
+    def shrink(self, **kwargs):
+        '''
+        Not to be confused with reduce(), this shrinks each sim in the msim;
+        see sim.shrink() for more information.
+
+        Args:
+            kwargs (dict): passed to sim.shrink() for each sim
+        '''
+        self.base_sim.shrink(**kwargs)
+        for sim in self.sims:
+            sim.shrink(**kwargs)
         return
 
 
@@ -180,42 +199,80 @@ class MultiSim(sc.prettyobj):
         return
 
 
-    def reduce(self, quantiles=None, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+    def reduce(self, quantiles=None, use_mean=False, bounds=None, output=False):
+        '''
+        Combine multiple sims into a single sim statistically: by default, use
+        the median value and the 10th and 90th percentiles for the lower and upper
+        bounds. If use_mean=True, then use the mean and ±2 standard deviations
+        for lower and upper bounds.
 
-        if quantiles is None:
-            quantiles = self.quantiles
-        if not isinstance(quantiles, dict):
-            try:
-                quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
-            except Exception as E:
-                errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
-                raise ValueError(errormsg)
+        Args:
+            quantiles (dict): the quantiles to use, e.g. [0.1, 0.9] or {'low : '0.1, 'high' : 0.9}
+            use_mean (bool): whether to use the mean instead of the median
+            bounds (float): if use_mean=True, the multiplier on the standard deviation for upper and lower bounds (default 2)
+            output (bool): whether to return the "reduced" sim (in any case, modify the multisim in-place)
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim())
+            msim.run()
+            msim.reduce()
+            msim.summarize()
+        '''
+
+        if use_mean:
+            if bounds is None:
+                bounds = 2
+        else:
+            if quantiles is None:
+                quantiles = make_metapars()['quantiles']
+            if not isinstance(quantiles, dict):
+                try:
+                    quantiles = {'low':float(quantiles[0]), 'high':float(quantiles[1])}
+                except Exception as E:
+                    errormsg = f'Could not figure out how to convert {quantiles} into a quantiles object: must be a dict with keys low, high or a 2-element array ({str(E)})'
+                    raise ValueError(errormsg)
 
         # Store information on the sims
         n_runs = len(self)
         reduced_sim = sc.dcp(self.sims[0])
-        reduced_sim.parallelized = {'parallelized':True, 'combined':False, 'n_runs':n_runs}  # Store how this was parallelized
+        reduced_sim.metadata = dict(parallelized=True, combined=False, n_runs=n_runs, quantiles=quantiles, use_mean=use_mean, bounds=bounds) # Store how this was parallelized
 
         # Perform the statistics
         raw = {}
-        reskeys = reduced_sim.result_keys()
-        for reskey in reskeys:
+        mainkeys = reduced_sim.result_keys('main')
+        strainkeys = reduced_sim.result_keys('strain')
+        for reskey in mainkeys:
             raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
-                if len(vals) != reduced_sim.npts:
-                    errormsg = f'Cannot reduce sims with inconsistent numbers of days: {reduced_sim.npts} vs. {len(vals)}'
-                    raise ValueError(errormsg)
-                raw[reskey][:,s] = vals
+                raw[reskey][:, s] = vals
+        for reskey in strainkeys:
+            raw[reskey] = np.zeros((reduced_sim['n_strains'], reduced_sim.npts, len(self.sims)))
+            for s,sim in enumerate(self.sims):
+                vals = sim.results['strain'][reskey].values
+                raw[reskey][:, :, s] = vals
 
-        for reskey in reskeys:
-            reduced_sim.results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-            reduced_sim.results[reskey].low       = np.quantile(raw[reskey], q=quantiles['low'],  axis=1)
-            reduced_sim.results[reskey].high      = np.quantile(raw[reskey], q=quantiles['high'], axis=1)
+        for reskey in mainkeys + strainkeys:
+            if reskey in mainkeys:
+                axis = 1
+                results = reduced_sim.results
+            else:
+                axis = 2
+                results = reduced_sim.results['strain']
+            if use_mean:
+                r_mean = np.mean(raw[reskey], axis=axis)
+                r_std = np.std(raw[reskey], axis=axis)
+                results[reskey].values[:] = r_mean
+                results[reskey].low = r_mean - bounds * r_std
+                results[reskey].high = r_mean + bounds * r_std
+            else:
+                results[reskey].values[:] = np.quantile(raw[reskey], q=0.5, axis=axis)
+                results[reskey].low = np.quantile(raw[reskey], q=quantiles['low'], axis=axis)
+                results[reskey].high = np.quantile(raw[reskey], q=quantiles['high'], axis=axis)
 
         # Compute and store final results
-        reduced_sim.compute_summary(verbose=False)
+        reduced_sim.compute_summary()
         self.orig_base_sim = self.base_sim
         self.base_sim = reduced_sim
         self.results = reduced_sim.results
@@ -228,8 +285,39 @@ class MultiSim(sc.prettyobj):
             return
 
 
+    def mean(self, bounds=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=True). See reduce() for full description.
+
+        Args:
+            bounds (float): multiplier on the standard deviation for the upper and lower bounds (default, 2)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=True, bounds=bounds, **kwargs)
+
+
+    def median(self, quantiles=None, **kwargs):
+        '''
+        Alias for reduce(use_mean=False). See reduce() for full description.
+
+        Args:
+            quantiles (list or dict): upper and lower quantiles (default, 0.1 and 0.9)
+            kwargs (dict): passed to reduce()
+        '''
+        return self.reduce(use_mean=False, quantiles=quantiles, **kwargs)
+
+
     def combine(self, output=False):
-        ''' Combine multiple sims into a single sim with scaled results '''
+        '''
+        Combine multiple sims into a single sim with scaled results.
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim())
+            msim.run()
+            msim.combine()
+            msim.summarize()
+        '''
 
         n_runs = len(self)
         combined_sim = sc.dcp(self.sims[0])
@@ -252,7 +340,7 @@ class MultiSim(sc.prettyobj):
                 combined_sim.results[key].values /= n_runs
 
         # Compute and store final results
-        combined_sim.compute_summary(verbose=False)
+        combined_sim.compute_summary()
         self.orig_base_sim = self.base_sim
         self.base_sim = combined_sim
         self.results = combined_sim.results
@@ -266,13 +354,13 @@ class MultiSim(sc.prettyobj):
             return
 
 
-    def compare(self, t=-1, sim_inds=None, output=False, do_plot=False, **kwargs):
+    def compare(self, t=None, sim_inds=None, output=False, do_plot=False, **kwargs):
         '''
         Create a dataframe compare sims at a single point in time.
 
         Args:
             t        (int/str) : the day (or date) to do the comparison; default, the end
-            sim_inds (list)    : list of integers of which sims to include (default              : all)
+            sim_inds (list)    : list of integers of which sims to include (default: all)
             output   (bool)    : whether or not to return the comparison as a dataframe
             do_plot  (bool)    : whether or not to plot the comparison (see also plot_compare())
             kwargs   (dict)    : passed to plot_compare()
@@ -280,6 +368,13 @@ class MultiSim(sc.prettyobj):
         Returns:
             df (dataframe): a dataframe comparison
         '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
 
         # Handle the indices
         if sim_inds is None:
@@ -289,13 +384,14 @@ class MultiSim(sc.prettyobj):
         resdict = defaultdict(dict)
         for i,s in enumerate(sim_inds):
             sim = self.sims[s]
+            day = sim.day(t) # Unlikely, but different sims might have different start days
             label = sim.label
             if not label: # Give it a label if it doesn't have one
                 label = f'Sim {i}'
             if label in resdict: # Avoid duplicates
                 label += f' ({i})'
             for reskey in sim.result_keys():
-                val = sim.results[reskey].values[t]
+                val = sim.results[reskey].values[day]
                 if reskey not in ['r_eff', 'doubling_time']:
                     val = int(val)
                 resdict[label][reskey] = val
@@ -304,11 +400,11 @@ class MultiSim(sc.prettyobj):
             self.plot_compare(**kwargs)
 
         df = pd.DataFrame.from_dict(resdict).astype(object) # astype is necessary to prevent type coercion
-        if output:
-            return df
-        else:
+        if not output:
+            print(f'Results for {daystr} in each sim:')
             print(df)
-            return None
+        else:
+            return df
 
 
     def plot(self, to_plot=None, inds=None, plot_sims=False, color_by_sim=None, max_sims=5, colors=None, labels=None, alpha_range=None, plot_args=None, show_args=None, **kwargs):
@@ -326,17 +422,20 @@ class MultiSim(sc.prettyobj):
         other options.
 
         Args:
-            to_plot      (list) : list or dict of which results to plot; see cv.get_sim_plots() for structure
+            to_plot      (list) : list or dict of which results to plot; see cv.get_default_plots() for structure
             inds         (list) : if not combined or reduced, the indices of the simulations to plot (if None, plot all)
             plot_sims    (bool) : whether to plot individual sims, even if combine() or reduce() has been used
             color_by_sim (bool) : if True, set colors based on the simulation type; otherwise, color by result type; True implies a scenario-style plotting, False implies sim-style plotting
-            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overriden by other options
+            max_sims     (int)  : maximum number of sims to use with color-by-sim; can be overridden by other options
             colors       (list) : if supplied, override default colors for color_by_sim
             labels       (list) : if supplied, override default labels for color_by_sim
             alpha_range  (list) : a 2-element list/tuple/array providing the range of alpha values to use to distinguish the lines
             plot_args    (dict) : passed to sim.plot()
             show_args    (dict) : passed to sim.plot()
             kwargs       (dict) : passed to sim.plot()
+
+        Returns:
+            fig: Figure handle
 
         **Examples**::
 
@@ -356,8 +455,9 @@ class MultiSim(sc.prettyobj):
         else:
 
             # Initialize
-            fig = None
-            orig_show    = kwargs.get('do_show', True)
+            fig          = kwargs.pop('fig', None)
+            orig_show    = kwargs.get('do_show', None)
+            orig_close   = cvo.close
             orig_setylim = kwargs.get('setylim', True)
             kwargs['legend_args'] = sc.mergedicts({'show_legend':True}, kwargs.get('legend_args')) # Only plot the legend the first time
 
@@ -375,10 +475,8 @@ class MultiSim(sc.prettyobj):
 
             # Handle what to plot
             if to_plot is None:
-                if color_by_sim:
-                    to_plot = cvd.get_scen_plots()
-                else:
-                    to_plot = cvd.get_sim_plots()
+                kind = 'scens' if color_by_sim else 'sim'
+                to_plot = cvd.get_default_plots(kind=kind)
 
             # Handle colors
             if colors is None:
@@ -408,15 +506,20 @@ class MultiSim(sc.prettyobj):
                     merged_show_args  = show_args
                     kwargs['do_show'] = orig_show
                     kwargs['setylim'] = orig_setylim
+                    cvo.set(close=orig_close) # Reset original closing settings
                 else:
                     merged_show_args  = False # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
-                    kwargs['setylim'] = False
+                    kwargs['setylim'] = False # Don't set the y limits until we have all the data
+                    cvo.set(close=False) # Do not close figures if we're in the middle of plotting
 
                 # Optionally set the label for the first max_sims sims
-                if labels is None and color_by_sim is True and s<max_sims:
-                    merged_labels = sim.label
-                elif final_plot:
+                if color_by_sim is True and s<max_sims:
+                    if labels is None:
+                        merged_labels = sim.label
+                    else:
+                        merged_labels = labels[s]
+                elif final_plot and not color_by_sim:
                     merged_labels = labels
                 else:
                     merged_labels = ''
@@ -429,7 +532,7 @@ class MultiSim(sc.prettyobj):
 
 
     def plot_result(self, key, colors=None, labels=None, *args, **kwargs):
-        ''' Convenience method for plotting -- arguments passed to Sim.plot_result() '''
+        ''' Convenience method for plotting -- arguments passed to sim.plot_result() '''
         if self.which in ['combined', 'reduced']:
             fig = self.base_sim.plot_result(key, *args, **kwargs)
         else:
@@ -451,7 +554,7 @@ class MultiSim(sc.prettyobj):
     def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
         '''
         Plot a comparison between sims, using bars to show different values for
-        each result.
+        each result. For an explanation of other available arguments, see Sim.plot().
 
         Args:
             t         (int)  : index of results, passed to compare()
@@ -460,7 +563,7 @@ class MultiSim(sc.prettyobj):
             kwargs    (dict) : standard plotting arguments, see Sim.plot() for explanation
 
         Returns:
-            fig (figure): the figure handle
+            fig: Figure handle
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
         cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
@@ -474,7 +577,7 @@ class MultiSim(sc.prettyobj):
         Args:
             filename    (str)  : the name or path of the file to save to; if None, uses default
             keep_people (bool) : whether or not to store the population in the Sim objects (NB, very large)
-            kwargs      (dict) : passed to makefilepath()
+            kwargs      (dict) : passed to ``sc.makefilepath()``
 
         Returns:
             scenfile (str): the validated absolute path to the saved file
@@ -488,7 +591,7 @@ class MultiSim(sc.prettyobj):
         msimfile = sc.makefilepath(filename=filename, **kwargs)
         self.filename = filename # Store the actual saved filename
 
-        # Store sims seperately
+        # Store sims separately
         sims = self.sims
         self.sims = None # Remove for now
 
@@ -608,7 +711,7 @@ class MultiSim(sc.prettyobj):
                 if hasattr(self, 'chunks'): # Created from a merged MultiSim
                     inds = self.chunks
                 else: # No indices or chunks and not created from a merge
-                    errormsg = f'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
+                    errormsg = 'If a MultiSim has not been created via merge(), you must supply either inds or chunks to split it'
                     raise ValueError(errormsg)
             else: # Chunks supplied, but not inds
                 inds = [] # Initialize
@@ -629,24 +732,109 @@ class MultiSim(sc.prettyobj):
         return mlist
 
 
-    def summarize(self, output=False):
-        ''' Print a brief summary of the MultiSim '''
-        string  = 'MultiSim summary:\n'
-        string += f'  Number of sims: {len(self.sims)}\n'
-        string += f'  Reduced/combined: {self.which}\n'
-        string += f'  Base: {self.base_sim.brief(output=True)}\n'
-        string += f'  Sims:\n'
-        for s,sim in enumerate(self.sims):
-            string += f'    {s}: {sim.brief(output=True)}\n'
+    def disp(self, output=False):
+        '''
+        Display a verbose description of a multisim. See also multisim.summarize()
+        (medium length output) and multisim.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.disp() # Displays detailed output
+        '''
+        string = self._disp()
         if not output:
             print(string)
         else:
             return string
 
 
+    def summarize(self, output=False):
+        '''
+        Print a moderate length summary of the MultiSim. See also multisim.disp()
+        (detailed output) and multisim.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.summarize() # Prints moderate length output
+        '''
+        labelstr = f' "{self.label}"' if self.label else ''
+        simlenstr = f'{len(self.sims)}' if self.sims else '0'
+        string  = f'MultiSim{labelstr} summary:\n'
+        string += f'  Number of sims: {simlenstr}\n'
+        string += f'  Reduced/combined: {self.which}\n'
+        string += f'  Base: {self.base_sim.brief(output=True)}\n'
+        if self.sims:
+            string += '  Sims:\n'
+            for s,sim in enumerate(self.sims):
+                string += f'    {s}: {sim.brief(output=True)}\n'
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def _brief(self):
+        '''
+        Return a brief description of a multisim -- used internally and by repr();
+        see multisim.brief() for the user version.
+        '''
+        try:
+            labelstr = f'"{self.label}"; ' if self.label else ''
+            n_sims = 0 if not self.sims else len(self.sims)
+            string   = f'MultiSim({labelstr}n_sims: {n_sims}; base: {self.base_sim.brief(output=True)})'
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, multisim appears to be malformed:\n{str(E)}'
+        return string
+
+
+    def brief(self, output=False):
+        '''
+        Print a compact representation of the multisim. See also multisim.disp()
+        (detailed output) and multisim.summarize() (medium length output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            msim = cv.MultiSim(cv.Sim(verbose=0), label='Example multisim')
+            msim.run()
+            msim.brief() # Prints one-line output
+         '''
+        string = self._brief()
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def to_json(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_json() '''
+        return self.base_sim.to_json(*args, **kwargs)
+
+
+    def to_excel(self, *args, **kwargs):
+        ''' Shortcut for base_sim.to_excel() '''
+        return self.base_sim.to_excel(*args, **kwargs)
+
+
 class Scenarios(cvb.ParsObj):
     '''
     Class for running multiple sets of multiple simulations -- e.g., scenarios.
+    Note that most users are recommended to use MultiSim rather than Scenarios,
+    as it gives more control over run options. Scenarios should be used primarily
+    for quick investigations. See the examples folder for example usage.
 
     Args:
         sim       (Sim)  : if supplied, use a pre-created simulation as the basis for the scenarios
@@ -654,23 +842,29 @@ class Scenarios(cvb.ParsObj):
         scenarios (dict) : a dictionary defining the scenarios; see examples folder for examples; see below for baseline
         basepars  (dict) : a dictionary of sim parameters to be used for the basis of the scenarios (not required if sim is provided)
         scenfile  (str)  : a filename for saving (defaults to the creation date)
+        label     (str)  : the name of the scenarios
+
+    **Example**::
+
+        scens = cv.Scenarios()
 
     Returns:
         scens: a Scenarios object
     '''
 
-    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None):
+    def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None, label=None):
 
         # For this object, metapars are the foundation
         default_pars = make_metapars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
+        cvb.set_metadata(self) # Set version, date, and git info
 
         # Handle filename
-        self.created = sc.now()
         if scenfile is None:
             datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
             scenfile = f'covasim_scenarios_{datestr}.scens'
         self.scenfile = scenfile
+        self.label = label
 
         # Handle scenarios -- by default, create the simplest possible baseline scenario
         if scenarios is None:
@@ -678,21 +872,25 @@ class Scenarios(cvb.ParsObj):
         self.scenarios = scenarios
 
         # Handle metapars
-        self.metapars = sc.mergedicts({}, metapars)
+        self.metapars = sc.dcp(sc.mergedicts(metapars))
         self.update_pars(self.metapars)
 
         # Create the simulation and handle basepars
         if sim is None:
             sim = cvs.Sim()
-        self.base_sim = sim
-        self.basepars = sc.mergedicts({}, basepars)
+        self.base_sim = sc.dcp(sim)
+        self.basepars = sc.dcp(sc.mergedicts(basepars))
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
-        self.base_sim.init_results()
+        if not self.base_sim.initialized:
+            self.base_sim.init_strains()
+            self.base_sim.init_immunity()
+            self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
         self.npts = self.base_sim.npts
         self.tvec = self.base_sim.tvec
+        self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high
         self.sims = sc.objdict()
@@ -706,10 +904,10 @@ class Scenarios(cvb.ParsObj):
         return
 
 
-    def result_keys(self):
+    def result_keys(self, which='all'):
         ''' Attempt to retrieve the results keys from the base sim '''
         try:
-            keys = self.base_sim.result_keys()
+            keys = self.base_sim.result_keys(which=which)
         except Exception as E:
             errormsg = f'Could not retrieve result keys since base sim not accessible: {str(E)}'
             raise ValueError(errormsg)
@@ -718,7 +916,7 @@ class Scenarios(cvb.ParsObj):
 
     def run(self, debug=False, keep_people=False, verbose=None, **kwargs):
         '''
-        Run the actual scenarios
+        Run the specified scenarios.
 
         Args:
             debug   (bool) : if True, runs a single run instead of multiple, which makes debugging easier
@@ -740,7 +938,8 @@ class Scenarios(cvb.ParsObj):
                 print(string)
             return
 
-        reskeys = self.result_keys() # Shorten since used extensively
+        mainkeys   = self.result_keys('main')
+        strainkeys = self.result_keys('strain')
 
         # Loop over scenarios
         for scenkey,scen in self.scenarios.items():
@@ -753,11 +952,18 @@ class Scenarios(cvb.ParsObj):
                 raise ValueError(errormsg)
 
             # Create and run the simulations
-
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.label = scenkey
-            scen_sim.update_pars(scenpars)
+
+            scen_sim.update_pars(scenpars)  # Update the parameters, if provided
+            scen_sim.validate_pars()
+            if 'strains' in scenpars: # Process strains
+                scen_sim.init_strains()
+                scen_sim.init_immunity(create=True)
+            elif 'imm_pars' in scenpars: # Process immunity
+                scen_sim.init_immunity(create=True) # TODO: refactor
+
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:
                 print('Running in debug mode (not parallelized)')
@@ -768,23 +974,28 @@ class Scenarios(cvb.ParsObj):
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-
+            ns = scen_sims[0]['n_strains'] # Get number of strains
             scenraw = {}
-            for reskey in reskeys:
+            for reskey in mainkeys:
                 scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
+            for reskey in strainkeys:
+                scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
+                for s,sim in enumerate(scen_sims):
+                    scenraw[reskey][:,:,s] = sim.results['strain'][reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
             scenres.low = {}
             scenres.high = {}
-            for reskey in reskeys:
-                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=1) # Changed from median to mean for smoother plots
-                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=1)
-                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=1)
+            for reskey in mainkeys + strainkeys:
+                axis = 1 if reskey in mainkeys else 2
+                scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
+                scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
+                scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
-            for reskey in reskeys:
+            for reskey in mainkeys + strainkeys:
                 self.results[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
                     self.results[reskey][scenkey][blh] = scenres[blh][reskey]
@@ -793,54 +1004,66 @@ class Scenarios(cvb.ParsObj):
 
         #%% Print statistics
         if verbose:
-            sc.heading('Results for last day in each scenario:')
-            x = defaultdict(dict)
-            scenkeys = list(self.scenarios.keys())
-            for scenkey in scenkeys:
-                for reskey in reskeys:
-                    val = self.results[reskey][scenkey].best[-1]
-                    if reskey not in ['r_eff', 'doubling_time']:
-                        val = int(val)
-                    x[scenkey][reskey] = val
-            df = pd.DataFrame.from_dict(x).astype(object)
-            print(df)
-            print()
+            self.compare()
 
         # Save details about the run
         self._kept_people = keep_people
 
-        return
+        return self
+
+
+    def compare(self, t=None, output=False):
+        '''
+        Print out a comparison of each scenario.
+
+        Args:
+            t (int/str)   : the day (or date) to do the comparison; default, the end
+            output (bool) : if true, return the dataframe instead of printing output
+
+        **Example**::
+
+            scenarios = {'base': {'name':'Base','pars': {}}, 'beta': {'name':'Beta', 'pars': {'beta': 0.020}}}
+            scens = cv.Scenarios(scenarios=scenarios, label='Example scenarios')
+            scens.run()
+            scens.compare(t=30) # Prints comparison for day 30
+        '''
+
+        # Handle time
+        if t is None:
+            t = -1
+            daystr = 'the last day'
+        else:
+            daystr = f'day {t}'
+        day = self.base_sim.day(t) # Unlike MultiSims, scenarios must have the same start day
+
+        # Compute dataframe
+        x = defaultdict(dict)
+        strainkeys = self.result_keys('strain')
+        for scenkey in self.scenarios.keys():
+            for reskey in self.result_keys():
+                if reskey in strainkeys:
+                    for strain in range(self.base_sim['n_strains']):
+                        val = self.results[reskey][scenkey].best[strain, day] # Only prints results for infections by first strain
+                        strainkey = reskey + str(strain) # Add strain number to the summary output
+                        x[scenkey][strainkey] = int(val)
+                else:
+                    val = self.results[reskey][scenkey].best[day]
+                    if reskey not in ['r_eff', 'doubling_time']:
+                        val = int(val)
+                    x[scenkey][reskey] = val
+        df = pd.DataFrame.from_dict(x).astype(object)
+
+        if not output:
+            print(f'Results for {daystr} in each scenario:')
+            print(df)
+        else:
+            return df
 
 
     def plot(self, *args, **kwargs):
         '''
-        Plot the results of a scenario.
-
-        Args:
-            to_plot      (dict): Dict of results to plot; see get_scen_plots() for structure
-            do_save      (bool): Whether or not to save the figure
-            fig_path     (str):  Path to save the figure
-            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            fill_args    (dict): Dictionary of kwargs to be passed to pl.fill_between()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
-            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
-            n_cols       (int):  Number of columns of subpanels to use for subplot
-            font_size    (int):  Size of the font
-            font_family  (str):  Font face
-            grid         (bool): Whether or not to plot gridlines
-            commaticks   (bool): Plot y-axis with commas rather than scientific notation
-            setylim      (bool): Reset the y limit to start at 0
-            log_scale    (bool): Whether or not to plot the y-axis with a log scale; if a list, panels to show as log
-            do_show      (bool): Whether or not to show the figure
-            colors       (dict): Custom color for each scenario, must be a dictionary with one entry per scenario key
-            sep_figs     (bool): Whether to show separate figures for different results instead of subplots
-            fig          (fig):  Existing figure to plot into
+        Plot the results of a scenario. For an explanation of available arguments,
+        see Sim.plot().
 
         Returns:
             fig: Figure handle
@@ -897,7 +1120,7 @@ class Scenarios(cvb.ParsObj):
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            for key in self.result_keys():
+            for key in self.result_keys('main'): # Multidimensional strain keys can't be exported
                 result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
                 result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()
@@ -933,7 +1156,7 @@ class Scenarios(cvb.ParsObj):
         scenfile = sc.makefilepath(filename=scenfile, **kwargs)
         self.scenfile = scenfile # Store the actual saved filename
 
-        # Store sims seperately
+        # Store sims separately
         sims = self.sims
         self.sims = None # Remove for now
 
@@ -982,6 +1205,95 @@ class Scenarios(cvb.ParsObj):
             errormsg = f'Cannot load object of {type(scens)} as a Scenarios object'
             raise TypeError(errormsg)
         return scens
+
+
+    def disp(self, output=False):
+        '''
+        Display a verbose description of the scenarios. See also scenarios.summarize()
+        (medium length output) and scenarios.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(cv.Sim(), label='Example scenarios')
+            scens.run(verbose=0) # Run silently
+            scens.disp() # Displays detailed output
+        '''
+        string = self._disp()
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def summarize(self, output=False):
+        '''
+        Print a moderate length summary of the scenarios. See also scenarios.disp()
+        (detailed output) and scenarios.brief() (short output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(cv.Sim(), label='Example scenarios')
+            scens.run(verbose=0) # Run silently
+            scens.summarize() # Prints moderate length output
+        '''
+        labelstr = f' "{self.label}"' if self.label else ''
+        string  = f'Scenarios{labelstr} summary:\n'
+        string += f'  Number of scenarios: {len(self.sims)}\n'
+        string += f'  Base: {self.base_sim.brief(output=True)}\n'
+        if self.sims:
+            string +=  '  Scenarios:\n'
+            for k,key,simlist in self.sims.enumitems():
+                keystr = f'      {k}: "{key}"\n'
+                string += keystr
+                for s,sim in enumerate(simlist):
+                    simstr = f'{sim.brief(output=True)}'
+                    string += '          ' + f'{s}: {simstr}\n'
+        if not output:
+            print(string)
+        else:
+            return string
+
+
+    def _brief(self):
+        '''
+        Return a brief description of the scenarios -- used internally and by repr();
+        see scenarios.brief() for the user version.
+        '''
+        try:
+            labelstr = f'"{self.label}"; ' if self.label else ''
+            n_scenarios = 0 if not self.scenarios else len(self.scenarios)
+            string   = f'Scenarios({labelstr}n_scenarios: {n_scenarios}; base: {self.base_sim.brief(output=True)})'
+        except Exception as E:
+            string = sc.objectid(self)
+            string += f'Warning, scenarios appear to be malformed:\n{str(E)}'
+        return string
+
+
+    def brief(self, output=False):
+        '''
+        Print a compact representation of the scenarios. See also scenarios.disp()
+        (detailed output) and scenarios.summarize() (medium length output).
+
+        Args:
+            output (bool): if true, return a string instead of printing output
+
+        **Example**::
+
+            scens = cv.Scenarios(label='Example scenarios')
+            scens.run()
+            scens.brief() # Prints one-line output
+         '''
+        string = self._brief()
+        if not output:
+            print(string)
+        else:
+            return string
 
 
 def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=False, run_args=None, sim_args=None, verbose=None, do_run=True, **kwargs):
@@ -1064,26 +1376,28 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
 
     Args:
-        sim        (Sim)   : the sim instance to be run, or a list of sims.
-        n_runs     (int)   : the number of parallel runs
-        reseed     (bool)  : whether or not to generate a fresh seed for each run
-        noise      (float) : the amount of noise to add to each run
-        noisepar   (str)   : the name of the parameter to add noise to
-        iterpars   (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
-        combine    (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
-        keep_people(bool)  : whether to keep the people after the sim run
-        run_args   (dict)  : arguments passed to sim.run()
-        sim_args   (dict)  : extra parameters to pass to the sim
-        do_run     (bool)  : whether to actually run the sim (if not, just initialize it)
-        par_args   (dict)  : arguments passed to sc.parallelize()
-        verbose    (int)   : detail to print
-        kwargs     (dict)  : also passed to the sim
+        sim         (Sim)   : the sim instance to be run, or a list of sims.
+        n_runs      (int)   : the number of parallel runs
+        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        noise       (float) : the amount of noise to add to each run
+        noisepar    (str)   : the name of the parameter to add noise to
+        iterpars    (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
+        combine     (bool)  : whether or not to combine all results into one sim, rather than return multiple sim objects
+        keep_people (bool)  : whether to keep the people after the sim run (default false)
+        run_args    (dict)  : arguments passed to sim.run()
+        sim_args    (dict)  : extra parameters to pass to the sim
+        par_args    (dict)  : arguments passed to sc.parallelize()
+        do_run      (bool)  : whether to actually run the sim (if not, just initialize it)
+        parallel    (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
+        n_cpus      (int)   : the number of CPUs to run on (if blank, set automatically; otherwise, passed to par_args)
+        verbose     (int)   : detail to print
+        kwargs      (dict)  : also passed to the sim
 
     Returns:
         If combine is True, a single sim object with the combined results from each sim.
@@ -1098,7 +1412,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts(par_args) # Handle blank
+    par_args = sc.mergedicts({'ncpus':n_cpus}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
@@ -1117,13 +1431,44 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
         iterkwargs = {'ind':np.arange(n_runs)}
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     elif isinstance(sim, list): # List of sims
         iterkwargs = {'sim':sim}
         kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
-        sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
         raise TypeError(errormsg)
+
+    # Actually run!
+    if parallel:
+        try:
+            sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+        except RuntimeError as E: # Handle if run outside of __main__ on Windows
+            if 'freeze_support' in E.args[0]: # For this error, add additional information
+                errormsg = '''
+ Uh oh! It appears you are trying to run with multiprocessing on Windows outside
+ of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+ for more information. The correct syntax to use is e.g.
+
+     import covasim as cv
+     sim = cv.Sim()
+     msim = cv.MultiSim(sim)
+
+     if __name__ == '__main__':
+         msim.run()
+
+Alternatively, to run without multiprocessing, set parallel=False.
+ '''
+                raise RuntimeError(errormsg) from E
+            else: # For all other runtime errors, raise the original exception
+                raise E
+    else: # Run in serial, not in parallel
+        sims = []
+        n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length
+        for s in range(n_sims):
+            this_iter = {k:v[s] for k,v in iterkwargs.items()} # Pull out items specific to this iteration
+            this_iter.update(kwargs) # Merge with the kwargs
+            this_iter['sim'] = this_iter['sim'].copy() # Ensure we have a fresh sim; this happens implicitly on pickling with multiprocessing
+            sim = single_run(**this_iter) # Run in series
+            sims.append(sim)
 
     return sims

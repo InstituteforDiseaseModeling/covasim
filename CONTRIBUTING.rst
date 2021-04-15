@@ -29,9 +29,7 @@ included in the following README files:
 
    -  `Project README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/README.rst>`__: Setup and project overview.
    -  `Covasim README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/covasim/README.rst>`__: Simulation parameters.
-   -  `Webapp README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/covasim/webapp/README.rst>`__: Running the web
       application.
-   -  `Docker README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/docker/README.rst>`__: Information regarding the
       docker setup.
    -  `Tests README <https://github.com/InstituteforDiseaseModeling/covasim/blob/master/tests/README.rst>`__: Running tests locally.
 

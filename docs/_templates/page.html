@@ -2,22 +2,17 @@
 
 {% set css_files = css_files + ["_static/theme_overrides.css"] %}
 
+{% block htmltitle %}
+{{ super() }}
+
+{% if not READTHEDOCS %}
+<meta name="robots" content="none">
+{% endif %}
+
+{% endblock %}
+
 {% block extrahead %}
 
 <link href="https://fonts.googleapis.com/css?family=Lato|Montserrat|Open+Sans" rel="stylesheet">
 
-{% endblock %}
-
-{% block head %}
-
-<script src="tipuesearch/tipuesearch_content.js"></script>
-<link href="tipuesearch/tipuesearch.css" rel="stylesheet">
-<script src="tipuesearch/tipuesearch_set.js"></script>
-<script src="tipuesearch/tipuesearch.min.js"></script>
-{% endblock %}
-
-{% block body %}
-<!-- From _templates/page.html -->
-{{ super() }}
-<div id="tipue_search_content"></div>
 {% endblock %}

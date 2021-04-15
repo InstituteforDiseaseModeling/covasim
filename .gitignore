@@ -1,13 +1,11 @@
-# Custom
-covasim/cova_cdc/results_2020mar14/
-covasim/cova_oregon/received/
-covasim/cova_oregon/results_2020mar14/
-covasim/cova_oregon/results_2020mar15/
-covasim/cova_seattle/capacity_analysis
-covasim/cova_seattle/school_analysis
-covasim/cova_seattle/seattle_analysis
-results/
+# Custom -- docs build files
+docs/covasim*.rst
+docs/modules.rst
+
+# Data files
 data/epi_data
+
+# Other files
 .idea
 
 # Byte-compiled / optimized / DLL files
@@ -143,5 +141,3 @@ dmypy.json
 
 # Node.js and NPM
 node_modules
-docs/covasim.*
-docs/modules.rst

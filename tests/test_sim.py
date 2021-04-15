@@ -1,5 +1,5 @@
 '''
-Simple example usage for the Covid-19 agent-based model
+Tests for single simulations
 '''
 
 #%% Imports and settings
@@ -10,7 +10,8 @@ import covasim as cv
 
 do_plot = 1
 do_save = 0
-do_show = 1
+cv.options.set(interactive=False) # Assume not running interactively
+
 
 #%% Define the tests
 
@@ -44,11 +45,14 @@ def test_microsim():
         }
     sim.update_pars(pars)
     sim.run()
+    sim.disp()
+    sim.summarize()
+    sim.brief()
 
     return sim
 
 
-def test_sim(do_plot=False, do_save=False, do_show=False): # If being run via pytest, turn off
+def test_sim(do_plot=False, do_save=False): # If being run via pytest, turn off
     sc.heading('Basic sim test')
 
     # Settings
@@ -62,7 +66,7 @@ def test_sim(do_plot=False, do_save=False, do_show=False): # If being run via py
 
     # Optionally plot
     if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show)
+        sim.plot(do_save=do_save)
 
     return sim
 
@@ -95,36 +99,7 @@ def test_fileio():
     return json
 
 
-def test_start_stop(): # If being run via pytest, turn off
-    sc.heading('Test starting and stopping')
-
-    pars = {'pop_size': 1000}
-
-    # Create and run a basic simulation
-    sim1 = cv.Sim(pars)
-    sim1.run(verbose=0)
-
-    # Test that step works
-    sim2 = cv.Sim(pars)
-    sim2.initialize()
-    for n in range(sim2.npts):
-        sim2.step()
-    sim2.finalize()
-
-    # Test that until works
-    sim3 = cv.Sim(pars)
-    sim3.run(until=20)
-    sim3.run(reset_seed=False)
-
-    # Compare results
-    key = 'cum_infections'
-    assert (sim1.results[key][:] == sim2.results[key][:]).all(), 'Next values do not match'
-    assert (sim1.results[key][:] == sim3.results[key][:]).all(), 'Until values do not match'
-
-    return sim2
-
-
-def test_sim_data(do_plot=False, do_show=False):
+def test_sim_data(do_plot=False):
     sc.heading('Data test')
 
     pars = dict(
@@ -138,12 +113,12 @@ def test_sim_data(do_plot=False, do_show=False):
 
     # Optionally plot
     if do_plot:
-        sim.plot(do_show=do_show)
+        sim.plot()
 
     return sim
 
 
-def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via pytest, turn off
+def test_dynamic_resampling(do_plot=False): # If being run via pytest, turn off
     sc.heading('Test dynamic resampling')
 
     pop_size = 1000
@@ -152,7 +127,7 @@ def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via py
 
     # Optionally plot
     if do_plot:
-        sim.plot(do_show=do_show)
+        sim.plot()
 
     # Create and run a basic simulation
     assert sim.results['cum_infections'][-1] > pop_size  # infections at the end of sim should be much more than internal pop
@@ -162,15 +137,17 @@ def test_dynamic_resampling(do_plot=False, do_show=False): # If being run via py
 
 #%% Run as a script
 if __name__ == '__main__':
+
+    # Start timing and optionally enable interactive plotting
+    cv.options.set(interactive=do_plot)
     T = sc.tic()
 
     pars = test_parsobj()
     sim0 = test_microsim()
-    sim1 = test_sim(do_plot=do_plot, do_save=do_save, do_show=do_show)
+    sim1 = test_sim(do_plot=do_plot, do_save=do_save)
     json = test_fileio()
-    sim4 = test_start_stop()
-    sim5 = test_sim_data(do_plot=do_plot, do_show=do_show)
-    sim6 = test_dynamic_resampling(do_plot=do_plot, do_show=do_show)
+    sim2 = test_sim_data(do_plot=do_plot)
+    sim3 = test_dynamic_resampling(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

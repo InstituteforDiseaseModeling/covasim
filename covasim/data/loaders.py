@@ -9,7 +9,7 @@ from . import country_age_data    as cad
 from . import state_age_data      as sad
 from . import household_size_data as hsd
 
-__all__ = ['get_country_aliases', 'map_entries', 'get_age_distribution', 'get_household_size']
+__all__ = ['get_country_aliases', 'map_entries', 'show_locations', 'get_age_distribution', 'get_household_size']
 
 
 def get_country_aliases():
@@ -88,6 +88,52 @@ def map_entries(json, location):
     return entries
 
 
+def show_locations(location=None, output=False):
+    '''
+    Print a list of available locations.
+
+    Args:
+        location (str): if provided, only check if this location is in the list
+        output (bool): whether to return the list (else print)
+
+    **Examples**::
+
+        cv.data.show_locations() # Print a list of valid locations
+        cv.data.show_locations('lithuania') # Check if Lithuania is a valid location
+        cv.data.show_locations('Viet-Nam') # Check if Viet-Nam is a valid location
+    '''
+    country_json   = sc.dcp(cad.data)
+    state_json     = sc.dcp(sad.data)
+    aliases        = get_country_aliases()
+
+    age_data       = sc.mergedicts(state_json, country_json, aliases) # Countries will overwrite states, e.g. Georgia
+    household_data = sc.dcp(hsd.data)
+
+    loclist = sc.objdict()
+    loclist.age_distributions = sorted(list(age_data.keys()))
+    loclist.household_size_distributions = sorted(list(household_data.keys()))
+
+    if location is not None:
+        age_available = location.lower() in [v.lower() for v in loclist.age_distributions]
+        hh_available = location.lower() in [v.lower() for v in loclist.household_size_distributions]
+        age_sugg = ''
+        hh_sugg = ''
+        age_sugg = f'(closest match: {sc.suggest(location, loclist.age_distributions)})' if not age_available else ''
+        hh_sugg = f'(closest match: {sc.suggest(location, loclist.household_size_distributions)})' if not hh_available else ''
+        print(f'For location "{location}":')
+        print(f'  Population age distribution is available: {age_available} {age_sugg}')
+        print(f'  Household size distribution is available: {hh_available} {hh_sugg}')
+        return
+
+    if output:
+        return loclist
+    else:
+        print(f'There are {len(loclist.age_distributions)} age distributions and {len(loclist.household_size_distributions)} household size distributions.')
+        print('\nList of available locations (case insensitive):\n')
+        sc.pp(loclist)
+        return
+
+
 def get_age_distribution(location=None):
     '''
     Load age distribution for a given country or countries.
@@ -100,9 +146,9 @@ def get_age_distribution(location=None):
     '''
 
     # Load the raw data
-    country_json = cad.get()
-    state_json   = sad.get()
-    json = {**state_json, **country_json}
+    country_json   = sc.dcp(cad.data)
+    state_json     = sc.dcp(sad.data)
+    json = sc.mergedicts(state_json, country_json) # Countries will overwrite states, e.g. Georgia
     entries = map_entries(json, location)
 
     max_age = 99
@@ -137,7 +183,7 @@ def get_household_size(location=None):
         house_size (float): Size of household, or dict if multiple locations
     '''
     # Load the raw data
-    json = hsd.get()
+    json = sc.dcp(hsd.data)
 
     result = map_entries(json, location)
     if len(result) == 1:
