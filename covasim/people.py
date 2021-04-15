@@ -46,10 +46,10 @@ class People(cvb.BasePeople):
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars          = pars # Equivalent to self.set_pars(pars)
-        self.pop_size      = int(pars['pop_size'])
-        self.location      = pars.get('location') # Try to get location, but set to None otherwise
-        self.version       = cvv.__version__ # Store version info
+        self.pars = pars # Equivalent to self.set_pars(pars)
+        self.pars['pop_size'] = int(pars['pop_size'])
+        self.pars.setdefault('location', None)
+        self.version = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -62,32 +62,32 @@ class People(cvb.BasePeople):
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
             if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+                self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+                self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
         # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
             val = (key in ['susceptible', 'naive']) # Default value is True for susceptible and naive, false otherwise
-            self[key] = np.full(self.pop_size, val, dtype=bool)
+            self[key] = np.full(self.pars['pop_size'], val, dtype=bool)
 
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
         for key in self.meta.by_strain_states:
-            self[key] = np.full((self['n_strains'], self.pop_size), False, dtype=bool)
+            self[key] = np.full((self.pars['n_strains'], self.pars['pop_size']), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self['n_strains'], self.pop_size), dtype=cvd.default_float)
+            self[key] = np.zeros((self.pars['n_strains'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
-            self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
+            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
@@ -222,7 +222,7 @@ class People(cvb.BasePeople):
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
         self.infectious_strain[inds] = self.exposed_strain[inds]
-        for strain in range(self['n_strains']):
+        for strain in range(self.pars['n_strains']):
             this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
             n_this_strain_inds = len(this_strain_inds)
             self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds

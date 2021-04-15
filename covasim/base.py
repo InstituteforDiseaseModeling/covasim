@@ -858,7 +858,7 @@ class BasePeople(FlexPretty):
 
     def __len__(self):
         ''' This is just a scalar, but validate() and _resize_arrays() make sure it's right '''
-        return self.pop_size
+        return self.pars['pop_size']
 
 
     def __iter__(self):
@@ -883,7 +883,7 @@ class BasePeople(FlexPretty):
                 raise NotImplementedError(errormsg)
 
         # Validate
-        newpeople.pop_size += people2.pop_size
+        newpeople.pars['pop_size'] += people2.pars['pop_size']
         newpeople.validate()
 
         # Reassign UIDs so they're unique
@@ -1060,7 +1060,7 @@ class BasePeople(FlexPretty):
         ''' Resize arrays if any mismatches are found '''
         if pop_size is None:
             pop_size = len(self)
-        self.pop_size = pop_size
+        self.pars['pop_size'] = pop_size
         if keys is None:
             keys = self.keys()
         keys = sc.promotetolist(keys)
