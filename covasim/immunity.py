@@ -38,6 +38,7 @@ class strain(sc.prettyobj):
     def __init__(self, strain, days, label=None, n_imports=1, rescale=True):
         self.days = days # Handle inputs
         self.n_imports = int(n_imports)
+        self.rescale   = rescale
         self.index     = None # Index of the strain in the sim; set later
         self.label     = None # Strain label (used as a dict key)
         self.p         = None # This is where the parameters will be stored
@@ -117,8 +118,8 @@ class strain(sc.prettyobj):
         ''' Introduce new infections with this strain '''
         for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce strain
             susceptible_inds = cvu.true(sim.people.susceptible)
-            # n_imports = sc.randround(self.n_imports/sim.rescale_vec[sim.t]) # Round stochastically to the nearest number of imports
-            n_imports = sc.randround(self.n_imports)
+            rescale_factor = sim.rescale_vec[sim.t] if self.rescale else 1.0
+            n_imports = sc.randround(self.n_imports/rescale_factor) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', strain=self.index)
         return
