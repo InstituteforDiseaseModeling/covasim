@@ -378,7 +378,7 @@ class Sim(cvb.BaseSim):
             elif isinstance(obj, cvb.BasePeople):
                 self.people = obj
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
-                n_actual    = len(self.people)
+                n_actual    = self['pop_size']
                 layer_keys  = self.people.layer_keys()
             else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'

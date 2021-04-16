@@ -70,7 +70,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(sus=dict(slope=2.7, n_50=0.03), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
+    pars['nab_eff']         = dict(sus=dict(slope=1.6, n_50=0.05), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
     pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
     pars['rel_imm']         = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
@@ -489,40 +489,40 @@ def get_vaccine_dose_pars(default=False):
     pars = dict(
 
         default = dict(
-            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
         ),
 
         pfizer = dict(
-            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         moderna = dict(
-            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 28,
         ),
 
         az = dict(
-            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=-0.85, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
 
         jj = dict(
-            nab_eff   = dict(sus=dict(slope=2.5, n_50=0.55)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=-1.1, par2= 2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
