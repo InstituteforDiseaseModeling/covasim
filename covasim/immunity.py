@@ -253,10 +253,6 @@ def init_immunity(sim, create=False):
     # Pull out all of the circulating strains for cross-immunity
     ns       = sim['n_strains']
     immunity = {}
-    # rel_imms = {}
-    # strain_labels = sim['strain_map'].values()
-    # for label in strain_labels:
-    #     rel_imms[label] = sim['strain_pars'][label]['rel_imm']
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
