@@ -1060,7 +1060,8 @@ class BasePeople(FlexPretty):
         ''' Resize arrays if any mismatches are found '''
         if pop_size is None:
             pop_size = len(self)
-        self.pars['pop_size'] = pop_size
+        if not isinstance(pop_size, tuple):
+            self.pars['pop_size'] = pop_size
         if keys is None:
             keys = self.keys()
         keys = sc.promotetolist(keys)
