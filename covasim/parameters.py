@@ -490,7 +490,7 @@ def get_vaccine_dose_pars(default=False):
 
         default = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
@@ -498,7 +498,7 @@ def get_vaccine_dose_pars(default=False):
 
         pfizer = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 21,
@@ -506,7 +506,7 @@ def get_vaccine_dose_pars(default=False):
 
         moderna = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_init  = dict(dist='normal', par1=2, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 28,
@@ -514,7 +514,7 @@ def get_vaccine_dose_pars(default=False):
 
         az = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_init  = dict(dist='normal', par1=-0.85, par2= 2),
             nab_boost = 2,
             doses     = 2,
             interval  = 21,
@@ -522,7 +522,7 @@ def get_vaccine_dose_pars(default=False):
 
         jj = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=0.5, par2= 2),
+            nab_init  = dict(dist='normal', par1=-1.1, par2= 2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
