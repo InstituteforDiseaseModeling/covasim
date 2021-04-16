@@ -59,6 +59,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
     pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
+    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
 
     # Parameters that control settings and defaults for multi-strain runs
     pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
@@ -71,13 +72,12 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
     pars['nab_eff']         = dict(sus=dict(slope=1.6, n_50=0.05), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
-    pars['cross_immunity']  = 0.5   # Default cross-immunity protection factor that applies across different strains
-    pars['rel_imm']         = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+    pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
-    pars['rel_beta']        = 1.0
-    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    pars['rel_beta']        = 1.0 # Relative transmissibility varies by strain
+    pars['rel_imm_strain']  = 1.0 # Relative own-immmunity varies by strain
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -351,7 +351,7 @@ def get_strain_pars(default=False):
     pars = dict(
 
         wild = dict(
-            rel_imm         = 1.0, # Default values
+            rel_imm_strain  = 1.0, # Default values
             rel_beta        = 1.0, # Default values
             rel_symp_prob   = 1.0, # Default values
             rel_severe_prob = 1.0, # Default values
@@ -360,16 +360,16 @@ def get_strain_pars(default=False):
         ),
 
         b117 = dict(
-            rel_imm         = 1.0, # Scaling factor applied to
+            rel_imm_strain  = 1.0, # Immunity protection obtained from a natural infection with wild type, relative to wild type. No evidence yet for a difference with B117
             rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
-            rel_symp_prob   = 1.0,
+            rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-            rel_crit_prob   = 1.0,
-            rel_death_prob  = 1.0,
+            rel_crit_prob   = 1.0, # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
+            rel_death_prob  = 1.0, # See comment above.
         ),
 
         b1351 = dict(
-            rel_imm         = 0.25,
+            rel_imm_strain  = 0.25, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
@@ -378,8 +378,8 @@ def get_strain_pars(default=False):
         ),
 
         p1 = dict(
-            rel_imm         = 0.5,
-            rel_beta        = 1.4,
+            rel_imm_strain  = 0.5, #
+            rel_beta        = 1.4, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
             rel_crit_prob   = 1.0,
@@ -395,36 +395,36 @@ def get_strain_pars(default=False):
 
 def get_cross_immunity(default=False):
     '''
-    Get the cross immunity between each strain and each other strain
+    Get the cross immunity between each strain in a sim
     '''
     pars = dict(
 
         wild = dict(
-            wild  = 1.0,
-            b117  = 0.5,
-            b1351 = 0.5,
-            p1    = 0.5,
+            wild  = 1.0, # Default for own-immunity
+            b117  = 0.5, # Assumption
+            b1351 = 0.5, # Assumption
+            p1    = 0.5, # Assumption
         ),
 
         b117 = dict(
-            wild  = 0.5,
-            b117  = 1.0,
-            b1351 = 0.8,
-            p1    = 0.8,
+            wild  = 0.5, # Assumption
+            b117  = 1.0, # Default for own-immunity
+            b1351 = 0.8, # Assumption
+            p1    = 0.8, # Assumption
         ),
 
         b1351 = dict(
-            wild  = 0.066,
-            b117  = 0.1,
-            b1351 = 1.0,
-            p1    = 0.1,
+            wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
+            b117  = 0.1,   # Assumption
+            b1351 = 1.0, # Default for own-immunity
+            p1    = 0.1,   # Assumption
         ),
 
         p1 = dict(
-            wild  = 0.17,
-            b117  = 0.2,
-            b1351 = 0.2,
-            p1    = 1.0,
+            wild  = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
+            b117  = 0.4,  # Assumption based on the above
+            b1351 = 0.4,  # Assumption based on the above
+            p1    = 1.0, # Default for own-immunity
         ),
     )
 

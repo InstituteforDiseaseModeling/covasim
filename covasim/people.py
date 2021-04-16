@@ -288,9 +288,9 @@ class People(cvb.BasePeople):
 
             # Reset additional states
             self.susceptible[inds] = True
-            self.prior_symptoms[inds]        = self.pars['rel_imm']['asymp']
-            self.prior_symptoms[mild_inds]   = self.pars['rel_imm']['mild']
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
+            self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
+            self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
         return len(inds)
