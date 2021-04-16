@@ -1337,6 +1337,7 @@ class vaccinate(Intervention):
                 for ind in find_day(self.days, sim.t, interv=self, sim=sim):
                     unvacc_inds = sc.findinds(~sim.people.vaccinated)
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
+            vacc_probs[cvu.true(sim.people.dead)] *= 0.0 # do not vaccinate dead people
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
             if len(vacc_inds):
