@@ -369,7 +369,7 @@ def get_strain_pars(default=False):
         ),
 
         b1351 = dict(
-            rel_imm_strain  = 0.25, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
+            rel_imm_strain  = 0.066, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
@@ -378,7 +378,7 @@ def get_strain_pars(default=False):
         ),
 
         p1 = dict(
-            rel_imm_strain  = 0.5, #
+            rel_imm_strain  = 0.17,
             rel_beta        = 1.4, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
@@ -463,9 +463,9 @@ def get_vaccine_strain_pars(default=False):
 
         az = dict(
             wild  = 1.0,
-            b117  = 1.0,
-            b1351 = 1/2,
-            p1    = 1/2,
+            b117  = 1/2.3,
+            b1351 = 1/9,
+            p1    = 1/2.9,
         ),
 
         jj = dict(
@@ -490,7 +490,7 @@ def get_vaccine_dose_pars(default=False):
 
         default = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=2, par2= 2),
+            nab_init  = dict(dist='normal', par1=2, par2=2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
@@ -498,32 +498,32 @@ def get_vaccine_dose_pars(default=False):
 
         pfizer = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=2, par2= 2),
-            nab_boost = 2,
+            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_boost = 3,
             doses     = 2,
             interval  = 21,
         ),
 
         moderna = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=2, par2= 2),
-            nab_boost = 2,
+            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_boost = 3,
             doses     = 2,
             interval  = 28,
         ),
 
         az = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-0.85, par2= 2),
-            nab_boost = 2,
+            nab_init  = dict(dist='normal', par1=-0.85, par2=2),
+            nab_boost = 3,
             doses     = 2,
             interval  = 21,
         ),
 
         jj = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-1.1, par2= 2),
-            nab_boost = 2,
+            nab_init  = dict(dist='normal', par1=-1.1, par2=2),
+            nab_boost = 3,
             doses     = 1,
             interval  = None,
         ),
