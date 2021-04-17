@@ -416,7 +416,7 @@ def get_cross_immunity(default=False):
         b1351 = dict(
             wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
             b117  = 0.1,   # Assumption
-            b1351 = 1.0, # Default for own-immunity
+            b1351 = 1.0,   # Default for own-immunity
             p1    = 0.1,   # Assumption
         ),
 
@@ -424,7 +424,7 @@ def get_cross_immunity(default=False):
             wild  = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             b117  = 0.4,  # Assumption based on the above
             b1351 = 0.4,  # Assumption based on the above
-            p1    = 1.0, # Default for own-immunity
+            p1    = 1.0,  # Default for own-immunity
         ),
     )
 

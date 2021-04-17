@@ -1209,26 +1209,39 @@ class simple_vaccine(Intervention):
 
 class vaccinate(Intervention):
     '''
-    Apply a vaccine to a subset of the population. In addition to changing the
-    relative susceptibility and the probability of developing symptoms if still
-    infected, this intervention stores several types of data:
+    Apply a vaccine to a subset of the population.
 
+    The main purpose of the intervention is to change the relative susceptibility
+    and the probability of developing symptoms if still infected. However, this intervention
+    also stores several types of data:
+
+        - ``vaccinated``:        whether or not a person is vaccinated
         - ``vaccinations``:      the number of vaccine doses per person
-        - ``vaccination_dates``: list of dates per person
-        - ``pars``:             vaccine pars that are given to Vaccine() class
+        - ``vaccination_dates``: list of vaccination dates per person
 
     Args:
-        vaccine (dict/str): which vaccine to use
+        vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         kwargs     (dict): passed to Intervention()
 
-    **Examples**::
+    If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
-        pfizer = cv.vaccinate(vaccine='pfizer', days=50, prob=0.3)
-        custom = cv.vaccinate(vaccine=)
+        - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
+        - ``nab_init``:  the initial antibody level (higher = more protection)
+        - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
+        - ``doses``:     the number of doses required to be fully vaccinated
+        - ``interval``:  the interval between doses
+        - entries for efficacy against each of the strains (e.g. ``b117``)
+
+    See ``parameters.py`` for additional examples of these parameters.
+
+    **Example**::
+
+        pfizer = cv.vaccinate(vaccine='pfizer', days=30, prob=0.7)
+        cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
     def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
@@ -1289,6 +1302,11 @@ class vaccinate(Intervention):
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         super().initialize()
+
+        # Check that the simulation parameters are correct
+        if not sim['use_waning']:
+            errormsg = 'The cv.vaccinate() intervention requires use_waning=True. Please enable waning, or else use cv.simple_vaccine().'
+            raise RuntimeError(errormsg)
 
         # Populate any missing keys -- must be here, after strains are initialized
         default_strain_pars = cvpar.get_vaccine_strain_pars(default=True)
