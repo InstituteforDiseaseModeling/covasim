@@ -375,20 +375,25 @@ class Sim(cvb.BaseSim):
                 self.popdict = obj
                 n_actual     = len(self.popdict['uid'])
                 layer_keys   = self.popdict['layer_keys']
+
             elif isinstance(obj, cvb.BasePeople):
+                n_actual = len(obj)
                 self.people = obj
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
-                n_actual    = self['pop_size']
                 layer_keys  = self.people.layer_keys()
+
+                # Perform validation
+                n_expected = self['pop_size']
+                if n_actual != n_expected: # External consistency check
+                    errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
+                    raise ValueError(errormsg)
+                self.people.validate() # Internal consistency check
+
             else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
-            # Perform validation
-            n_expected = self['pop_size']
-            if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
-                raise ValueError(errormsg)
+
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
             self.popfile = None # Once loaded, remove to save memory
 

@@ -90,8 +90,8 @@ def test_basepeople():
     ppl.date_keys()
     ppl.dur_keys()
     ppl.indices()
-    ppl._resize_arrays(pop_size=200) # This only resizes the arrays, not actually create new people
-    ppl._resize_arrays(pop_size=100) # Change back
+    ppl._resize_arrays(new_size=200) # This only resizes the arrays, not actually create new people
+    ppl._resize_arrays(new_size=100) # Change back
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
