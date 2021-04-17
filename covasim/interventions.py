@@ -997,7 +997,7 @@ class contact_tracing(Intervention):
         if self.trace_time is None:
             self.trace_time = 0.0
         if self.quar_period is None:
-            self.quar_period = sim.pars['quar_period']
+            self.quar_period = sim['quar_period']
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
             self.trace_probs = {k:val for k in sim.people.layer_keys()}
@@ -1332,8 +1332,8 @@ class vaccinate(Intervention):
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
-        self.vaccinations      = np.zeros(sim.pars['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = np.full(sim.pars['pop_size'], np.nan) # Store the dates when people are vaccinated
+        self.vaccinations      = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
@@ -1346,7 +1346,7 @@ class vaccinate(Intervention):
 
         if sim.t >= np.min(self.days):
             # Determine who gets first dose of vaccine today
-            vacc_probs = np.zeros(sim.pars['pop_size'])
+            vacc_probs = np.zeros(sim['pop_size'])
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 if len(subtarget_vals):

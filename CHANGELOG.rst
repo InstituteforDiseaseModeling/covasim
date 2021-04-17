@@ -24,6 +24,18 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Version 3.0.1 (2021-04-16)
+--------------------------
+- Immunity and vaccine parameters have been updated.
+- The ``People`` class has been updated to remove parameters that were copied into attributes; thus there is no longer both ``people.pars['pop_size']`` and ``people.pop_size``; only the former. Recommended practice is to use ``len(people)`` to get the number of people.
+- Loaded population files can now be used with more than one strain; arrays will be resized automatically. If there is a mismatch in the number of people, this will *not* be automatically resized.
+- A bug was fixed with the ``rescale`` argument to ``cv.strain()`` not having any effect.
+- Dead people are no longer eligible to be vaccinated.
+- *Regression information*: Any user scripts that call ``sim.people.pop_size`` should be updated to call ``len(sim.people)`` (preferred), or ``sim.n``, ``sim['pop_size']``, or ``sim.people.pars['pop_size']``.
+- *GitHub info*: PR `999 <https://github.com/amath-idm/covasim/pull/999>`__
+
+
 Version 3.0.0 (2021-04-13)
 --------------------------
 This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
