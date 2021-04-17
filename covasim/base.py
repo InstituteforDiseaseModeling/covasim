@@ -892,6 +892,12 @@ class BasePeople(FlexPretty):
         return newpeople
 
 
+    def __radd__(self, people2):
+        ''' Allows sum() to work correctly '''
+        if not people2: return self
+        else:           return self.__add__(people2)
+
+
     def _brief(self):
         '''
         Return a one-line description of the people -- used internally and by repr();
@@ -1031,15 +1037,14 @@ class BasePeople(FlexPretty):
         expected_len = len(self)
         expected_strains = self.pars['n_strains']
         for key in self.keys():
-            actual_len = len(self[key])
-            # check if it's 2d
-            if self[key].ndim > 1:
-                actual_len = np.shape(self[key])[1]
-                actual_strains = np.shape(self[key])[0]
+            if self[key].ndim == 1:
+                actual_len = len(self[key])
+            else: # If it's 2D, strains need to be checked separately
+                actual_strains, actual_len = self[key].shape
                 if actual_strains != expected_strains:
                     if verbose:
                         print(f'Resizing "{key}" from {actual_strains} to {expected_strains}')
-                    self._resize_arrays(keys=key, pop_size=(expected_strains, expected_len))
+                    self._resize_arrays(keys=key, new_size=(expected_strains, expected_len))
             if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
@@ -1056,17 +1061,22 @@ class BasePeople(FlexPretty):
         return
 
 
-    def _resize_arrays(self, pop_size=None, keys=None):
+    def _resize_arrays(self, new_size=None, keys=None):
         ''' Resize arrays if any mismatches are found '''
-        if pop_size is None:
-            pop_size = len(self)
-        if not isinstance(pop_size, tuple):
-            self.pars['pop_size'] = pop_size
+
+        # Handle None or tuple input (representing strains and pop_size)
+        if new_size is None:
+            new_size = len(self)
+        pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
+        self.pars['pop_size'] = pop_size
+
+        # Reset sizes
         if keys is None:
             keys = self.keys()
         keys = sc.promotetolist(keys)
         for key in keys:
-            self[key].resize(pop_size, refcheck=False)
+            self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
+
         return
 
 
@@ -1120,7 +1130,7 @@ class BasePeople(FlexPretty):
         # Handle population size
         pop_size = len(people)
         if resize:
-            self._resize_arrays(pop_size=pop_size)
+            self._resize_arrays(new_size=pop_size)
 
         # Iterate over people -- slow!
         for p,person in enumerate(people):
