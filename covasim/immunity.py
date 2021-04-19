@@ -252,17 +252,13 @@ def init_immunity(sim, create=False):
 
     # Pull out all of the circulating strains for cross-immunity
     ns       = sim['n_strains']
-    immunity = {}
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
 
         # Firstly, initialize immunity matrix with defaults. These are then overwitten with strain-specific values below
-        for ax in cvd.immunity_axes:
-            if ax == 'sus':  # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
-                immunity[ax] = np.ones((ns, ns), dtype=cvd.default_float)  # Fill with defaults
-            else:  # Progression and transmission are matrices of scalars of size sim['n_strains']
-                immunity[ax] = np.ones(ns, dtype=cvd.default_float)  # Fill with defaults
+        # Susceptibility matrix is of size sim['n_strains']*sim['n_strains']
+        immunity = np.ones((ns, ns), dtype=cvd.default_float)  # Fill with defaults
 
         # Next, overwrite these defaults with any known immunity values about specific strains
         default_cross_immunity = cvpar.get_cross_immunity()
@@ -272,9 +268,9 @@ def init_immunity(sim, create=False):
                 if i != j: # Populate cross-immunity
                     label_j = sim['strain_map'][j]
                     if label_i in default_cross_immunity and label_j in default_cross_immunity:
-                        immunity['sus'][j][i] = default_cross_immunity[label_j][label_i]
+                        immunity[j][i] = default_cross_immunity[label_j][label_i]
                 else: # Populate own-immunity
-                    immunity['sus'][i, i] = sim['strain_pars'][label_i]['rel_imm_strain']
+                    immunity[i, i] = sim['strain_pars'][label_i]['rel_imm_strain']
 
         sim['immunity'] = immunity
 
@@ -330,7 +326,7 @@ def check_immunity(people, strain, sus=True, inds=None):
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this strain
             current_nabs = people.nab[is_sus_was_inf_same]
-            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_nabs * immunity['sus'][strain, strain], 'sus', nab_eff)
+            people.sus_imm[strain, is_sus_was_inf_same] = nab_to_efficacy(current_nabs * immunity[strain, strain], 'sus', nab_eff)
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different strain
             prior_strains = people.recovered_strain[is_sus_was_inf_diff]
@@ -338,7 +334,7 @@ def check_immunity(people, strain, sus=True, inds=None):
             for unique_strain in prior_strains_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_strains == unique_strain)]
                 current_nabs = people.nab[unique_inds]
-                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_nabs * immunity['sus'][strain, unique_strain], 'sus', nab_eff)
+                people.sus_imm[strain, unique_inds] = nab_to_efficacy(current_nabs * immunity[strain, unique_strain], 'sus', nab_eff)
 
     # PART 2: Immunity to disease for currently-infected people
     else:
@@ -349,13 +345,13 @@ def check_immunity(people, strain, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])  # TODO: use vaccine source
             vaccine_scale = vacc_mapping[strain]
             current_nabs = people.nab[is_inf_vacc]
-            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale * immunity['symp'][strain], 'symp', nab_eff)
-            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale * immunity['sev'][strain], 'sev', nab_eff)
+            people.symp_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'symp', nab_eff)
+            people.sev_imm[strain, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'sev', nab_eff)
 
         if len(was_inf):  # Immunity for reinfected people
             current_nabs = people.nab[was_inf]
-            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_nabs * immunity['symp'][strain], 'symp', nab_eff)
-            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_nabs * immunity['sev'][strain], 'sev', nab_eff)
+            people.symp_imm[strain, was_inf] = nab_to_efficacy(current_nabs, 'symp', nab_eff)
+            people.sev_imm[strain, was_inf] = nab_to_efficacy(current_nabs, 'sev', nab_eff)
 
     return
 
