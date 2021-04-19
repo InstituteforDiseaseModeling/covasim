@@ -321,12 +321,14 @@ class MultiSim(cvb.FlexPretty):
 
         n_runs = len(self)
         combined_sim = sc.dcp(self.sims[0])
-        combined_sim.parallelized = {'parallelized':True, 'combined':True, 'n_runs':n_runs}  # Store how this was parallelized
-        combined_sim['pop_size'] *= n_runs  # Record the number of people
+        combined_sim.parallelized = dict(parallelized=True, combined=True, n_runs=n_runs)  # Store how this was parallelized
 
         for s,sim in enumerate(self.sims[1:]): # Skip the first one
-            if combined_sim.people:
+            if combined_sim.people: # If the people are there, add them and increment the population size accordingly
                 combined_sim.people += sim.people
+                combined_sim['pop_size'] = combined_sim.people.pars['pop_size']
+            else: # If not, manually update population size
+                combined_sim['pop_size'] += sim['pop_size']  # Record the number of people
             for key in sim.result_keys():
                 vals = sim.results[key].values
                 if len(vals) != combined_sim.npts:
