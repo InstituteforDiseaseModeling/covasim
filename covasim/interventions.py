@@ -1258,7 +1258,7 @@ class vaccinate(Intervention):
     def parse(self, vaccine=None, label=None):
         ''' Unpack vaccine information, which may be given as a string or dict '''
 
-        # Option 1: vaccines can be chosen from a list of pre-defined strains
+        # Option 1: vaccines can be chosen from a list of pre-defined vaccines
         if isinstance(vaccine, str):
 
             choices, mapping = cvpar.get_vaccine_choices()
@@ -1330,10 +1330,13 @@ class vaccinate(Intervention):
                 self.p[key] = val
 
         self.days = process_days(sim, self.days) # days that group becomes eligible
+        self.first_dose_nab_days = [None]*(sim['n_days']+1)  # inds who get nabs from first dose
+        self.second_dose_nab_days = [None]*(sim['n_days']+1)  # inds who get nabs from second dose (if relevant)
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
         self.vaccinations      = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
+        self.vaccine_nab_dates = np.full(sim['pop_size'], np.nan)  # Store the dates when people get their new vaccine nabs
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
@@ -1366,9 +1369,13 @@ class vaccinate(Intervention):
                     next_dose_day = sim.t + self.p.interval
                     if next_dose_day < sim['n_days']:
                         self.second_dose_days[next_dose_day] = vacc_inds
+                        self.first_dose_nab_days[next_dose_day] = vacc_inds
+                else:
+                    self.first_dose_nab_days[sim.t] = vacc_inds
 
             vacc_inds_dose2 = self.second_dose_days[sim.t]
             if vacc_inds_dose2 is not None:
+                self.second_dose_nab_days[sim.t + 14] = vacc_inds_dose2
                 vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
                 sim.people.flows['new_vaccinations'] += len(vacc_inds_dose2)
             if len(vacc_inds):
@@ -1378,10 +1385,21 @@ class vaccinate(Intervention):
                 self.vaccinations[vacc_inds] += 1
                 self.vaccination_dates[vacc_inds] = sim.t
 
+                self.vaccine_nab_dates[vacc_inds] = (sim.t + self.p.interval) if self.p.interval else sim.t
+
                 # Update vaccine attributes in sim
                 sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-                sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
-                cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
+
+            # check whose nabs kick in today and then init_nabs for them!
+            vaccine_nabs_first_dose_inds = self.first_dose_nab_days[sim.t]
+            vaccine_nabs_second_dose_inds = self.second_dose_nab_days[sim.t]
+
+            vaccine_nabs_inds = [vaccine_nabs_first_dose_inds, vaccine_nabs_second_dose_inds]
+
+            for vaccinees in vaccine_nabs_inds:
+                if vaccinees is not None:
+                    sim.people.date_vaccinated[vaccinees] = sim.t
+                    cvi.init_nab(sim.people, vaccinees, prior_inf=False)
 
         return
 
