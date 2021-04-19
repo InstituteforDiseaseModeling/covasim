@@ -930,7 +930,7 @@ class test_prob(Intervention):
         diag_inds       = cvu.true(sim.people.diagnosed)
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-        test_probs = np.zeros(sim.n) # Begin by assigning equal testing probability to everyone
+        test_probs = np.zeros(sim['pop_size']) # Begin by assigning equal testing probability to everyone
         test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
         test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
@@ -997,7 +997,7 @@ class contact_tracing(Intervention):
         if self.trace_time is None:
             self.trace_time = 0.0
         if self.quar_period is None:
-            self.quar_period = sim.pars['quar_period']
+            self.quar_period = sim['quar_period']
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
             self.trace_probs = {k:val for k in sim.people.layer_keys()}
@@ -1209,26 +1209,39 @@ class simple_vaccine(Intervention):
 
 class vaccinate(Intervention):
     '''
-    Apply a vaccine to a subset of the population. In addition to changing the
-    relative susceptibility and the probability of developing symptoms if still
-    infected, this intervention stores several types of data:
+    Apply a vaccine to a subset of the population.
 
+    The main purpose of the intervention is to change the relative susceptibility
+    and the probability of developing symptoms if still infected. However, this intervention
+    also stores several types of data:
+
+        - ``vaccinated``:        whether or not a person is vaccinated
         - ``vaccinations``:      the number of vaccine doses per person
-        - ``vaccination_dates``: list of dates per person
-        - ``pars``:             vaccine pars that are given to Vaccine() class
+        - ``vaccination_dates``: list of vaccination dates per person
 
     Args:
-        vaccine (dict/str): which vaccine to use
+        vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         kwargs     (dict): passed to Intervention()
 
-    **Examples**::
+    If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
-        pfizer = cv.vaccinate(vaccine='pfizer', days=50, prob=0.3)
-        custom = cv.vaccinate(vaccine=)
+        - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
+        - ``nab_init``:  the initial antibody level (higher = more protection)
+        - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
+        - ``doses``:     the number of doses required to be fully vaccinated
+        - ``interval``:  the interval between doses
+        - entries for efficacy against each of the strains (e.g. ``b117``)
+
+    See ``parameters.py`` for additional examples of these parameters.
+
+    **Example**::
+
+        pfizer = cv.vaccinate(vaccine='pfizer', days=30, prob=0.7)
+        cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
     def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
@@ -1290,6 +1303,11 @@ class vaccinate(Intervention):
         ''' Fix the dates and store the vaccinations '''
         super().initialize()
 
+        # Check that the simulation parameters are correct
+        if not sim['use_waning']:
+            errormsg = 'The cv.vaccinate() intervention requires use_waning=True. Please enable waning, or else use cv.simple_vaccine().'
+            raise RuntimeError(errormsg)
+
         # Populate any missing keys -- must be here, after strains are initialized
         default_strain_pars = cvpar.get_vaccine_strain_pars(default=True)
         default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
@@ -1314,8 +1332,8 @@ class vaccinate(Intervention):
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
         self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
-        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = np.full(sim.n, np.nan) # Store the dates when people are vaccinated
+        self.vaccinations      = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
@@ -1328,14 +1346,16 @@ class vaccinate(Intervention):
 
         if sim.t >= np.min(self.days):
             # Determine who gets first dose of vaccine today
-            vacc_probs = np.zeros(sim.n)
+            vacc_probs = np.zeros(sim['pop_size'])
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+                if len(subtarget_vals):
+                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
             else:
                 for ind in find_day(self.days, sim.t, interv=self, sim=sim):
                     unvacc_inds = sc.findinds(~sim.people.vaccinated)
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
+            vacc_probs[cvu.true(sim.people.dead)] *= 0.0 # do not vaccinate dead people
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
             if len(vacc_inds):
@@ -1351,17 +1371,17 @@ class vaccinate(Intervention):
             if vacc_inds_dose2 is not None:
                 vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
                 sim.people.flows['new_vaccinations'] += len(vacc_inds_dose2)
+            if len(vacc_inds):
+                # Update vaccine attributes in sim
+                sim.people.vaccinated[vacc_inds] = True
+                sim.people.vaccine_source[vacc_inds] = self.index
+                self.vaccinations[vacc_inds] += 1
+                self.vaccination_dates[vacc_inds] = sim.t
 
-            # Update vaccine attributes in sim
-            sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccine_source[vacc_inds] = self.index
-            self.vaccinations[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = sim.t
-
-            # Update vaccine attributes in sim
-            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-            sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
-            cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
+                # Update vaccine attributes in sim
+                sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
+                sim.people.date_vaccinated[vacc_inds] = self.vaccination_dates[vacc_inds]
+                cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
 
         return
 

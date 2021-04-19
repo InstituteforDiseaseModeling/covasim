@@ -375,20 +375,25 @@ class Sim(cvb.BaseSim):
                 self.popdict = obj
                 n_actual     = len(self.popdict['uid'])
                 layer_keys   = self.popdict['layer_keys']
+
             elif isinstance(obj, cvb.BasePeople):
+                n_actual = len(obj)
                 self.people = obj
                 self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
-                n_actual    = len(self.people)
                 layer_keys  = self.people.layer_keys()
+
+                # Perform validation
+                n_expected = self['pop_size']
+                if n_actual != n_expected: # External consistency check
+                    errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
+                    raise ValueError(errormsg)
+                self.people.validate() # Internal consistency check
+
             else: # pragma: no cover
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
-            # Perform validation
-            n_expected = self['pop_size']
-            if n_actual != n_expected:
-                errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
-                raise ValueError(errormsg)
+
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
             self.popfile = None # Once loaded, remove to save memory
 
@@ -526,7 +531,7 @@ class Sim(cvb.BaseSim):
             if current_scale < pop_scale: # We have room to rescale
                 not_naive_inds = self.people.false('naive') # Find everyone not naive
                 n_not_naive = len(not_naive_inds) # Number of people who are not naive
-                n_people = len(self.people) # Number of people overall
+                n_people = self['pop_size'] # Number of people overall
                 current_ratio = n_not_naive/n_people # Current proportion not naive
                 threshold = self['rescale_threshold'] # Threshold to trigger rescaling
                 if current_ratio > threshold: # Check if we've reached point when we want to rescale
@@ -565,7 +570,7 @@ class Sim(cvb.BaseSim):
         if self['n_imports']:
             n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
             if n_imports>0:
-                importation_inds = cvu.choose(max_n=len(people), n=n_imports)
+                importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Add strains
@@ -598,7 +603,7 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten useful parameters
-        ns = self['n_strains']  # Shorten number of strains
+        ns = self['n_strains'] # Shorten number of strains
         sus = people.susceptible
         symp = people.symptomatic
         diag = people.diagnosed
@@ -659,7 +664,8 @@ class Sim(cvb.BaseSim):
                 self.results['strain'][key][strain][t] += count[strain]
 
         # Update nab and immunity for this time step
-        self.results['pop_nabs'][t]            = np.sum(people.nab[cvu.defined(people.nab)])/len(people)
+        inds_alive = cvu.false(people.dead)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.defined(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 

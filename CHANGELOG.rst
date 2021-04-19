@@ -24,6 +24,18 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Version 3.0.1 (2021-04-16)
+--------------------------
+- Immunity and vaccine parameters have been updated.
+- The ``People`` class has been updated to remove parameters that were copied into attributes; thus there is no longer both ``people.pars['pop_size']`` and ``people.pop_size``; only the former. Recommended practice is to use ``len(people)`` to get the number of people.
+- Loaded population files can now be used with more than one strain; arrays will be resized automatically. If there is a mismatch in the number of people, this will *not* be automatically resized.
+- A bug was fixed with the ``rescale`` argument to ``cv.strain()`` not having any effect.
+- Dead people are no longer eligible to be vaccinated.
+- *Regression information*: Any user scripts that call ``sim.people.pop_size`` should be updated to call ``len(sim.people)`` (preferred), or ``sim.n``, ``sim['pop_size']``, or ``sim.people.pars['pop_size']``.
+- *GitHub info*: PR `999 <https://github.com/amath-idm/covasim/pull/999>`__
+
+
 Version 3.0.0 (2021-04-13)
 --------------------------
 This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
@@ -34,6 +46,22 @@ Highlights
 - **Multi-strain modeling**: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g. ``b117 = cv.strain('b117', days=1, n_imports=20)`` followed by ``sim = cv.Sim(strains=b117)`` to import strain B117. Further examples are contained in ``tests/test_immunity.py`` and in Tutorial 8.
 - **New methods for vaccine modeling**: A new ``cv.vaccinate()`` intervention has been added, which allows more flexible modeling of vaccinations. Vaccines, like natural infections, are assumed to boost agents' immunity.
 - **Consistency**: By default, results from Covasim 3.0.0 should exactly match Covasim 2.1.2. To use the new features, you will need to manually specify ``cv.Sim(use_waning=True)``.
+- **Still TLDR?** Here's a quick showcase of the new features:
+
+.. code-block:: python
+
+    import covasim as cv
+
+    pars = dict(
+        use_waning    = True,  # Use the new immunity features
+        n_days        = 180,   # Set the days, as before
+        n_agents      = 50e3,  # New alias for pop_size
+        scaled_pop    = 200e3, # New alternative to specifying pop_scale
+        strains       = cv.strain('b117', days=20, n_imports=20), # Introduce B117
+        interventions = cv.vaccinate('astrazeneca', days=80), # Create a vaccine
+    )
+
+    cv.Sim(pars).run().plot('strain') # Create, run, and plot strain results
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

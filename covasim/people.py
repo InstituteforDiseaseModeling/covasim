@@ -46,11 +46,11 @@ class People(cvb.BasePeople):
         # Handle pars and population size
         if sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars          = pars # Equivalent to self.set_pars(pars)
-        self.pop_size      = int(pars['pop_size'])
-        self.location      = pars.get('location') # Try to get location, but set to None otherwise
-        self.n_strains = pars.get('n_strains', 1) # Assume 1 strain if not supplied
-        self.version       = cvv.__version__ # Store version info
+        self.pars = pars # Equivalent to self.set_pars(pars)
+        self.pars['pop_size'] = int(pars['pop_size'])
+        self.pars.setdefault('n_strains', 1)
+        self.pars.setdefault('location', None)
+        self.version = cvv.__version__ # Store version info
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -63,32 +63,32 @@ class People(cvb.BasePeople):
         # Set person properties -- all floats except for UID
         for key in self.meta.person:
             if key == 'uid':
-                self[key] = np.arange(self.pop_size, dtype=cvd.default_int)
+                self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
             else:
-                self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+                self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
         # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
         for key in self.meta.states:
             val = (key in ['susceptible', 'naive']) # Default value is True for susceptible and naive, false otherwise
-            self[key] = np.full(self.pop_size, val, dtype=bool)
+            self[key] = np.full(self.pars['pop_size'], val, dtype=bool)
 
         # Set strain states, which store info about which strain a person is exposed to
         for key in self.meta.strain_states:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
         for key in self.meta.by_strain_states:
-            self[key] = np.full((self.n_strains, self.pop_size), False, dtype=bool)
+            self[key] = np.full((self.pars['n_strains'], self.pars['pop_size']), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self.n_strains, self.pop_size), dtype=cvd.default_float)
+            self[key] = np.zeros((self.pars['n_strains'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
-            self[key] = np.zeros(self.pop_size, dtype=cvd.default_int)
+            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
         # Set dates and durations -- both floats
         for key in self.meta.dates + self.meta.durs:
-            self[key] = np.full(self.pop_size, np.nan, dtype=cvd.default_float)
+            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
@@ -121,7 +121,7 @@ class People(cvb.BasePeople):
         self.flows = {key:0 for key in cvd.new_result_flows}
         self.flows_strain = {}
         for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.zeros(self.n_strains, dtype=cvd.default_float)
+            self.flows_strain[key] = np.zeros(self.pars['n_strains'], dtype=cvd.default_float)
         return
 
 
@@ -288,9 +288,9 @@ class People(cvb.BasePeople):
 
             # Reset additional states
             self.susceptible[inds] = True
-            self.prior_symptoms[inds]        = self.pars['rel_imm']['asymp']
-            self.prior_symptoms[mild_inds]   = self.pars['rel_imm']['mild']
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm']['severe']
+            self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
+            self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
         return len(inds)
