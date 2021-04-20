@@ -337,6 +337,7 @@ def get_vaccine_choices():
         'default': ['default', None],
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
         'moderna': ['moderna'],
+        'novavax': ['nvx', 'novavax', 'nova'],
         'az':      ['az', 'astrazeneca'],
         'jj':      ['jj', 'jnj', 'johnson & johnson', 'janssen'],
     }
@@ -461,6 +462,13 @@ def get_vaccine_strain_pars(default=False):
             p1    = 1/8.6,
         ),
 
+        novavax = dict( # https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
+            wild  = 1.0,
+            b117  = 1/1.12,
+            b1351 = 1/4.7,
+            p1    = 1/8.6, # assumption, no data available yet
+        ),
+
         az = dict(
             wild  = 1.0,
             b117  = 1/2.3,
@@ -510,6 +518,14 @@ def get_vaccine_dose_pars(default=False):
             nab_boost = 3,
             doses     = 2,
             interval  = 28,
+        ),
+
+        novavax = dict(
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=-0.9, par2=2),
+            nab_boost = 3,
+            doses     = 2,
+            interval  = 21,
         ),
 
         az = dict(
