@@ -315,6 +315,7 @@ class Sim(cvb.BaseSim):
         self.results['pop_nabs']            = init_res('Population nab levels', scale=False, color=dcols.pop_nabs)
         self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
+        self.results['frac_reinfected']     = init_res('Proportion reinfected', scale=False)
 
         # Handle strains
         ns = self['n_strains']
@@ -847,6 +848,7 @@ class Sim(cvb.BaseSim):
         self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
         self.results['frac_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
+        self.results['frac_reinfected'][:] = res['new_reinfections'][:]/res['new_infections'][:]
         return
 
 

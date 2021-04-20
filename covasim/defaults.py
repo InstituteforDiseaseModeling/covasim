@@ -63,6 +63,7 @@ class PeopleMeta(sc.prettyobj):
             'critical',
             'tested',
             'diagnosed',
+            'prior_diagnosed', # a previous infection was diagnosed
             'recovered',
             'dead',
             'known_contact',
@@ -167,6 +168,7 @@ result_flows = {
     'deaths':       'deaths',
     'tests':        'tests',
     'diagnoses':    'diagnoses',
+    'rediagnoses':  'rediagnoses',
     'quarantined':  'quarantined people',
     'vaccinations': 'vaccinations',
     'vaccinated':   'vaccinated people'
@@ -264,6 +266,7 @@ def get_default_colors():
     c.pop_nabs              = '#32733d'
     c.pop_protection        = '#9e1149'
     c.pop_symp_protection   = '#b86113'
+    c.rediagnoses           = '#b86113'
     return c
 
 
