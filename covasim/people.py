@@ -3,6 +3,7 @@ Defines the Person class and functions associated with making people.
 '''
 
 #%% Imports
+from typing import Type
 import numpy as np
 import sciris as sc
 from collections import defaultdict
@@ -11,7 +12,7 @@ from . import utils as cvu
 from . import defaults as cvd
 from . import base as cvb
 from . import plotting as cvplt
-from .test_sensitivity_curves import GetTestSensitivityCurve
+from .test_sensitivity_profile import TestSensitivityProfile, BinomialTestSensitivityProfile
 
 
 __all__ = ['People']
@@ -38,9 +39,11 @@ class People(cvb.BasePeople):
     '''
 
     def __init__(self, pars, strict=True, **kwargs):
-        object = GetTestSensitivityCurve ('data/pcr_pars.csv', 'data/lfa_pars.csv')
-        self.lfa = object.lfa_prob_positive
-        self.pcr=object.pcr_prob_positive
+
+
+        #object = GetTestSensitivityCurve ('./data/pcr_pars.csv', './data/lfa_pars.csv')
+        #self.lfa = object.lfa_prob_positive
+        #self.pcr=object.pcr_prob_positive
         
 
         # Handle pars and population size
@@ -50,6 +53,9 @@ class People(cvb.BasePeople):
         self.pop_size = int(pars['pop_size'])
         self.location = pars.get('location') # Try to get location, but set to None otherwise
         self.version  = cvv.__version__ # Store version info
+
+        # try to get available test sensitivity profiles, set to None otherwise
+        self.test_sensitivity_profiles = pars.get('test_sensitivity_profiles')
 
         # Other initialization
         self.t = 0 # Keep current simulation time
@@ -109,6 +115,18 @@ class People(cvb.BasePeople):
         self.set_prognoses()
         self.validate()
         self.initialized = True
+
+        # initialize the test sensitivity profiles
+        for profile in self.test_sensitivity_profiles.values():
+
+            if not issubclass(type(profile), TestSensitivityProfile):
+                print(profile)
+                print(TestSensitivityProfile)
+                raise TypeError("Profile is not a test sensitivity profile")
+
+            # initialise the profile
+            profile.initialize(self)
+
         return
 
 
@@ -439,45 +457,29 @@ class People(cvb.BasePeople):
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
 
         return n_infections # For incrementing counters
-    
-    def newTest(self, inds, loss_prob=0.0, test_delay=0,test_type='pcr'): 
-        '''
-        Method to test people. Typically not to be called by the user directly;
-        see the test_num() and test_prob() interventions.
+
+        
+    def test_custom_profile(self, inds, test_sensitivity_profile_key: str):
+        """
+        Works similarly to the standard testing function, with the exception that it 
+        calls a test_sensitivity_profile. This allows different types of tests to be used
+        in the same simulation. 
+
+        Test sensitivity profiles need to be passed as part of pars, in a dictionary format.
+
+        To use a specific profile, set the test_sensitivity_profile_key to the value in the
+        dictionary.
 
         Args:
-            inds: indices of who to test
-            test_type (str): options are 'pcr' (default) and 'lfa';different tests have different sensitivity curves
-            loss_prob (float): probability of loss to follow-up
-            test_delay (int): number of days before test results are ready
-        '''
-        inds = np.unique(inds)
-        self.tested[inds] = True
-        self.date_tested[inds] = self.t # Only keep the last time they tested
-        is_infectious = cvu.itruei(self.infectious, inds)
-        self.infec_time       = cvd.default_int(self.t - self.date_infectious[is_infectious])
+            test_sensitivity_profile (str): the key of the desired test sensitivity profile
+        """
 
-        result = []
-        if test_type is 'pcr':
-            for i in np.unique(self.infec_time):
-                result.append(cvu.n_binomial(self.pcr(i),sum(self.infec_time == i)))
-        else:
-            for i in np.unique(self.infec_time):
-                result.append(cvu.n_binomial(self.lfa(i),sum(self.infec_time == i)))
-        
-        pos_test = np.concatenate(result)
-        is_inf_pos    = is_infectious[pos_test]
-        
-        not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
-        final_inds    = not_diagnosed[not_lost]
-        
-        self.date_diagnosed[final_inds] = self.t + test_delay
-        self.date_pos_test[final_inds] = self.t
-        
+        profile = self.test_sensitivity_profiles[test_sensitivity_profile_key]
+
+        profile.test(self, inds)
+
         return
-        
-    
+
     def TestTimeVaryingSensitivity(self, inds, loss_prob=0.0, test_delay=0,test_type='pcr'): 
         '''
         Method to test people. Typically not to be called by the user directly;

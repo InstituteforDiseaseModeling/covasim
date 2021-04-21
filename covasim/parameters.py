@@ -47,6 +47,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
     pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
 
+    # test sensitivity profile parameters
+    pars['test_sensitivity_profiles'] = {}  # pass empty dictionary of test sensitivity profiles that the simulation can use
+
     # Basic disease transmission
     pars['beta']        = 0.016 # Beta per symptomatic contact; absolute value, calibrated
     pars['contacts']    = None  # The number of contacts per layer; set by reset_layer_pars() below
