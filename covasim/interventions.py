@@ -1322,14 +1322,14 @@ class vaccinate(Intervention):
                     if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and strain {key}, setting to 1.0')
                 self.p[key] = val
 
+
         self.days = process_days(sim, self.days) # days that group becomes eligible
-        self.first_dose_nab_days = [None]*(sim['n_days']+1)  # inds who get nabs from first dose
-        self.second_dose_nab_days = [None]*(sim['n_days']+1)  # inds who get nabs from second dose (if relevant)
-        self.second_dose_days = [None]*(sim['n_days']+1)  # inds who get second dose (if relevant)
-        self.vaccinated       = [None]*(sim['n_days']+1) # keep track of inds of people vaccinated on each day
-        self.vaccinations      = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
-        self.vaccine_nab_dates = np.full(sim['pop_size'], np.nan)  # Store the dates when people get their new vaccine nabs
+        self.first_dose_nab_days  = [None]*sim.npts # People who get nabs from first dose
+        self.second_dose_nab_days = [None]*sim.npts # People who get nabs from second dose (if relevant)
+        self.second_dose_days     = [None]*sim.npts # People who get second dose (if relevant)
+        self.vaccinated           = [None]*sim.npts # Keep track of inds of people vaccinated on each day
+        self.vaccinations         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates    = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
@@ -1385,8 +1385,6 @@ class vaccinate(Intervention):
                 sim.people.vaccine_source[vacc_inds] = self.index
                 self.vaccinations[vacc_inds] += 1
                 self.vaccination_dates[vacc_inds] = sim.t
-
-                self.vaccine_nab_dates[vacc_inds] = (sim.t + self.p.interval) if self.p.interval else sim.t
 
                 # Update vaccine attributes in sim
                 sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
