@@ -484,11 +484,8 @@ class sequence(Intervention):
     def initialize(self, sim):
         ''' Fix the dates '''
         super().initialize()
-        self.days = process_days(sim, self.days)
-        if isinstance(self.days, list): # Normal use case
-            self.days_arr = np.array(self.days + [sim.npts])
-        else: # If a function is supplied
-            self.days_arr = self.days
+        self.days = [sim.day(day) for day in self.days]
+        self.days_arr = np.array(self.days + [sim.npts])
         for intervention in self.interventions:
             intervention.initialize(sim)
         return
@@ -496,11 +493,7 @@ class sequence(Intervention):
 
     def apply(self, sim):
         ''' Find the matching day, and see which intervention to activate '''
-        if isinstance(self.days_arr, list): # Normal use case
-            days_arr = np.array([get_day(d, interv=self, sim=sim) for d in self.days_arr]) <= sim.t
-        else:
-            days_arr = self.days
-        inds = find_day(days_arr, interv=self, sim=sim, which='last')
+        inds = find_day(self.days_arr <= sim.t, which='last')
         if len(inds):
             return self.interventions[inds[0]].apply(sim)
 
