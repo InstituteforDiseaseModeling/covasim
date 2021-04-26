@@ -510,7 +510,7 @@ class BaseSim(ParsObj):
 
     def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
         '''
-        Export results as JSON.
+        Export results and parameters as JSON.
 
         Args:
             filename (str): if None, return string; else, write to file
@@ -563,6 +563,23 @@ class BaseSim(ParsObj):
         return output
 
 
+    def to_df(self, date_index=False):
+        '''
+        Export results to a pandas dataframe
+
+        Args:
+            date_index  (bool): if True, use the date as the index
+        '''
+        resdict = self.export_results(for_json=False)
+        df = pd.DataFrame.from_dict(resdict)
+        df['date'] = self.datevec
+        new_columns = ['t','date'] + df.columns[1:-1].tolist() # Get column order
+        df = df.reindex(columns=new_columns) # Reorder so 't' and 'date' are first
+        if date_index:
+            df = df.set_index('date')
+        return df
+
+
     def to_excel(self, filename=None, skip_pars=None):
         '''
         Export parameters and results as Excel format
@@ -573,20 +590,19 @@ class BaseSim(ParsObj):
 
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
-
         '''
         if skip_pars is None:
             skip_pars = ['strain_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
 
-        resdict = self.export_results(for_json=False)
-        result_df = pd.DataFrame.from_dict(resdict)
-        result_df.index = self.datevec
-        result_df.index.name = 'date'
+        # Export results
+        result_df = self.to_df(date_index=True)
 
+        # Export parameters
         pars = {k:v for k,v in self.pars.items() if k not in skip_pars}
         par_df = pd.DataFrame.from_dict(sc.flattendict(pars, sep='_'), orient='index', columns=['Value'])
         par_df.index.name = 'Parameter'
 
+        # Convert to spreadsheet
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
