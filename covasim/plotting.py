@@ -244,12 +244,13 @@ def date_formatter(start_day=None, dateformat=None, interval=None, start=None, e
     **Examples**::
 
         # Automatically configure the axis with default option
-        cv.date_formatter(sim=sim, ax=ax) s
+        cv.date_formatter(sim=sim, ax=ax)
 
         # Manually configure
         ax = pl.subplot(111)
         ax.plot(np.arange(60), np.random.random(60))
         formatter = cv.date_formatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%Y-%m-%d', ax=ax)
+        ax.xaxis.set_major_formatter(formatter)
     '''
 
     # Set the default -- "Mar-01"
