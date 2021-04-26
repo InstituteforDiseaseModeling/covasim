@@ -167,7 +167,6 @@ result_flows = {
     'deaths':       'deaths',
     'tests':        'tests',
     'diagnoses':    'diagnoses',
-    'rediagnoses':  'rediagnoses',
     'quarantined':  'quarantined people',
     'vaccinations': 'vaccinations',
     'vaccinated':   'vaccinated people'
@@ -265,7 +264,6 @@ def get_default_colors():
     c.tests                 = '#aaa8ff'
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
-    c.rediagnoses           = c.diagnoses
     c.quarantined           = '#5c399c'
     c.vaccinations          = c.quarantined # TODO: new color
     c.vaccinated            = c.quarantined

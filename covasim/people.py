@@ -283,18 +283,15 @@ class People(cvb.BasePeople):
             mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
             severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
 
-            # determine who was diagnosed and set their prior diagnosis to true and current diagnosis to false
-            inds_diagnosed = cvu.true(self.diagnosed[inds])
-            self.prior_diagnosed[inds[inds_diagnosed]] = True
-            self.diagnosed[inds] = False
-
             # Reset additional states
             self.susceptible[inds] = True
+            self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
             self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
+
         return len(inds)
 
 
@@ -336,10 +333,6 @@ class People(cvb.BasePeople):
         quarantined = cvu.itruei(self.quarantined, diag_inds)
         self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
-
-        # Determine how many people who are diagnosed today have a prior diagnosis
-        prior_diag_inds = cvu.true(self.prior_diagnosed[test_pos_inds])
-        self.flows['new_rediagnoses'] += len(prior_diag_inds)
 
         return len(test_pos_inds)
 
