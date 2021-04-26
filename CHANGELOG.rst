@@ -25,6 +25,14 @@ Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.0.2 (2021-04-26)
+--------------------------
+- Added a new method, ``sim.to_df()``, that exports results to a pandas dataframe.
+- Added ``people.lock()`` and ``people.unlock()`` methods, so you do not need to set ``people._lock`` manually.
+- Added extra parameter checking to ``people.set_pars(pars)``, so ``pop_size`` is guaranteed to be an integer.
+- *GitHub info*: PR `1020 <https://github.com/amath-idm/covasim/pull/1020>`__
+
+
 Version 3.0.1 (2021-04-16)
 --------------------------
 - Immunity and vaccine parameters have been updated.

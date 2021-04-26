@@ -188,20 +188,6 @@ cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 new_result_flows_by_strain = [f'new_{key}' for key in result_flows_by_strain.keys()]
 cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.keys()]
 
-# Define results that are floats (not numbers of people)
-float_results = [
-    'prevalence',
-    'incidence',
-    'r_eff',
-    'doubling_time',
-    'test_yield',
-    'rel_test_yield',
-    'frac_vaccinated',
-    'pop_nabs',
-    'pop_protection',
-    'pop_symp_protection',
-]
-
 # Parameters that can vary by strain
 strain_pars = [
     'rel_imm_strain',
