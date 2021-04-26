@@ -520,7 +520,7 @@ def get_version_pars(version, verbose=True):
     '''
 
     # Construct a sorted list of available parameters based on the files in the regression folder
-    regression_folder = sc.thisdir(__file__, 'regression', as_path=True)
+    regression_folder = sc.thisdir(__file__, 'regression', aspath=True)
     available_versions = [x.stem.replace('pars_v','') for x in regression_folder.iterdir() if x.suffix=='.json']
     available_versions = sorted(available_versions, key=LooseVersion)
 
