@@ -1342,12 +1342,10 @@ class vaccinate(Intervention):
 
         if sim.t >= np.min(self.days):
 
-            # Initialize
-            vacc_probs = np.zeros(sim['pop_size'])
-            vacc_inds = np.array([], dtype=int)
-
             # Vaccinate people with their first dose
+            vacc_inds = np.array([], dtype=int) # Initialize in case no one gets their first dose
             for ind in find_day(self.days, sim.t, interv=self, sim=sim):
+                vacc_probs = np.zeros(sim['pop_size'])
                 unvacc_inds = sc.findinds(~sim.people.vaccinated)
                 if self.subtarget is not None:
                     subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
@@ -1361,7 +1359,7 @@ class vaccinate(Intervention):
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
                     sim.people.flows['new_vaccinations'] += len(vacc_inds)
-                    sim.people.flows['new_vaccinated'] += len(vacc_inds)
+                    sim.people.flows['new_vaccinated']   += len(vacc_inds)
                     if self.p.interval is not None:
                         next_dose_day = sim.t + self.p.interval
                         if next_dose_day < sim['n_days']:
