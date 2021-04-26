@@ -393,8 +393,9 @@ class MultiSim(cvb.FlexPretty):
             if label in resdict: # Avoid duplicates
                 label += f' ({i})'
             for reskey in sim.result_keys():
-                val = sim.results[reskey].values[day]
-                if reskey not in cvd.float_results:
+                res = sim.results[reskey]
+                val = res.values[day]
+                if res.scale: # Results that are scaled by population are ints
                     val = int(val)
                 resdict[label][reskey] = val
 
