@@ -510,7 +510,7 @@ class BaseSim(ParsObj):
 
     def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
         '''
-        Export results as JSON.
+        Export results and parameters as JSON.
 
         Args:
             filename (str): if None, return string; else, write to file
@@ -563,6 +563,23 @@ class BaseSim(ParsObj):
         return output
 
 
+    def to_df(self, date_index=False):
+        '''
+        Export results to a pandas dataframe
+
+        Args:
+            date_index  (bool): if True, use the date as the index
+        '''
+        resdict = self.export_results(for_json=False)
+        df = pd.DataFrame.from_dict(resdict)
+        df['date'] = self.datevec
+        new_columns = ['t','date'] + df.columns[1:-1].tolist() # Get column order
+        df = df.reindex(columns=new_columns) # Reorder so 't' and 'date' are first
+        if date_index:
+            df = df.set_index('date')
+        return df
+
+
     def to_excel(self, filename=None, skip_pars=None):
         '''
         Export parameters and results as Excel format
@@ -573,20 +590,19 @@ class BaseSim(ParsObj):
 
         Returns:
             An sc.Spreadsheet with an Excel file, or writes the file to disk
-
         '''
         if skip_pars is None:
             skip_pars = ['strain_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
 
-        resdict = self.export_results(for_json=False)
-        result_df = pd.DataFrame.from_dict(resdict)
-        result_df.index = self.datevec
-        result_df.index.name = 'date'
+        # Export results
+        result_df = self.to_df(date_index=True)
 
+        # Export parameters
         pars = {k:v for k,v in self.pars.items() if k not in skip_pars}
         par_df = pd.DataFrame.from_dict(sc.flattendict(pars, sep='_'), orient='index', columns=['Value'])
         par_df.index.name = 'Parameter'
 
+        # Convert to spreadsheet
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
@@ -837,28 +853,40 @@ class BasePeople(FlexPretty):
             If the key is an integer, alias `people.person()` to return a `Person` instance
         '''
 
-        if isinstance(key, int):
-            return self.person(key)
-
         try:
             return self.__dict__[key]
         except: # pragma: no cover
-            errormsg = f'Key "{key}" is not a valid attribute of people'
-            raise AttributeError(errormsg)
+            if isinstance(key, int):
+                return self.person(key)
+            else:
+                errormsg = f'Key "{key}" is not a valid attribute of people'
+                raise AttributeError(errormsg)
 
 
     def __setitem__(self, key, value):
         ''' Ditto '''
         if self._lock and key not in self.__dict__: # pragma: no cover
-            errormsg = f'Key "{key}" is not a valid attribute of people'
+            errormsg = f'Key "{key}" is not a current attribute of people, and the people object is locked; see people.unlock()'
             raise AttributeError(errormsg)
         self.__dict__[key] = value
         return
 
 
+    def lock(self):
+        ''' Lock the people object to prevent keys from being added '''
+        self._lock = True
+        return
+
+
+    def unlock(self):
+        ''' Unlock the people object to allow keys to be added '''
+        self._lock = False
+        return
+
+
     def __len__(self):
         ''' This is just a scalar, but validate() and _resize_arrays() make sure it's right '''
-        return self.pars['pop_size']
+        return int(self.pars['pop_size'])
 
 
     def __iter__(self):
@@ -973,12 +1001,24 @@ class BasePeople(FlexPretty):
         return (self[key]==0).sum()
 
 
-    def set_pars(self, pars):
+    def set_pars(self, pars=None):
         '''
-        Very simple method to re-link the parameters stored in the people object
-        to the sim containing it: included simply for the sake of being explicit.
+        Re-link the parameters stored in the people object to the sim containing it,
+        and perform some basic validation.
         '''
-        self.pars = pars
+        if pars is None:
+            pars = {}
+        elif sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
+        pars = sc.mergedicts(orig_pars, pars)
+        if 'pop_size' not in pars:
+            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
+            raise sc.KeyNotFoundError(errormsg)
+        pars['pop_size'] = int(pars['pop_size'])
+        pars.setdefault('n_strains', 1)
+        pars.setdefault('location', None)
+        self.pars = pars # Actually store the pars
         return
 
 

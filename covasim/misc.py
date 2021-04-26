@@ -9,7 +9,7 @@ import sciris as sc
 import scipy.stats as sps
 from pathlib import Path
 from . import version as cvv
-
+from distutils.version import LooseVersion
 
 #%% Convenience imports from Sciris
 
@@ -502,6 +502,16 @@ def get_version_pars(version, verbose=True):
     '''
     Function for loading parameters from the specified version.
 
+    Parameters will be loaded for Covasim 'as at' the requested version i.e. the
+    most recent set of parameters that is <= the requested version. Available
+    parameter values are stored in the regression folder. If parameters are available
+    for versions 1.3, and 1.4, then this function will return the following
+
+    - If parameters for version '1.3' are requested, parameters will be returned from '1.3'
+    - If parameters for version '1.3.5' are requested, parameters will be returned from '1.3', since
+      Covasim at version 1.3.5 would have been using the parameters defined at version 1.3.
+    - If parameters for version '1.4' are requested, parameters will be returned from '1.4'
+
     Args:
         version (str): the version to load parameters from
 
@@ -509,42 +519,23 @@ def get_version_pars(version, verbose=True):
         Dictionary of parameters from that version
     '''
 
-    # Define mappings for available sets of parameters -- note that this must be manually updated from the changelog
-    match_map = {
-        '0.30.4': ['0.30.4'],
-        '0.31.0': ['0.31.0'],
-        '0.32.0': ['0.32.0'],
-        '1.0.0': ['1.0.0'],
-        '1.0.1': [f'1.0.{i}' for i in range(1,4)],
-        '1.1.0': ['1.1.0'],
-        '1.1.1': [f'1.1.{i}' for i in range(1,3)],
-        '1.1.3': [f'1.1.{i}' for i in range(3,8)],
-        '1.2.0': [f'1.2.{i}' for i in range(4)],
-        '1.3.0': [f'1.3.{i}' for i in range(6)],
-        '1.4.0': [f'1.4.{i}' for i in range(9)],
-        '1.5.0': [f'1.5.{i}' for i in range(4)] + [f'1.6.{i}' for i in range(2)] + [f'1.7.{i}' for i in range(7)],
-        '2.0.0': [f'2.0.{i}' for i in range(5)] + ['2.1.0'],
-        '2.1.1': [f'2.1.{i}' for i in range(1,3)],
-        '3.0.0': ['3.0.0'],
-    }
+    # Construct a sorted list of available parameters based on the files in the regression folder
+    regression_folder = sc.thisdir(__file__, 'regression', aspath=True)
+    available_versions = [x.stem.replace('pars_v','') for x in regression_folder.iterdir() if x.suffix=='.json']
+    available_versions = sorted(available_versions, key=LooseVersion)
 
-    # Find and check the match
-    match = None
-    for ver,verlist in match_map.items():
-        if version in verlist:
-            match = ver
-            break
-    if match is None: # pragma: no cover
-        options = '\n'.join(sum(match_map.values(), []))
-        errormsg = f'Could not find version "{version}" among options:\n{options}'
+    # Find the highest parameter version that is <= the requested version
+    version_comparison = [sc.compareversions(version, v)>=0 for v in available_versions]
+    try:
+        target_version = available_versions[sc.findlast(version_comparison)]
+    except IndexError:
+        errormsg = f"Could not find a parameter version that was less than or equal to '{version}'. Available versions are {available_versions}"
         raise ValueError(errormsg)
 
     # Load the parameters
-    filename = f'pars_v{match}.json'
-    regression_folder = sc.thisdir(__file__, 'regression')
-    pars = sc.loadjson(filename=filename, folder=regression_folder)
+    pars = sc.loadjson(filename=regression_folder/f'pars_v{target_version}.json', folder=regression_folder)
     if verbose:
-        print(f'Loaded parameters from {match}')
+        print(f'Loaded parameters from {target_version}')
 
     return pars
 

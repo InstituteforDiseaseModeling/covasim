@@ -394,7 +394,7 @@ class MultiSim(cvb.FlexPretty):
                 label += f' ({i})'
             for reskey in sim.result_keys():
                 val = sim.results[reskey].values[day]
-                if reskey not in ['r_eff', 'doubling_time']:
+                if reskey not in cvd.float_results:
                     val = int(val)
                 resdict[label][reskey] = val
 

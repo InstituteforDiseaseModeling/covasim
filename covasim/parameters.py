@@ -40,7 +40,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['end_day']    = None         # End day of the simulation
     pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
     pars['rand_seed']  = 1            # Random seed, if None, don't reset
-    pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+    pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (default), 2 (everything)
 
     # Rescaling parameters
     pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
@@ -335,10 +335,11 @@ def get_vaccine_choices():
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
         'default': ['default', None],
-        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech'],
-        'moderna': ['moderna'],
-        'az':      ['az', 'astrazeneca'],
-        'jj':      ['jj', 'jnj', 'johnson & johnson', 'janssen'],
+        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech', 'pf', 'pfz', 'pz'],
+        'moderna': ['moderna', 'md'],
+        'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
+        'az':      ['astrazeneca', 'oxford', 'vaxzevria', 'az'],
+        'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -474,6 +475,13 @@ def get_vaccine_strain_pars(default=False):
             b1351 = 1/6.7,
             p1    = 1/8.6,
         ),
+
+        novavax = dict( # https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
+            wild  = 1.0,
+            b117  = 1/1.12,
+            b1351 = 1/4.7,
+            p1    = 1/8.6, # assumption, no data available yet
+        ),
     )
 
     if default:
@@ -526,6 +534,14 @@ def get_vaccine_dose_pars(default=False):
             nab_boost = 3,
             doses     = 1,
             interval  = None,
+        ),
+
+        novavax = dict(
+            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_init  = dict(dist='normal', par1=-0.9, par2=2),
+            nab_boost = 3,
+            doses     = 2,
+            interval  = 21,
         ),
     )
 

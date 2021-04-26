@@ -44,12 +44,7 @@ class People(cvb.BasePeople):
     def __init__(self, pars, strict=True, **kwargs):
 
         # Handle pars and population size
-        if sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars = pars # Equivalent to self.set_pars(pars)
-        self.pars['pop_size'] = int(pars['pop_size'])
-        self.pars.setdefault('n_strains', 1)
-        self.pars.setdefault('location', None)
+        self.set_pars(pars)
         self.version = cvv.__version__ # Store version info
 
         # Other initialization
@@ -92,7 +87,8 @@ class People(cvb.BasePeople):
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = strict # If strict is true, stop further keys from being set (does not affect attributes)
+        if strict:
+            self.lock() # If strict is true, stop further keys from being set (does not affect attributes)
 
         # Store flows to be computed during simulation
         self.init_flows()

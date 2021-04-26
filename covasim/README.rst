@@ -6,9 +6,9 @@ This file describes each of the input parameters in Covasim. Note: the overall i
 
 Population parameters
 ---------------------
-* ``pop_size``     = Number ultimately susceptible to CoV
+* ``pop_size``     = Number of agents, i.e., people susceptible to SARS-CoV-2
 * ``pop_infected`` = Number of initial infections
-* ``pop_type``     = What type of population data to use -- random (fastest), synthpops (best), hybrid (compromise), or clustered (not recommended)
+* ``pop_type``     = What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
 * ``location``     = What location to load data from -- default Seattle
 
 Simulation parameters
@@ -17,31 +17,50 @@ Simulation parameters
 * ``end_day``    = End day of the simulation
 * ``n_days``     = Number of days to run, if end_day isn't specified
 * ``rand_seed``  = Random seed, if None, don't reset
-* ``verbose``    = Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
+* ``verbose``    = Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (more), 2 (everything)
 
 Rescaling parameters
 --------------------
 * ``pop_scale``         = Factor by which to scale the population -- e.g. 1000 with pop_size = 10e3 means a population of 10m
+* ``scaled_pop``        = The total scaled population, i.e. the number of agents times the scale factor; alternative to pop_scale
 * ``rescale``           = Enable dynamic rescaling of the population
 * ``rescale_threshold`` = Fraction susceptible population that will trigger rescaling if rescaling
 * ``rescale_factor``    = Factor by which we rescale the population
 
 Basic disease transmission
 --------------------------
-* ``beta``        = Beta per symptomatic contact; absolute
-* ``contacts``    = The number of contacts per layer; set below
-* ``dynam_layer`` = Which layers are dynamic; set below
-* ``beta_layer``  = Transmissibility per layer; set below
-* ``n_imports``   = Average daily number of imported cases (actual number is drawn from Poisson distribution)
-* ``beta_dist``   = Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
-* ``viral_dist``  = The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-
-Efficacy of protection measures
--------------------------------
+* ``beta``         = Beta per symptomatic contact; absolute
+* ``n_imports``    = Average daily number of imported cases (actual number is drawn from Poisson distribution)
+* ``beta_dist``    = Distribution to draw individual level transmissibility; see https://wellcomeopenresearch.org/articles/5-67
+* ``viral_dist``   = The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
 * ``asymp_factor`` = Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-* ``iso_factor``  = Multiply beta by this factor for diganosed cases to represent isolation; set below
-* ``quar_factor``  = Quarantine multiplier on transmissibility and susceptibility; set below
-* ``quar_period``  = Number of days to quarantine for; assumption based on standard policies
+
+Network parameters
+------------------
+* ``contacts``    = The number of contacts per layer
+* ``dynam_layer`` = Which layers are dynamic
+* ``beta_layer``  = Transmissibility per layer
+
+Multi-strain parameters
+-----------------------
+* ``n_imports`` = Average daily number of imported cases (actual number is drawn from Poisson distribution)
+* ``n_strains`` = The number of strains circulating in the population
+
+Immunity parameters
+-------------------
+* ``use_waning``   = Whether to use dynamically calculated immunity
+* ``nab_init``     = Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+* ``nab_decay``    = Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+* ``nab_kin``      = Constructed during sim initialization using the nab_decay parameters
+* ``nab_boost``    = Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+* ``nab_eff``      = Parameters to map nabs to efficacy
+* ``rel_imm_symp`` = Relative immunity from natural infection varies by symptoms
+* ``immunity``     = Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+
+Strain-specific parameters
+--------------------------
+* ``rel_beta``       = Relative transmissibility varies by strain
+* ``rel_imm_strain`` = Relative own-immunity varies by strain
 
 Time for disease progression
 ----------------------------
@@ -65,6 +84,12 @@ Severity parameters
 * ``rel_death_prob``  = Scale factor for proportion of critical cases that result in death
 * ``prog_by_age``     = Whether to set disease progression based on the person's age
 * ``prognoses``       = The actual arrays of prognoses by age; this is populated later
+
+Efficacy of protection measures
+-------------------------------
+* ``iso_factor``  = Multiply beta by this factor for diganosed cases to represent isolation; set below
+* ``quar_factor``  = Quarantine multiplier on transmissibility and susceptibility; set below
+* ``quar_period``  = Number of days to quarantine for; assumption based on standard policies
 
 Events and interventions
 ------------------------
