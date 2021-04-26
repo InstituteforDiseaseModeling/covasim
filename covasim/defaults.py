@@ -188,6 +188,20 @@ cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
 new_result_flows_by_strain = [f'new_{key}' for key in result_flows_by_strain.keys()]
 cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.keys()]
 
+# Define results that are floats (not numbers of people)
+float_results = [
+    'prevalence',
+    'incidence',
+    'r_eff',
+    'doubling_time',
+    'test_yield',
+    'rel_test_yield',
+    'frac_vaccinated',
+    'pop_nabs',
+    'pop_protection',
+    'pop_symp_protection',
+]
+
 # Parameters that can vary by strain
 strain_pars = [
     'rel_imm_strain',
@@ -317,7 +331,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
     # Default plots -- different for sims and scenarios
     if which in [None, 'default']:
 
-        if kind == 'sim':
+        if 'sim' in kind:
             plots = sc.odict({
                     'Total counts': [
                         'cum_infections',
@@ -335,7 +349,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     ],
             })
 
-        elif kind == 'scens': # pragma: no cover
+        elif 'scen' in kind: # pragma: no cover
             plots = sc.odict({
                 'Cumulative infections': [
                     'cum_infections',
@@ -347,6 +361,10 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     'cum_deaths',
                 ],
             })
+
+        else:
+            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+            raise ValueError(errormsg)
 
     # Show an overview
     elif which == 'overview': # pragma: no cover
