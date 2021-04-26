@@ -305,10 +305,10 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']             = init_res('Number alive', scale=False)
-        self.results['n_naive']             = init_res('Number never infected', scale=False)
-        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
-        self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['n_alive']             = init_res('Number alive', scale=True)
+        self.results['n_naive']             = init_res('Number never infected', scale=True)
+        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=True, color=dcols.exposed)
+        self.results['n_removed']           = init_res('Number removed', scale=True, color=dcols.recovered)
         self.results['prevalence']          = init_res('Prevalence', scale=False)
         self.results['incidence']           = init_res('Incidence', scale=False)
         self.results['r_eff']               = init_res('Effective reproduction number', scale=False)
