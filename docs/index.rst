@@ -24,5 +24,6 @@ Full contents
    parameters
    data
    glossary
+   conduct
    contributing
    modules
