@@ -77,7 +77,7 @@ for sim in msim.sims:
     VE = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
               np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
     results[vaccine] = VE
-    print(f'  {vaccine:10s}: {VE*100}%')
+    print(f'  {vaccine:8s}: {VE*100:0.2f}%')
 
 # Plot
 to_plot = cv.get_default_plots('default', 'scen')
