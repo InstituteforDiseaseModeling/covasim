@@ -266,6 +266,7 @@ def get_default_colors():
     c.tests                 = '#aaa8ff'
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
+    c.rediagnoses           = c.diagnoses
     c.quarantined           = '#5c399c'
     c.vaccinations          = c.quarantined # TODO: new color
     c.vaccinated            = c.quarantined
@@ -280,7 +281,6 @@ def get_default_colors():
     c.pop_nabs              = '#32733d'
     c.pop_protection        = '#9e1149'
     c.pop_symp_protection   = '#b86113'
-    c.rediagnoses           = '#b86113'
     return c
 
 

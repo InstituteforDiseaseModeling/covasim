@@ -1074,7 +1074,7 @@ class BasePeople(FlexPretty):
             raise ValueError(errormsg)
 
         # Check that the length of each array is consistent
-        expected_len = len(self.age)
+        expected_len = len(self)
         expected_strains = self.pars['n_strains']
         for key in self.keys():
             if self[key].ndim == 1:
