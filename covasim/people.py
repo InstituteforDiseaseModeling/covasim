@@ -275,6 +275,7 @@ class People(cvb.BasePeople):
         self.exposed_by_strain[:, inds] = False
         self.infectious_by_strain[:, inds] = False
 
+
         # Handle immunity aspects
         if self.pars['use_waning']:
 
@@ -284,11 +285,13 @@ class People(cvb.BasePeople):
 
             # Reset additional states
             self.susceptible[inds] = True
+            self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
             self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
+
         return len(inds)
 
 
