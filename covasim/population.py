@@ -24,11 +24,11 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
 def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
     '''
     Make the actual people for the simulation. Usually called via sim.initialize(),
-    not directly by the user.
+    but can be called directly by the user.
 
     Args:
-        sim      (Sim)  : the simulation object
-        popdict  (dict) : if supplied, use this population dictionary rather than generate a new one
+        sim      (Sim)  : the simulation object; population parameters are taken from the sim object
+        popdict  (dict) : if supplied, use this population dictionary instead of generating a new one
         save_pop (bool) : whether to save the population to disk
         popfile  (bool) : if so, the filename to save to
         die      (bool) : whether or not to fail if synthetic populations are requested but not available

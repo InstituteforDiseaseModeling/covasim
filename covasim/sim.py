@@ -183,8 +183,12 @@ class Sim(cvb.BaseSim):
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != set(layer_keys): # pragma: no cover
-                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise sc.KeyNotFoundError(errormsg)
+                if not len(pop_keys):
+                    errormsg = f'Your population does not have any layer keys, but your simulation does {layer_keys}. If you called cv.People() directly, you probably need cv.make_people() instead.'
+                    raise sc.KeyNotFoundError(errormsg)
+                else:
+                    errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                    raise sc.KeyNotFoundError(errormsg)
 
         return
 
