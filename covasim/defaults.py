@@ -317,7 +317,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
     # Default plots -- different for sims and scenarios
     if which in [None, 'default']:
 
-        if kind == 'sim':
+        if 'sim' in kind:
             plots = sc.odict({
                     'Total counts': [
                         'cum_infections',
@@ -335,7 +335,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     ],
             })
 
-        elif kind == 'scens': # pragma: no cover
+        elif 'scen' in kind: # pragma: no cover
             plots = sc.odict({
                 'Cumulative infections': [
                     'cum_infections',
@@ -347,6 +347,10 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     'cum_deaths',
                 ],
             })
+
+        else:
+            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+            raise ValueError(errormsg)
 
     # Show an overview
     elif which == 'overview': # pragma: no cover

@@ -2,9 +2,13 @@
 Calculate vaccine efficiency for protection against symptomatic covid after first dose
 '''
 
-import covasim as cv
 import numpy as np
+import sciris as sc
+import covasim as cv
+
 cv.check_version('>=3.0.0')
+
+vaccines = ['pfizer', 'moderna', 'az', 'j&j']
 
 # construct analyzer to select placebo arm
 class placebo_arm(cv.Analyzer):
@@ -29,13 +33,15 @@ pars = {
     'pop_size': 20000,
     'beta': 0.015,
     'n_days': 120,
+    'verbose': -1,
 }
 
 # Define vaccine arm
-trial_size = 500
+trial_size = 2000
 start_trial = 20
+
 def subtarget(sim):
-    # select people who are susceptible
+    ''' Select people who are susceptible '''
     if sim.t == start_trial:
         eligible = cv.true(~np.isfinite(sim.people.date_exposed))
         inds = eligible[cv.choose(len(eligible), min(trial_size//2, len(eligible)))]
@@ -43,29 +49,39 @@ def subtarget(sim):
         inds = []
     return {'vals': [1.0 for ind in inds], 'inds': inds}
 
-pfizer = cv.vaccinate(vaccine='pfizer', days=[start_trial], prob=0.0, subtarget=subtarget)
+# Initialize
+sims = []
+for vaccine in vaccines:
+    vx = cv.vaccinate(vaccine=vaccine, days=[start_trial], prob=0.0, subtarget=subtarget)
+    sim = cv.Sim(
+        label=vaccine,
+        use_waning=True,
+        pars=pars,
+        interventions=vx,
+        analyzers=placebo_arm(day=start_trial, trial_size=trial_size//2)
+    )
+    sims.append(sim)
 
-sim = cv.Sim(
-    use_waning=True,
-    pars=pars,
-    interventions=pfizer,
-    analyzers=placebo_arm(day=start_trial, trial_size=trial_size//2)
-)
-sim.run()
+# Run
+msim = cv.MultiSim(sims)
+msim.run(keep_people=True)
 
-# Find trial arm indices, those who were vaccinated
-vacc_inds = cv.true(sim.people.vaccinated)
-placebo_inds = sim['analyzers'][0].placebo_inds
-# Check that there is no overlap
-assert (len(set(vacc_inds).intersection(set(placebo_inds))) == 0)
-# Calculate vaccine efficiency
-VE = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
-          np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
-print('Vaccine efficiency for symptomatic covid:', VE)
+results = sc.objdict()
+print('Vaccine efficiency for symptomatic covid:')
+for sim in msim.sims:
+    vaccine = sim.label
+    vacc_inds = cv.true(sim.people.vaccinated) # Find trial arm indices, those who were vaccinated
+    placebo_inds = sim['analyzers'][0].placebo_inds
+    assert (len(set(vacc_inds).intersection(set(placebo_inds))) == 0) # Check that there is no overlap
+    # Calculate vaccine efficiency
+    VE = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
+              np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
+    results[vaccine] = VE
+    print(f'  {vaccine:8s}: {VE*100:0.2f}%')
 
 # Plot
-to_plot = cv.get_default_plots('default', 'sim')
-to_plot['Health outcomes'] += ['cum_vaccinated']
-sim.plot(to_plot=to_plot)
+to_plot = cv.get_default_plots('default', 'scen')
+to_plot['Vaccinations'] = ['cum_vaccinated']
+msim.plot(to_plot=to_plot)
 
 print('Done')

@@ -44,12 +44,7 @@ class People(cvb.BasePeople):
     def __init__(self, pars, strict=True, **kwargs):
 
         # Handle pars and population size
-        if sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-        self.pars = pars # Equivalent to self.set_pars(pars)
-        self.pars['pop_size'] = int(pars['pop_size'])
-        self.pars.setdefault('n_strains', 1)
-        self.pars.setdefault('location', None)
+        self.set_pars(pars)
         self.version = cvv.__version__ # Store version info
 
         # Other initialization
@@ -92,7 +87,8 @@ class People(cvb.BasePeople):
 
         # Store the dtypes used in a flat dict
         self._dtypes = {key:self[key].dtype for key in self.keys()} # Assign all to float by default
-        self._lock = strict # If strict is true, stop further keys from being set (does not affect attributes)
+        if strict:
+            self.lock() # If strict is true, stop further keys from being set (does not affect attributes)
 
         # Store flows to be computed during simulation
         self.init_flows()
@@ -279,6 +275,7 @@ class People(cvb.BasePeople):
         self.exposed_by_strain[:, inds] = False
         self.infectious_by_strain[:, inds] = False
 
+
         # Handle immunity aspects
         if self.pars['use_waning']:
 
@@ -288,11 +285,13 @@ class People(cvb.BasePeople):
 
             # Reset additional states
             self.susceptible[inds] = True
+            self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
             self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
             if len(inds):
                 cvi.init_nab(self, inds, prior_inf=True)
+
         return len(inds)
 
 

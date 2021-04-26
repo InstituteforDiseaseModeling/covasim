@@ -12,8 +12,14 @@ This document contains answers to frequently (and some not so frequently) asked 
 Usage questions
 ^^^^^^^^^^^^^^^
 
+What are the system requirements for Covasim?
+---------------------------------------------------------------------------------
+
+If your system can run scientific Python (Numpy, SciPy, and Matplotlib), then you can probably run Covasim. Covasim requires 1 GB of RAM per 1 million people, and can simulate roughly 5-10 million person-days per second. A typical use case, such as a population of 100,000 agents running for 500 days, would require 100 MB of memory and take about 5-10 seconds to run.
+
+
 Can Covasim be run on HPC clusters?
----------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 Yes. On a single-node setup, it is quite easy: in fact, ``MultiSim`` objects will automatically scale to the number of cores available. This can also be specified explicitly with e.g. ``msim.run(n_cpus=24)``.
 
@@ -21,7 +27,7 @@ For more complex use cases (e.g. running across multiple virtual machines), we r
 
 
 What method is best for saving simulation objects?
----------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 The recommended way to save a simulation is simply via ``sim.save(filename)``. By default, this does *not* save the people (``sim.people``), since they are very large (i.e., 7 KB without people vs. 7 MB with people for 100,000 agents). However, if you really want to save the people, pass ``keep_people=True``.
 
@@ -37,7 +43,7 @@ Typically, parameters are held constant for the duration of the simulation. Howe
 How can you introduce new infections into a simulation?
 ---------------------------------------------------------------------------------
 
-These are referred to as *importations*. You can set the ``n_imports`` parameter for a fixed number of importations each day (or make it time-varying with ``cv.dynamic_pars()``, as described above). Alternatively, you can infect people directly using ``sim.people.infect()``.
+These are referred to as *importations*. You can set the ``n_imports`` parameter for a fixed number of importations each day (or make it time-varying with ``cv.dynamic_pars()``, as described above). Alternatively, you can infect people directly using ``sim.people.infect()``. Since version 3.0, you can also import specific strains on a given day: e.g., ``cv.Sim(strains=cv.strain('b117', days=50, n_imports=10)``.
 
 
 How do you set custom prognoses parameters (mortality rate, susceptibility etc.)?
