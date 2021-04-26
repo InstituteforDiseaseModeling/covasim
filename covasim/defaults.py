@@ -63,7 +63,6 @@ class PeopleMeta(sc.prettyobj):
             'critical',
             'tested',
             'diagnosed',
-            'prior_diagnosed', # a previous infection was diagnosed
             'recovered',
             'dead',
             'known_contact',
