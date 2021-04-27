@@ -68,10 +68,12 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
     pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    # pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_decay'] = dict(form='nab_growth_decay', growth_time=14, decay_rate1=np.log(2) / 90, decay_time1=250,
+                             decay_rate2=0.001)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(sus=dict(slope=1.6, n_50=0.05), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
+    pars['nab_eff']         = dict(sus=dict(slope=1.6, n_50=0.05), symp=0.3, sev=0.52) # Parameters to map nabs to efficacy
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
@@ -522,7 +524,7 @@ def get_vaccine_dose_pars(default=False):
 
         az = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-0.85, par2=2),
+            nab_init  = dict(dist='normal', par1=-2, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 21,
@@ -530,7 +532,7 @@ def get_vaccine_dose_pars(default=False):
 
         jj = dict(
             nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-1.1, par2=2),
+            nab_init  = dict(dist='normal', par1=.8, par2=2),
             nab_boost = 3,
             doses     = 1,
             interval  = None,

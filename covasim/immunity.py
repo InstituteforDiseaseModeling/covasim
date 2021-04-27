@@ -194,7 +194,13 @@ def init_nab(people, inds, prior_inf=True):
 
 
 def check_nab(t, people, inds=None):
-    ''' Determines current NAb based on date since recovered/vaccinated.'''
+    ''' Determines current NAb based on date since recovered/vaccinated.
+
+
+        First step: determine if we are in the growth or decay period
+            If in growth, pull nabs of inds and add % of peak nabs
+            If in decay, % of peak nabs
+    '''
 
     # Indices of people who've had some nab event
     rec_inds = cvu.defined(people.date_recovered[inds])
@@ -207,8 +213,15 @@ def check_nab(t, people, inds=None):
     t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
     t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
+    # Determine which nabs are in decay (peak > current)
+    nabs = people.nab[inds]
+    peak_nabs = people.init_nab[inds]
+    inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
+    nabs[inds_in_decay] = 0
+    nabs = np.nan_to_num(nabs)
+
     # Set current NAb
-    people.nab[inds] = people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
+    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
 
     return
 
@@ -388,6 +401,9 @@ def precompute_waning(length, pars=None):
     if form is None or form == 'nab_decay':
         output = nab_decay(length, **pars)
 
+    elif form == 'nab_growth_decay':
+        output = nab_growth_decay(length, **pars)
+
     elif form == 'exp_decay':
         if pars['half_life'] is None: pars['half_life'] = np.nan
         output = exp_decay(length, **pars)
@@ -431,6 +447,43 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
     y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([y1,y2])
+
+    return y
+
+
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2):
+    '''
+    Returns an array of length 'length' containing the evaluated function nab growth/decay
+    function at each point.
+
+    Uses linear growth + exponential decay, with the rate of exponential decay also set to
+    exponentially decay (!) after 250 days.
+
+    Args:
+        length (int): number of points
+        growth_time (int): length of time NAbs grow (used to determine slope)
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate at which the decay decays
+    '''
+
+    def f1(t, growth_time):
+        '''Simple linear growth'''
+        return (1 / growth_time) * t
+
+    def f2(t, decay_rate1):
+        ''' Simple exponential decay '''
+        return np.exp(-t*decay_rate1)
+
+    def f3(t, decay_rate1, decay_time1, decay_rate2):
+        ''' Complex exponential decay '''
+        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
+
+    t  = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t<= growth_time), growth_time)
+    y2 = f2(cvu.true(t<= decay_time1), decay_rate1)
+    y3 = f3(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
+    y  = np.concatenate([y1, y2, y3])
 
     return y
 
