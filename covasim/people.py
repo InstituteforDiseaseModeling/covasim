@@ -452,8 +452,8 @@ class People(cvb.BasePeople):
         # Deal with strain parameters
         strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = {k:self.pars[k] for k in strain_keys}
+        strain_label = self.pars['strain_map'][strain]
         if strain:
-            strain_label = self.pars['strain_map'][strain]
             for k in strain_keys:
                 infect_pars[k] *= self.pars['strain_pars'][strain_label][k]
 
@@ -476,7 +476,8 @@ class People(cvb.BasePeople):
 
         # Record transmissions
         for i, target in enumerate(inds):
-            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t,
+                                           layer=layer, strain=strain_label))
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
