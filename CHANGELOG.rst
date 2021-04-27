@@ -25,6 +25,21 @@ Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.0.2 (2021-04-26)
+--------------------------
+- Added Novavax as one of the default vaccines.
+- If ``use_waning=True``, people will now become *undiagnosed* when they recover (so they are not incorrectly marked as diagnosed if they become reinfected).
+- Added a new method, ``sim.to_df()``, that exports results to a pandas dataframe.
+- Added ``people.lock()`` and ``people.unlock()`` methods, so you do not need to set ``people._lock`` manually.
+- Added extra parameter checking to ``people.set_pars(pars)``, so ``pop_size`` is guaranteed to be an integer.
+- Flattened ``sim['immunity']`` to no longer have separate axes for susceptible, symptomatic, and severe.
+- Fixed a bug in ``cv.sequence()``, introduced in version 2.1.2, that meant it would only ever trigger the last intervention.
+- Fixed a bug where if subtargeting was used with ``cv.vaccinate()``, it would trigger on every day.
+- Fixed ``msim.compare()`` to be more careful about not converting all results to integers.
+- *Regression information*: If you are using waning, ``sim.people.diagnosed`` no longer refers to everyone who has ever been diagnosed, only those still infectious. You can use ``sim.people.defined('date_diagnosed')`` in place of ``sim.people.true('diagnosed')`` (before these were identical).
+- *GitHub info*: PR `1020 <https://github.com/amath-idm/covasim/pull/1020>`__
+
+
 Version 3.0.1 (2021-04-16)
 --------------------------
 - Immunity and vaccine parameters have been updated.

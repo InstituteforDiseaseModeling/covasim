@@ -183,8 +183,12 @@ class Sim(cvb.BaseSim):
         if self.people is not None:
             pop_keys = set(self.people.contacts.keys())
             if pop_keys != set(layer_keys): # pragma: no cover
-                errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
-                raise sc.KeyNotFoundError(errormsg)
+                if not len(pop_keys):
+                    errormsg = f'Your population does not have any layer keys, but your simulation does {layer_keys}. If you called cv.People() directly, you probably need cv.make_people() instead.'
+                    raise sc.KeyNotFoundError(errormsg)
+                else:
+                    errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
+                    raise sc.KeyNotFoundError(errormsg)
 
         return
 
@@ -301,10 +305,10 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
-        self.results['n_alive']             = init_res('Number alive', scale=False)
-        self.results['n_naive']             = init_res('Number never infected', scale=False)
-        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=False, color=dcols.exposed)
-        self.results['n_removed']           = init_res('Number removed', scale=False, color=dcols.recovered)
+        self.results['n_alive']             = init_res('Number alive', scale=True)
+        self.results['n_naive']             = init_res('Number never infected', scale=True)
+        self.results['n_preinfectious']     = init_res('Number preinfectious', scale=True, color=dcols.exposed)
+        self.results['n_removed']           = init_res('Number removed', scale=True, color=dcols.recovered)
         self.results['prevalence']          = init_res('Prevalence', scale=False)
         self.results['incidence']           = init_res('Incidence', scale=False)
         self.results['r_eff']               = init_res('Effective reproduction number', scale=False)
@@ -843,10 +847,11 @@ class Sim(cvb.BaseSim):
         self.results['n_removed'][:]       = count_recov*res['cum_recoveries'][:] + res['cum_deaths'][:] # Calculate the number removed: recovered + dead
         self.results['prevalence'][:]      = res['n_exposed'][:]/res['n_alive'][:] # Calculate the prevalence
         self.results['incidence'][:]       = res['new_infections'][:]/res['n_susceptible'][:] # Calculate the incidence
+        self.results['frac_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the fraction vaccinated
 
         self.results['strain']['incidence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_susceptible'][:]) # Calculate the incidence
         self.results['strain']['prevalence_by_strain'][:] = np.einsum('ji,i->ji',res['strain']['new_infections_by_strain'][:], 1/res['n_alive'][:])  # Calculate the prevalence
-        self.results['frac_vaccinated'][:] = res['n_vaccinated'][:]/res['n_alive'][:] # Calculate the share vaccinated
+
         return
 
 
