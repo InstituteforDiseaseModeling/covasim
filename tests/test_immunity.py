@@ -94,7 +94,7 @@ def test_waning(do_plot=False):
         pars = dict(
             n_days    = 90,
             beta      = 0.008,
-            nab_decay = dict(form='nab_decay', decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
+            nab_decay = dict(form='nab_growth_decay', growth_time=14, decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
         )
 
         # Optionally include rescaling
@@ -117,7 +117,7 @@ def test_waning(do_plot=False):
         for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
             v0 = res0[key]
             v1 = res1[key]
-            print(f'Checking {key:20s} ... ', end='')
+            print(f'Checking {key:20s} ... {v1}, {v0}', end='')
             assert v1 > v0, f'Expected {key} to be higher with waning than without'
             print(f'✓ ({v1} > {v0})')
 
