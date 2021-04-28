@@ -203,19 +203,18 @@ def check_nab(t, people, inds=None):
     '''
 
     # Indices of people who've had some nab event
-    rec_inds = cvu.defined(people.date_recovered[inds])
+    inf_inds = cvu.defined(people.date_exposed[inds])
     vac_inds = cvu.defined(people.date_vaccinated[inds])
-    both_inds = np.intersect1d(rec_inds, vac_inds)
+    both_inds = np.intersect1d(inf_inds, vac_inds)
 
     # Time since boost
     t_since_boost = np.full(len(inds), np.nan, dtype=cvd.default_int)
-    t_since_boost[rec_inds] = t-people.date_recovered[inds[rec_inds]]
+    t_since_boost[inf_inds] = t-people.date_exposed[inds[inf_inds]]
     t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
-    t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
+    t_since_boost[both_inds] = t-np.maximum(people.date_exposed[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
     # Determine which nabs are in decay (peak > current)
     nabs = people.nab[inds]
-    peak_nabs = people.init_nab[inds]
     inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
     nabs[inds_in_decay] = 0
     nabs = np.nan_to_num(nabs)

@@ -278,19 +278,9 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-
-            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
-            mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-            severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
-
             # Reset additional states
             self.susceptible[inds] = True
             self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
-            self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
-            self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
-            if len(inds):
-                cvi.init_nab(self, inds, prior_inf=True)
 
         return len(inds)
 
@@ -545,6 +535,19 @@ class People(cvb.BasePeople):
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
         self.date_recovered[dead_inds] = np.nan # If they did die, remove them from recovered
+
+        # Handle immunity aspects
+        if self.pars['use_waning']:
+
+            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
+            mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
+            severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
+
+            self.prior_symptoms[inds] = self.pars['rel_imm_symp']['asymp']
+            self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
+            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
+            if len(inds):
+                cvi.init_nab(self, inds, prior_inf=True)
 
         return n_infections # For incrementing counters
 

@@ -368,25 +368,25 @@ def get_strain_pars(default=False):
             rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
             rel_crit_prob   = 1.0, # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
-            rel_death_prob  = 1.0, # See comment above.
+            rel_death_prob  = 1.6, # See comment above.
         ),
 
         b1351 = dict(
             rel_imm_strain  = 0.066, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
             rel_beta        = 1.4,
-            rel_symp_prob   = 1.0,
-            rel_severe_prob = 1.4,
+            rel_symp_prob   = 2.0,
+            rel_severe_prob = 3.6,
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 1.4,
+            rel_death_prob  = 3.2,
         ),
 
         p1 = dict(
             rel_imm_strain  = 0.17,
             rel_beta        = 1.4, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
-            rel_severe_prob = 1.4,
+            rel_severe_prob = 2.6,
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 2.0,
+            rel_death_prob  = 1.67,
         )
     )
 
