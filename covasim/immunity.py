@@ -146,7 +146,7 @@ def get_vaccine_pars(pars):
 
 def init_nab(people, inds, prior_inf=True):
     '''
-    Draws an initial neutralizing antibody (NAb) level for individuals.
+    Draws a peak neutralizing antibody (NAb) level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
     1) a natural infection. If individual has no existing NAb, draw from distribution
     depending upon symptoms. If individual has existing NAb, multiply booster impact
@@ -157,7 +157,7 @@ def init_nab(people, inds, prior_inf=True):
     nab_arrays = people.nab[inds]
     prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior NAb
     no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
-    peak_nab = people.init_nab[prior_nab_inds]
+    peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
     pars = people.pars
 
     # NAb from infection
@@ -168,12 +168,13 @@ def init_nab(people, inds, prior_inf=True):
             init_nab = cvu.sample(**pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
-            people.init_nab[no_prior_nab_inds] = no_prior_nab
+            people.peak_nab[no_prior_nab_inds] = no_prior_nab
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
+            people.last_nab[prior_nab_inds] = people.nab[prior_nab_inds]
             init_nab = peak_nab * nab_boost
-            people.init_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] = init_nab
 
     # NAb from a vaccine
     else:
@@ -182,13 +183,14 @@ def init_nab(people, inds, prior_inf=True):
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**vaccine_pars['nab_init'], size=len(no_prior_nab_inds))
-            people.init_nab[no_prior_nab_inds] = 2**init_nab
+            people.peak_nab[no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
+            people.last_nab[prior_nab_inds] = people.nab[prior_nab_inds]
             nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
             init_nab = peak_nab * nab_boost
-            people.init_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] = init_nab
 
     return
 
@@ -214,13 +216,13 @@ def check_nab(t, people, inds=None):
     t_since_boost[both_inds] = t-np.maximum(people.date_exposed[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
 
     # Determine which nabs are in decay (peak > current)
-    nabs = people.nab[inds]
+    nabs = people.last_nab[inds]
     inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
     nabs[inds_in_decay] = 0
     nabs = np.nan_to_num(nabs)
 
     # Set current NAb
-    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
+    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.peak_nab[inds]
 
     return
 

@@ -94,7 +94,7 @@ def test_waning(do_plot=False):
         pars = dict(
             n_days    = 90,
             beta      = 0.008,
-            nab_decay = dict(form='nab_decay', decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
+            # nab_decay = dict(form='nab_growth_decay', growth_time=14, decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
         )
 
         # Optionally include rescaling
@@ -220,11 +220,11 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
+    # sim1   = test_states()
     msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_strains(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    res    = test_decays(do_plot=do_plot)
+    # sim2   = test_strains(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')
