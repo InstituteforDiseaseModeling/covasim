@@ -615,9 +615,9 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus = people.rel_sus
 
-        # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
+        # Check nabs.
         if self['use_waning']:
-            has_nabs = np.setdiff1d(cvu.defined(people.peak_nab), cvu.false(people.susceptible))
+            has_nabs = cvu.defined(people.peak_nab)
             if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections

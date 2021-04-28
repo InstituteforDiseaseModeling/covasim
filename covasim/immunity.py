@@ -172,7 +172,8 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
-            people.last_nab[prior_nab_inds] = people.nab[prior_nab_inds]
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             init_nab = peak_nab * nab_boost
             people.peak_nab[prior_nab_inds] = init_nab
 
@@ -187,7 +188,8 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
-            people.last_nab[prior_nab_inds] = people.nab[prior_nab_inds]
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
             init_nab = peak_nab * nab_boost
             people.peak_nab[prior_nab_inds] = init_nab
@@ -217,8 +219,9 @@ def check_nab(t, people, inds=None):
 
     # Determine which nabs are in decay (peak > current)
     nabs = people.last_nab[inds]
-    inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
-    nabs[inds_in_decay] = 0
+    if people.pars['nab_decay']['form'] == 'nab_growth_decay':
+        inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
+        nabs[inds_in_decay] = 0
     nabs = np.nan_to_num(nabs)
 
     # Set current NAb
