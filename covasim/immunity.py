@@ -396,16 +396,17 @@ def precompute_waning(length, pars=None):
     form = pars.pop('form')
     choices = [
         'nab_decay', # Default if no form is provided
+        'nab_growth_decay',
         'exp_decay',
         'linear_growth',
         'linear_decay'
     ]
 
     # Process inputs
-    if form is None or form == 'nab_decay':
+    if form == 'nab_decay':
         output = nab_decay(length, **pars)
 
-    elif form == 'nab_growth_decay':
+    elif form is None or form == 'nab_growth_decay':
         output = nab_growth_decay(length, **pars)
 
     elif form == 'exp_decay':
