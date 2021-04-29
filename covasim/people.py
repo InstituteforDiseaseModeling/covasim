@@ -168,16 +168,18 @@ class People(cvb.BasePeople):
 
         # Initialize
         self.t = t
-        self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
+        self.is_exp     = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
         self.init_flows()
-        self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        self.flows['new_symptomatic'] += self.check_symptomatic()
-        self.flows['new_severe']      += self.check_severe()
-        self.flows['new_critical']    += self.check_critical()
-        self.flows['new_deaths']      += self.check_death()
-        self.flows['new_recoveries']  += self.check_recovery() # TODO: check logic here
+        self.flows['new_infectious']    += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic']   += self.check_symptomatic()
+        self.flows['new_severe']        += self.check_severe()
+        self.flows['new_critical']      += self.check_critical()
+        self.flows['new_recoveries']    += self.check_recovery()
+        new_deaths, new_known_deaths    = self.check_death()
+        self.flows['new_deaths']        += new_deaths
+        self.flows['new_known_deaths']  += new_known_deaths
 
         return
 
@@ -298,20 +300,23 @@ class People(cvb.BasePeople):
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
         inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
-        self.susceptible[inds]   = False
-        self.exposed[inds]       = False
-        self.infectious[inds]    = False
-        self.symptomatic[inds]   = False
-        self.severe[inds]        = False
-        self.critical[inds]      = False
-        self.known_contact[inds] = False
-        self.quarantined[inds]   = False
-        self.recovered[inds]     = False
-        self.dead[inds]          = True
+        self.dead[inds]             = True
+        # Check whether the person was diagnosed before dying
+        diag_inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.true('diagnosed') )
+        self.known_dead[diag_inds]  = True
+        self.susceptible[inds]      = False
+        self.exposed[inds]          = False
+        self.infectious[inds]       = False
+        self.symptomatic[inds]      = False
+        self.severe[inds]           = False
+        self.critical[inds]         = False
+        self.known_contact[inds]    = False
+        self.quarantined[inds]      = False
+        self.recovered[inds]        = False
         self.infectious_strain[inds] = np.nan
         self.exposed_strain[inds]    = np.nan
         self.recovered_strain[inds]  = np.nan
-        return len(inds)
+        return len(inds), len(diag_inds)
 
 
     def check_diagnosed(self):
