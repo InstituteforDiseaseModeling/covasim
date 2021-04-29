@@ -301,8 +301,7 @@ class People(cvb.BasePeople):
         ''' Check whether or not this person died on this timestep  '''
         inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
         self.dead[inds]             = True
-        # Check whether the person was diagnosed before dying
-        diag_inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.true('diagnosed') )
+        diag_inds = inds[self.diagnosed[inds]] # Check whether the person was diagnosed before dying
         self.known_dead[diag_inds]  = True
         self.susceptible[inds]      = False
         self.exposed[inds]          = False
