@@ -370,7 +370,7 @@ def get_strain_pars(default=False):
         ),
 
         b1351 = dict(
-            rel_imm_strain  = 0.066, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
+            rel_imm_strain  = 1.0, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
@@ -416,9 +416,9 @@ def get_cross_immunity(default=False):
 
         b1351 = dict(
             wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
-            b117  = 0.1,   # Assumption
+            b117  = 0.5,   # Assumption
             b1351 = 1.0,   # Default for own-immunity
-            p1    = 0.1,   # Assumption
+            p1    = 0.5,   # Assumption
         ),
 
         p1 = dict(
