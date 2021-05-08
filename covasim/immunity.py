@@ -275,7 +275,7 @@ def init_immunity(sim, create=False):
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['nab_kin'] = precompute_waning(length=sim['n_days'], pars=sim['nab_decay'])
+    sim['nab_kin'] = precompute_waning(length=sim['n_days']+1, pars=sim['nab_decay'])
 
     return
 
