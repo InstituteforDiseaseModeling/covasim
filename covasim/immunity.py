@@ -265,12 +265,9 @@ def init_immunity(sim, create=False):
         for i in range(ns):
             label_i = sim['strain_map'][i]
             for j in range(ns):
-                if i != j: # Populate cross-immunity
-                    label_j = sim['strain_map'][j]
-                    if label_i in default_cross_immunity and label_j in default_cross_immunity:
-                        immunity[j][i] = default_cross_immunity[label_j][label_i]
-                else: # Populate own-immunity
-                    immunity[i, i] = sim['strain_pars'][label_i]['rel_imm_strain']
+                label_j = sim['strain_map'][j]
+                if label_i in default_cross_immunity and label_j in default_cross_immunity:
+                    immunity[j][i] = default_cross_immunity[label_j][label_i]
 
         sim['immunity'] = immunity
 

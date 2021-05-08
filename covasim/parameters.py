@@ -352,7 +352,6 @@ def get_strain_pars(default=False):
     pars = dict(
 
         wild = dict(
-            rel_imm_strain  = 1.0, # Default values
             rel_beta        = 1.0, # Default values
             rel_symp_prob   = 1.0, # Default values
             rel_severe_prob = 1.0, # Default values
@@ -361,7 +360,6 @@ def get_strain_pars(default=False):
         ),
 
         b117 = dict(
-            rel_imm_strain  = 1.0, # Immunity protection obtained from a natural infection with wild type, relative to wild type. No evidence yet for a difference with B117
             rel_beta        = 1.5, # Transmissibility estimates range from 40-80%, see https://cmmid.github.io/topics/covid19/uk-novel-variant.html, https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.26.1.2002106
             rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
@@ -370,7 +368,6 @@ def get_strain_pars(default=False):
         ),
 
         b1351 = dict(
-            rel_imm_strain  = 0.066, # Immunity protection obtained from a natural infection with wild type, relative to wild type. TODO: add source
             rel_beta        = 1.4,
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
@@ -379,7 +376,6 @@ def get_strain_pars(default=False):
         ),
 
         p1 = dict(
-            rel_imm_strain  = 0.17,
             rel_beta        = 1.4, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
             rel_severe_prob = 1.4,
