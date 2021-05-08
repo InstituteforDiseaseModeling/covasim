@@ -267,7 +267,7 @@ def get_prognoses(by_age=True, version=None):
     prognoses = relative_prognoses(prognoses) # Convert to conditional probabilities
 
     # If version is specified, load old parameters
-    if version is not None:
+    if by_age and version is not None:
         version_prognoses = cvm.get_version_pars(version, verbose=False)['prognoses']
         for key in version_prognoses.keys(): # Only loop over keys that have been populated
             if key in version_prognoses: # Only replace keys that exist in the old version
