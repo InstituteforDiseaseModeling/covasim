@@ -244,11 +244,14 @@ def get_prognoses(by_age=True, version=None):
 
     if not by_age: # All rough estimates -- almost always, prognoses by age (below) are used instead
         prognoses = dict(
-            age_cutoffs  = np.array([0]),
-            symp_probs   = np.array([0.75]),
-            severe_probs = np.array([0.10]),
-            crit_probs   = np.array([0.04]),
-            death_probs  = np.array([0.01]),
+            age_cutoffs   = np.array([0]),
+            sus_ORs       = np.array([1.00]),
+            trans_ORs     = np.array([1.00]),
+            symp_probs    = np.array([0.75]),
+            comorbidities = np.array([1.00]),
+            severe_probs  = np.array([0.10]),
+            crit_probs    = np.array([0.04]),
+            death_probs   = np.array([0.01]),
         )
     else:
         prognoses = dict(
