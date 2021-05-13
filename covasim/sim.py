@@ -431,6 +431,8 @@ class Sim(cvb.BaseSim):
         # Actually make the people
         self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
+        if self['use_waning']:
+            self.init_people_immunity()
 
         # Handle anyone who isn't susceptible
         if self['frac_susceptible'] < 1:
@@ -526,6 +528,9 @@ class Sim(cvb.BaseSim):
             cvimm.init_immunity(self, create=create)
         return
 
+    def init_people_immunity(self):
+        self.people.pars['nab_kin'] = self['nab_kin']
+        return
 
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
@@ -618,7 +623,8 @@ class Sim(cvb.BaseSim):
         # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
         if self['use_waning']:
             has_nabs = np.setdiff1d(cvu.defined(people.init_nab), cvu.false(people.susceptible))
-            if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+            if len(has_nabs):
+                cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
