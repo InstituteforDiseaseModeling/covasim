@@ -529,7 +529,8 @@ class Sim(cvb.BaseSim):
         return
 
     def init_people_immunity(self):
-        self.people.pars['nab_kin'] = self['nab_kin']
+        self.people.pars['nab_kin']  = self['nab_kin']
+        self.people.pars['immunity'] = self['immunity']
         return
 
     def rescale(self):
