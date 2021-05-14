@@ -1167,6 +1167,22 @@ class Sim(cvb.BaseSim):
         return self.fit
 
 
+    def calibrate(self, calib_pars, **kwargs):
+        '''
+        Automtaically calibrate the simulation, returning a Calibration object.
+
+        Args:
+            calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
+            kwargs (dict): passed to cv.Calibration()
+
+        Returns:
+            calib: a Calibration object
+        '''
+        calib = cva.Calibration(sim=self, calib_pars=calib_pars, **kwargs)
+        calib.calibrate()
+        return calib
+
+
     def make_age_histogram(self, *args, output=True, **kwargs):
         '''
         Calculate the age histograms of infections, deaths, diagnoses, etc. See

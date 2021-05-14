@@ -129,6 +129,31 @@ def test_fit():
     return fit1
 
 
+def test_calibration():
+    sc.heading('Testing calibration')
+
+    pars = dict(
+        verbose = 0,
+        start_day = '2020-02-05',
+        pop_size = 1e3,
+        pop_scale = 4,
+        interventions = cv.test_prob(0.1),
+    )
+
+    sim = cv.Sim(pars, datafile='example_data.csv')
+
+    calib_pars = dict(
+        beta = [0.016, 0.005, 0.020],
+        rel_death_prob = [1.0, 0.5, 2.0],
+    )
+
+    calib = cv.Calibration(sim, calib_pars, n_trials=10)
+    calib.calibrate()
+    calib.plot(to_plot=['cum_deaths', 'cum_diagnoses'])
+
+    return calib
+
+
 def test_transtree():
     sc.heading('Testing transmission tree')
 
@@ -159,12 +184,13 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    snapshot  = test_snapshot()
-    agehist   = test_age_hist()
-    daily_age = test_daily_age()
-    daily     = test_daily_stats()
-    fit       = test_fit()
-    transtree = test_transtree()
+    # snapshot  = test_snapshot()
+    # agehist   = test_age_hist()
+    # daily_age = test_daily_age()
+    # daily     = test_daily_stats()
+    # fit       = test_fit()
+    calib     = test_calibration()
+    # transtree = test_transtree()
 
     print('\n'*2)
     sc.toc(T)
