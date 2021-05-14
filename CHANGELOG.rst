@@ -27,8 +27,10 @@ Latest versions (3.0.x)
 
 Version 3.0.3 (2021-05-14)
 --------------------------
-- Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``.
-- *Regression information*: If you are using waning, ``sim.people.diagnosed`` no longer refers to everyone who has ever been diagnosed, only those still infectious. You can use ``sim.people.defined('date_diagnosed')`` in place of ``sim.people.true('diagnosed')`` (before these were identical).
+- Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``. Note: this requires Optuna, which is not installed by default; please install separately via ``pip install optuna``.
+- Added a new result, ``known_deaths``, which counts only deaths among people who have been diagnosed.
+- ``sim.compute_fit()`` now returns the fit by default, and creates ``sim.fit`` (previously, this was stored in ``sim.results.fit``).
+- *Regression information*: Calls to ``sim.results.fit`` should be replaced with ``sim.fit``. The ``output`` parameter for ``sim.compute_fit()`` has been removed since it now always outputs the ``Fit`` object.
 - *GitHub info*: PR `1047 <https://github.com/amath-idm/covasim/pull/1047>`__
 
 

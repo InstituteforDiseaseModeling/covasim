@@ -1240,6 +1240,7 @@ class Calibration(Analyzer):
         calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
         custom_fn (function): a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
         label (str): a label for this calibration object
+        verbose (bool): whether to print details of the calibration
 
         kwargs (dict): passed to cv.Calibration()
 
@@ -1250,11 +1251,12 @@ class Calibration(Analyzer):
 
         sim = cv.Sim(datafile='data.csv')
         calib_pars = dict(beta=[0.015, 0.010, 0.020])
-        calib = sim.calibrate(calib_pars)
+        calib = cv.calibrate(sim, calib_pars)
+        calib.calibrate()
         calib.plot()
     '''
 
-    def __init__(self, sim, calib_pars=None, custom_fn=None, label=None, name=None, db_name=None, storage=None, n_workers=None, n_trials=None):
+    def __init__(self, sim, calib_pars=None, custom_fn=None, name=None, db_name=None, storage=None, n_workers=None, n_trials=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
 
@@ -1268,7 +1270,8 @@ class Calibration(Analyzer):
         self.calib_pars = calib_pars
         self.custom_fn  = custom_fn
         self.run_args   = sc.objdict(name=name, db_name=db_name, storage=storage, n_workers=n_workers, n_trials=n_trials)
-
+        self.verbose    = verbose
+        self.calibrated = False
         return
 
 
@@ -1304,6 +1307,10 @@ class Calibration(Analyzer):
 
     def worker(self):
         ''' Run a single worker '''
+        if self.verbose:
+            op.logging.set_verbosity(op.logging.DEBUG)
+        else:
+            op.logging.set_verbosity(op.logging.ERROR)
         study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
         output = study.optimize(self.run_trial, n_trials=self.run_args.n_trials)
         return output
@@ -1324,8 +1331,14 @@ class Calibration(Analyzer):
         return output
 
 
-    def calibrate(self, calib_pars=None, **kwargs):
-        ''' Actually perform calibration '''
+    def calibrate(self, calib_pars=None, verbose=True, **kwargs):
+        '''
+        Actually perform calibration.
+
+        Args:
+            calib_pars (dict): if supplied, overwrite stored calib_pars
+            kwargs (dict): if supplied, overwrite stored run_args (n_trials, n_workers, etc.)
+        '''
 
         # Load and validate calibration parameters
         if calib_pars is not None:
@@ -1333,47 +1346,45 @@ class Calibration(Analyzer):
         if self.calib_pars is None:
             errormsg = 'You must supply calibration parameters either when creating the calibration object or when calling calibrate().'
             raise ValueError(errormsg)
-
-        # Update optuna settings
-        to_pop = []
-        for k,v in kwargs.items():
-            if k in self.g:
-                self.g[k] = v
-                to_pop.append(k)
-        for k in to_pop:
-            kwargs.pop(k)
+        self.run_args.update(kwargs) # Update optuna settings
 
         # Run the optimization
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
         study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
-        self.best_pars = study.best_params
-        T = sc.toc(t0, output=True)
-        print(f'Output: {self.best_pars}, time: {T}')
+        self.best_pars = sc.objdict(study.best_params)
+        self.elapsed = sc.toc(t0, output=True)
 
         # Compare the results
-        self.initial_pars = {k:v[0] for k,v in self.calib_pars.items()}
+        self.initial_pars = sc.objdict({k:v[0] for k,v in self.calib_pars.items()})
         self.before = self.run_sim(calib_pars=self.initial_pars, label='Before calibration', return_sim=True)
-        self.after = self.run_sim(calib_pars=self.best_pars, label='After calibration', return_sim=True)
+        self.after  = self.run_sim(calib_pars=self.best_pars,    label='After calibration',  return_sim=True)
+
+        # Tidy up
+        self.calibrated = True
+        if verbose:
+            self.summarize()
+
         return
 
 
     def summarize(self):
-        try:
+        if self.calibrated:
+            print(f'Calibration for {self.run_args.n_workers*self.run_args.n_trials} total trials completed in {self.elapsed:0.1f} s.')
             before = self.before.fit.mismatch
             after = self.after.fit.mismatch
-            print('Initial parameter values:')
+            print('\nInitial parameter values:')
             print(self.initial_pars)
-            print('Best parameter values:')
+            print('\nBest parameter values:')
             print(self.best_pars)
-            print(f'Mismatch before calibration: {before:n}')
+            print(f'\nMismatch before calibration: {before:n}')
             print(f'Mismatch after calibration:  {after:n}')
-            print(f'Percent improvement:         {(1-(before-after)/before)*100:0.1f}%')
+            print(f'Percent improvement:         {((before-after)/before)*100:0.1f}%')
             return before, after
-        except Exception as E:
-            errormsg = 'Could not get summary, have you run the calibration?'
-            raise RuntimeError(errormsg) from E
+        else:
+            print('Calibration not yet run; please run calib.calibrate()')
+            return
 
 
     def plot(self, **kwargs):
