@@ -1234,39 +1234,57 @@ class Fit(Analyzer):
 class Calibration(Analyzer):
     '''
     A class to handle calibration of Covasim simulations.
+
+    Args:
+        sim (Sim): the simulation to calibrate
+        calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
+        custom_fn (function): a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
+        label (str): a label for this calibration object
+
+        kwargs (dict): passed to cv.Calibration()
+
+    Returns:
+        A Calibration object
+
+    **Example**::
+
+        sim = cv.Sim(datafile='data.csv')
+        calib_pars = dict(beta=[0.015, 0.010, 0.020])
+        calib = sim.calibrate(calib_pars)
+        calib.plot()
     '''
 
-    def __init__(self, sim, calib_pars=None, label=None, **kwargs):
+    def __init__(self, sim, calib_pars=None, custom_fn=None, label=None, name=None, db_name=None, storage=None, n_workers=None, n_trials=None):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
-        self.sim = sim
+
+        # Handle arguments
+        if name      is None: name      = 'covasim_calibration'
+        if db_name   is None: db_name   = f'{name}.db'
+        if storage   is None: storage   = f'sqlite:///{db_name}'
+        if n_workers is None: n_workers = 4
+        if n_trials  is None: n_trials  = 20
+        self.sim        = sim
         self.calib_pars = calib_pars
-        self.results = None
-        self.init_optuna(**kwargs)
-        return
+        self.custom_fn  = custom_fn
+        self.run_args   = sc.objdict(name=name, db_name=db_name, storage=storage, n_workers=n_workers, n_trials=n_trials)
 
-
-    def init_optuna(self, **kwargs):
-        ''' Create a (mutable) dictionary for global settings '''
-        g = sc.objdict() # g for "global" -- probably should rename
-        g.name      = kwargs.pop('name', 'covasim')
-        g.db_name   = kwargs.pop('db_name', f'{g.name}.db')
-        g.storage   = kwargs.pop('storage', f'sqlite:///{g.db_name}')
-        g.n_workers = kwargs.pop('n_workers', 4) # Define how many workers to run in parallel
-        g.n_trials  = kwargs.pop('n_trials', 100) # Define the number of trials, i.e. sim runs, per worker
-        self.g = g
-        if len(kwargs):
-            errormsg = f'Did not recognize keys {sc.strjoin(kwargs.keys())}'
-            raise ValueError(errormsg)
         return
 
 
     def run_sim(self, calib_pars, label=None, return_sim=False):
         ''' Create and run a simulation '''
         sim = self.sim.copy()
-        if label:
-            sim.label = label
-        sim.update_pars(calib_pars)
+        if label: sim.label = label
+        valid_pars = {k:v for k,v in calib_pars.items() if k in sim.pars}
+        sim.update_pars(valid_pars)
+        if self.custom_fn:
+            sim = self.custom_fn(sim, calib_pars)
+        else:
+            if len(valid_pars) != len(calib_pars):
+                extra = set(calib_pars.keys()) - set(valid_pars.keys())
+                errormsg = f'The following parameters are not part of the sim, nor is a custom function specified to use them: {sc.strjoin(extra)}'
+                raise ValueError(errormsg)
         sim.run()
         sim.compute_fit()
         if return_sim:
@@ -1286,23 +1304,23 @@ class Calibration(Analyzer):
 
     def worker(self):
         ''' Run a single worker '''
-        study = op.load_study(storage=self.g.storage, study_name=self.g.name)
-        output = study.optimize(self.run_trial, n_trials=self.g.n_trials)
+        study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        output = study.optimize(self.run_trial, n_trials=self.run_args.n_trials)
         return output
 
 
     def run_workers(self):
         ''' Run multiple workers in parallel '''
-        output = sc.parallelize(self.worker, self.g.n_workers)
+        output = sc.parallelize(self.worker, iterarg=self.run_args.n_workers)
         return output
 
 
     def make_study(self):
         ''' Make a study, deleting one if it already exists '''
-        if os.path.exists(self.g.db_name):
-            os.remove(self.g.db_name)
-            print(f'Removed existing calibration {self.g.db_name}')
-        output = op.create_study(storage=self.g.storage, study_name=self.g.name)
+        if os.path.exists(self.run_args.db_name):
+            os.remove(self.run_args.db_name)
+            print(f'Removed existing calibration {self.run_args.db_name}')
+        output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
 
@@ -1329,7 +1347,7 @@ class Calibration(Analyzer):
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
-        study = op.load_study(storage=self.g.storage, study_name=self.g.name)
+        study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
         self.best_pars = study.best_params
         T = sc.toc(t0, output=True)
         print(f'Output: {self.best_pars}, time: {T}')

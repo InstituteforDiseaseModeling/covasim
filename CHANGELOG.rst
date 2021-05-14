@@ -25,6 +25,13 @@ Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.0.3 (2021-05-14)
+--------------------------
+- Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``.
+- *Regression information*: If you are using waning, ``sim.people.diagnosed`` no longer refers to everyone who has ever been diagnosed, only those still infectious. You can use ``sim.people.defined('date_diagnosed')`` in place of ``sim.people.true('diagnosed')`` (before these were identical).
+- *GitHub info*: PR `1047 <https://github.com/amath-idm/covasim/pull/1047>`__
+
+
 Version 3.0.2 (2021-04-26)
 --------------------------
 - Added Novavax as one of the default vaccines.
