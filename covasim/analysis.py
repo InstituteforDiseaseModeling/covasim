@@ -3,6 +3,7 @@ Additional analysis functions that are not part of the core Covasim workflow,
 but which are useful for particular investigations.
 '''
 
+import os
 import numpy as np
 import pylab as pl
 import pandas as pd
@@ -12,9 +13,15 @@ from . import misc as cvm
 from . import interventions as cvi
 from . import settings as cvset
 from . import plotting as cvpl
+from . import run as cvr
+try:
+    import optuna as op
+except ImportError as E: # pragma: no cover
+    errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
+    op = ImportError(errormsg)
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'Calibration', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -1221,6 +1228,141 @@ class Fit(Analyzer):
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
+
+
+
+class Calibration(Analyzer):
+    '''
+    A class to handle calibration of Covasim simulations.
+    '''
+
+    def __init__(self, sim, calib_pars=None, label=None, **kwargs):
+        super().__init__(label=label) # Initialize the Analyzer object
+        if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
+        self.sim = sim
+        self.calib_pars = calib_pars
+        self.results = None
+        self.init_optuna(**kwargs)
+        return
+
+
+    def init_optuna(self, **kwargs):
+        ''' Create a (mutable) dictionary for global settings '''
+        g = sc.objdict() # g for "global" -- probably should rename
+        g.name      = kwargs.pop('name', 'covasim')
+        g.db_name   = kwargs.pop('db_name', f'{g.name}.db')
+        g.storage   = kwargs.pop('storage', f'sqlite:///{g.db_name}')
+        g.n_workers = kwargs.pop('n_workers', 4) # Define how many workers to run in parallel
+        g.n_trials  = kwargs.pop('n_trials', 100) # Define the number of trials, i.e. sim runs, per worker
+        self.g = g
+        if len(kwargs):
+            errormsg = f'Did not recognize keys {sc.strjoin(kwargs.keys())}'
+            raise ValueError(errormsg)
+        return
+
+
+    def run_sim(self, calib_pars, label=None, return_sim=False):
+        ''' Create and run a simulation '''
+        sim = self.sim.copy()
+        if label:
+            sim.label = label
+        sim.update_pars(calib_pars)
+        sim.run()
+        sim.compute_fit()
+        if return_sim:
+            return sim
+        else:
+            return sim.fit.mismatch
+
+
+    def run_trial(self, trial):
+        ''' Define the objective for Optuna '''
+        pars = {}
+        for key, (best,low,high) in self.calib_pars.items():
+            pars[key] = trial.suggest_uniform(key, low, high) # Sample from beta values within this range
+        mismatch = self.run_sim(pars)
+        return mismatch
+
+
+    def worker(self):
+        ''' Run a single worker '''
+        study = op.load_study(storage=self.g.storage, study_name=self.g.name)
+        output = study.optimize(self.run_trial, n_trials=self.g.n_trials)
+        return output
+
+
+    def run_workers(self):
+        ''' Run multiple workers in parallel '''
+        output = sc.parallelize(self.worker, self.g.n_workers)
+        return output
+
+
+    def make_study(self):
+        ''' Make a study, deleting one if it already exists '''
+        if os.path.exists(self.g.db_name):
+            os.remove(self.g.db_name)
+            print(f'Removed existing calibration {self.g.db_name}')
+        output = op.create_study(storage=self.g.storage, study_name=self.g.name)
+        return output
+
+
+    def calibrate(self, calib_pars=None, **kwargs):
+        ''' Actually perform calibration '''
+
+        # Load and validate calibration parameters
+        if calib_pars is not None:
+            self.calib_pars = calib_pars
+        if self.calib_pars is None:
+            errormsg = 'You must supply calibration parameters either when creating the calibration object or when calling calibrate().'
+            raise ValueError(errormsg)
+
+        # Update optuna settings
+        to_pop = []
+        for k,v in kwargs.items():
+            if k in self.g:
+                self.g[k] = v
+                to_pop.append(k)
+        for k in to_pop:
+            kwargs.pop(k)
+
+        # Run the optimization
+        t0 = sc.tic()
+        self.make_study()
+        self.run_workers()
+        study = op.load_study(storage=self.g.storage, study_name=self.g.name)
+        self.best_pars = study.best_params
+        T = sc.toc(t0, output=True)
+        print(f'Output: {self.best_pars}, time: {T}')
+
+        # Compare the results
+        self.initial_pars = {k:v[0] for k,v in self.calib_pars.items()}
+        self.before = self.run_sim(calib_pars=self.initial_pars, label='Before calibration', return_sim=True)
+        self.after = self.run_sim(calib_pars=self.best_pars, label='After calibration', return_sim=True)
+        return
+
+
+    def summarize(self):
+        try:
+            before = self.before.fit.mismatch
+            after = self.after.fit.mismatch
+            print('Initial parameter values:')
+            print(self.initial_pars)
+            print('Best parameter values:')
+            print(self.best_pars)
+            print(f'Mismatch before calibration: {before:n}')
+            print(f'Mismatch after calibration:  {after:n}')
+            print(f'Percent improvement:         {(1-(before-after)/before)*100:0.1f}%')
+            return before, after
+        except Exception as E:
+            errormsg = 'Could not get summary, have you run the calibration?'
+            raise RuntimeError(errormsg) from E
+
+
+    def plot(self, **kwargs):
+        msim = cvr.MultiSim([self.before, self.after])
+        fig = msim.plot(**kwargs)
+        return fig
+
 
 
 class TransTree(Analyzer):

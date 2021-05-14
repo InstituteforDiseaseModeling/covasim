@@ -1147,13 +1147,12 @@ class Sim(cvb.BaseSim):
             return string
 
 
-    def compute_fit(self, output=True, *args, **kwargs):
+    def compute_fit(self, *args, **kwargs):
         '''
         Compute the fit between the model and the data. See cv.Fit() for more
         information.
 
         Args:
-            output (bool): whether or not to return the TransTree; if not, store in sim.results
             args   (list): passed to cv.Fit()
             kwargs (dict): passed to cv.Fit()
 
@@ -1164,12 +1163,8 @@ class Sim(cvb.BaseSim):
             fit = sim.compute_fit()
             fit.plot()
         '''
-        fit = cva.Fit(self, *args, **kwargs)
-        if output:
-            return fit
-        else:
-            self.results.fit = fit
-            return
+        self.fit = cva.Fit(self, *args, **kwargs)
+        return self.fit
 
 
     def make_age_histogram(self, *args, output=True, **kwargs):
