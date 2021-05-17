@@ -4,6 +4,7 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
+from scipy.special import expit
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -251,7 +252,10 @@ def nab_to_efficacy(nab, ax, function_args):
     if ax == 'sus':
         slope = args['slope']
         n_50 = args['n_50']
-        efficacy = 1 / (1 + np.exp(-slope * (np.log10(nab) - np.log10(n_50))))  # from logistic regression computed in R using data from Khoury et al
+        logNAb = np.log(nab)
+        VE = logNAb*slope + n_50
+        efficacy = expit(VE) # from linear in logit-log space (see fit https://github.com/amath-idm/COVID-Immune-Modeling/blob/main/scripts/nab2eff.R)
+        # efficacy = 1 / (1 + np.exp(-slope * (np.log10(nab) - np.log10(n_50))))  # from logistic regression computed in R using data from Khoury et al
     else:
         efficacy = np.full(len(nab), fill_value=args)
     return efficacy
