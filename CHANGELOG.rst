@@ -15,7 +15,7 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Expanded tutorials (health care workers, calibration, exercises, etc.)
+- Continued updates to vaccine and variant parameters and workflows
 - Multi-region and geographical support
 - Economics and costing analysis
 
@@ -25,9 +25,9 @@ Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.0.3 (2021-05-14)
+Version 3.0.3 (2021-05-17)
 --------------------------
-- Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``. Note: this requires Optuna, which is not installed by default; please install separately via ``pip install optuna``.
+- Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``. Note: this requires Optuna, which is not installed by default; please install separately via ``pip install optuna``. See the updated calibration tutorial for more information.
 - Added a new result, ``known_deaths``, which counts only deaths among people who have been diagnosed.
 - ``sim.compute_fit()`` now returns the fit by default, and creates ``sim.fit`` (previously, this was stored in ``sim.results.fit``).
 - *Regression information*: Calls to ``sim.results.fit`` should be replaced with ``sim.fit``. The ``output`` parameter for ``sim.compute_fit()`` has been removed since it now always outputs the ``Fit`` object.
