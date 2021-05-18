@@ -30,6 +30,5 @@ if __name__ == '__main__':
     n_workers = 4
     calib = sim.calibrate(calib_pars=calib_pars, n_trials=n_trials, n_workers=n_workers)
 
-    # Summarize and plot the results
-    calib.summarize()
+    # Plot the results
     calib.plot(to_plot=['cum_tests', 'cum_diagnoses', 'cum_deaths'])

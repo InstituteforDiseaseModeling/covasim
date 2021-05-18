@@ -29,6 +29,7 @@ Version 3.0.3 (2021-05-17)
 --------------------------
 - Added a new class, ``cv.Calibration``, that can perform automatic calibration. Simplest usage is ``sim.calibrate(calib_pars)``. Note: this requires Optuna, which is not installed by default; please install separately via ``pip install optuna``. See the updated calibration tutorial for more information.
 - Added a new result, ``known_deaths``, which counts only deaths among people who have been diagnosed.
+- Updated several vaccine and variant parameters (e.g., B1.351 and B117 cross-immunity).
 - ``sim.compute_fit()`` now returns the fit by default, and creates ``sim.fit`` (previously, this was stored in ``sim.results.fit``).
 - *Regression information*: Calls to ``sim.results.fit`` should be replaced with ``sim.fit``. The ``output`` parameter for ``sim.compute_fit()`` has been removed since it now always outputs the ``Fit`` object.
 - *GitHub info*: PR `1047 <https://github.com/amath-idm/covasim/pull/1047>`__

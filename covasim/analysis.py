@@ -1288,6 +1288,13 @@ class Calibration(Analyzer):
         self.custom_fn  = custom_fn
         self.verbose    = verbose
         self.calibrated = False
+
+        # Handle if the sim has already been run
+        if self.sim.complete:
+            print('Warning: sim has already been run; re-initializing, but in future, use a sim that has not been run')
+            self.sim = self.sim.copy()
+            self.sim.initialize()
+
         return
 
 
@@ -1316,7 +1323,7 @@ class Calibration(Analyzer):
         ''' Define the objective for Optuna '''
         pars = {}
         for key, (best,low,high) in self.calib_pars.items():
-            pars[key] = trial.suggest_uniform(key, low, high) # Sample from beta values within this range
+            pars[key] = trial.suggest_uniform(key, low, high) # Sample from values within this range
         mismatch = self.run_sim(pars)
         return mismatch
 
@@ -1353,6 +1360,7 @@ class Calibration(Analyzer):
 
         Args:
             calib_pars (dict): if supplied, overwrite stored calib_pars
+            verbose (bool): whether to print output from each trial
             kwargs (dict): if supplied, overwrite stored run_args (n_trials, n_workers, etc.)
         '''
 
@@ -1368,8 +1376,8 @@ class Calibration(Analyzer):
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
-        study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
-        self.best_pars = sc.objdict(study.best_params)
+        self.study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        self.best_pars = sc.objdict(self.study.best_params)
         self.elapsed = sc.toc(t0, output=True)
 
         # Compare the results
