@@ -4,6 +4,7 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
+from scipy.special import expit
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -401,7 +402,7 @@ def precompute_waning(length, pars=None):
     if form is None or form == 'nab_growth_decay':
         output = nab_growth_decay(length, **pars)
 
-    if form == 'nab_decay':
+    elif form == 'nab_decay':
         output = nab_decay(length, **pars)
 
     elif form == 'exp_decay':

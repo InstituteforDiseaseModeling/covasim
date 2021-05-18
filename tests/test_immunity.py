@@ -93,7 +93,7 @@ def test_waning(do_plot=False):
         # Define parameters specific to this test
         pars = dict(
             n_days    = 90,
-            beta      = 0.008,
+            beta      = 0.08,
         )
 
         # Optionally include rescaling
@@ -117,7 +117,7 @@ def test_waning(do_plot=False):
             v0 = res0[key]
             v1 = res1[key]
             print(f'Checking {key:20s} ... ', end='')
-            assert v1 > v0, f'Expected {key} to be higher with waning than without'
+            assert v1 > v0, f'Expected {key} to be higher with waning ({v1}) than without ({v0})'
             print(f'✓ ({v1} > {v0})')
 
         # Optionally plot
@@ -219,11 +219,11 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
+#    sim1   = test_states()
     msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_strains(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    res    = test_decays(do_plot=do_plot)
+#    sim2   = test_strains(do_plot=do_plot)
+#    sim3   = test_vaccines(do_plot=do_plot)
+#    res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

@@ -541,15 +541,10 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-
-            mild_inds = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-            severe_inds = self.check_inds(self.susceptible, self.date_severe, filter_inds=inds)
-
-            self.prior_symptoms[inds] = self.pars['rel_imm_symp']['asymp']
+            self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
-            if len(inds):
-                cvi.init_nab(self, inds, prior_inf=True)
+            self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
+            cvi.init_nab(self, inds, prior_inf=True)
 
         return n_infections # For incrementing counters
 
