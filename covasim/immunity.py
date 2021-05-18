@@ -173,6 +173,8 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             init_nab = peak_nab * nab_boost
             people.peak_nab[prior_nab_inds] = init_nab
 
@@ -187,6 +189,8 @@ def init_nab(people, inds, prior_inf=True):
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
             init_nab = peak_nab * nab_boost
             people.peak_nab[prior_nab_inds] = init_nab
