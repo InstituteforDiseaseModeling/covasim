@@ -1172,7 +1172,8 @@ class Sim(cvb.BaseSim):
 
     def calibrate(self, calib_pars, **kwargs):
         '''
-        Automatically calibrate the simulation, returning a Calibration object.
+        Automatically calibrate the simulation, returning a Calibration object
+        (a type of analyzer). See the documentation on that class for more information.
 
         Args:
             calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
@@ -1185,7 +1186,7 @@ class Sim(cvb.BaseSim):
 
             sim = cv.Sim(datafile='data.csv')
             calib_pars = dict(beta=[0.015, 0.010, 0.020])
-            calib = sim.calibrate(calib_pars)
+            calib = sim.calibrate(calib_pars, n_trials=50)
             calib.plot()
         '''
         calib = cva.Calibration(sim=self, calib_pars=calib_pars, **kwargs)

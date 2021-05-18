@@ -1233,15 +1233,27 @@ class Fit(Analyzer):
 
 class Calibration(Analyzer):
     '''
-    A class to handle calibration of Covasim simulations.
+    A class to handle calibration of Covasim simulations. Uses the Optuna hyperparameter
+    optimization library (optuna.org), which must be installed separately (via
+    pip install optuna).
+
+    Note: running a calibration does not guarantee a good fit! You must ensure that
+    you run for a sufficient number of iterations, have enough free parameters, and
+    that the parameters have wide enough bounds. Please see the tutorial on calibration
+    for more information.
 
     Args:
         sim (Sim): the simulation to calibrate
         calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
         custom_fn (function): a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
+        n_trials (int): the number of trials per worker
+        n_workers (int): the number of parallel workers (default: maximum
+        total_trials (int): if n_trials is not supplied, calculate by dividing this number by n_workers)
+        name (str): the name of the database (default: 'covasim_calibration')
+        db_name (str): the name of the database file (default: 'covasim_calibration.db')
+        storage (str): the location of the database (default: sqlite)
         label (str): a label for this calibration object
         verbose (bool): whether to print details of the calibration
-
         kwargs (dict): passed to cv.Calibration()
 
     Returns:
@@ -1251,25 +1263,29 @@ class Calibration(Analyzer):
 
         sim = cv.Sim(datafile='data.csv')
         calib_pars = dict(beta=[0.015, 0.010, 0.020])
-        calib = cv.calibrate(sim, calib_pars)
+        calib = cv.Calibration(sim, calib_pars, total_trials=100)
         calib.calibrate()
         calib.plot()
     '''
 
-    def __init__(self, sim, calib_pars=None, custom_fn=None, name=None, db_name=None, storage=None, n_workers=None, n_trials=None, label=None, verbose=True):
+    def __init__(self, sim, calib_pars=None, custom_fn=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
+        import multiprocessing as mp
 
-        # Handle arguments
+        # Handle run arguments
+        if n_trials  is None: n_trials  = 20
+        if n_workers is None: n_workers = mp.cpu_count()
         if name      is None: name      = 'covasim_calibration'
         if db_name   is None: db_name   = f'{name}.db'
         if storage   is None: storage   = f'sqlite:///{db_name}'
-        if n_workers is None: n_workers = 4
-        if n_trials  is None: n_trials  = 20
+        if total_trials is not None: n_trials = total_trials/n_workers
+        self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, storage=storage)
+
+        # Handle other inputs
         self.sim        = sim
         self.calib_pars = calib_pars
         self.custom_fn  = custom_fn
-        self.run_args   = sc.objdict(name=name, db_name=db_name, storage=storage, n_workers=n_workers, n_trials=n_trials)
         self.verbose    = verbose
         self.calibrated = False
         return
