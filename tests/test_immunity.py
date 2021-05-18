@@ -94,7 +94,6 @@ def test_waning(do_plot=False):
         pars = dict(
             n_days    = 90,
             beta      = 0.008,
-            nab_decay = dict(form='nab_decay', decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
         )
 
         # Optionally include rescaling
