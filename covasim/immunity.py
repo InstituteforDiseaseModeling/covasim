@@ -288,7 +288,7 @@ def init_immunity(sim, create=False):
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['nab_kin'] = precompute_waning(length=sim['n_days'], pars=sim['nab_decay'])
+    sim['nab_kin'] = precompute_waning(length=sim['n_days']+1, pars=sim['nab_decay'])
 
     return
 
@@ -450,7 +450,7 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2)
 
     t  = np.arange(length, dtype=cvd.default_int)
     y1 = f1(cvu.true(t<= growth_time), growth_time)
-    y2 = f2(cvu.true(t<= decay_time1), decay_rate1)
+    y2 = f2(cvu.true((t>growth_time)*(t<= decay_time1)), decay_rate1)
     y3 = f3(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([y1, y2, y3])
 
