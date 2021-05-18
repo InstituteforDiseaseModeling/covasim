@@ -21,10 +21,11 @@ jobs:
       - name: Install Covasim
         run: pip install -e .
       - name: Install tests
-        run: pip install pytest
+        working-directory: ./tests
+        run: pip install -r requirements_test.txt
       - name: Run integration tests
         working-directory: ./tests
-        run: pytest -v test_*.py --durations=0
+        run: pytest -v test_*.py --workers auto --durations=0
       - name: Run unit tests
         working-directory: ./tests/unittests
-        run: pytest -v test_*.py --durations=0
+        run: pytest -v test_*.py --workers auto --durations=0

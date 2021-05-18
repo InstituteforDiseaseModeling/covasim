@@ -129,6 +129,37 @@ def test_fit():
     return fit1
 
 
+def test_calibration():
+    sc.heading('Testing calibration')
+
+    pars = dict(
+        verbose = 0,
+        start_day = '2020-02-05',
+        pop_size = 1e3,
+        pop_scale = 4,
+        interventions = [cv.test_prob(symp_prob=0.1)],
+    )
+
+    sim = cv.Sim(pars, datafile='example_data.csv')
+
+    calib_pars = dict(
+        beta      = [0.013, 0.005, 0.020],
+        test_prob = [0.01, 0.00, 0.30]
+    )
+
+    def set_test_prob(sim, calib_pars):
+        tp = sim.get_intervention(cv.test_prob)
+        tp.symp_prob = calib_pars['test_prob']
+        return sim
+
+    calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=5)
+    calib.plot(to_plot=['cum_deaths', 'cum_diagnoses'])
+
+    assert calib.after.fit.mismatch < calib.before.fit.mismatch
+
+    return calib
+
+
 def test_transtree():
     sc.heading('Testing transmission tree')
 
@@ -164,6 +195,7 @@ if __name__ == '__main__':
     daily_age = test_daily_age()
     daily     = test_daily_stats()
     fit       = test_fit()
+    calib     = test_calibration()
     transtree = test_transtree()
 
     print('\n'*2)

@@ -64,6 +64,7 @@ class PeopleMeta(sc.prettyobj):
             'tested',
             'diagnosed',
             'recovered',
+            'known_dead',
             'dead',
             'known_contact',
             'quarantined',
@@ -146,6 +147,7 @@ result_stocks = {
     'recovered':   'Number recovered',
     'dead':        'Number dead',
     'diagnosed':   'Number of confirmed cases',
+    'known_dead':  'Number of confirmed deaths',
     'quarantined': 'Number in quarantine',
     'vaccinated':  'Number of people vaccinated',
 }
@@ -167,6 +169,7 @@ result_flows = {
     'deaths':       'deaths',
     'tests':        'tests',
     'diagnoses':    'diagnoses',
+    'known_deaths': 'known deaths',
     'quarantined':  'quarantined people',
     'vaccinations': 'vaccinations',
     'vaccinated':   'vaccinated people'
@@ -260,6 +263,8 @@ def get_default_colors():
     c.critical              = '#b86113'
     c.deaths                = '#000000'
     c.dead                  = c.deaths
+    c.known_dead            = c.deaths
+    c.known_deaths          = c.deaths
     c.default               = '#000000'
     c.pop_nabs              = '#32733d'
     c.pop_protection        = '#9e1149'
@@ -273,6 +278,7 @@ overview_plots = [
     'cum_severe',
     'cum_critical',
     'cum_deaths',
+    'cum_known_deaths',
     'cum_diagnoses',
     'new_infections',
     'new_severe',
@@ -332,6 +338,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                         'cum_severe',
                         'cum_critical',
                         'cum_deaths',
+                        'cum_known_deaths',
                     ],
             })
 
@@ -345,6 +352,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                 ],
                 'Cumulative deaths': [
                     'cum_deaths',
+                    'cum_known_deaths',
                 ],
             })
 
