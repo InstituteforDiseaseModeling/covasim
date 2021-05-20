@@ -619,7 +619,6 @@ class Sim(cvb.BaseSim):
             has_nabs = cvu.defined(people.peak_nab)
             if len(has_nabs):
                 cvimm.check_nab(t, people, inds=has_nabs)
-                viral_load[has_nabs] *= cvu.sample(**self['vl_redux'], size=len(has_nabs))
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
