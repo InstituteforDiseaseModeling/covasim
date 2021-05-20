@@ -168,7 +168,7 @@ class People(cvb.BasePeople):
 
         # Initialize
         self.t = t
-        self.is_exp     = self.true('exposed') # For storing the interim values since used in every subsequent calculation
+        self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
         # Perform updates
         self.init_flows()
