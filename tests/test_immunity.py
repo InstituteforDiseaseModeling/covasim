@@ -111,7 +111,6 @@ def test_waning(do_plot=False):
         msim = cv.MultiSim([s0,s1])
         msims[rescale] = msim
 
-
         # Check results
         for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
             v0 = res0[key]

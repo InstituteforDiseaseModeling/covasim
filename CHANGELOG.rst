@@ -28,7 +28,10 @@ Version 3.0.4 (2021-05-19)
 --------------------------
 - Fixed a bug that prevented simulations from being run *without* prognoses by age.
 - Fixed an array length mismatch for single-dose vaccines.
+- For neutralizing antibodies (NAbs), replaced initial NAbs with peak and last NAbs.
+- Added a new NAb functional form, ``nab_growth_decay``, which is the new default.
 - Removed the ``rel_imm_strain`` parameter; self-immunity is now always 1.0.
+- Updated vaccine and strain parameter values based on fits to empirical data.
 - *GitHub info*: PR `1058 <https://github.com/amath-idm/covasim/pull/1058>`__
 
 
