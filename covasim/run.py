@@ -86,7 +86,7 @@ class MultiSim(cvb.FlexPretty):
         # Set properties
         self.sims      = sims
         self.base_sim  = base_sim
-        self.label     = label
+        self.label     = base_sim.label if (label is None and base_sim is not None) else label
         self.run_args  = sc.mergedicts(kwargs)
         self.results   = None
         self.which     = None # Whether the multisim is to be reduced, combined, etc.
@@ -660,14 +660,16 @@ class MultiSim(cvb.FlexPretty):
             args = args[0] # A single list of MultiSims has been provided
 
         # Create the multisim from the base sim of the first argument
-        msim = MultiSim(base_sim=sc.dcp(args[0].base_sim))
+        msim = MultiSim(base_sim=sc.dcp(args[0].base_sim), label=args[0].label)
         msim.sims = []
         msim.chunks = [] # This is used to enable automatic splitting later
 
         # Handle different options for combining
         if base: # Only keep the base sims
             for i,ms in enumerate(args):
-                msim.sims.append(sc.dcp(ms.base_sim))
+                sim = sc.dcp(ms.base_sim)
+                sim.label = ms.label
+                msim.sims.append(sim)
                 msim.chunks.append([[i]])
         else: # Keep all the sims
             for ms in args:
