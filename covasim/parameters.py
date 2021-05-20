@@ -244,11 +244,14 @@ def get_prognoses(by_age=True, version=None):
 
     if not by_age: # All rough estimates -- almost always, prognoses by age (below) are used instead
         prognoses = dict(
-            age_cutoffs  = np.array([0]),
-            symp_probs   = np.array([0.75]),
-            severe_probs = np.array([0.10]),
-            crit_probs   = np.array([0.04]),
-            death_probs  = np.array([0.01]),
+            age_cutoffs   = np.array([0]),
+            sus_ORs       = np.array([1.00]),
+            trans_ORs     = np.array([1.00]),
+            symp_probs    = np.array([0.75]),
+            comorbidities = np.array([1.00]),
+            severe_probs  = np.array([0.10]),
+            crit_probs    = np.array([0.04]),
+            death_probs   = np.array([0.01]),
         )
     else:
         prognoses = dict(
@@ -264,7 +267,7 @@ def get_prognoses(by_age=True, version=None):
     prognoses = relative_prognoses(prognoses) # Convert to conditional probabilities
 
     # If version is specified, load old parameters
-    if version is not None:
+    if by_age and version is not None:
         version_prognoses = cvm.get_version_pars(version, verbose=False)['prognoses']
         for key in version_prognoses.keys(): # Only loop over keys that have been populated
             if key in version_prognoses: # Only replace keys that exist in the old version
@@ -412,9 +415,9 @@ def get_cross_immunity(default=False):
 
         b1351 = dict(
             wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
-            b117  = 0.1,   # Assumption
+            b117  = 0.5,   # Assumption
             b1351 = 1.0,   # Default for own-immunity
-            p1    = 0.1,   # Assumption
+            p1    = 0.5,   # Assumption
         ),
 
         p1 = dict(
