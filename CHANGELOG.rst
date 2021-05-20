@@ -24,6 +24,13 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 3.0.4 (2021-05-19)
+--------------------------
+- Fixed a bug that prevented simulations from being run *without* prognoses by age.
+- Fixed an array length mismatch for single-dose vaccines.
+- Removed the ``rel_imm_strain`` parameter; self-immunity is now always 1.0.
+- *GitHub info*: PR `1058 <https://github.com/amath-idm/covasim/pull/1058>`__
+
 
 Version 3.0.3 (2021-05-17)
 --------------------------
