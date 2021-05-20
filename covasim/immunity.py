@@ -268,7 +268,7 @@ def init_immunity(sim, create=False):
         return
 
     # Pull out all of the circulating strains for cross-immunity
-    ns       = sim['n_strains']
+    ns = sim['n_strains']
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:

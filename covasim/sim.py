@@ -113,7 +113,6 @@ class Sim(cvb.BaseSim):
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
-        # self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
