@@ -116,6 +116,28 @@ def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+def test_vaccine_1dose(do_plot=False, do_show=True, do_save=False):
+    # Create some base parameters
+    pars = sc.mergedicts(base_pars, {
+        'beta': 0.015,
+        'n_days': 120,
+    })
+    janssen = cv.vaccinate(vaccine='janssen', days=[0])
+    sim = cv.Sim(
+        use_waning=True,
+        pars=pars,
+        interventions=janssen
+    )
+    sim.run()
+    to_plot = sc.objdict({
+        'New infections': ['new_infections'],
+        'Cumulative infections': ['cum_infections'],
+        'New reinfections': ['new_reinfections'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
+
+
 def test_synthpops():
     sim = cv.Sim(use_waning=True, **sc.mergedicts(base_pars, dict(pop_size=5000, pop_type='synthpops')))
     sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
@@ -405,6 +427,7 @@ if __name__ == '__main__':
     # Run Vaccine tests
     sim4 = test_synthpops()
     sim5 = test_vaccine_1strain()
+    sim6 = test_vaccine_1dose()
 
     # Run multisim and scenario tests
     scens0 = test_vaccine_1strain_scen()
