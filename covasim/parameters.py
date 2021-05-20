@@ -74,6 +74,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_eff']         = dict(sus=dict(slope=0.8412132, n_50=1.318724), symp=0.3, sev=0.52) # Parameters to map nabs to efficacy
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+    pars['vl_redux']        = dict(dist='uniform', par1=.38, par2=.49)
 
     # Strain-specific disease transmission parameters. By default, these are set up for a single strain, but can all be modified for multiple strains
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by strain
