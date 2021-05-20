@@ -28,8 +28,9 @@ Version 3.0.4 (2021-05-19)
 --------------------------
 - Fixed a bug that prevented simulations from being run *without* prognoses by age.
 - Fixed an array length mismatch for single-dose vaccines.
-- For neutralizing antibodies (NAbs), replaced initial NAbs with peak and last NAbs.
-- Added a new NAb functional form, ``nab_growth_decay``, which is the new default.
+- The default antibody kinetics are now a 3-part curve, with a 14-day growth, 250 day exp decay and then another exponential decay with a exponentially decaying decay parameter. This is captured in the new NAb functional form, ``nab_growth_decay``. To align with this change, NAbs are now initialized at the time of infection, so that individuals build immunity over the course of infection. 
+- Some strain parameter changes based on https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
+- Added strain to the infection log
 - Removed the ``rel_imm_strain`` parameter; self-immunity is now always 1.0.
 - Updated vaccine and strain parameter values based on fits to empirical data.
 - *GitHub info*: PR `1058 <https://github.com/amath-idm/covasim/pull/1058>`__
