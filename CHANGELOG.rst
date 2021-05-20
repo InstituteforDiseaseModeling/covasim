@@ -33,6 +33,7 @@ Version 3.0.4 (2021-05-19)
 - Added strain to the infection log
 - Removed the ``rel_imm_strain`` parameter; self-immunity is now always 1.0.
 - Updated vaccine and strain parameter values based on fits to empirical data.
+- Merged multisims now use the labels from each multisim, rather than the sim labels, for plotting.
 - *GitHub info*: PR `1058 <https://github.com/amath-idm/covasim/pull/1058>`__
 
 
