@@ -94,7 +94,8 @@ class PeopleMeta(sc.prettyobj):
         # Neutralizing antibody states, not by strain
         self.nab_states = [
             'prior_symptoms',   # Float
-            'init_nab',         # Float, initial neutralization titre relative to convalescent plasma
+            'peak_nab',         # Float, peak neutralization titre relative to convalescent plasma
+            'last_nab',         # Float, neutralization titre relative to convalescent plasma on day of boost
             'nab',              # Float, current neutralization titre relative to convalescent plasma
         ]
 

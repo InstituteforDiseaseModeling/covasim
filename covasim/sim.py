@@ -113,7 +113,6 @@ class Sim(cvb.BaseSim):
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
-        # self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
@@ -615,10 +614,11 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus = people.rel_sus
 
-        # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
+        # Check nabs.
         if self['use_waning']:
-            has_nabs = np.setdiff1d(cvu.defined(people.init_nab), cvu.false(people.susceptible))
-            if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+            has_nabs = cvu.defined(people.peak_nab)
+            if len(has_nabs):
+                cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):

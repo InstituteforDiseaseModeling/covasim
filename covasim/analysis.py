@@ -1266,6 +1266,8 @@ class Calibration(Analyzer):
         calib = cv.Calibration(sim, calib_pars, total_trials=100)
         calib.calibrate()
         calib.plot()
+
+    New in version 3.0.3.
     '''
 
     def __init__(self, sim, calib_pars=None, custom_fn=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
