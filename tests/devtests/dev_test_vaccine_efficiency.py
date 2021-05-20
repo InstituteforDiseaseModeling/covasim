@@ -37,7 +37,7 @@ pars = {
 }
 
 # Define vaccine arm
-trial_size = 2000
+trial_size = 4000
 start_trial = 20
 
 def subtarget(sim):
@@ -63,25 +63,35 @@ for vaccine in vaccines:
     sims.append(sim)
 
 # Run
+# Run
 msim = cv.MultiSim(sims)
 msim.run(keep_people=True)
 
 results = sc.objdict()
-print('Vaccine efficiency for symptomatic covid:')
+print('Vaccine efficiency:')
 for sim in msim.sims:
     vaccine = sim.label
-    vacc_inds = cv.true(sim.people.vaccinated) # Find trial arm indices, those who were vaccinated
+    results[vaccine] = sc.objdict()
+    vacc_inds = cv.true(sim.people.vaccinated)  # Find trial arm indices, those who were vaccinated
     placebo_inds = sim['analyzers'][0].placebo_inds
-    assert (len(set(vacc_inds).intersection(set(placebo_inds))) == 0) # Check that there is no overlap
-    # Calculate vaccine efficiency
-    VE = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
-              np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
-    results[vaccine] = VE
-    print(f'  {vaccine:8s}: {VE*100:0.2f}%')
+    assert (len(set(vacc_inds).intersection(set(placebo_inds))) == 0)  # Check that there is no overlap
+    # Calculate vaccine efficacy against infection
+    VE_inf = 1 - (np.isfinite(sim.people.date_exposed[vacc_inds]).sum() /
+                  np.isfinite(sim.people.date_exposed[placebo_inds]).sum())
+    # Calculate vaccine efficacy against symptoms
+    VE_symp = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
+                   np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
+    # Calculate vaccine efficacy against severe disease
+    VE_sev = 1 - (np.isfinite(sim.people.date_severe[vacc_inds]).sum() /
+                  np.isfinite(sim.people.date_severe[placebo_inds]).sum())
+    results[vaccine]['inf'] = VE_inf
+    results[vaccine]['symp'] = VE_symp
+    results[vaccine]['sev'] = VE_sev
+    print(f'  {vaccine:8s}: infection: {VE_inf * 100:0.2f}%, symptoms: {VE_symp * 100:0.2f}%, severity: {VE_sev * 100:0.2f}%')
 
 # Plot
 to_plot = cv.get_default_plots('default', 'scen')
 to_plot['Vaccinations'] = ['cum_vaccinated']
-msim.plot(to_plot=to_plot)
+# msim.plot(to_plot=to_plot)
 
 print('Done')

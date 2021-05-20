@@ -68,10 +68,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
     pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001) # Parameters describing the kinetics of decay of nabs over time, taken from fig3b of https://doi.org/10.1101/2021.03.09.21252641
+    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=14, decay_rate1=np.log(2) / 90, decay_time1=250, decay_rate2=0.001)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(sus=dict(slope=1.6, n_50=0.05), symp=0.1, sev=0.52) # Parameters to map nabs to efficacy
+    pars['nab_eff']         = dict(sus=dict(slope=0.8412132, n_50=1.318724), symp=0.3, sev=0.52) # Parameters to map nabs to efficacy
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
@@ -367,23 +367,23 @@ def get_strain_pars(default=False):
             rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.8, # From https://www.ssi.dk/aktuelt/nyheder/2021/b117-kan-fore-til-flere-indlaggelser and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
             rel_crit_prob   = 1.0, # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
-            rel_death_prob  = 1.0, # See comment above.
+            rel_death_prob  = 1.6, # See comment above.
         ),
 
         b1351 = dict(
             rel_beta        = 1.4,
-            rel_symp_prob   = 1.0,
-            rel_severe_prob = 1.4,
+            rel_symp_prob   = 2.0,
+            rel_severe_prob = 3.6,
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 1.4,
+            rel_death_prob  = 3.2,
         ),
 
         p1 = dict(
             rel_beta        = 1.4, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
-            rel_severe_prob = 1.4,
+            rel_severe_prob = 2.6,
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 2.0,
+            rel_death_prob  = 1.67,
         )
     )
 
@@ -496,7 +496,7 @@ def get_vaccine_dose_pars(default=False):
     pars = dict(
 
         default = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
             nab_init  = dict(dist='normal', par1=2, par2=2),
             nab_boost = 2,
             doses     = 1,
@@ -504,7 +504,7 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         pfizer = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
             nab_init  = dict(dist='normal', par1=2, par2=2),
             nab_boost = 3,
             doses     = 2,
@@ -512,7 +512,7 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         moderna = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
             nab_init  = dict(dist='normal', par1=2, par2=2),
             nab_boost = 3,
             doses     = 2,
@@ -520,23 +520,23 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         az = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-0.85, par2=2),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
+            nab_init  = dict(dist='normal', par1=-1, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 21,
         ),
 
         jj = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
-            nab_init  = dict(dist='normal', par1=-1.1, par2=2),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
+            nab_init  = dict(dist='normal', par1=1, par2=2),
             nab_boost = 3,
             doses     = 1,
             interval  = None,
         ),
 
         novavax = dict(
-            nab_eff   = dict(sus=dict(slope=1.6, n_50=0.05)),
+            nab_eff   = dict(sus=dict(slope=0.8412132, n_50=1.318724)),
             nab_init  = dict(dist='normal', par1=-0.9, par2=2),
             nab_boost = 3,
             doses     = 2,
