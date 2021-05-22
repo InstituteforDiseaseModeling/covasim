@@ -178,6 +178,8 @@ result_flows = {
 
 result_flows_by_variant = {
     'infections_by_variant': 'infections by variant',
+    'symptomatic_by_variant': 'symptomatic by variant',
+    'severe_by_variant': 'severe by variant',
     'infectious_by_variant': 'infectious by variant',
 }
 
@@ -260,7 +262,9 @@ def get_default_colors():
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
+    c.symptomatic_by_variant= '#c1ad71'
     c.severe                = '#c1981d'
+    c.severe_by_variant     = '#c1981d'
     c.critical              = '#b86113'
     c.deaths                = '#000000'
     c.dead                  = c.deaths

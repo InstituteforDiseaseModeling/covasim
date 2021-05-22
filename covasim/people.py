@@ -486,6 +486,7 @@ class People(cvb.BasePeople):
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
+        self.flows_variant['new_symptomatic_by_variant'][variant] += len(symp_inds)
 
         # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
         dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))
@@ -500,6 +501,7 @@ class People(cvb.BasePeople):
         is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
+        self.flows_variant['new_severe_by_variant'][variant] += len(sev_inds)
 
         # CASE 2.1: Mild symptoms, no hospitalization required and no probability of death
         dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))
