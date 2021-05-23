@@ -367,7 +367,7 @@ def get_variant_pars(default=False):
             rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.64, # From https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3792894, and consistent with https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348 and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
             rel_crit_prob   = 1.0, # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
-            rel_death_prob  = 1.6, # See comment above. # TODO: conditional on severity, should this not be lower?
+            rel_death_prob  = 1.0, # See comment above.
         ),
 
         b1351 = dict(
@@ -375,7 +375,7 @@ def get_variant_pars(default=False):
             rel_symp_prob   = 1.0,
             rel_severe_prob = 3.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 3.2, # TODO: add source?? also, conditional on severity, should this not be lower?
+            rel_death_prob  = 1.0,
         ),
 
         p1 = dict(
@@ -383,7 +383,7 @@ def get_variant_pars(default=False):
             rel_symp_prob   = 1.0,
             rel_severe_prob = 2.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 1.67, # TODO: conditional on severity, should this not be lower?
+            rel_death_prob  = 1.0, 
         )
     )
 
