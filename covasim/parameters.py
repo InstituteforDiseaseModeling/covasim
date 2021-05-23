@@ -371,7 +371,7 @@ def get_variant_pars(default=False):
         ),
 
         b1351 = dict(
-            rel_beta        = 1.45, # Early analyses suggest that b117 is ~50% more transmissible than b1351 (https://www.medrxiv.org/content/10.1101/2021.05.19.21257476v1). We use the above-mentioned results for b117 transmissibility and then use a value for b1351 which is ~50% lower.
+            rel_beta        = 1.0, # No increase in transmissibility; B1351's fitness advantage comes from the reduction in neutralisation
             rel_symp_prob   = 1.0,
             rel_severe_prob = 3.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
             rel_crit_prob   = 1.0,
@@ -383,7 +383,7 @@ def get_variant_pars(default=False):
             rel_symp_prob   = 1.0,
             rel_severe_prob = 2.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
             rel_crit_prob   = 1.0,
-            rel_death_prob  = 1.0, 
+            rel_death_prob  = 1.0,
         )
     )
 
