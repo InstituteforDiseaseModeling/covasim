@@ -59,6 +59,8 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
+            elif key == 'n_infections':
+                self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
@@ -461,6 +463,7 @@ class People(cvb.BasePeople):
         self.recovered[inds]      = False
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
+        self.n_infections[inds]  += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)

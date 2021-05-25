@@ -1,11 +1,11 @@
 import covasim as cv
 import sciris as sc
 import numpy as np
+import covasim.utils as cvu
 
-
-do_plot = 0
+do_plot = 1
 do_show = 0
-do_save = 0
+do_save = 1
 debug   = 0
 
 base_pars = dict(
@@ -49,6 +49,44 @@ def test_import2variants(do_plot=False, do_show=True, do_save=False):
     return sim
 
 
+def test_efficacy(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test the efficacy of infection against reinfection')
+
+    pars = sc.mergedicts(base_pars, {
+        'beta': 0.015,
+        'pop_infected': 100,
+        'pop_size': 50_000,
+        'n_days': 180,
+    })
+    interventions = [cv.change_beta([30, 90], [0.3, 1])]
+    sim = cv.Sim(use_waning=True,
+                 pars=pars,
+                 interventions=interventions
+                 )
+    sim.run()
+
+    # Number of people exposed during the first wave:
+    d1 = 90
+    trial_arm_size = sim.results.cum_infections[d1]
+    trial_not_reinfected = len(cvu.true(sim.people['date_exposed'] <= d1))
+    trial_reinfected = trial_arm_size-trial_not_reinfected
+    control_arm_size = 50_000-sim.results.cum_infections[d1]
+
+
+
+    eff_stats = []
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections', 'new_reinfections'],
+        'Cumulative infections': ['cum_infections', 'cum_reinfections'],
+        'Immunity levels': ['pop_nabs', 'pop_protection'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
+
+    return sim
+
+
 
 #%% Vaccination tests
 
@@ -67,14 +105,6 @@ def test_vaccine_1variant(do_plot=False, do_show=True, do_save=False):
         interventions=pfizer
     )
     sim.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New reinfections': ['new_reinfections'],
-    })
-    if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
 
     return sim
 
@@ -378,29 +408,29 @@ if __name__ == '__main__':
     # Gather keywords
     kw = dict(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # Run simplest possible test
-    test_simple(do_plot=do_plot)
+    # # Run simplest possible test
+    # test_simple(do_plot=do_plot)
+    #
+    # # Run more complex single-sim tests
+    # sim0 = test_import1variant(**kw)
+    # sim1 = test_import2variants(**kw)
+    sim = test_efficacy(**kw)
 
-    # Run more complex single-sim tests
-    sim0 = test_import1variant(**kw)
-    sim1 = test_import2variants(**kw)
-    sim2 = test_efficacy(**kw)
-
-    # Run Vaccine tests
-    sim3 = test_synthpops()
-    sim4 = test_vaccine_1variant()
-    sim5 = test_vaccine_1dose()
-
-    # Run multisim and scenario tests
-    scens0 = test_vaccine_1variant_scen()
-    scens1 = test_vaccine_2variants_scen()
-    msim0  = test_msim()
-
-    # Run immunity tests
-    sim_immunity0 = test_varyingimmunity(**kw)
-
-    # Run test to compare sims with and without waning
-    scens2 = test_waning_vs_not(**kw)
+    # # Run Vaccine tests
+    # sim3 = test_synthpops()
+    # sim4 = test_vaccine_1variant()
+    # sim5 = test_vaccine_1dose()
+    #
+    # # Run multisim and scenario tests
+    # scens0 = test_vaccine_1variant_scen()
+    # scens1 = test_vaccine_2variants_scen()
+    # msim0  = test_msim()
+    #
+    # # Run immunity tests
+    # sim_immunity0 = test_varyingimmunity(**kw)
+    #
+    # # Run test to compare sims with and without waning
+    # scens2 = test_waning_vs_not(**kw)
 
     sc.toc()
 
