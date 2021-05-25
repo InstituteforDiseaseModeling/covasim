@@ -420,29 +420,29 @@ if __name__ == '__main__':
     # Gather keywords
     kw = dict(do_plot=do_plot, do_save=do_save, do_show=do_show)
 
-    # # Run simplest possible test
-    # test_simple(do_plot=do_plot)
-    #
-    # # Run more complex single-sim tests
-    # sim0 = test_import1variant(**kw)
-    # sim1 = test_import2variants(**kw)
-    sim = test_efficacy(**kw)
+    # Run simplest possible test
+    test_simple(do_plot=do_plot)
 
-    # # Run Vaccine tests
-    # sim3 = test_synthpops()
-    # sim4 = test_vaccine_1variant()
-    # sim5 = test_vaccine_1dose()
-    #
-    # # Run multisim and scenario tests
-    # scens0 = test_vaccine_1variant_scen()
-    # scens1 = test_vaccine_2variants_scen()
-    # msim0  = test_msim()
-    #
-    # # Run immunity tests
-    # sim_immunity0 = test_varyingimmunity(**kw)
-    #
-    # # Run test to compare sims with and without waning
-    # scens2 = test_waning_vs_not(**kw)
+    # Run more complex single-sim tests
+    sim0 = test_import1variant(**kw)
+    sim1 = test_import2variants(**kw)
+    sim2 = test_efficacy(**kw)
+
+    # Run Vaccine tests
+    sim3 = test_synthpops()
+    sim4 = test_vaccine_1variant()
+    sim5 = test_vaccine_1dose()
+
+    # Run multisim and scenario tests
+    scens0 = test_vaccine_1variant_scen()
+    scens1 = test_vaccine_2variants_scen()
+    msim0  = test_msim()
+
+    # Run immunity tests
+    sim_immunity0 = test_varyingimmunity(**kw)
+
+    # Run test to compare sims with and without waning
+    scens2 = test_waning_vs_not(**kw)
 
     sc.toc()
 
