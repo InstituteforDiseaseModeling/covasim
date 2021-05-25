@@ -384,11 +384,12 @@ if __name__ == '__main__':
     # Run more complex single-sim tests
     sim0 = test_import1variant(**kw)
     sim1 = test_import2variants(**kw)
+    sim2 = test_efficacy(**kw)
 
     # Run Vaccine tests
-    sim2 = test_synthpops()
-    sim3 = test_vaccine_1variant()
-    sim4 = test_vaccine_1dose()
+    sim3 = test_synthpops()
+    sim4 = test_vaccine_1variant()
+    sim5 = test_vaccine_1dose()
 
     # Run multisim and scenario tests
     scens0 = test_vaccine_1variant_scen()
