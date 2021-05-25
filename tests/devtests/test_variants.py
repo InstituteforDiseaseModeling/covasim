@@ -60,21 +60,33 @@ def test_efficacy(do_plot=False, do_show=True, do_save=False):
     })
     interventions = [cv.change_beta([30, 90], [0.3, 1])]
     sim = cv.Sim(use_waning=True,
+                 analyzers=cv.snapshot(90),
                  pars=pars,
-                 interventions=interventions
+                 interventions=interventions,
+
                  )
     sim.run()
 
     # Number of people exposed during the first wave:
+    snap = sim.get_analyzer()
     d1 = 90
-    trial_arm_size = sim.results.cum_infections[d1]
-    trial_not_reinfected = len(cvu.true(sim.people['date_exposed'] <= d1))
-    trial_reinfected = trial_arm_size-trial_not_reinfected
-    control_arm_size = 50_000-sim.results.cum_infections[d1]
+    people0 = snap.get(d1)
+    people1 = sim.people
 
+    trial_arm_size = len(cvu.true(people0.n_infections>0))
+    control_arm_size = len(cvu.true(people0.n_infections==0))
 
+    trial_not_infected = len(cvu.true((people0.n_infections > 0) * (people1.n_infections == people0.n_infections)))
+    trial_infected = len(cvu.true((people0.n_infections > 0) * (people1.n_infections > people0.n_infections)))
 
-    eff_stats = []
+    control_not_infected = len(cvu.true((people0.n_infections == 0) * (people1.n_infections == 0)))
+    control_infected = len(cvu.true((people0.n_infections == 0) * (people1.n_infections > 0)))
+
+    p_inf_trial = trial_infected/trial_arm_size
+    p_inf_control = control_infected/control_arm_size
+    pe = 1-p_inf_trial/p_inf_control
+
+    print(f'Protective efficacy of infection against reinfection: {pe}')
 
     to_plot = sc.objdict({
         'New infections': ['new_infections', 'new_reinfections'],
