@@ -228,6 +228,32 @@ def check_nab(t, people, inds=None):
     return
 
 
+def calc_VE(alpha, beta, nab):
+    return cvu.invlogit(alpha + beta*np.log(nab))
+
+
+def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab):
+    return 1 - (1 - calc_VE(alpha_symp_inf, beta_symp_inf, nab)) * (1 - calc_VE(alpha_inf, beta_inf, nab))
+
+
+def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab):
+    return 1 - (1 - calc_VE(alpha_symp_inf, beta_symp_inf, nab)) * (1 - calc_VE(alpha_inf, beta_inf, nab)) *\
+           (1 - calc_VE(alpha_sev_symp, beta_sev_symp, nab))
+
+
+def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab):
+    VE_inf = calc_VE(alpha_inf, beta_inf, nab)
+    VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+    return 1 - ((1-VE_symp)/(1-VE_inf))
+
+
+def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab):
+    VE_sev = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
+    VE_inf = calc_VE(alpha_inf, beta_inf, nab)
+    VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+    return 1 - ((1-VE_sev)/(1-(1-VE_inf)*(1-VE_symp_inf)))
+
+
 def nab_to_efficacy(nab, ax, function_args):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
@@ -244,16 +270,26 @@ def nab_to_efficacy(nab, ax, function_args):
     if ax not in ['sus', 'symp', 'sev']:
         errormsg = f'Choice {ax} not in list of choices'
         raise ValueError(errormsg)
-    args = function_args[ax]
 
     if ax == 'sus':
-        slope = args['slope']
-        n_50 = args['n_50']
-        logNAb = np.log(nab)
-        VE = logNAb * slope + n_50
-        efficacy = expit(VE)  # from linear in logit-log space (see fit https://github.com/amath-idm/COVID-Immune-Modeling/blob/main/scripts/nab2eff.R)
+        alpha = function_args['alpha_inf']
+        beta = function_args['beta_inf']
+        efficacy = calc_VE(alpha, beta, nab)
+    elif ax == 'symp':
+        alpha_inf = function_args['alpha_inf']
+        beta_inf = function_args['beta_inf']
+        alpha_symp_inf = function_args['alpha_symp_inf']
+        beta_symp_inf = function_args['beta_symp_inf']
+        efficacy = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
     else:
-        efficacy = np.full(len(nab), fill_value=args)
+        alpha_inf = function_args['alpha_inf']
+        beta_inf = function_args['beta_inf']
+        alpha_symp_inf = function_args['alpha_symp_inf']
+        beta_symp_inf = function_args['beta_symp_inf']
+        alpha_sev_symp = function_args['alpha_sev_symp']
+        beta_sev_symp = function_args['beta_sev_symp']
+        efficacy = calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp,
+                                    nab)
     return efficacy
 
 

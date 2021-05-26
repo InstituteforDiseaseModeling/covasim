@@ -473,6 +473,13 @@ def choose_w(probs, n, unique=True): # No performance gain from Numba
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
 
+def logit(p):
+    return np.log(p/(1-p))
+
+
+def invlogit(lo):
+    return np.exp(lo)/(1+np.exp(lo))
+
 
 #%% Simple array operations
 
