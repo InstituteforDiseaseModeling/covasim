@@ -23,6 +23,13 @@ These are the major improvements we are currently working on. If there is a spec
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+Version 3.0.5 (2021-05-26)
+--------------------------
+- Changed all reference to variants from 'strain' to 'variant'.
+- Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
+- Changes associated parameters provided to ``nab_to_efficacy`` function
+- Updated some strain parameters to be based on studies and not modeled inferences
+
 
 Version 3.0.4 (2021-05-19)
 --------------------------
