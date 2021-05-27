@@ -459,7 +459,7 @@ def precompute_waning(length, pars=None):
     return output
 
 
-def nab_growth_decay(length, growth_time, decay_rate1, decay_rate2):
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2):
     '''
     Returns an array of length 'length' containing the evaluated function nab growth/decay
     function at each point.
@@ -469,6 +469,7 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_rate2):
         length (int): number of points
         growth_time (int): length of time NAbs grow (used to determine slope)
         decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
         decay_rate2 (float): the rate at which the decay decays
     '''
 
@@ -476,15 +477,19 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_rate2):
         '''Simple linear growth'''
         return (1 / growth_time) * t
 
+    def f2(t, decay_rate1):
+        ''' Simple exponential decay '''
+        return np.exp(-t * decay_rate1)
 
-    def f2(t, decay_rate1, decay_rate2):
+    def f3(t, decay_rate1, decay_time1, decay_rate2):
         ''' Complex exponential decay '''
-        return np.exp(-t*(decay_rate1*np.exp(-t*decay_rate2)))
+        return np.exp(-t * (decay_rate1 * np.exp(-(t - decay_time1) * decay_rate2)))
 
-    t  = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t<= growth_time), growth_time)
-    y2 = f2(t[1:len(t)-growth_time], decay_rate1, decay_rate2)
-    y  = np.concatenate([y1, y2])
+    t = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t <= growth_time), growth_time)
+    y2 = f2(cvu.true(t <= decay_time1), decay_rate1)
+    y3 = f3(cvu.true(t > decay_time1), decay_rate1, decay_time1, decay_rate2)
+    y = np.concatenate([y1, y2, y3])
 
     return y
 
