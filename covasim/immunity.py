@@ -4,6 +4,7 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
+from scipy.special import expit
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -146,7 +147,7 @@ def get_vaccine_pars(pars):
 
 def init_nab(people, inds, prior_inf=True):
     '''
-    Draws an initial neutralizing antibody (NAb) level for individuals.
+    Draws a peak neutralizing antibody (NAb) level for individuals.
     Can come from a natural infection or vaccination and depends on if there is prior immunity:
     1) a natural infection. If individual has no existing NAb, draw from distribution
     depending upon symptoms. If individual has existing NAb, multiply booster impact
@@ -157,7 +158,7 @@ def init_nab(people, inds, prior_inf=True):
     nab_arrays = people.nab[inds]
     prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior NAb
     no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
-    peak_nab = people.init_nab[prior_nab_inds]
+    peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
     pars = people.pars
 
     # NAb from infection
@@ -168,12 +169,14 @@ def init_nab(people, inds, prior_inf=True):
             init_nab = cvu.sample(**pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
-            people.init_nab[no_prior_nab_inds] = no_prior_nab
+            people.peak_nab[no_prior_nab_inds] = no_prior_nab
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             init_nab = peak_nab * nab_boost
-            people.init_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] = init_nab
 
     # NAb from a vaccine
     else:
@@ -182,33 +185,45 @@ def init_nab(people, inds, prior_inf=True):
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**vaccine_pars['nab_init'], size=len(no_prior_nab_inds))
-            people.init_nab[no_prior_nab_inds] = 2**init_nab
+            people.peak_nab[no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
+            last_nab = people.nab[prior_nab_inds]
+            people.last_nab[prior_nab_inds] = last_nab
             nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
             init_nab = peak_nab * nab_boost
-            people.init_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] = init_nab
 
     return
 
 
 def check_nab(t, people, inds=None):
-    ''' Determines current NAb based on date since recovered/vaccinated.'''
-
+    ''' Determines current NAb based on date since recovered/vaccinated.
+        First step: determine if we are in the growth or decay period
+            If in growth, pull nabs of inds and add % of peak nabs
+            If in decay, % of peak nabs
+    '''
     # Indices of people who've had some nab event
-    rec_inds = cvu.defined(people.date_recovered[inds])
+    inf_inds = cvu.defined(people.date_exposed[inds])
     vac_inds = cvu.defined(people.date_vaccinated[inds])
-    both_inds = np.intersect1d(rec_inds, vac_inds)
+    both_inds = np.intersect1d(inf_inds, vac_inds)
 
     # Time since boost
     t_since_boost = np.full(len(inds), np.nan, dtype=cvd.default_int)
-    t_since_boost[rec_inds] = t-people.date_recovered[inds[rec_inds]]
+    t_since_boost[inf_inds] = t-people.date_exposed[inds[inf_inds]]
     t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
-    t_since_boost[both_inds] = t-np.maximum(people.date_recovered[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
+    t_since_boost[both_inds] = t-np.maximum(people.date_exposed[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
+
+    # Determine which nabs are in decay (peak > current)
+    nabs = people.last_nab[inds]
+    if people.pars['nab_decay']['form'] == 'nab_growth_decay':
+        inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
+        nabs[inds_in_decay] = 0
+    nabs = np.nan_to_num(nabs)
 
     # Set current NAb
-    people.nab[inds] = people.pars['nab_kin'][t_since_boost] * people.init_nab[inds]
+    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.peak_nab[inds]
 
     return
 
@@ -234,7 +249,9 @@ def nab_to_efficacy(nab, ax, function_args):
     if ax == 'sus':
         slope = args['slope']
         n_50 = args['n_50']
-        efficacy = 1 / (1 + np.exp(-slope * (np.log10(nab) - np.log10(n_50))))  # from logistic regression computed in R using data from Khoury et al
+        logNAb = np.log(nab)
+        VE = logNAb * slope + n_50
+        efficacy = expit(VE)  # from linear in logit-log space (see fit https://github.com/amath-idm/COVID-Immune-Modeling/blob/main/scripts/nab2eff.R)
     else:
         efficacy = np.full(len(nab), fill_value=args)
     return efficacy
@@ -251,7 +268,7 @@ def init_immunity(sim, create=False):
         return
 
     # Pull out all of the circulating strains for cross-immunity
-    ns       = sim['n_strains']
+    ns = sim['n_strains']
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
@@ -265,17 +282,14 @@ def init_immunity(sim, create=False):
         for i in range(ns):
             label_i = sim['strain_map'][i]
             for j in range(ns):
-                if i != j: # Populate cross-immunity
-                    label_j = sim['strain_map'][j]
-                    if label_i in default_cross_immunity and label_j in default_cross_immunity:
-                        immunity[j][i] = default_cross_immunity[label_j][label_i]
-                else: # Populate own-immunity
-                    immunity[i, i] = sim['strain_pars'][label_i]['rel_imm_strain']
+                label_j = sim['strain_map'][j]
+                if label_i in default_cross_immunity and label_j in default_cross_immunity:
+                    immunity[j][i] = default_cross_immunity[label_j][label_i]
 
         sim['immunity'] = immunity
 
     # Next, precompute the NAb kinetics and store these for access during the sim
-    sim['nab_kin'] = precompute_waning(length=sim['n_days'], pars=sim['nab_decay'])
+    sim['nab_kin'] = precompute_waning(length=sim.npts, pars=sim['nab_decay'])
 
     return
 
@@ -378,14 +392,18 @@ def precompute_waning(length, pars=None):
     pars = sc.dcp(pars)
     form = pars.pop('form')
     choices = [
-        'nab_decay', # Default if no form is provided
+        'nab_growth_decay', # Default if no form is provided
+        'nab_decay',
         'exp_decay',
         'linear_growth',
         'linear_decay'
     ]
 
     # Process inputs
-    if form is None or form == 'nab_decay':
+    if form is None or form == 'nab_growth_decay':
+        output = nab_growth_decay(length, **pars)
+
+    elif form == 'nab_decay':
         output = nab_decay(length, **pars)
 
     elif form == 'exp_decay':
@@ -404,6 +422,40 @@ def precompute_waning(length, pars=None):
 
     return output
 
+
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2):
+    '''
+    Returns an array of length 'length' containing the evaluated function nab growth/decay
+    function at each point.
+    Uses linear growth + exponential decay, with the rate of exponential decay also set to
+    exponentially decay (!) after 250 days.
+    Args:
+        length (int): number of points
+        growth_time (int): length of time NAbs grow (used to determine slope)
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate at which the decay decays
+    '''
+
+    def f1(t, growth_time):
+        '''Simple linear growth'''
+        return (1 / growth_time) * t
+
+    def f2(t, decay_rate1):
+        ''' Simple exponential decay '''
+        return np.exp(-t*decay_rate1)
+
+    def f3(t, decay_rate1, decay_time1, decay_rate2):
+        ''' Complex exponential decay '''
+        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
+
+    t  = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t<= growth_time), growth_time)
+    y2 = f2(cvu.true((t>growth_time)*(t<= decay_time1)), decay_rate1)
+    y3 = f3(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
+    y  = np.concatenate([y1, y2, y3])
+
+    return y
 
 def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     '''

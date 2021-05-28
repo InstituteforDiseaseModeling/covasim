@@ -93,8 +93,7 @@ def test_waning(do_plot=False):
         # Define parameters specific to this test
         pars = dict(
             n_days    = 90,
-            beta      = 0.008,
-            nab_decay = dict(form='nab_decay', decay_rate1=0.1, decay_time1=250, decay_rate2=0.001)
+            beta      = 0.01,
         )
 
         # Optionally include rescaling
@@ -112,13 +111,12 @@ def test_waning(do_plot=False):
         msim = cv.MultiSim([s0,s1])
         msims[rescale] = msim
 
-
         # Check results
         for key in ['n_susceptible', 'cum_infections', 'cum_reinfections', 'pop_nabs', 'pop_protection', 'pop_symp_protection']:
             v0 = res0[key]
             v1 = res1[key]
             print(f'Checking {key:20s} ... ', end='')
-            assert v1 > v0, f'Expected {key} to be higher with waning than without'
+            assert v1 > v0, f'Expected {key} to be higher with waning ({v1}) than without ({v0})'
             print(f'✓ ({v1} > {v0})')
 
         # Optionally plot

@@ -172,12 +172,14 @@ class People(cvb.BasePeople):
 
         # Perform updates
         self.init_flows()
-        self.flows['new_infectious']  += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        self.flows['new_symptomatic'] += self.check_symptomatic()
-        self.flows['new_severe']      += self.check_severe()
-        self.flows['new_critical']    += self.check_critical()
-        self.flows['new_deaths']      += self.check_death()
-        self.flows['new_recoveries']  += self.check_recovery() # TODO: check logic here
+        self.flows['new_infectious']    += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic']   += self.check_symptomatic()
+        self.flows['new_severe']        += self.check_severe()
+        self.flows['new_critical']      += self.check_critical()
+        self.flows['new_recoveries']    += self.check_recovery()
+        new_deaths, new_known_deaths    = self.check_death()
+        self.flows['new_deaths']        += new_deaths
+        self.flows['new_known_deaths']  += new_known_deaths
 
         return
 
@@ -279,18 +281,9 @@ class People(cvb.BasePeople):
         # Handle immunity aspects
         if self.pars['use_waning']:
 
-            # Before letting them recover, store information about the strain they had, store symptoms and pre-compute nabs array
-            mild_inds   = self.check_inds(self.susceptible, self.date_symptomatic, filter_inds=inds)
-            severe_inds = self.check_inds(self.susceptible, self.date_severe,      filter_inds=inds)
-
             # Reset additional states
             self.susceptible[inds] = True
             self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
-            self.prior_symptoms[inds]        = self.pars['rel_imm_symp']['asymp']
-            self.prior_symptoms[mild_inds]   = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[severe_inds] = self.pars['rel_imm_symp']['severe']
-            if len(inds):
-                cvi.init_nab(self, inds, prior_inf=True)
 
         return len(inds)
 
@@ -298,20 +291,22 @@ class People(cvb.BasePeople):
     def check_death(self):
         ''' Check whether or not this person died on this timestep  '''
         inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
-        self.susceptible[inds]   = False
-        self.exposed[inds]       = False
-        self.infectious[inds]    = False
-        self.symptomatic[inds]   = False
-        self.severe[inds]        = False
-        self.critical[inds]      = False
-        self.known_contact[inds] = False
-        self.quarantined[inds]   = False
-        self.recovered[inds]     = False
-        self.dead[inds]          = True
+        self.dead[inds]             = True
+        diag_inds = inds[self.diagnosed[inds]] # Check whether the person was diagnosed before dying
+        self.known_dead[diag_inds]  = True
+        self.susceptible[inds]      = False
+        self.exposed[inds]          = False
+        self.infectious[inds]       = False
+        self.symptomatic[inds]      = False
+        self.severe[inds]           = False
+        self.critical[inds]         = False
+        self.known_contact[inds]    = False
+        self.quarantined[inds]      = False
+        self.recovered[inds]        = False
         self.infectious_strain[inds] = np.nan
         self.exposed_strain[inds]    = np.nan
         self.recovered_strain[inds]  = np.nan
-        return len(inds)
+        return len(inds), len(diag_inds)
 
 
     def check_diagnosed(self):
@@ -452,8 +447,8 @@ class People(cvb.BasePeople):
         # Deal with strain parameters
         strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = {k:self.pars[k] for k in strain_keys}
+        strain_label = self.pars['strain_map'][strain]
         if strain:
-            strain_label = self.pars['strain_map'][strain]
             for k in strain_keys:
                 infect_pars[k] *= self.pars['strain_pars'][strain_label][k]
 
@@ -471,12 +466,11 @@ class People(cvb.BasePeople):
         self.flows['new_infections']   += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
         self.flows_strain['new_infections_by_strain'][strain] += len(inds)
-        # print('HI DEBUG', self.t, len(inds), len(cvu.defined(self.date_recovered[inds])))
-        # self.date_recovered[inds] = np.nan # Reset date they recovered - we only store the last recovery # TODO CK
 
         # Record transmissions
         for i, target in enumerate(inds):
-            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer))
+            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t,
+                                           layer=layer, strain=strain_label))
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
@@ -544,6 +538,13 @@ class People(cvb.BasePeople):
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
         self.date_recovered[dead_inds] = np.nan # If they did die, remove them from recovered
+
+        # Handle immunity aspects
+        if self.pars['use_waning']:
+            self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
+            self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
+            self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
+            cvi.init_nab(self, inds, prior_inf=True)
 
         return n_infections # For incrementing counters
 

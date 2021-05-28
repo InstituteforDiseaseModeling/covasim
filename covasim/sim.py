@@ -113,7 +113,6 @@ class Sim(cvb.BaseSim):
         self.init_results() # After initializing the strain, create the results structure
         self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
         self.init_interventions()  # Initialize the interventions...
-        # self.init_vaccines() # Initialize vaccine information
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
         self.set_seed() # Reset the random seed again so the random number stream is consistent
@@ -615,10 +614,11 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus = people.rel_sus
 
-        # Check nabs. Take set difference so we don't compute nabs for anyone currently infected
+        # Check nabs.
         if self['use_waning']:
-            has_nabs = np.setdiff1d(cvu.defined(people.init_nab), cvu.false(people.susceptible))
-            if len(has_nabs): cvimm.check_nab(t, people, inds=has_nabs)
+            has_nabs = cvu.defined(people.peak_nab)
+            if len(has_nabs):
+                cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_strains to calculate infections
         for strain in range(ns):
@@ -1147,29 +1147,51 @@ class Sim(cvb.BaseSim):
             return string
 
 
-    def compute_fit(self, output=True, *args, **kwargs):
+    def compute_fit(self, *args, **kwargs):
         '''
         Compute the fit between the model and the data. See cv.Fit() for more
         information.
 
         Args:
-            output (bool): whether or not to return the TransTree; if not, store in sim.results
             args   (list): passed to cv.Fit()
             kwargs (dict): passed to cv.Fit()
 
+        Returns:
+            A Fit object
+
         **Example**::
 
-            sim = cv.Sim(datafile=data.csv)
+            sim = cv.Sim(datafile='data.csv')
             sim.run()
             fit = sim.compute_fit()
             fit.plot()
         '''
-        fit = cva.Fit(self, *args, **kwargs)
-        if output:
-            return fit
-        else:
-            self.results.fit = fit
-            return
+        self.fit = cva.Fit(self, *args, **kwargs)
+        return self.fit
+
+
+    def calibrate(self, calib_pars, **kwargs):
+        '''
+        Automatically calibrate the simulation, returning a Calibration object
+        (a type of analyzer). See the documentation on that class for more information.
+
+        Args:
+            calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
+            kwargs (dict): passed to cv.Calibration()
+
+        Returns:
+            A Calibration object
+
+        **Example**::
+
+            sim = cv.Sim(datafile='data.csv')
+            calib_pars = dict(beta=[0.015, 0.010, 0.020])
+            calib = sim.calibrate(calib_pars, n_trials=50)
+            calib.plot()
+        '''
+        calib = cva.Calibration(sim=self, calib_pars=calib_pars, **kwargs)
+        calib.calibrate()
+        return calib
 
 
     def make_age_histogram(self, *args, output=True, **kwargs):

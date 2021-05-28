@@ -5,3 +5,4 @@ echo `ls -1 ./my-*.* 2> /dev/null`
 echo '...in 2 seconds'
 sleep 2
 rm -vf ./my-*.*
+rm -vf ./covasim_calibration.db
