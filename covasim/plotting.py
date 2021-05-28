@@ -395,7 +395,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 variant_colors = sc.gridcolors(ns)
                 for variant in range(ns):
                     color = variant_colors[variant]  # Choose the color
-                    label = 'wild type' if variant == 0 else sim['variant'][variant-1].label
+                    label = 'wild type' if variant == 0 else sim['variants'][variant-1].label
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low[variant,:], res.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(res_t, res.values[variant,:], label=label, **args.plot, c=color)  # Actually plot the sim!
