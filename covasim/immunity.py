@@ -4,7 +4,6 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
-from scipy.special import expit
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -228,33 +227,47 @@ def check_nab(t, people, inds=None):
     return
 
 
-def calc_VE(alpha, beta, nab):
-    return cvu.invlogit(alpha + beta*np.log(nab))
+def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
+    ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
+    output = cvu.invlogit(alpha_inf + beta_inf*np.log(nab))
+    return output
 
 
-def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab):
-    return 1 - (1 - calc_VE(alpha_symp_inf, beta_symp_inf, nab)) * (1 - calc_VE(alpha_inf, beta_inf, nab))
+def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
+    ''' As above, for symptoms given infection '''
+    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
+    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+    output  = 1 - (1-inf_VE) * (1-symp_VE)
+    return output
 
 
-def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab):
-    return 1 - (1 - calc_VE(alpha_symp_inf, beta_symp_inf, nab)) * (1 - calc_VE(alpha_inf, beta_inf, nab)) *\
-           (1 - calc_VE(alpha_sev_symp, beta_sev_symp, nab))
+def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
+    ''' As above, for severe disease '''
+    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
+    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+    sev_VE  = calc_VE(alpha_sev_symp, beta_sev_symp, nab)
+    output  = 1 - (1-inf_VE) * (1-symp_VE) * (1-sev_VE)
+    return output
 
 
-def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab):
-    VE_inf = calc_VE(alpha_inf, beta_inf, nab)
+def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
+    ''' As above, for symptoms and infection '''
+    VE_inf  = calc_VE(alpha_inf, beta_inf, nab)
     VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    return 1 - ((1-VE_symp)/(1-VE_inf))
+    output = 1 - ((1-VE_symp)/(1-VE_inf))
+    return output
 
 
-def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab):
-    VE_sev = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
-    VE_inf = calc_VE(alpha_inf, beta_inf, nab)
+def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
+    ''' As above, for severe disease '''
+    VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
     VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    return 1 - ((1-VE_sev)/(1-(1-VE_inf)*(1-VE_symp_inf)))
+    VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
+    output      = 1 - ((1-VE_sev)/(1-(1-VE_inf)*(1-VE_symp_inf)))
+    return output
 
 
-def nab_to_efficacy(nab, ax, function_args):
+def nab_to_efficacy(nab, ax, pars):
     '''
     Convert NAb levels to immunity protection factors, using the functional form
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
@@ -262,34 +275,19 @@ def nab_to_efficacy(nab, ax, function_args):
     Args:
         nab (arr): an array of NAb levels
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+        pars (dict): dictionary of parameters for the vaccine efficacy
 
     Returns:
         an array the same size as NAb, containing the immunity protection factors for the specified axis
      '''
-
-    if ax not in ['sus', 'symp', 'sev']:
-        errormsg = f'Choice {ax} not in list of choices'
+    choices = ['sus', 'symp', 'sev']
+    if ax not in choices:
+        errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
         raise ValueError(errormsg)
 
-    if ax == 'sus':
-        alpha = function_args['alpha_inf']
-        beta = function_args['beta_inf']
-        efficacy = calc_VE(alpha, beta, nab)
-    elif ax == 'symp':
-        alpha_inf = function_args['alpha_inf']
-        beta_inf = function_args['beta_inf']
-        alpha_symp_inf = function_args['alpha_symp_inf']
-        beta_symp_inf = function_args['beta_symp_inf']
-        efficacy = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    else:
-        alpha_inf = function_args['alpha_inf']
-        beta_inf = function_args['beta_inf']
-        alpha_symp_inf = function_args['alpha_symp_inf']
-        beta_symp_inf = function_args['beta_symp_inf']
-        alpha_sev_symp = function_args['alpha_sev_symp']
-        beta_sev_symp = function_args['beta_sev_symp']
-        efficacy = calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp,
-                                    nab)
+    if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
+    elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
+    elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
     return efficacy
 
 

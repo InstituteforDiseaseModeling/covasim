@@ -263,9 +263,9 @@ def get_default_colors():
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
-    c.symptomatic_by_variant= '#c1ad71'
+    c.symptomatic_by_variant= c.symptomatic
     c.severe                = '#c1981d'
-    c.severe_by_variant     = '#c1981d'
+    c.severe_by_variant     = c.severe
     c.critical              = '#b86113'
     c.deaths                = '#000000'
     c.dead                  = c.deaths

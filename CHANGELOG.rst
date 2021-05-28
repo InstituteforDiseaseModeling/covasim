@@ -27,7 +27,7 @@ Latest versions (3.0.x)
 
 Version 3.0.5 (2021-05-26)
 --------------------------
-- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`__ for the rationale behind the change.
+- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`__ for the rationale behind the change.
 - Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
 - Changed the parameters provided to ``nab_to_efficacy`` function.
 - Updated some strain parameters to be based on studies and not modeled inferences.
