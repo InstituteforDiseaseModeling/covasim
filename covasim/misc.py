@@ -244,14 +244,13 @@ def migrate_lognormal(pars, revert=False, verbose=True):
     return
 
 
-def migrate_strains(pars, verbose=True):
+def migrate_variants(pars, verbose=True):
     '''
-    Small helper function to add necessary strain parameters.
+    Small helper function to add necessary variant parameters.
     '''
     pars['use_waning'] = False
-    pars['n_strains'] = 1
-    pars['n_strains'] = 1
-    pars['strains'] = []
+    pars['n_variants'] = 1
+    pars['variants'] = []
     return
 
 
@@ -318,8 +317,8 @@ def migrate(obj, update=True, verbose=True, die=False):
         if sc.compareversions(sim.version, '3.0.0') == -1:
             if verbose:
                 print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
-                print('Adding strain parameters')
-            migrate_strains(sim.pars, verbose=verbose)
+                print('Adding variant parameters')
+            migrate_variants(sim.pars, verbose=verbose)
 
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover

@@ -59,23 +59,25 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
+            elif key == 'n_infections':
+                self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
-        # Set health states -- only susceptible is true by default -- booleans except exposed by strain which should return the strain that ind is exposed to
+        # Set health states -- only susceptible is true by default -- booleans except exposed by variant which should return the variant that ind is exposed to
         for key in self.meta.states:
             val = (key in ['susceptible', 'naive']) # Default value is True for susceptible and naive, false otherwise
             self[key] = np.full(self.pars['pop_size'], val, dtype=bool)
 
-        # Set strain states, which store info about which strain a person is exposed to
-        for key in self.meta.strain_states:
+        # Set variant states, which store info about which variant a person is exposed to
+        for key in self.meta.variant_states:
             self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
-        for key in self.meta.by_strain_states:
-            self[key] = np.full((self.pars['n_strains'], self.pars['pop_size']), False, dtype=bool)
+        for key in self.meta.by_variant_states:
+            self[key] = np.full((self.pars['n_variants'], self.pars['pop_size']), False, dtype=bool)
 
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
-            self[key] = np.zeros((self.pars['n_strains'], self.pars['pop_size']), dtype=cvd.default_float)
+            self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
             self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
         for key in self.meta.vacc_states:
@@ -115,9 +117,9 @@ class People(cvb.BasePeople):
     def init_flows(self):
         ''' Initialize flows to be zero '''
         self.flows = {key:0 for key in cvd.new_result_flows}
-        self.flows_strain = {}
-        for key in cvd.new_result_flows_by_strain:
-            self.flows_strain[key] = np.zeros(self.pars['n_strains'], dtype=cvd.default_float)
+        self.flows_variant = {}
+        for key in cvd.new_result_flows_by_variant:
+            self.flows_variant[key] = np.zeros(self.pars['n_variants'], dtype=cvd.default_float)
         return
 
 
@@ -220,12 +222,12 @@ class People(cvb.BasePeople):
         ''' Check if they become infectious '''
         inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
         self.infectious[inds] = True
-        self.infectious_strain[inds] = self.exposed_strain[inds]
-        for strain in range(self.pars['n_strains']):
-            this_strain_inds = cvu.itrue(self.infectious_strain[inds] == strain, inds)
-            n_this_strain_inds = len(this_strain_inds)
-            self.flows_strain['new_infectious_by_strain'][strain] += n_this_strain_inds
-            self.infectious_by_strain[strain, this_strain_inds] = True
+        self.infectious_variant[inds] = self.exposed_variant[inds]
+        for variant in range(self.pars['n_variants']):
+            this_variant_inds = cvu.itrue(self.infectious_variant[inds] == variant, inds)
+            n_this_variant_inds = len(this_variant_inds)
+            self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
+            self.infectious_by_variant[variant, this_variant_inds] = True
         return len(inds)
 
 
@@ -271,11 +273,11 @@ class People(cvb.BasePeople):
         self.severe[inds]           = False
         self.critical[inds]         = False
         self.recovered[inds]        = True
-        self.recovered_strain[inds] = self.exposed_strain[inds]
-        self.infectious_strain[inds] = np.nan
-        self.exposed_strain[inds]    = np.nan
-        self.exposed_by_strain[:, inds] = False
-        self.infectious_by_strain[:, inds] = False
+        self.recovered_variant[inds] = self.exposed_variant[inds]
+        self.infectious_variant[inds] = np.nan
+        self.exposed_variant[inds]    = np.nan
+        self.exposed_by_variant[:, inds] = False
+        self.infectious_by_variant[:, inds] = False
 
 
         # Handle immunity aspects
@@ -303,9 +305,9 @@ class People(cvb.BasePeople):
         self.known_contact[inds]    = False
         self.quarantined[inds]      = False
         self.recovered[inds]        = False
-        self.infectious_strain[inds] = np.nan
-        self.exposed_strain[inds]    = np.nan
-        self.recovered_strain[inds]  = np.nan
+        self.infectious_variant[inds] = np.nan
+        self.exposed_variant[inds]    = np.nan
+        self.recovered_variant[inds]  = np.nan
         return len(inds), len(diag_inds)
 
 
@@ -364,10 +366,10 @@ class People(cvb.BasePeople):
             else:
                 self[key][inds] = False
 
-        # Reset strain states
-        for key in self.meta.strain_states:
+        # Reset variant states
+        for key in self.meta.variant_states:
             self[key][inds] = np.nan
-        for key in self.meta.by_strain_states:
+        for key in self.meta.by_variant_states:
             self[key][:, inds] = False
 
         # Reset immunity and antibody states
@@ -406,7 +408,7 @@ class People(cvb.BasePeople):
 
 
 
-    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, strain=0):
+    def infect(self, inds, hosp_max=None, icu_max=None, source=None, layer=None, variant=0):
         '''
         Infect people and determine their eventual outcomes.
 
@@ -424,7 +426,7 @@ class People(cvb.BasePeople):
             icu_max  (bool):  whether or not there is an ICU bed available for this person
             source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
-            strain   (int):   the strain people are being infected by
+            variant   (int):   the variant people are being infected by
 
         Returns:
             count (int): number of people infected
@@ -442,35 +444,36 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         if self.pars['use_waning']:
-            cvi.check_immunity(self, strain, sus=False, inds=inds)
+            cvi.check_immunity(self, variant, sus=False, inds=inds)
 
-        # Deal with strain parameters
-        strain_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
-        infect_pars = {k:self.pars[k] for k in strain_keys}
-        strain_label = self.pars['strain_map'][strain]
-        if strain:
-            for k in strain_keys:
-                infect_pars[k] *= self.pars['strain_pars'][strain_label][k]
+        # Deal with variant parameters
+        variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
+        infect_pars = {k:self.pars[k] for k in variant_keys}
+        variant_label = self.pars['variant_map'][variant]
+        if variant:
+            for k in variant_keys:
+                infect_pars[k] *= self.pars['variant_pars'][variant_label][k]
 
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
-        # Update states, strain info, and flows
+        # Update states, variant info, and flows
         self.susceptible[inds]    = False
         self.naive[inds]          = False
         self.recovered[inds]      = False
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
-        self.exposed_strain[inds] = strain
-        self.exposed_by_strain[strain, inds] = True
+        self.n_infections[inds]  += 1
+        self.exposed_variant[inds] = variant
+        self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-        self.flows_strain['new_infections_by_strain'][strain] += len(inds)
+        self.flows_variant['new_infections_by_variant'][variant] += len(inds)
 
         # Record transmissions
         for i, target in enumerate(inds):
-            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t,
-                                           layer=layer, strain=strain_label))
+            entry = dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer, variant=variant_label)
+            self.infection_log.append(entry)
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
@@ -482,10 +485,11 @@ class People(cvb.BasePeople):
             self[key][inds] = np.nan
 
         # Use prognosis probabilities to determine what happens to them
-        symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[strain, inds]) # Calculate their actual probability of being symptomatic
+        symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[variant, inds]) # Calculate their actual probability of being symptomatic
         is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
+        self.flows_variant['new_symptomatic_by_variant'][variant] += len(symp_inds)
 
         # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
         dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))
@@ -496,11 +500,11 @@ class People(cvb.BasePeople):
         n_symp_inds = len(symp_inds)
         self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
-        sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[strain, symp_inds]) # Probability of these people being severe
-        # print(self.sev_imm[strain, inds])
+        sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[variant, symp_inds]) # Probability of these people being severe
         is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
+        self.flows_variant['new_severe_by_variant'][variant] += len(sev_inds)
 
         # CASE 2.1: Mild symptoms, no hospitalization required and no probability of death
         dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))
