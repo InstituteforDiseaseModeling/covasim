@@ -31,7 +31,7 @@ Version 3.0.5 (2021-05-26)
 - Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
 - Changed the parameters provided to ``nab_to_efficacy`` function.
 - Updated some strain parameters to be based on studies and not modeled inferences.
-- *Regression information*: All instances of ``strain`` should be renamed ``variant``. A find-and-replace should be sufficient for updating scripts. Parameter values and functional forms have been updated, so results using waning immunity will differ.
+- *Regression information*: All instances of ``strain`` should be renamed ``variant``. A find-and-replace should be sufficient for updating most scripts. Parameter values and functional forms have also been updated, so results using waning immunity will differ.
 - *GitHub info*: PR `1069 <https://github.com/amath-idm/covasim/pull/1069>`__
 
 

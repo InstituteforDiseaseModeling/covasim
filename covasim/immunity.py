@@ -229,7 +229,8 @@ def check_nab(t, people, inds=None):
 
 def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
-    output = cvu.invlogit(alpha_inf + beta_inf*np.log(nab))
+    lo = alpha_inf + beta_inf*np.log(nab)
+    output = np.exp(lo)/(1+np.exp(lo)) # Inverse logit function
     return output
 
 

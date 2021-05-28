@@ -178,14 +178,14 @@ result_flows = {
 }
 
 result_flows_by_variant = {
-    'infections_by_variant': 'infections by variant',
+    'infections_by_variant':  'infections by variant',
     'symptomatic_by_variant': 'symptomatic by variant',
-    'severe_by_variant': 'severe by variant',
-    'infectious_by_variant': 'infectious by variant',
+    'severe_by_variant':      'severe by variant',
+    'infectious_by_variant':  'infectious by variant',
 }
 
 result_imm = {
-    'pop_nabs': 'Population average nabs',
+    'pop_nabs':       'Population average nabs',
     'pop_protection': 'Population average protective immunity'
 }
 

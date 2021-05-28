@@ -7,9 +7,10 @@ at the heart of the integration loop.
 
 #%% Housekeeping
 
-import numba  as nb # For faster computations
-import numpy  as np # For numerics
+import numba as nb # For faster computations
+import numpy as np # For numerics
 import random # Used only for resetting the seed
+import sciris as sc # For additional utilities
 import scipy.stats as sps # For distributions
 from .settings import options as cvo # To set options
 from . import defaults as cvd # To set default types
@@ -146,7 +147,6 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     - 'uniform'       : uniform distribution from low=par1 to high=par2; mean is equal to (par1+par2)/2
     - 'normal'        : normal distribution with mean=par1 and std=par2
     - 'lognormal'     : lognormal distribution with mean=par1 and std=par2 (parameters are for the lognormal distribution, *not* the underlying normal distribution)
-    - 'nabdist'       : distribution of peak nabs following first infection. log2(nab)~N(par1,par2)
     - 'normal_pos'    : right-sided normal distribution (i.e. only positive values), with mean=par1 and std=par2 *of the underlying normal distribution*
     - 'normal_int'    : normal distribution with mean=par1 and std=par2, returns only integer values
     - 'lognormal_int' : lognormal distribution with mean=par1 and std=par2, returns only integer values
@@ -190,7 +190,6 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         'normal_int',
         'lognormal',
         'lognormal_int',
-        'nabdist',
         'poisson',
         'neg_binomial',
     ]
@@ -216,12 +215,8 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
             samples = np.zeros(size)
         if '_int' in dist:
             samples = np.round(samples)
-    elif dist == 'nabdist':
-        log2nabs = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
-
     else:
-        choicestr = '\n'.join(choices)
-        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
         raise NotImplementedError(errormsg)
 
     return samples
@@ -472,13 +467,6 @@ def choose_w(probs, n, unique=True): # No performance gain from Numba
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
-
-def logit(p):
-    return np.log(p/(1-p))
-
-
-def invlogit(lo):
-    return np.exp(lo)/(1+np.exp(lo))
 
 
 #%% Simple array operations

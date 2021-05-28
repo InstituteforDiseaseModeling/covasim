@@ -493,6 +493,8 @@ def get_vaccine_dose_pars(default=False):
     '''
     Define the parameters for each vaccine
     '''
+
+    # Default vaccine NAb efficacy is nearly identical to infection -- only alpha_inf differs
     default_nab_eff = dict(
         alpha_inf      =  1.11,
         beta_inf       =  1.219,

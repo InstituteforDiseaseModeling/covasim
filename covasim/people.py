@@ -472,8 +472,8 @@ class People(cvb.BasePeople):
 
         # Record transmissions
         for i, target in enumerate(inds):
-            self.infection_log.append(dict(source=source[i] if source is not None else None, target=target, date=self.t,
-                                           layer=layer, variant=variant_label))
+            entry = dict(source=source[i] if source is not None else None, target=target, date=self.t, layer=layer, variant=variant_label)
+            self.infection_log.append(entry)
 
         # Calculate how long before this person can infect other people
         self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)

@@ -320,16 +320,16 @@ class Sim(cvb.BaseSim):
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
 
         # Handle variants
-        ns = self['n_variants']
+        nv = self['n_variants']
         self.results['variant'] = {}
-        self.results['variant']['prevalence_by_variant'] = init_res('Prevalence by variant', scale=False, n_variants=ns)
-        self.results['variant']['incidence_by_variant']  = init_res('Incidence by variant', scale=False, n_variants=ns)
+        self.results['variant']['prevalence_by_variant'] = init_res('Prevalence by variant', scale=False, n_variants=nv)
+        self.results['variant']['incidence_by_variant']  = init_res('Incidence by variant', scale=False, n_variants=nv)
         for key,label in cvd.result_flows_by_variant.items():
-            self.results['variant'][f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], n_variants=ns)  # Cumulative variables -- e.g. "Cumulative infections"
+            self.results['variant'][f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key], n_variants=nv)  # Cumulative variables -- e.g. "Cumulative infections"
         for key,label in cvd.result_flows_by_variant.items():
-            self.results['variant'][f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], n_variants=ns) # Flow variables -- e.g. "Number of new infections"
+            self.results['variant'][f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key], n_variants=nv) # Flow variables -- e.g. "Number of new infections"
         for key,label in cvd.result_stocks_by_variant.items():
-            self.results['variant'][f'n_{key}'] = init_res(label, color=dcols[key], n_variants=ns)
+            self.results['variant'][f'n_{key}'] = init_res(label, color=dcols[key], n_variants=nv)
 
         # Populate the rest of the results
         if self['rescale']:
@@ -606,7 +606,7 @@ class Sim(cvb.BaseSim):
         viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten useful parameters
-        ns = self['n_variants'] # Shorten number of variants
+        nv = self['n_variants'] # Shorten number of variants
         sus = people.susceptible
         symp = people.symptomatic
         diag = people.diagnosed
@@ -621,7 +621,7 @@ class Sim(cvb.BaseSim):
                 cvimm.check_nab(t, people, inds=has_nabs)
 
         # Iterate through n_variants to calculate infections
-        for variant in range(ns):
+        for variant in range(nv):
 
             # Check immunity
             if self['use_waning']:
@@ -657,14 +657,14 @@ class Sim(cvb.BaseSim):
         for key in cvd.result_stocks.keys():
             self.results[f'n_{key}'][t] = people.count(key)
         for key in cvd.result_stocks_by_variant.keys():
-            for variant in range(ns):
+            for variant in range(nv):
                 self.results['variant'][f'n_{key}'][variant, t] = people.count_by_variant(key, variant)
 
         # Update counts for this time step: flows
         for key,count in people.flows.items():
             self.results[key][t] += count
         for key,count in people.flows_variant.items():
-            for variant in range(ns):
+            for variant in range(nv):
                 self.results['variant'][key][variant][t] += count[variant]
 
         # Update nab and immunity for this time step
