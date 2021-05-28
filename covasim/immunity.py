@@ -264,7 +264,7 @@ def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_s
     VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
     VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
     VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
-    output      = 1 - ((1-VE_sev)/(1-(1-VE_inf)*(1-VE_symp_inf)))
+    output      = 1 - ((1-VE_sev)/((1-VE_inf)*(1-VE_symp_inf)))
     return output
 
 
