@@ -7,6 +7,7 @@ import sciris as sc
 import covasim as cv
 import pandas as pd
 import pylab as pl
+import numpy as np
 
 do_plot = 1
 cv.options.set(interactive=False) # Assume not running interactively
@@ -154,6 +155,25 @@ def test_vaccines(do_plot=False):
 
     return sim
 
+def test_vaccines_sequential(do_plot=False):
+    sc.heading('Testing sequential vaccine...')
+
+    p1 = cv.strain('sa variant',   days=20, n_imports=20)
+    def age_sequence(people): return np.argsort(-people.age)
+
+    # TODO - add verification that coverage is increasing in the right people at the right time
+    # (maybe via a custom analyzer? maybe implement as a standard analyzer? or maybe age_histogram already does it?)
+
+    pfizer = cv.vaccinate_sequential(vaccine='pfizer', sequence=age_sequence, doses_per_day=100)
+    sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
+    sim.run()
+
+    if do_plot:
+        sim.plot('overview-strain')
+
+    return sim
+
+
 
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
@@ -218,11 +238,13 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_strains(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    res    = test_decays(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_strains(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    sim4   = test_vaccines_sequential(do_plot=do_plot)
+
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

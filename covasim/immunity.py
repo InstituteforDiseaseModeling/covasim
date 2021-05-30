@@ -247,11 +247,12 @@ def nab_to_efficacy(nab, ax, function_args):
     args = function_args[ax]
 
     if ax == 'sus':
+        efficacy = np.zeros_like(nab)
         slope = args['slope']
         n_50 = args['n_50']
-        logNAb = np.log(nab)
+        logNAb = np.log(nab[nab>0])
         VE = logNAb * slope + n_50
-        efficacy = expit(VE)  # from linear in logit-log space (see fit https://github.com/amath-idm/COVID-Immune-Modeling/blob/main/scripts/nab2eff.R)
+        efficacy[nab>0] = expit(VE)  # from linear in logit-log space (see fit https://github.com/amath-idm/COVID-Immune-Modeling/blob/main/scripts/nab2eff.R)
     else:
         efficacy = np.full(len(nab), fill_value=args)
     return efficacy
