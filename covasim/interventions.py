@@ -1539,10 +1539,10 @@ class vaccinate_sequential(BaseVaccination):
         # Work out how many people to vaccinate today
         if sc.isnumber(self.doses_per_day):
             num_people = self.doses_per_day
-        elif sim.t in self.doses_per_day:
-            num_people = self.doses_per_day[sim.t]
         elif callable(self.doses_per_day):
             num_people = self.doses_per_day(sim)
+        elif sim.t in self.doses_per_day:
+            num_people = self.doses_per_day[sim.t]
         else:
             # If nobody gets vaccinated today, just return an empty list
             return np.array([])
@@ -1569,7 +1569,7 @@ class vaccinate_sequential(BaseVaccination):
         # Next, work out who is eligible for a first dose
         # Anyone who has received at least one dose of a vaccine would have had subsequent doses scheduled
         # and therefore should not be selected here
-        first_dose_eligible = self.sequence[~sim.people.vaccinated & ~sim.people.dead[self.sequence]]
+        first_dose_eligible = self.sequence[~sim.people.vaccinated[self.sequence] & ~sim.people.dead[self.sequence]]
 
         if len(first_dose_eligible) == 0:
             return scheduled  # Just return anyone that is scheduled

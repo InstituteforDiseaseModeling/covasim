@@ -12,7 +12,7 @@ import numpy as np
 do_plot = 1
 cv.options.set(interactive=False) # Assume not running interactively
 
-# Shared parameters arcross simulations
+# Shared parameters across simulations
 base_pars = dict(
     pop_size = 1e3,
     verbose  = -1,
@@ -155,6 +155,7 @@ def test_vaccines(do_plot=False):
 
     return sim
 
+
 def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
@@ -164,15 +165,39 @@ def test_vaccines_sequential(do_plot=False):
     # TODO - add verification that coverage is increasing in the right people at the right time
     # (maybe via a custom analyzer? maybe implement as a standard analyzer? or maybe age_histogram already does it?)
 
-    pfizer = cv.vaccinate_sequential(vaccine='pfizer', sequence=age_sequence, doses_per_day=100)
-    sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
+    n_doses = []
+    pfizer = cv.vaccinate_sequential(vaccine='pfizer', sequence=age_sequence, doses_per_day=lambda sim: sim.t)
+    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, strains=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
     sim.run()
 
+    n_doses = np.array(n_doses)
+
     if do_plot:
-        sim.plot('overview-strain')
+        fully_vaccinated = (n_doses == 2).sum(axis=1)
+        first_dose = (n_doses == 1).sum(axis=1)
+        pl.stackplot(sim.tvec, first_dose, fully_vaccinated)
+
+        # Stacked bars by 10 year age
+
+        # At the end of the simulation
+        df = pd.DataFrame(n_doses.T)
+        df['age_bin'] = np.digitize(sim.people.age,np.arange(0,100,10))
+        df['fully_vaccinated'] = df[60]==2
+        df['first_dose'] = df[60]==1
+        df['unvaccinated'] = df[60]==0
+        out = df.groupby('age_bin').sum()
+        out[["unvaccinated", "first_dose","fully_vaccinated"]].plot(kind="bar", stacked=True)
+
+        # Part-way through the simulation
+        df = pd.DataFrame(n_doses.T)
+        df['age_bin'] = np.digitize(sim.people.age,np.arange(0,100,10))
+        df['fully_vaccinated'] = df[40]==2
+        df['first_dose'] = df[40]==1
+        df['unvaccinated'] = df[40]==0
+        out = df.groupby('age_bin').sum()
+        out[["unvaccinated", "first_dose","fully_vaccinated"]].plot(kind="bar", stacked=True)
 
     return sim
-
 
 
 def test_decays(do_plot=False):
@@ -228,7 +253,6 @@ def test_decays(do_plot=False):
     res.x = x
 
     return res
-
 
 
 #%% Run as a script
