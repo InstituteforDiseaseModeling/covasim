@@ -176,7 +176,7 @@ def update_peak_nab(people, inds, prior_inf=True):
     '''
 
     nab_arrays = people.nab[inds]
-    prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior NAb
+    prior_nab_inds = cvu.true(nab_arrays, inds) # Find people with prior NAb
     no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
     peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
     pars = people.pars
