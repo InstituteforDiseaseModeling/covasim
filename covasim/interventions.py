@@ -261,6 +261,14 @@ class Intervention:
             return f'{self.__module__}.{self.__class__.__name__}()'
 
 
+    def __call__(self, *args, **kwargs):
+        # Makes Intervention(sim) equivalent to Intervention.apply(sim)
+        if not self.initialized:  # pragma: no cover
+            errormsg = f'Intervention (label={self.label}, {type(self)}) has not been initialized'
+            raise RuntimeError(errormsg)
+        return self.apply(*args, **kwargs)
+
+
     def disp(self):
         ''' Print a detailed representation of the intervention '''
         return sc.pr(self)
