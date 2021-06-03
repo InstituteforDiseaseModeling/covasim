@@ -1227,7 +1227,7 @@ class vaccinate(Intervention):
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
         - ``doses``:     the number of doses required to be fully vaccinated
         - ``interval``:  the interval between doses
-        - entries for efficacy against each of the strains (e.g. ``b117``)
+        - entries for efficacy against each of the variants (e.g. ``b117``)
 
     See ``parameters.py`` for additional examples of these parameters.
 
@@ -1255,7 +1255,7 @@ class vaccinate(Intervention):
         if isinstance(vaccine, str):
 
             choices, mapping = cvpar.get_vaccine_choices()
-            strain_pars = cvpar.get_vaccine_strain_pars()
+            variant_pars = cvpar.get_vaccine_variant_pars()
             dose_pars = cvpar.get_vaccine_dose_pars()
 
             label = vaccine.lower()
@@ -1264,7 +1264,7 @@ class vaccinate(Intervention):
 
             if label in mapping:
                 label = mapping[label]
-                vaccine_pars = sc.mergedicts(strain_pars[label], dose_pars[label])
+                vaccine_pars = sc.mergedicts(variant_pars[label], dose_pars[label])
             else: # pragma: no cover
                 errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
@@ -1272,7 +1272,7 @@ class vaccinate(Intervention):
             if self.label is None:
                 self.label = label
 
-        # Option 2: strains can be specified as a dict of pars
+        # Option 2: variants can be specified as a dict of pars
         elif isinstance(vaccine, dict):
 
             # Parse label
@@ -1301,10 +1301,10 @@ class vaccinate(Intervention):
             errormsg = 'The cv.vaccinate() intervention requires use_waning=True. Please enable waning, or else use cv.simple_vaccine().'
             raise RuntimeError(errormsg)
 
-        # Populate any missing keys -- must be here, after strains are initialized
-        default_strain_pars = cvpar.get_vaccine_strain_pars(default=True)
+        # Populate any missing keys -- must be here, after variants are initialized
+        default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
         default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
-        strain_labels       = list(sim['strain_pars'].keys())
+        variant_labels       = list(sim['variant_pars'].keys())
         dose_keys           = list(default_dose_pars.keys())
 
         # Handle dose keys
@@ -1312,14 +1312,14 @@ class vaccinate(Intervention):
             if key not in self.p:
                 self.p[key] = default_dose_pars[key]
 
-        # Handle strains
-        for key in strain_labels:
+        # Handle variants
+        for key in variant_labels:
             if key not in self.p:
-                if key in default_strain_pars:
-                    val = default_strain_pars[key]
+                if key in default_variant_pars:
+                    val = default_variant_pars[key]
                 else:
                     val = 1.0
-                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and strain {key}, setting to 1.0')
+                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
                 self.p[key] = val
 
 

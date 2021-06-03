@@ -1,5 +1,5 @@
 '''
-Tests for immune waning, strains, and vaccine intervention.
+Tests for immune waning, variants, and vaccine intervention.
 '''
 
 #%% Imports and settings
@@ -121,22 +121,22 @@ def test_waning(do_plot=False):
 
         # Optionally plot
         if do_plot:
-            msim.plot('overview-strain', rotation=30)
+            msim.plot('overview-variant', rotation=30)
 
     return msims
 
 
-def test_strains(do_plot=False):
-    sc.heading('Testing strains...')
+def test_variants(do_plot=False):
+    sc.heading('Testing variants...')
 
-    b117 = cv.strain('b117',         days=10, n_imports=20)
-    p1   = cv.strain('sa variant',   days=20, n_imports=20)
-    cust = cv.strain(label='Custom', days=40, n_imports=20, strain={'rel_beta': 2, 'rel_symp_prob': 1.6})
-    sim  = cv.Sim(base_pars, use_waning=True, strains=[b117, p1, cust])
+    b117 = cv.variant('b117',         days=10, n_imports=20)
+    p1   = cv.variant('sa variant',   days=20, n_imports=20)
+    cust = cv.variant(label='Custom', days=40, n_imports=20, variant={'rel_beta': 2, 'rel_symp_prob': 1.6})
+    sim  = cv.Sim(base_pars, use_waning=True, variants=[b117, p1, cust])
     sim.run()
 
     if do_plot:
-        sim.plot('overview-strain')
+        sim.plot('overview-variant')
 
     return sim
 
@@ -144,13 +144,13 @@ def test_strains(do_plot=False):
 def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
-    p1 = cv.strain('sa variant',   days=20, n_imports=20)
+    p1 = cv.variant('sa variant',   days=20, n_imports=20)
     pfizer = cv.vaccinate(vaccine='pfizer', days=30)
-    sim  = cv.Sim(base_pars, use_waning=True, strains=p1, interventions=pfizer)
+    sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer)
     sim.run()
 
     if do_plot:
-        sim.plot('overview-strain')
+        sim.plot('overview-variant')
 
     return sim
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
 
     sim1   = test_states()
     msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_strains(do_plot=do_plot)
+    sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
     res    = test_decays(do_plot=do_plot)
 

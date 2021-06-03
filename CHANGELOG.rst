@@ -24,6 +24,17 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Version 3.0.5 (2021-05-26)
+--------------------------
+- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`__ for the rationale behind the change.
+- Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
+- Changed the parameters provided to ``nab_to_efficacy`` function.
+- Updated some strain parameters to be based on studies and not modeled inferences.
+- *Regression information*: All instances of ``strain`` should be renamed ``variant``. A find-and-replace should be sufficient for updating most scripts. Parameter values and functional forms have also been updated, so results using waning immunity will differ.
+- *GitHub info*: PR `1069 <https://github.com/amath-idm/covasim/pull/1069>`__
+
+
 Version 3.0.4 (2021-05-19)
 --------------------------
 - Fixed a bug that prevented simulations from being run *without* prognoses by age.
@@ -34,6 +45,7 @@ Version 3.0.4 (2021-05-19)
 - Removed the ``rel_imm_strain`` parameter; self-immunity is now always 1.0.
 - Updated vaccine and strain parameter values based on fits to empirical data.
 - Merged multisims now use the labels from each multisim, rather than the sim labels, for plotting.
+- *Regression information*: Parameter values have been updated, so results using waning immunity will differ.
 - *GitHub info*: PR `1058 <https://github.com/amath-idm/covasim/pull/1058>`__
 
 

@@ -1,11 +1,11 @@
 import covasim as cv
 import sciris as sc
 import numpy as np
+import covasim.utils as cvu
 
-
-do_plot = 0
+do_plot = 1
 do_show = 0
-do_save = 0
+do_save = 1
 debug   = 0
 
 base_pars = dict(
@@ -22,66 +22,79 @@ def test_simple(do_plot=False):
     return
 
 
-def test_import1strain(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing a new strain partway through a sim')
+def test_import1variant(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing a new variant partway through a sim')
 
-    strain_pars = {
+    variant_pars = {
         'rel_beta': 1.5,
     }
     pars = {
         'beta': 0.01
     }
-    strain = cv.strain(strain_pars, days=1, n_imports=20, label='Strain 2: 1.5x more transmissible')
-    sim = cv.Sim(use_waning=True, pars=pars, strains=strain, analyzers=cv.snapshot(30, 60), **pars, **base_pars)
+    variant = cv.variant(variant_pars, days=1, n_imports=20, label='Variant 2: 1.5x more transmissible')
+    sim = cv.Sim(use_waning=True, pars=pars, variants=variant, analyzers=cv.snapshot(30, 60), **pars, **base_pars)
     sim.run()
 
     return sim
 
 
-def test_import2strains(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing 2 new strains partway through a sim')
+def test_import2variants(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test introducing 2 new variants partway through a sim')
 
-    b117 = cv.strain('b117', days=1, n_imports=20)
-    p1 = cv.strain('sa variant', days=2, n_imports=20)
-    sim = cv.Sim(use_waning=True, strains=[b117, p1], label='With imported infections', **base_pars)
+    b117 = cv.variant('b117', days=1, n_imports=20)
+    p1 = cv.variant('sa variant', days=2, n_imports=20)
+    sim = cv.Sim(use_waning=True, variants=[b117, p1], label='With imported infections', **base_pars)
     sim.run()
 
     return sim
 
 
-def test_importstrain_longerdur(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing a new strain with longer duration partway through a sim')
+def test_efficacy(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test the efficacy of infection against reinfection')
 
     pars = sc.mergedicts(base_pars, {
-        'n_days': 120,
+        'beta': 0.015,
+        'pop_infected': 100,
+        'pop_size': 50_000,
+        'n_days': 180,
     })
+    interventions = [cv.change_beta([30, 90], [0.3, 1])]
+    sim = cv.Sim(use_waning=True,
+                 analyzers=cv.snapshot(90),
+                 pars=pars,
+                 interventions=interventions,
 
-    strain_pars = {
-        'rel_beta': 1.5,
-    }
-
-    strain = cv.strain(strain=strain_pars, label='Custom strain', days=10, n_imports=30)
-    sim = cv.Sim(use_waning=True, pars=pars, strains=strain, label='With imported infections')
+                 )
     sim.run()
 
-    return sim
+    # Number of people exposed during the first wave:
+    snap = sim.get_analyzer()
+    d1 = 90
+    people0 = snap.get(d1)
+    people1 = sim.people
 
+    trial_arm_size = len(cvu.true(people0.n_infections>0))
+    control_arm_size = len(cvu.true(people0.n_infections==0))
 
-def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test introducing 2 new strains partway through a sim, with a change_beta intervention')
+    trial_not_infected = len(cvu.true((people0.n_infections > 0) * (people1.n_infections == people0.n_infections)))
+    trial_infected = len(cvu.true((people0.n_infections > 0) * (people1.n_infections > people0.n_infections)))
 
-    strain2 = {'rel_beta': 1.5,
-               'rel_severe_prob': 1.3}
+    control_not_infected = len(cvu.true((people0.n_infections == 0) * (people1.n_infections == 0)))
+    control_infected = len(cvu.true((people0.n_infections == 0) * (people1.n_infections > 0)))
 
-    strain3 = {'rel_beta': 2,
-               'rel_symp_prob': 1.6}
+    p_inf_trial = trial_infected/trial_arm_size
+    p_inf_control = control_infected/control_arm_size
+    pe = 1-p_inf_trial/p_inf_control
 
-    intervs  = cv.change_beta(days=[5, 20, 40], changes=[0.8, 0.7, 0.6])
-    strains  = [cv.strain(strain=strain2, days=10, n_imports=20),
-                cv.strain(strain=strain3, days=30, n_imports=20),
-               ]
-    sim = cv.Sim(use_waning=True, interventions=intervs, strains=strains, label='With imported infections', **base_pars)
-    sim.run()
+    print(f'Protective efficacy of infection against reinfection: {pe}')
+
+    to_plot = sc.objdict({
+        'New infections': ['new_infections', 'new_reinfections'],
+        'Cumulative infections': ['cum_infections', 'cum_reinfections'],
+        'Immunity levels': ['pop_nabs', 'pop_protection'],
+    })
+    if do_plot:
+        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
 
     return sim
 
@@ -89,8 +102,8 @@ def test_import2strains_changebeta(do_plot=False, do_show=True, do_save=False):
 
 #%% Vaccination tests
 
-def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Test vaccination with a single strain')
+def test_vaccine_1variant(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Test vaccination with a single variant')
 
     pars = sc.mergedicts(base_pars, {
         'beta': 0.015,
@@ -104,14 +117,6 @@ def test_vaccine_1strain(do_plot=False, do_show=True, do_save=False):
         interventions=pfizer
     )
     sim.run()
-
-    to_plot = sc.objdict({
-        'New infections': ['new_infections'],
-        'Cumulative infections': ['cum_infections'],
-        'New reinfections': ['new_reinfections'],
-    })
-    if do_plot:
-        sim.plot(do_save=do_save, do_show=do_show, fig_path='results/test_reinfection.png', to_plot=to_plot)
 
     return sim
 
@@ -158,8 +163,8 @@ def test_synthpops():
 
 #%% Multisim and scenario tests
 
-def test_vaccine_1strain_scen(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with 1 strain, pfizer vaccine')
+def test_vaccine_1variant_scen(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with 1 variant, pfizer vaccine')
 
     # Define baseline parameters
     n_runs = 3
@@ -203,8 +208,8 @@ def test_vaccine_1strain_scen(do_plot=False, do_show=True, do_save=False):
     return scens
 
 
-def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
-    sc.heading('Run a basic sim with b117 strain on day 10, pfizer vaccine day 20')
+def test_vaccine_2variants_scen(do_plot=False, do_show=True, do_save=False):
+    sc.heading('Run a basic sim with b117 variant on day 10, pfizer vaccine day 20')
 
     # Define baseline parameters
     n_runs = 3
@@ -216,8 +221,8 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
     base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
     jnj = cv.vaccinate(days=subtarg_days, vaccine='j&j', subtarget=vacc_subtarg)
-    b1351 = cv.strain('b1351', days=10, n_imports=20)
-    p1 = cv.strain('p1', days=100, n_imports=100)
+    b1351 = cv.variant('b1351', days=10, n_imports=20)
+    p1 = cv.variant('p1', days=100, n_imports=100)
 
     # Define the scenarios
 
@@ -225,21 +230,21 @@ def test_vaccine_2strains_scen(do_plot=False, do_show=True, do_save=False):
         'baseline': {
             'name': 'B1351 on day 10, No Vaccine',
             'pars': {
-                'strains': [b1351]
+                'variants': [b1351]
             }
         },
         'b1351': {
             'name': 'B1351 on day 10, J&J starting on day 60',
             'pars': {
                 'interventions': [jnj],
-                'strains': [b1351],
+                'variants': [b1351],
             }
         },
         'p1': {
             'name': 'B1351 on day 10, J&J starting on day 60, p1 on day 100',
             'pars': {
                 'interventions': [jnj],
-                'strains': [b1351, p1],
+                'variants': [b1351, p1],
             }
         },
     }
@@ -264,8 +269,8 @@ def test_msim(do_plot=False):
     sc.heading('Testing multisim...')
 
     # basic test for vaccine
-    b117 = cv.strain('b117', days=0)
-    sim = cv.Sim(use_waning=True, strains=[b117], **base_pars)
+    b117 = cv.variant('b117', days=0)
+    sim = cv.Sim(use_waning=True, variants=[b117], **base_pars)
     msim = cv.MultiSim(sim, n_runs=2)
     msim.run()
     msim.reduce()
@@ -290,7 +295,7 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
     base_sim = cv.Sim(use_waning=True, n_days=400, pars=base_pars)
 
     # Define the scenarios
-    b1351 = cv.strain('b1351', days=100, n_imports=20)
+    b1351 = cv.variant('b1351', days=100, n_imports=20)
 
     scenarios = {
         'baseline': {
@@ -309,14 +314,14 @@ def test_varyingimmunity(do_plot=False, do_show=True, do_save=False):
             'name': 'Default Immunity (decay at log(2)/90), B1351 on day 100',
             'pars': {
                 'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/90, decay_time1=250, decay_rate2=0.001),
-                'strains': [b1351],
+                'variants': [b1351],
             },
         },
         'faster_immunity_b1351': {
             'name': 'Faster Immunity (decay at log(2)/30), B1351 on day 100',
             'pars': {
                 'nab_decay': dict(form='nab_decay', decay_rate1=np.log(2)/30, decay_time1=250, decay_rate2=0.001),
-                'strains': [b1351],
+                'variants': [b1351],
             },
         },
     }
@@ -419,19 +424,18 @@ if __name__ == '__main__':
     test_simple(do_plot=do_plot)
 
     # Run more complex single-sim tests
-    sim0 = test_import1strain(**kw)
-    sim1 = test_import2strains(**kw)
-    sim2 = test_importstrain_longerdur(**kw)
-    sim3 = test_import2strains_changebeta(**kw)
+    sim0 = test_import1variant(**kw)
+    sim1 = test_import2variants(**kw)
+    sim2 = test_efficacy(**kw)
 
     # Run Vaccine tests
-    sim4 = test_synthpops()
-    sim5 = test_vaccine_1strain()
-    sim6 = test_vaccine_1dose()
+    sim3 = test_synthpops()
+    sim4 = test_vaccine_1variant()
+    sim5 = test_vaccine_1dose()
 
     # Run multisim and scenario tests
-    scens0 = test_vaccine_1strain_scen()
-    scens1 = test_vaccine_2strains_scen()
+    scens0 = test_vaccine_1variant_scen()
+    scens1 = test_vaccine_2variants_scen()
     msim0  = test_msim()
 
     # Run immunity tests

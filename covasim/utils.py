@@ -7,9 +7,10 @@ at the heart of the integration loop.
 
 #%% Housekeeping
 
-import numba  as nb # For faster computations
-import numpy  as np # For numerics
+import numba as nb # For faster computations
+import numpy as np # For numerics
 import random # Used only for resetting the seed
+import sciris as sc # For additional utilities
 import scipy.stats as sps # For distributions
 from .settings import options as cvo # To set options
 from . import defaults as cvd # To set default types
@@ -215,8 +216,7 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         if '_int' in dist:
             samples = np.round(samples)
     else:
-        choicestr = '\n'.join(choices)
-        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {choicestr}'
+        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
         raise NotImplementedError(errormsg)
 
     return samples

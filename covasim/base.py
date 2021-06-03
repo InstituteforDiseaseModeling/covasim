@@ -123,7 +123,7 @@ class Result(object):
         npts (int): if values is None, precreate it to be of this length
         scale (bool): whether or not the value scales by population scale factor
         color (str/arr): default color for plotting (hex or RGB notation)
-        n_strains (int): the number of strains the result is for (0 for results not by strain)
+        n_variants (int): the number of variants the result is for (0 for results not by variant)
 
     **Example**::
 
@@ -133,7 +133,7 @@ class Result(object):
         print(r1.values)
     '''
 
-    def __init__(self, name=None, npts=None, scale=True, color=None, n_strains=0):
+    def __init__(self, name=None, npts=None, scale=True, color=None, n_variants=0):
         self.name =  name  # Name of this result
         self.scale = scale # Whether or not to scale the result by the scale factor
         if color is None:
@@ -143,8 +143,8 @@ class Result(object):
             npts = 0
         npts = int(npts)
 
-        if n_strains>0:
-            self.values = np.zeros((n_strains, npts), dtype=cvd.result_float)
+        if n_variants>0:
+            self.values = np.zeros((n_variants, npts), dtype=cvd.result_float)
         else:
             self.values = np.zeros(npts, dtype=cvd.result_float)
 
@@ -413,16 +413,16 @@ class BaseSim(ParsObj):
         '''
         Get the actual results objects, not other things stored in sim.results.
 
-        If which is 'main', return only the main results keys. If 'strain', return
-        only strain keys. If 'all', return all keys.
+        If which is 'main', return only the main results keys. If 'variant', return
+        only variant keys. If 'all', return all keys.
 
         '''
         keys = []
-        choices = ['main', 'strain', 'all']
+        choices = ['main', 'variant', 'all']
         if which in ['main', 'all']:
             keys += [key for key,res in self.results.items() if isinstance(res, Result)]
-        if which in ['strain', 'all'] and 'strain' in self.results:
-            keys += [key for key,res in self.results['strain'].items() if isinstance(res, Result)]
+        if which in ['variant', 'all'] and 'variant' in self.results:
+            keys += [key for key,res in self.results['variant'].items() if isinstance(res, Result)]
         if which not in choices: # pragma: no cover
             errormsg = f'Choice "which" not available; choices are: {sc.strjoin(choices)}'
             raise ValueError(errormsg)
@@ -592,7 +592,7 @@ class BaseSim(ParsObj):
             An sc.Spreadsheet with an Excel file, or writes the file to disk
         '''
         if skip_pars is None:
-            skip_pars = ['strain_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
+            skip_pars = ['variant_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
 
         # Export results
         result_df = self.to_df(date_index=True)
@@ -991,9 +991,9 @@ class BasePeople(FlexPretty):
         ''' Count the number of people for a given key '''
         return (self[key]>0).sum()
 
-    def count_by_strain(self, key, strain):
+    def count_by_variant(self, key, variant):
         ''' Count the number of people for a given key '''
-        return (self[key][strain,:]>0).sum()
+        return (self[key][variant,:]>0).sum()
 
 
     def count_not(self, key):
@@ -1016,7 +1016,7 @@ class BasePeople(FlexPretty):
             errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
             raise sc.KeyNotFoundError(errormsg)
         pars['pop_size'] = int(pars['pop_size'])
-        pars.setdefault('n_strains', 1)
+        pars.setdefault('n_variants', 1)
         pars.setdefault('location', None)
         self.pars = pars # Actually store the pars
         return
@@ -1075,16 +1075,16 @@ class BasePeople(FlexPretty):
 
         # Check that the length of each array is consistent
         expected_len = len(self)
-        expected_strains = self.pars['n_strains']
+        expected_variants = self.pars['n_variants']
         for key in self.keys():
             if self[key].ndim == 1:
                 actual_len = len(self[key])
-            else: # If it's 2D, strains need to be checked separately
-                actual_strains, actual_len = self[key].shape
-                if actual_strains != expected_strains:
+            else: # If it's 2D, variants need to be checked separately
+                actual_variants, actual_len = self[key].shape
+                if actual_variants != expected_variants:
                     if verbose:
-                        print(f'Resizing "{key}" from {actual_strains} to {expected_strains}')
-                    self._resize_arrays(keys=key, new_size=(expected_strains, expected_len))
+                        print(f'Resizing "{key}" from {actual_variants} to {expected_variants}')
+                    self._resize_arrays(keys=key, new_size=(expected_variants, expected_len))
             if actual_len != expected_len: # pragma: no cover
                 if die:
                     errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
@@ -1104,7 +1104,7 @@ class BasePeople(FlexPretty):
     def _resize_arrays(self, new_size=None, keys=None):
         ''' Resize arrays if any mismatches are found '''
 
-        # Handle None or tuple input (representing strains and pop_size)
+        # Handle None or tuple input (representing variants and pop_size)
         if new_size is None:
             new_size = len(self)
         pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
