@@ -204,16 +204,9 @@ def check_nab(t, people, inds=None):
             If in growth, pull nabs of inds and add % of peak nabs
             If in decay, % of peak nabs
     '''
-    # Indices of people who've had some nab event
-    inf_inds = cvu.defined(people.date_exposed[inds])
-    vac_inds = cvu.defined(people.date_vaccinated[inds])
-    both_inds = np.intersect1d(inf_inds, vac_inds)
 
-    # Time since boost
-    t_since_boost = np.full(len(inds), np.nan, dtype=cvd.default_int)
-    t_since_boost[inf_inds] = t-people.date_exposed[inds[inf_inds]]
-    t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
-    t_since_boost[both_inds] = t-np.maximum(people.date_exposed[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
+    # # Time since last nab-boosting event
+    t_since_boost = t-np.fmax(people.date_exposed[inds],people.date_vaccinated[inds]).astype(cvd.default_int)
 
     # Determine which nabs are in decay (peak > current)
     nabs = people.last_nab[inds]
