@@ -144,14 +144,35 @@ def get_vaccine_pars(pars):
     return vaccine_pars
 
 
-def init_nab(people, inds, prior_inf=True):
+def update_peak_nab(people, inds, prior_inf=True):
     '''
-    Draws a peak neutralizing antibody (NAb) level for individuals.
-    Can come from a natural infection or vaccination and depends on if there is prior immunity:
+    Update peak NAb level
+
+    This function updates the peak NAb level for individuals when a NAb boosting event occurs.
+    NAbs can come from a natural infection or vaccination and the peak level depends on if there
+    is prior immunity:
+
     1) a natural infection. If individual has no existing NAb, draw from distribution
     depending upon symptoms. If individual has existing NAb, multiply booster impact
     2) Vaccination. If individual has no existing NAb, draw from distribution
     depending upon vaccine source. If individual has existing NAb, multiply booster impact
+
+    Updating peak nab due to either infection or vaccination. The operation varies depending on whether
+    or not the person already has some immunity (although it doesn't matter how they acquired their immunity)
+
+    For people with prior immunity:
+        - peak nab is increased by the nab_boost factor
+            - From `pars` if immunity is being updated due to infections
+            - From `vaccine_pars` if immunity is being updated due to vaccination
+
+    For people with no prior immunity
+        - peak_nab is sampled from a distribution parametrized by `nab_init`
+            - From `pars` if immunity is being updated due to infections
+            - From `vaccine_pars` if immunity is being updated due to vaccination
+
+    - Additionally, for people with no prior immunity and with natural infection, the peak nab
+      is scaled by whether or not the person develops symptoms
+
     '''
 
     nab_arrays = people.nab[inds]
@@ -267,7 +288,7 @@ def nab_to_efficacy(nab, ax, pars):
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
 
     Args:
-        nab (arr): an array of NAb levels
+        nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
         pars (dict): dictionary of parameters for the vaccine efficacy
 

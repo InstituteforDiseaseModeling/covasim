@@ -200,6 +200,26 @@ def test_vaccines_sequential(do_plot=False):
     return sim
 
 
+def test_plot_nabs(do_plot=False):
+    sc.heading('Testing nab decay in simulation...')
+
+    p1 = cv.strain('sa variant',   days=20, n_imports=0)
+    def age_sequence(people): return np.argsort(-people.age)
+
+    # TODO - add verification that coverage is increasing in the right people at the right time
+    # (maybe via a custom analyzer? maybe implement as a standard analyzer? or maybe age_histogram already does it?)
+
+    nabs = []
+    vac = cv.vaccinate(vaccine='pfizer', days=[1])
+    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, strains=p1, interventions=vac, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim.run()
+
+    nabs = np.array(nabs)
+
+
+    print(sim)
+
+
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
 
@@ -269,6 +289,7 @@ if __name__ == '__main__':
     res    = test_decays(do_plot=do_plot)
 
     sim4   = test_vaccines_sequential(do_plot=do_plot)
+    sim5 = test_plot_nabs(do_plot=do_plot)
 
 
     sc.toc(T)

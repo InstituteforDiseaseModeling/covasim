@@ -548,7 +548,7 @@ class People(cvb.BasePeople):
             self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.init_nab(self, inds, prior_inf=True)
+            cvi.update_peak_nab(self, inds, prior_inf=True)
 
         return n_infections # For incrementing counters
 
