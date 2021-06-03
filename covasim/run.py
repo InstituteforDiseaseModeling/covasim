@@ -241,25 +241,25 @@ class MultiSim(cvb.FlexPretty):
         # Perform the statistics
         raw = {}
         mainkeys = reduced_sim.result_keys('main')
-        strainkeys = reduced_sim.result_keys('strain')
+        variantkeys = reduced_sim.result_keys('variant')
         for reskey in mainkeys:
             raw[reskey] = np.zeros((reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
                 vals = sim.results[reskey].values
                 raw[reskey][:, s] = vals
-        for reskey in strainkeys:
-            raw[reskey] = np.zeros((reduced_sim['n_strains'], reduced_sim.npts, len(self.sims)))
+        for reskey in variantkeys:
+            raw[reskey] = np.zeros((reduced_sim['n_variants'], reduced_sim.npts, len(self.sims)))
             for s,sim in enumerate(self.sims):
-                vals = sim.results['strain'][reskey].values
+                vals = sim.results['variant'][reskey].values
                 raw[reskey][:, :, s] = vals
 
-        for reskey in mainkeys + strainkeys:
+        for reskey in mainkeys + variantkeys:
             if reskey in mainkeys:
                 axis = 1
                 results = reduced_sim.results
             else:
                 axis = 2
-                results = reduced_sim.results['strain']
+                results = reduced_sim.results['variant']
             if use_mean:
                 r_mean = np.mean(raw[reskey], axis=axis)
                 r_std = np.std(raw[reskey], axis=axis)
@@ -888,7 +888,7 @@ class Scenarios(cvb.ParsObj):
         self.base_sim.update_pars(self.basepars)
         self.base_sim.validate_pars()
         if not self.base_sim.initialized:
-            self.base_sim.init_strains()
+            self.base_sim.init_variants()
             self.base_sim.init_immunity()
             self.base_sim.init_results()
 
@@ -944,7 +944,7 @@ class Scenarios(cvb.ParsObj):
             return
 
         mainkeys   = self.result_keys('main')
-        strainkeys = self.result_keys('strain')
+        variantkeys = self.result_keys('variant')
 
         # Loop over scenarios
         for scenkey,scen in self.scenarios.items():
@@ -963,8 +963,8 @@ class Scenarios(cvb.ParsObj):
 
             scen_sim.update_pars(scenpars)  # Update the parameters, if provided
             scen_sim.validate_pars()
-            if 'strains' in scenpars: # Process strains
-                scen_sim.init_strains()
+            if 'variants' in scenpars: # Process variants
+                scen_sim.init_variants()
                 scen_sim.init_immunity(create=True)
             elif 'imm_pars' in scenpars: # Process immunity
                 scen_sim.init_immunity(create=True) # TODO: refactor
@@ -979,28 +979,28 @@ class Scenarios(cvb.ParsObj):
 
             # Process the simulations
             print_heading(f'Processing {scenkey}')
-            ns = scen_sims[0]['n_strains'] # Get number of strains
+            ns = scen_sims[0]['n_variants'] # Get number of variants
             scenraw = {}
             for reskey in mainkeys:
                 scenraw[reskey] = np.zeros((self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
                     scenraw[reskey][:,s] = sim.results[reskey].values
-            for reskey in strainkeys:
+            for reskey in variantkeys:
                 scenraw[reskey] = np.zeros((ns, self.npts, len(scen_sims)))
                 for s,sim in enumerate(scen_sims):
-                    scenraw[reskey][:,:,s] = sim.results['strain'][reskey].values
+                    scenraw[reskey][:,:,s] = sim.results['variant'][reskey].values
 
             scenres = sc.objdict()
             scenres.best = {}
             scenres.low = {}
             scenres.high = {}
-            for reskey in mainkeys + strainkeys:
+            for reskey in mainkeys + variantkeys:
                 axis = 1 if reskey in mainkeys else 2
                 scenres.best[reskey] = np.quantile(scenraw[reskey], q=0.5, axis=axis) # Changed from median to mean for smoother plots
                 scenres.low[reskey]  = np.quantile(scenraw[reskey], q=self['quantiles']['low'], axis=axis)
                 scenres.high[reskey] = np.quantile(scenraw[reskey], q=self['quantiles']['high'], axis=axis)
 
-            for reskey in mainkeys + strainkeys:
+            for reskey in mainkeys + variantkeys:
                 self.results[reskey][scenkey]['name'] = scenname
                 for blh in ['best', 'low', 'high']:
                     self.results[reskey][scenkey][blh] = scenres[blh][reskey]
@@ -1043,14 +1043,14 @@ class Scenarios(cvb.ParsObj):
 
         # Compute dataframe
         x = defaultdict(dict)
-        strainkeys = self.result_keys('strain')
+        variantkeys = self.result_keys('variant')
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
-                if reskey in strainkeys:
-                    for strain in range(self.base_sim['n_strains']):
-                        val = self.results[reskey][scenkey].best[strain, day] # Only prints results for infections by first strain
-                        strainkey = reskey + str(strain) # Add strain number to the summary output
-                        x[scenkey][strainkey] = int(val)
+                if reskey in variantkeys:
+                    for variant in range(self.base_sim['n_variants']):
+                        val = self.results[reskey][scenkey].best[variant, day] # Only prints results for infections by first variant
+                        variantkey = reskey + str(variant) # Add variant number to the summary output
+                        x[scenkey][variantkey] = int(val)
                 else:
                     val = self.results[reskey][scenkey].best[day]
                     if reskey not in ['r_eff', 'doubling_time']:
@@ -1125,7 +1125,7 @@ class Scenarios(cvb.ParsObj):
         spreadsheet = sc.Spreadsheet()
         spreadsheet.freshbytes()
         with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            for key in self.result_keys('main'): # Multidimensional strain keys can't be exported
+            for key in self.result_keys('main'): # Multidimensional variant keys can't be exported
                 result_df = pd.DataFrame.from_dict(sc.flattendict(self.results[key], sep='_'))
                 result_df.to_excel(writer, sheet_name=key)
         spreadsheet.load()

@@ -50,6 +50,7 @@ class PeopleMeta(sc.prettyobj):
             'death_prob',       # Float
             'rel_trans',        # Float
             'rel_sus',          # Float
+            'n_infections',     # Int
         ]
 
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -71,27 +72,27 @@ class PeopleMeta(sc.prettyobj):
             'vaccinated',
         ]
 
-        # Strain states -- these are ints
-        self.strain_states = [
-            'exposed_strain',
-            'infectious_strain',
-            'recovered_strain',
+        # Variant states -- these are ints
+        self.variant_states = [
+            'exposed_variant',
+            'infectious_variant',
+            'recovered_variant',
         ]
 
-        # Strain states -- these are ints, by strain
-        self.by_strain_states = [
-            'exposed_by_strain',
-            'infectious_by_strain',
+        # Variant states -- these are ints, by variant
+        self.by_variant_states = [
+            'exposed_by_variant',
+            'infectious_by_variant',
         ]
 
-        # Immune states, by strain
+        # Immune states, by variant
         self.imm_states = [
-            'sus_imm',          # Float, by strain
-            'symp_imm',         # Float, by strain
-            'sev_imm',          # Float, by strain
+            'sus_imm',          # Float, by variant
+            'symp_imm',         # Float, by variant
+            'sev_imm',          # Float, by variant
         ]
 
-        # Neutralizing antibody states, not by strain
+        # Neutralizing antibody states, not by variant
         self.nab_states = [
             'prior_symptoms',   # Float
             'peak_nab',         # Float, peak neutralization titre relative to convalescent plasma
@@ -119,10 +120,10 @@ class PeopleMeta(sc.prettyobj):
             'dur_disease',
         ]
 
-        self.all_states = self.person + self.states + self.strain_states + self.by_strain_states + self.imm_states + self.nab_states + self.vacc_states + self.dates + self.durs
+        self.all_states = self.person + self.states + self.variant_states + self.by_variant_states + self.imm_states + self.nab_states + self.vacc_states + self.dates + self.durs
 
         # Validate
-        self.state_types = ['person', 'states', 'strain_states', 'by_strain_states', 'imm_states', 'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
+        self.state_types = ['person', 'states', 'variant_states', 'by_variant_states', 'imm_states', 'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
         for state_type in self.state_types:
             states = getattr(self, state_type)
             n_states        = len(states)
@@ -153,9 +154,9 @@ result_stocks = {
     'vaccinated':  'Number of people vaccinated',
 }
 
-result_stocks_by_strain = {
-    'exposed_by_strain':    'Number exposed by strain',
-    'infectious_by_strain': 'Number infectious by strain',
+result_stocks_by_variant = {
+    'exposed_by_variant':    'Number exposed by variant',
+    'infectious_by_variant': 'Number infectious by variant',
 }
 
 # The types of result that are counted as flows -- used in sim.py; value is the label suffix
@@ -176,25 +177,27 @@ result_flows = {
     'vaccinated':   'vaccinated people'
 }
 
-result_flows_by_strain = {
-    'infections_by_strain': 'infections by strain',
-    'infectious_by_strain': 'infectious by strain',
+result_flows_by_variant = {
+    'infections_by_variant':  'infections by variant',
+    'symptomatic_by_variant': 'symptomatic by variant',
+    'severe_by_variant':      'severe by variant',
+    'infectious_by_variant':  'infectious by variant',
 }
 
 result_imm = {
-    'pop_nabs': 'Population average nabs',
+    'pop_nabs':       'Population average nabs',
     'pop_protection': 'Population average protective immunity'
 }
 
 # Define new and cumulative flows
 new_result_flows = [f'new_{key}' for key in result_flows.keys()]
 cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
-new_result_flows_by_strain = [f'new_{key}' for key in result_flows_by_strain.keys()]
-cum_result_flows_by_strain = [f'cum_{key}' for key in result_flows_by_strain.keys()]
+new_result_flows_by_variant = [f'new_{key}' for key in result_flows_by_variant.keys()]
+cum_result_flows_by_variant = [f'cum_{key}' for key in result_flows_by_variant.keys()]
 
-# Parameters that can vary by strain
-strain_pars = [
-    'rel_imm_strain',
+# Parameters that can vary by variant
+variant_pars = [
+    'rel_imm_variant',
     'rel_beta',
     'rel_symp_prob',
     'rel_severe_prob',
@@ -245,12 +248,12 @@ def get_default_colors():
     c = sc.objdict()
     c.susceptible           = '#4d771e'
     c.exposed               = '#c78f65'
-    c.exposed_by_strain     = '#c75649',
+    c.exposed_by_variant    = '#c75649',
     c.infectious            = '#e45226'
-    c.infectious_by_strain  = c.infectious
+    c.infectious_by_variant = c.infectious
     c.infections            = '#b62413'
     c.reinfections          = '#732e26'
-    c.infections_by_strain  = '#b62413'
+    c.infections_by_variant = '#b62413'
     c.tests                 = '#aaa8ff'
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
@@ -260,7 +263,9 @@ def get_default_colors():
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
     c.symptomatic           = '#c1ad71'
+    c.symptomatic_by_variant= c.symptomatic
     c.severe                = '#c1981d'
+    c.severe_by_variant     = c.severe
     c.critical              = '#b86113'
     c.deaths                = '#000000'
     c.dead                  = c.deaths
@@ -302,10 +307,10 @@ overview_plots = [
     'r_eff',
 ]
 
-overview_strain_plots = [
-    'cum_infections_by_strain',
-    'new_infections_by_strain',
-    'n_infectious_by_strain',
+overview_variant_plots = [
+    'cum_infections_by_variant',
+    'new_infections_by_variant',
+    'n_infectious_by_variant',
     'cum_reinfections',
     'new_reinfections',
     'pop_nabs',
@@ -369,18 +374,18 @@ def get_default_plots(which='default', kind='sim', sim=None):
     elif which.lower() == 'all': # pragma: no cover
         plots = sim.result_keys('all')
 
-    # Show an overview plus strains
-    elif 'overview' in which and 'strain' in which: # pragma: no cover
-        plots = sc.dcp(overview_plots) + sc.dcp(overview_strain_plots)
+    # Show an overview plus variants
+    elif 'overview' in which and 'variant' in which: # pragma: no cover
+        plots = sc.dcp(overview_plots) + sc.dcp(overview_variant_plots)
 
-    # Show default but with strains
-    elif 'strain' in which: # pragma: no cover
+    # Show default but with variants
+    elif 'variant' in which: # pragma: no cover
         plots = sc.odict({
-                'Cumulative infections by strain': [
-                    'cum_infections_by_strain',
+                'Cumulative infections by variant': [
+                    'cum_infections_by_variant',
                 ],
-                'New infections by strain': [
-                    'new_infections_by_strain',
+                'New infections by variant': [
+                    'new_infections_by_variant',
                 ],
                 'Diagnoses': [
                     'cum_diagnoses',
@@ -403,7 +408,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         ],
 
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "strain", "overview-strain", or "seir"'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir"'
         raise ValueError(errormsg)
 
     return plots
