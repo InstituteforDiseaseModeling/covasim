@@ -1378,7 +1378,7 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = sim.t
-            cvi.update_peak_nab(sim.people, vacc_inds, prior_inf=False)
+            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, prior_inf=False)
 
         return vacc_inds
 
@@ -1512,7 +1512,7 @@ class vaccinate_sequential(BaseVaccination):
 
         """
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
-        self.sequence = sequence
+        self.sequence = sc.promotetoarray(sequence)
         self.doses_per_day = doses_per_day
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
         return
@@ -1583,13 +1583,14 @@ class vaccinate_sequential(BaseVaccination):
         first_dose_eligible = first_dose_eligible[~np.in1d(first_dose_eligible, scheduled)]
 
         if (len(first_dose_eligible)+len(scheduled)) > num_agents:
-            first_dose = first_dose_eligible[:(num_agents-len(scheduled))]
+            first_dose_inds = first_dose_eligible[:(num_agents - len(scheduled))]
         else:
-            first_dose = first_dose_eligible
+            first_dose_inds = first_dose_eligible
 
         # Schedule subsequent doses
         # For vaccines with >2 doses, scheduled doses will also need to be checked
-        self._scheduled_doses[sim.t+self.p['interval']].update(first_dose)
+        if self.p['doses'] > 1:
+            self._scheduled_doses[sim.t+self.p['interval']].update(first_dose_inds)
 
-        return np.concatenate([scheduled, first_dose])
+        return np.concatenate([scheduled, first_dose_inds])
 

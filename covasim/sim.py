@@ -437,8 +437,9 @@ class Sim(cvb.BaseSim):
             self.people.make_nonnaive(inds=inds)
 
         # Create the seed infections
-        inds = cvu.choose(self['pop_size'], self['pop_infected'])
-        self.people.infect(inds=inds, layer='seed_infection')
+        if self['pop_infected']:
+            inds = cvu.choose(self['pop_size'], self['pop_infected'])
+            self.people.infect(inds=inds, layer='seed_infection')
 
         return
 

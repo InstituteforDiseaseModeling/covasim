@@ -432,6 +432,9 @@ class People(cvb.BasePeople):
             count (int): number of people infected
         '''
 
+        if len(inds) == 0:
+            return 0
+
         # Remove duplicates
         inds, unique = np.unique(inds, return_index=True)
         if source is not None:
@@ -548,7 +551,7 @@ class People(cvb.BasePeople):
             self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, prior_inf=True)
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, prior_inf=True)
 
         return n_infections # For incrementing counters
 

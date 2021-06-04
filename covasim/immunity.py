@@ -144,7 +144,7 @@ def get_vaccine_pars(pars):
     return vaccine_pars
 
 
-def update_peak_nab(people, inds, prior_inf=True):
+def update_peak_nab(people, inds, nab_pars, prior_inf=True):
     '''
     Update peak NAb level
 
@@ -175,18 +175,17 @@ def update_peak_nab(people, inds, prior_inf=True):
 
     '''
 
-    nab_arrays = people.nab[inds]
-    prior_nab_inds = cvu.true(nab_arrays, inds) # Find people with prior NAb
-    no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
+
+    has_nabs = people.nab[inds] > 0
+    no_prior_nab_inds = inds[~has_nabs]
+    prior_nab_inds = inds[has_nabs]
     peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
-    pars = people.pars
 
     # NAb from infection
     if prior_inf:
-        nab_boost = pars['nab_boost']  # Boosting factor for natural infection
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
             people.peak_nab[no_prior_nab_inds] = no_prior_nab
@@ -195,24 +194,21 @@ def update_peak_nab(people, inds, prior_inf=True):
         if len(prior_nab_inds):
             last_nab = people.nab[prior_nab_inds]
             people.last_nab[prior_nab_inds] = last_nab
-            init_nab = peak_nab * nab_boost
+            init_nab = peak_nab * nab_pars['nab_boost']
             people.peak_nab[prior_nab_inds] = init_nab
 
     # NAb from a vaccine
     else:
-        vaccine_pars = get_vaccine_pars(pars)
-
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**vaccine_pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             people.peak_nab[no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
             last_nab = people.nab[prior_nab_inds]
             people.last_nab[prior_nab_inds] = last_nab
-            nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
-            init_nab = peak_nab * nab_boost
+            init_nab = peak_nab * nab_pars['nab_boost']
             people.peak_nab[prior_nab_inds] = init_nab
 
     return
