@@ -162,12 +162,9 @@ def test_vaccines_sequential(do_plot=False):
     p1 = cv.strain('sa variant',   days=20, n_imports=20)
     def age_sequence(people): return np.argsort(-people.age)
 
-    # TODO - add verification that coverage is increasing in the right people at the right time
-    # (maybe via a custom analyzer? maybe implement as a standard analyzer? or maybe age_histogram already does it?)
-
     n_doses = []
     pfizer = cv.vaccinate_sequential(vaccine='pfizer', sequence=age_sequence, doses_per_day=lambda sim: sim.t)
-    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, strains=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
+    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
     sim.run()
 
     n_doses = np.array(n_doses)
@@ -204,14 +201,10 @@ def test_plot_nabs(do_plot=False):
     sc.heading('Testing nab decay in simulation...')
 
     p1 = cv.strain('sa variant',   days=20, n_imports=0)
-    def age_sequence(people): return np.argsort(-people.age)
-
-    # TODO - add verification that coverage is increasing in the right people at the right time
-    # (maybe via a custom analyzer? maybe implement as a standard analyzer? or maybe age_histogram already does it?)
 
     nabs = []
     vac = cv.vaccinate(vaccine='pfizer', days=[1])
-    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, strains=p1, interventions=vac, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=vac, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     nabs = np.array(nabs)
@@ -219,6 +212,20 @@ def test_plot_nabs(do_plot=False):
 
     print(sim)
 
+def test_two_vaccines(do_plot=False):
+    sc.heading('Testing nab decay in simulation...')
+
+    p1 = cv.variant('sa variant',   days=20, n_imports=0)
+
+    nabs = []
+    vac1 = cv.vaccinate_sequential(vaccine='pfizer',sequence=[0], doses_per_day=1)
+    vac2 = cv.vaccinate_sequential(vaccine='jj', sequence=[1], doses_per_day=1)
+
+    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim.run()
+
+    nabs = np.array(nabs)
+    pl.plot(nabs)
 
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
@@ -282,14 +289,18 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    res    = test_decays(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # res    = test_decays(do_plot=do_plot)
+    #
+    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    #
+    #
+    # sim5 = test_plot_nabs(do_plot=do_plot)
 
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5 = test_plot_nabs(do_plot=do_plot)
+    sim5 = test_two_vaccines(do_plot=do_plot)
 
 
     sc.toc(T)
