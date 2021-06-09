@@ -159,7 +159,7 @@ def test_vaccines(do_plot=False):
 def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
-    p1 = cv.strain('sa variant',   days=20, n_imports=20)
+    p1 = cv.variant('sa variant',   days=20, n_imports=20)
     def age_sequence(people): return np.argsort(-people.age)
 
     n_doses = []
@@ -197,21 +197,6 @@ def test_vaccines_sequential(do_plot=False):
     return sim
 
 
-def test_plot_nabs(do_plot=False):
-    sc.heading('Testing nab decay in simulation...')
-
-    p1 = cv.strain('sa variant',   days=20, n_imports=0)
-
-    nabs = []
-    vac = cv.vaccinate(vaccine='pfizer', days=[1])
-    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=vac, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
-    sim.run()
-
-    nabs = np.array(nabs)
-
-
-    print(sim)
-
 def test_two_vaccines(do_plot=False):
     sc.heading('Testing nab decay in simulation...')
 
@@ -224,8 +209,11 @@ def test_two_vaccines(do_plot=False):
     sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
-    nabs = np.array(nabs)
-    pl.plot(nabs)
+    if do_plot:
+        nabs = np.array(nabs)
+        print(sim.people.peak_nab)
+        pl.figure()
+        pl.plot(nabs)
 
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
@@ -273,7 +261,7 @@ def test_decays(do_plot=False):
     if do_plot:
         pl.figure(figsize=(12,8))
         for key,y in res.items():
-            pl.semilogy(x, y, label=key, lw=3, alpha=0.7)
+            pl.semilogy(x, np.cumsum(y), label=key, lw=3, alpha=0.7)
         pl.legend()
         pl.show()
 
@@ -293,15 +281,10 @@ if __name__ == '__main__':
     # msims1 = test_waning(do_plot=do_plot)
     # sim2   = test_variants(do_plot=do_plot)
     # sim3   = test_vaccines(do_plot=do_plot)
-    # res    = test_decays(do_plot=do_plot)
-    #
     # sim4   = test_vaccines_sequential(do_plot=do_plot)
-    #
-    #
-    # sim5 = test_plot_nabs(do_plot=do_plot)
-
     sim5 = test_two_vaccines(do_plot=do_plot)
 
+    res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

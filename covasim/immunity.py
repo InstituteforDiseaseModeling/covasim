@@ -503,9 +503,9 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     t  = np.arange(length, dtype=cvd.default_int)
     y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
     y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
-    y  = np.concatenate([y1,y2])
-
-
+    y  = np.concatenate([[-np.inf],y1,y2])
+    y = np.diff(y)[0:length]
+    y[0] = 1
     return y
 
 
@@ -513,6 +513,7 @@ def exp_decay(length, init_val, half_life, delay=None):
     '''
     Returns an array of length t with values for the immunity at each time step after recovery
     '''
+    length = length+1
     decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
     if delay is not None:
         t = np.arange(length-delay, dtype=cvd.default_int)
@@ -522,18 +523,16 @@ def exp_decay(length, init_val, half_life, delay=None):
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = init_val * np.exp(-decay_rate * t)
-    return result
+    return np.diff(result)
 
 
 def linear_decay(length, init_val, slope):
     ''' Calculate linear decay '''
-    t = np.arange(length, dtype=cvd.default_int)
-    result = init_val - slope*t
-    result = np.maximum(result, 0)
+    result = -slope*np.ones(length)
+    result[0] = init_val
     return result
 
 
 def linear_growth(length, slope):
     ''' Calculate linear growth '''
-    t = np.arange(length, dtype=cvd.default_int)
-    return (slope * t)
+    return slope*np.ones(length)
