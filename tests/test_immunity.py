@@ -221,7 +221,7 @@ def test_two_vaccines(do_plot=False):
     vac1 = cv.vaccinate_sequential(vaccine='pfizer',sequence=[0], doses_per_day=1)
     vac2 = cv.vaccinate_sequential(vaccine='jj', sequence=[1], doses_per_day=1)
 
-    sim  = cv.Sim(base_pars, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     nabs = np.array(nabs)
