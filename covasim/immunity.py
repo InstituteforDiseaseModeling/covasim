@@ -2,7 +2,10 @@
 Defines classes and methods for calculating immunity
 '''
 
+import numba as nb
 import numpy as np
+import scipy.integrate
+
 import sciris as sc
 from . import utils as cvu
 from . import defaults as cvd
@@ -174,7 +177,6 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
-    peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
 
     # NAb from infection
     if natural:
@@ -187,10 +189,7 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
-            last_nab = people.nab[prior_nab_inds]
-            people.last_nab[prior_nab_inds] = last_nab
-            init_nab = peak_nab * nab_pars['nab_boost']
-            people.peak_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
 
     # NAb from a vaccine
     else:
@@ -201,34 +200,19 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
-            last_nab = people.nab[prior_nab_inds]
-            people.last_nab[prior_nab_inds] = last_nab
-            init_nab = peak_nab * nab_pars['nab_boost']
-            people.peak_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
 
     return
 
 
-def check_nab(t, people, inds=None):
-    ''' Determines current NAb based on date since recovered/vaccinated.
-        First step: determine if we are in the growth or decay period
-            If in growth, pull nabs of inds and add % of peak nabs
-            If in decay, % of peak nabs
+def update_nab(people, inds):
     '''
-
-    # # Time since last nab-boosting event
-    t_since_boost = t-np.fmax(people.date_exposed[inds],people.date_vaccinated[inds]).astype(cvd.default_int)
-
-    # Determine which nabs are in decay (peak > current)
-    nabs = people.last_nab[inds]
-    if people.pars['nab_decay']['form'] == 'nab_growth_decay':
-        inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
-        nabs[inds_in_decay] = 0
-    nabs = np.nan_to_num(nabs)
-
-    # Set current NAb
-    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.peak_nab[inds]
-
+    Step NAb levels forward in time
+    '''
+    t_since_boost = people.t-np.fmax(people.date_exposed[inds],people.date_vaccinated[inds]).astype(cvd.default_int)
+    people.nab[inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[inds]
+    people.nab[inds[people.nab[inds] < 0]] = 0 # Make sure nabs don't drop below 0
+    people.nab[inds[people.nab[inds] > people.peak_nab[inds]]] = people.peak_nab[inds[people.nab[inds] > people.peak_nab[inds]]] # Make sure nabs don't exceed peak_nab
     return
 
 
@@ -476,25 +460,23 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2)
         decay_rate2 (float): the rate at which the decay decays
     '''
 
-    def f1(t, growth_time):
-        '''Simple linear growth'''
-        return (1 / growth_time) * t
 
-    def f2(t, decay_rate1):
-        ''' Simple exponential decay '''
-        return np.exp(-t * decay_rate1)
+    def compute_decay(t):
+        # Calculate the double exponential decay curve
+        def decay(t,x):
+            ''' Complex exponential decay '''
+            if t < decay_time1:
+                return -x*decay_rate1
+            else:
+                return -x*decay_rate1*np.exp(-(t - decay_time1) * decay_rate2)
+        return scipy.integrate.solve_ivp(decay, [t[0], t[-1]], [1], t_eval=t).y.ravel()
 
-    def f3(t, decay_rate1, decay_time1, decay_rate2):
-        ''' Complex exponential decay '''
-        return np.exp(-t * (decay_rate1 * np.exp(-(t - decay_time1) * decay_rate2)))
-
-    t = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t <= growth_time), growth_time)
-    y2 = f2(cvu.true(t <= decay_time1), decay_rate1)
-    y3 = f3(cvu.true(t > decay_time1), decay_rate1, decay_time1, decay_rate2)
-    y = np.concatenate([y1, y2, y3])
-
+    t = np.arange(length+1, dtype=cvd.default_int)
+    y = np.zeros(length)
+    y[0:growth_time] = 1/growth_time # Linear growth
+    y[growth_time:] = np.diff(compute_decay(t[growth_time:])) # Exponential decay
     return y
+
 
 def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     '''
@@ -522,6 +504,7 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
     y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([y1,y2])
+
 
     return y
 
