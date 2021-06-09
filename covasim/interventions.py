@@ -1512,7 +1512,7 @@ class vaccinate_sequential(BaseVaccination):
 
         """
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
-        self.sequence = sc.promotetoarray(sequence)
+        self.sequence = sequence
         self.doses_per_day = doses_per_day
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
         return
@@ -1528,6 +1528,8 @@ class vaccinate_sequential(BaseVaccination):
             self.sequence = self.sequence(sim.people)
         elif sequence is None:
             self.sequence = np.random.permutation(sim.n)
+        else:
+            self.sequence = sc.promotetoarray(self.sequence)
 
         if self.p['doses'] > 2:
             raise NotImplementedError('Scheduling three or more doses not yet supported')

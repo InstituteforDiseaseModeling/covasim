@@ -376,7 +376,7 @@ class People(cvb.BasePeople):
         for key in self.meta.imm_states:
             self[key][:, inds] = 0
         for key in self.meta.nab_states:
-            self[key][inds] = np.nan
+            self[key][inds] = 0
         for key in self.meta.vacc_states:
             self[key][inds] = 0
 
