@@ -144,7 +144,7 @@ def get_vaccine_pars(pars):
     return vaccine_pars
 
 
-def update_peak_nab(people, inds, nab_pars, prior_inf=True):
+def update_peak_nab(people, inds, nab_pars, natural=True):
     '''
     Update peak NAb level
 
@@ -157,22 +157,17 @@ def update_peak_nab(people, inds, nab_pars, prior_inf=True):
     2) Vaccination. If individual has no existing NAb, draw from distribution
     depending upon vaccine source. If individual has existing NAb, multiply booster impact
 
-    Updating peak nab due to either infection or vaccination. The operation varies depending on whether
-    or not the person already has some immunity (although it doesn't matter how they acquired their immunity)
+    Additionally, for people with no prior immunity and with natural infection, the peak NAb
+    is scaled by whether or not the person develops symptoms.
 
-    For people with prior immunity:
-        - peak nab is increased by the nab_boost factor
-            - From `pars` if immunity is being updated due to infections
-            - From `vaccine_pars` if immunity is being updated due to vaccination
+    Args:
+        people: A people object
+        inds: Array of people indices
+        nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
+                    sim pars (for natural immunity) or vaccine pars
+        natural: If True, immunity is being changed due to infection rather than vaccination
 
-    For people with no prior immunity
-        - peak_nab is sampled from a distribution parametrized by `nab_init`
-            - From `pars` if immunity is being updated due to infections
-            - From `vaccine_pars` if immunity is being updated due to vaccination
-
-    - Additionally, for people with no prior immunity and with natural infection, the peak nab
-      is scaled by whether or not the person develops symptoms
-
+    Returns: None
     '''
 
 
@@ -182,7 +177,7 @@ def update_peak_nab(people, inds, nab_pars, prior_inf=True):
     peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
 
     # NAb from infection
-    if prior_inf:
+    if natural:
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
