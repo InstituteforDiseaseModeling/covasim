@@ -1393,7 +1393,7 @@ class BaseVaccination(Intervention):
 
 
 
-class vaccinate(BaseVaccination):
+class vaccinate_prob(BaseVaccination):
     '''
     Probability-based vaccination
 
@@ -1476,7 +1476,7 @@ class vaccinate(BaseVaccination):
 
 
 
-class vaccinate_sequential(BaseVaccination):
+class vaccinate_num(BaseVaccination):
     def __init__(self, vaccine, doses_per_day, sequence=None, **kwargs):
         """
         Sequence-based vaccination

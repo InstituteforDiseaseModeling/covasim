@@ -2,7 +2,6 @@
 Defines classes and methods for calculating immunity
 '''
 
-import numba as nb
 import numpy as np
 import scipy.integrate
 
