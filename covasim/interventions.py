@@ -1482,9 +1482,8 @@ class vaccinate_num(BaseVaccination):
         Sequence-based vaccination
 
         This vaccine intervention allocates vaccines in a pre-computed order of
-        distribution, at a specified rate of doses per day.
-
-        By default, second doses are prioritised each day.
+        distribution, at a specified rate of doses per day. Second doses are prioritized
+        each day.
 
         Args:
             vaccine (dict/str): which vaccine to use; see below for dict parameters
