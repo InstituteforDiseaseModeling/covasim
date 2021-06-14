@@ -1100,7 +1100,7 @@ class contact_tracing(Intervention):
 
 #%% Treatment and prevention interventions
 
-__all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate', 'vaccinate_sequential']
+__all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate_prob', 'vaccinate_num']
 
 
 class simple_vaccine(Intervention):
