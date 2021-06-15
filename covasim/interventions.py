@@ -1450,8 +1450,7 @@ class vaccinate_prob(BaseVaccination):
                 unvacc_inds = sc.findinds(~sim.people.vaccinated)
                 if self.subtarget is not None:
                     subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                    if len(subtarget_vals):
-                        vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
                 else:
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
                 vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
