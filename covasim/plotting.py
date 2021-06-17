@@ -628,12 +628,14 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
                 weight = 1
                 total_contacts = 2*len(people.contacts[lk]) # x2 since each contact is undirected
                 ylabel = 'Number of contacts'
-                title = f'Total contacts for layer "{lk}": {total_contacts:n}'
+                participation = len(people.contacts[lk].members)/len(people.contacts[lk]) if len(people.contacts[lk]) else 0 # Proportion of people that have contacts in this layer
+                title = f'Total contacts for layer "{lk}": {total_contacts:n}\n({participation*100:.0f}% participation)'
             elif w_type == 'percapita':
-                weight = np.divide(1.0, age_counts, where=age_counts>0)
-                mean_contacts = 2*len(people.contacts[lk])/len(people) # Factor of 2 since edges are bi-directional
+                age_counts_within_layer = np.histogram(people.age[people.contacts[lk].members], edges)[0]
+                weight = np.divide(1.0, age_counts_within_layer, where=age_counts_within_layer>0)
+                mean_contacts_within_layer = 2 * len(people.contacts[lk]) / len(people.contacts[lk].members) if len(people.contacts[lk]) else 0  # Factor of 2 since edges are bi-directional
                 ylabel = 'Per capita number of contacts'
-                title = f'Mean contacts for layer "{lk}": {mean_contacts:0.2f}'
+                title = f'Mean contacts for layer "{lk}": {mean_contacts_within_layer:0.2f}'
             elif w_type == 'weighted':
                 weight = people.pars['beta_layer'][lk]*people.pars['beta']
                 total_weight = np.round(weight*2*len(people.contacts[lk]))
