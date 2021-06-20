@@ -26,7 +26,10 @@ scenarios = {'baseline': {
               },
              }
 
-# Run and plot the scenarios
-scens = cv.Scenarios(basepars=basepars, scenarios=scenarios)
-scens.run()
-scens.plot()
+             
+if __name__ == '__main__':
+    
+    # Run and plot the scenarios
+    scens = cv.Scenarios(basepars=basepars, scenarios=scenarios)
+    scens.run()
+    scens.plot()

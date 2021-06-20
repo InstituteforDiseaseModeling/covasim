@@ -27,7 +27,7 @@ Latest versions (3.0.x)
 Version 3.0.6 (2021-06-20)
 --------------------------
 - Added alpha, beta, and gamma as aliases for variants B117, B1351, and P1, respectively.
-- Added a new ``fit_args`` argument to the ``Calibration`` class, allowing arguments to be passed to ``sim.compute_fit()``.
+- Added a new ``fit_args`` argument to the ``Calibration`` class, allowing arguments to be passed to ``sim.compute_fit()``. Also added a ``par_samplers`` argument, allowing different Optuna samplers to be specified.
 - *Regression information*: TBC
 - *GitHub info*: PR `1088 <https://github.com/amath-idm/covasim/pull/1088>`_
 
