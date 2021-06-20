@@ -24,6 +24,12 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 3.0.6 (2021-06-20)
+--------------------------
+- TBC
+- *Regression information*: TBC
+- *GitHub info*: PR `1069 <https://github.com/amath-idm/covasim/pull/1069>`_
+
 
 Version 3.0.5 (2021-05-26)
 --------------------------
