@@ -583,16 +583,7 @@ class Sim(cvb.BaseSim):
 
         # Apply interventions
         for i,intervention in enumerate(self['interventions']):
-            if isinstance(intervention, cvi.Intervention):
-                if not intervention.initialized: # pragma: no cover
-                    errormsg = f'Intervention {i} (label={intervention.label}, {type(intervention)}) has not been initialized'
-                    raise RuntimeError(errormsg)
-                intervention.apply(self) # If it's an intervention, call the apply() method
-            elif callable(intervention):
-                intervention(self) # If it's a function, call it directly
-            else: # pragma: no cover
-                errormsg = f'Intervention {i} ({intervention}) is neither callable nor an Intervention object'
-                raise TypeError(errormsg)
+            intervention(self) # If it's a function, call it directly
 
         people.update_states_post() # Check for state changes after interventions
 
@@ -675,16 +666,7 @@ class Sim(cvb.BaseSim):
 
         # Apply analyzers -- same syntax as interventions
         for i,analyzer in enumerate(self['analyzers']):
-            if isinstance(analyzer, cva.Analyzer):
-                if not analyzer.initialized: # pragma: no cover
-                    errormsg = f'Analyzer {i} (label={analyzer.label}, {type(analyzer)}) has not been initialized'
-                    raise RuntimeError(errormsg)
-                analyzer.apply(self) # If it's an intervention, call the apply() method
-            elif callable(analyzer):
-                analyzer(self) # If it's a function, call it directly
-            else: # pragma: no cover
-                errormsg = f'Analyzer {i} ({analyzer}) is neither callable nor an Analyzer object'
-                raise ValueError(errormsg)
+            analyzer(self)
 
         # Tidy up
         self.t += 1
