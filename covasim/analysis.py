@@ -1607,7 +1607,7 @@ class TransTree(Analyzer):
 
         def df_to_arrdict(df):
             ''' Convert a dataframe to a dictionary of arrays '''
-            arrdict = dict()
+            arrdict = {}
             for col in df.columns:
                 arrdict[col] = df[col].values
             return arrdict
@@ -1669,8 +1669,8 @@ class TransTree(Analyzer):
 
         # Also re-parse the log and convert to a simpler dataframe
         targets = np.array(self.target_inds)
-        dtr = dict()
         infdates = dd['date'][targets]
+        dtr = {}
         dtr['date']      = infdates
         dtr['layer']     = dd['layer'][targets]
         dtr['s_asymp']   = np.isnan(dd['src_date_symptomatic'][targets])

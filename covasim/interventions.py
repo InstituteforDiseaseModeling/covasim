@@ -1062,7 +1062,7 @@ class contact_tracing(Intervention):
         '''
 
         if not len(trace_inds):
-            return dict()
+            return {}
 
         contacts = defaultdict(list)
 
