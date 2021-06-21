@@ -437,8 +437,9 @@ class Sim(cvb.BaseSim):
             self.people.make_nonnaive(inds=inds)
 
         # Create the seed infections
-        inds = cvu.choose(self['pop_size'], self['pop_infected'])
-        self.people.infect(inds=inds, layer='seed_infection')
+        if self['pop_infected']:
+            inds = cvu.choose(self['pop_size'], self['pop_infected'])
+            self.people.infect(inds=inds, layer='seed_infection')
 
         return
 
@@ -607,9 +608,9 @@ class Sim(cvb.BaseSim):
 
         # Check nabs.
         if self['use_waning']:
-            has_nabs = cvu.defined(people.peak_nab)
+            has_nabs = cvu.true(people.peak_nab)
             if len(has_nabs):
-                cvimm.check_nab(t, people, inds=has_nabs)
+                cvimm.update_nab(people, inds=has_nabs)
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
@@ -660,7 +661,7 @@ class Sim(cvb.BaseSim):
 
         # Update nab and immunity for this time step
         inds_alive = cvu.false(people.dead)
-        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.defined(people.nab[inds_alive])]])/len(inds_alive)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.true(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 

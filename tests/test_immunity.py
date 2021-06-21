@@ -7,11 +7,12 @@ import sciris as sc
 import covasim as cv
 import pandas as pd
 import pylab as pl
+import numpy as np
 
 do_plot = 1
 cv.options.set(interactive=False) # Assume not running interactively
 
-# Shared parameters arcross simulations
+# Shared parameters across simulations
 base_pars = dict(
     pop_size = 1e3,
     verbose  = -1,
@@ -145,7 +146,7 @@ def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
     p1 = cv.variant('sa variant',   days=20, n_imports=20)
-    pfizer = cv.vaccinate(vaccine='pfizer', days=30)
+    pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30)
     sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer)
     sim.run()
 
@@ -154,6 +155,65 @@ def test_vaccines(do_plot=False):
 
     return sim
 
+
+def test_vaccines_sequential(do_plot=False):
+    sc.heading('Testing sequential vaccine...')
+
+    p1 = cv.variant('sa variant',   days=20, n_imports=20)
+    def age_sequence(people): return np.argsort(-people.age)
+
+    n_doses = []
+    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, doses_per_day=lambda sim: sim.t)
+    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
+    sim.run()
+
+    n_doses = np.array(n_doses)
+
+    if do_plot:
+        fully_vaccinated = (n_doses == 2).sum(axis=1)
+        first_dose = (n_doses == 1).sum(axis=1)
+        pl.stackplot(sim.tvec, first_dose, fully_vaccinated)
+
+        # Stacked bars by 10 year age
+
+        # At the end of the simulation
+        df = pd.DataFrame(n_doses.T)
+        df['age_bin'] = np.digitize(sim.people.age,np.arange(0,100,10))
+        df['fully_vaccinated'] = df[60]==2
+        df['first_dose'] = df[60]==1
+        df['unvaccinated'] = df[60]==0
+        out = df.groupby('age_bin').sum()
+        out[["unvaccinated", "first_dose","fully_vaccinated"]].plot(kind="bar", stacked=True)
+
+        # Part-way through the simulation
+        df = pd.DataFrame(n_doses.T)
+        df['age_bin'] = np.digitize(sim.people.age,np.arange(0,100,10))
+        df['fully_vaccinated'] = df[40]==2
+        df['first_dose'] = df[40]==1
+        df['unvaccinated'] = df[40]==0
+        out = df.groupby('age_bin').sum()
+        out[["unvaccinated", "first_dose","fully_vaccinated"]].plot(kind="bar", stacked=True)
+
+    return sim
+
+
+def test_two_vaccines(do_plot=False):
+    sc.heading('Testing nab decay in simulation...')
+
+    p1 = cv.variant('sa variant',   days=20, n_imports=0)
+
+    nabs = []
+    vac1 = cv.vaccinate_num(vaccine='pfizer', sequence=[0], doses_per_day=1)
+    vac2 = cv.vaccinate_num(vaccine='jj', sequence=[1], doses_per_day=1)
+
+    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim.run()
+
+    if do_plot:
+        nabs = np.array(nabs)
+        print(sim.people.peak_nab)
+        pl.figure()
+        pl.plot(nabs)
 
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
@@ -201,14 +261,13 @@ def test_decays(do_plot=False):
     if do_plot:
         pl.figure(figsize=(12,8))
         for key,y in res.items():
-            pl.semilogy(x, y, label=key, lw=3, alpha=0.7)
+            pl.semilogy(x, np.cumsum(y), label=key, lw=3, alpha=0.7)
         pl.legend()
         pl.show()
 
     res.x = x
 
     return res
-
 
 
 #%% Run as a script
@@ -222,6 +281,8 @@ if __name__ == '__main__':
     msims1 = test_waning(do_plot=do_plot)
     sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
+    sim4   = test_vaccines_sequential(do_plot=do_plot)
+    sim5 = test_two_vaccines(do_plot=do_plot)
     res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)

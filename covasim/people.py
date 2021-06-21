@@ -79,7 +79,7 @@ class People(cvb.BasePeople):
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
+            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
         for key in self.meta.vacc_states:
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
@@ -376,7 +376,7 @@ class People(cvb.BasePeople):
         for key in self.meta.imm_states:
             self[key][:, inds] = 0
         for key in self.meta.nab_states:
-            self[key][inds] = np.nan
+            self[key][inds] = 0
         for key in self.meta.vacc_states:
             self[key][inds] = 0
 
@@ -431,6 +431,9 @@ class People(cvb.BasePeople):
         Returns:
             count (int): number of people infected
         '''
+
+        if len(inds) == 0:
+            return 0
 
         # Remove duplicates
         inds, unique = np.unique(inds, return_index=True)
@@ -548,7 +551,7 @@ class People(cvb.BasePeople):
             self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.init_nab(self, inds, prior_inf=True)
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
 
         return n_infections # For incrementing counters
 
