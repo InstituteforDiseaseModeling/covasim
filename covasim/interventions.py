@@ -1108,7 +1108,7 @@ class contact_tracing(Intervention):
 
 #%% Treatment and prevention interventions
 
-__all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate_prob', 'vaccinate_num']
+__all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate', 'vaccinate_prob', 'vaccinate_num']
 
 
 class simple_vaccine(Intervention):
@@ -1400,6 +1400,21 @@ class BaseVaccination(Intervention):
         return inds
 
 
+def vaccinate(*args, **kwargs):
+    '''
+    Wrapper function for ``vaccinate_prob()`` and ``vaccinate_num()``. If the ``num_doses``
+    argument is used, will call ``vaccinate_num()``; else, calls ``vaccinate_prob()``.
+
+    **Examples**::
+
+        vx1 = cv.vaccinate(vaccine='pfizer', days=30, prob=0.7)
+        vx2 = cv.vaccinate(vaccine='pfizer', num_doses=100)
+    '''
+    if 'num_doses' in kwargs:
+        return vaccinate_num(*args, **kwargs)
+    else:
+        return vaccinate_prob(*args, **kwargs)
+
 
 class vaccinate_prob(BaseVaccination):
     '''
@@ -1429,7 +1444,7 @@ class vaccinate_prob(BaseVaccination):
 
     **Example**::
 
-        pfizer = cv.vaccinate(vaccine='pfizer', days=30, prob=0.7)
+        pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
     def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
@@ -1484,7 +1499,7 @@ class vaccinate_prob(BaseVaccination):
 
 
 class vaccinate_num(BaseVaccination):
-    def __init__(self, vaccine, doses_per_day, sequence=None, **kwargs):
+    def __init__(self, vaccine, num_doses, sequence=None, **kwargs):
         """
         Sequence-based vaccination
 
@@ -1501,7 +1516,7 @@ class vaccinate_num(BaseVaccination):
                   vaccinate people in descending age order, ``def age_sequence(people): return np.argsort(-people.age)``
                   would be suitable.
                   If not specified, people will be randomly ordered.
-            doses_per_day: Specify the number of doses per day. This can take three forms
+            num_doses: Specify the number of doses per day. This can take three forms
                 - A scalar number of doses per day
                 - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
                   Any dates are convered to simulation days in `initialize()` which will also copy the
@@ -1513,13 +1528,13 @@ class vaccinate_num(BaseVaccination):
         **Example**::
 
             def age_sequence(people): return np.argsort(-people.age)
-            pfizer = cv.vaccinate_sequential(vaccine='pfizer', sequence=age_sequence, doses_per_day=100)
+            pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=100)
             cv.Sim(interventions=pfizer, use_waning=True).run().plot()
 
         """
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
         self.sequence = sequence
-        self.doses_per_day = doses_per_day
+        self.num_doses = num_doses
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
         return
 
@@ -1527,8 +1542,8 @@ class vaccinate_num(BaseVaccination):
         super().initialize(sim)
 
         # Convert any dates to simulation days
-        if isinstance(self.doses_per_day, dict):
-            self.doses_per_day = {sim.day(k):v for k, v in self.doses_per_day.items()}
+        if isinstance(self.num_doses, dict):
+            self.num_doses = {sim.day(k):v for k, v in self.num_doses.items()}
 
         if callable(self.sequence):
             self.sequence = self.sequence(sim.people)
@@ -1545,12 +1560,12 @@ class vaccinate_num(BaseVaccination):
     def select_people(self, sim):
 
         # Work out how many people to vaccinate today
-        if sc.isnumber(self.doses_per_day):
-            num_people = self.doses_per_day
-        elif callable(self.doses_per_day):
-            num_people = self.doses_per_day(sim)
-        elif sim.t in self.doses_per_day:
-            num_people = self.doses_per_day[sim.t]
+        if sc.isnumber(self.num_doses):
+            num_people = self.num_doses
+        elif callable(self.num_doses):
+            num_people = self.num_doses(sim)
+        elif sim.t in self.num_doses:
+            num_people = self.num_doses[sim.t]
         else:
             # If nobody gets vaccinated today, just return an empty list
             return np.array([])

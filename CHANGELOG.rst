@@ -27,14 +27,14 @@ Latest versions (3.0.x)
 Version 3.0.6 (2021-06-21)
 --------------------------
 - Added alpha, beta, and gamma as aliases for variants B117, B1351, and P1, respectively.
-- Renamed ``cv.vaccination`` has been renamed to ``cv.vaccinate_prob``
 - Split vaccine implementation to separate the state changes associated with vaccinating a person from the allocation/prioritization of vaccine distribution. The base class ``cv.BaseVaccination`` implements vaccinating individuals, and derived classes define the ``cv.BaseVaccination.select_people()`` method which determines who to vaccinate each timestep.
-- Added ``cv.vaccinate_num`` as an alternate way to allocate vaccines. This intervention specifies the order in which to vaccinate people, and the number of doses to distribute each day.
-- Updated NAb kinetics so that the NAb level no longer exceeds the peak NAb value after the second dose
+- Added ``cv.vaccinate_num()`` as an alternate way to allocate vaccines. This intervention specifies the order in which to vaccinate people, and the number of doses to distribute each day.
+- Renamed ``cv.vaccinate()`` to ``cv.vaccinate_prob()``, but added ``cv.vaccinate()`` as an alias that can be used (more or less) interchangeably with ``cv.vaccinate_prob()``.
+- Updated NAb kinetics so that the NAb level no longer exceeds the peak NAb value after the second dose.
 - Updated ``nab_growth_decay`` so that the NAb level no longer increases in the second decay phase (i.e. after 250 days by default).
 - Vaccine parameters for simulations with multiple different vaccines are now correctly handled. Previously only the first vaccine's parameters were used.
 - Added a new ``fit_args`` argument to the ``Calibration`` class, allowing arguments to be passed to ``sim.compute_fit()``. Also added a ``par_samplers`` argument, allowing different Optuna samplers to be specified.
-- *Regression information*: ``cv.vaccination`` has been renamed to ``cv.vaccinate_prob``. The correction to the NAb decay implementation means results in simulations with vaccines and a long duration (e.g., >250 days) may differ - vaccines are expected to be slightly less effective.
+- *Regression information*: ``cv.vaccination`` has been renamed to ``cv.vaccinate_prob`` (however, ``cv.vaccinate()`` is retained as an alias to ``cv.vaccinate_prob()``, so user code should not break). The correction to the NAb decay implementation means results in simulations with vaccines and a long duration (e.g., >250 days) may differ -- vaccines are expected to be slightly less effective.
 - *GitHub info*: PR `1088 <https://github.com/amath-idm/covasim/pull/1088>`_
 
 
