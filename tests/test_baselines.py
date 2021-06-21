@@ -29,6 +29,7 @@ def make_sim(use_defaults=False, do_plot=False, **kwargs):
 
     # Define the parameters
     pars = dict(
+        use_waning    = False,        # Whether or not to use waning and NAb calculations
         pop_size      = 20e3,         # Population size
         pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
