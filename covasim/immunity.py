@@ -401,6 +401,8 @@ def precompute_waning(length, pars=None):
 
         - 'nab_growth_decay' : based on Khoury et al.
         - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
+        - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+        - 'linear_decay': linear decay
 
     A custom function can also be supplied.
 
@@ -417,6 +419,7 @@ def precompute_waning(length, pars=None):
     choices = [
         'nab_growth_decay', # Default if no form is provided
         'nab_decay',
+        'exp_decay',
     ]
 
     # Process inputs
@@ -425,6 +428,10 @@ def precompute_waning(length, pars=None):
 
     elif form == 'nab_decay':
         output = nab_decay(length, **pars)
+
+    elif form == 'exp_decay':
+        if pars['half_life'] is None: pars['half_life'] = np.nan
+        output = exp_decay(length, **pars)
 
     elif callable(form):
         output = form(length, **pars)
@@ -497,3 +504,32 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     y = np.diff(y)[0:length]
     y[0] = 1
     return y
+
+
+def exp_decay(length, init_val, half_life, delay=None):
+    '''
+    Returns an array of length t with values for the immunity at each time step after recovery
+    '''
+    length = length+1
+    decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+    if delay is not None:
+        t = np.arange(length-delay, dtype=cvd.default_int)
+        growth = linear_growth(delay, init_val/delay)
+        decay = init_val * np.exp(-decay_rate * t)
+        result = np.concatenate([growth, decay], axis=None)
+    else:
+        t = np.arange(length, dtype=cvd.default_int)
+        result = init_val * np.exp(-decay_rate * t)
+    return np.diff(result)
+
+
+def linear_decay(length, init_val, slope):
+    ''' Calculate linear decay '''
+    result = -slope*np.ones(length)
+    result[0] = init_val
+    return result
+
+
+def linear_growth(length, slope):
+    ''' Calculate linear growth '''
+    return slope*np.ones(length)
