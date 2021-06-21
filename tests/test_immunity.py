@@ -282,7 +282,7 @@ if __name__ == '__main__':
     sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
     sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5 = test_two_vaccines(do_plot=do_plot)
+    sim5   = test_two_vaccines(do_plot=do_plot)
     res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)

@@ -3,9 +3,8 @@ Defines classes and methods for calculating immunity
 '''
 
 import numpy as np
-import scipy.integrate
-
 import sciris as sc
+import scipy.integrate
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
