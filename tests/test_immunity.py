@@ -222,11 +222,21 @@ def test_decays(do_plot=False):
     x = pl.arange(n)
 
     pars = sc.objdict(
+
+        nab_growth_decay = dict(
+            func = cv.immunity.nab_growth_decay,
+            length = n,
+            growth_time = 22,
+            decay_rate1 = np.log(2)/100,
+            decay_time1 = 250,
+            decay_rate2 = 0.002587529,
+        ),
+
         nab_decay = dict(
             func = cv.immunity.nab_decay,
             length = n,
             decay_rate1 = 0.05,
-            decay_time1= 100,
+            decay_time1 = 100,
             decay_rate2 = 0.002,
         ),
 
@@ -234,7 +244,7 @@ def test_decays(do_plot=False):
             func = cv.immunity.exp_decay,
             length = n,
             init_val = 0.8,
-            half_life= 100,
+            half_life = 100,
             delay = 20,
         ),
 
@@ -277,12 +287,12 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    # sim5   = test_two_vaccines(do_plot=do_plot)
     res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
