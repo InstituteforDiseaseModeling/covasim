@@ -15,9 +15,11 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Continued updates to vaccine and variant parameters and workflows
-- Multi-region and geographical support
-- Economics and costing analysis
+- Adding the delta variant (planned for v3.0.7)
+- Updates to the NAb decay function (planned for v3.0.7)
+- Continued updates to vaccine and variant parameters and workflows (planned for v3.1)
+- Multi-region and geographical support (planned for v3.2)
+- Economics and costing analysis (planned for v3.3)
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
