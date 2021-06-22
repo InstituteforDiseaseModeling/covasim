@@ -215,6 +215,7 @@ def test_two_vaccines(do_plot=False):
         pl.figure()
         pl.plot(nabs)
 
+
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
 
@@ -287,12 +288,12 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # sim1   = test_states()
-    # msims1 = test_waning(do_plot=do_plot)
-    # sim2   = test_variants(do_plot=do_plot)
-    # sim3   = test_vaccines(do_plot=do_plot)
-    # sim4   = test_vaccines_sequential(do_plot=do_plot)
-    # sim5   = test_two_vaccines(do_plot=do_plot)
+    sim1   = test_states()
+    msims1 = test_waning(do_plot=do_plot)
+    sim2   = test_variants(do_plot=do_plot)
+    sim3   = test_vaccines(do_plot=do_plot)
+    sim4   = test_vaccines_sequential(do_plot=do_plot)
+    sim5   = test_two_vaccines(do_plot=do_plot)
     res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
