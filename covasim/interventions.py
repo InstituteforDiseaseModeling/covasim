@@ -1511,12 +1511,14 @@ class vaccinate_num(BaseVaccination):
             vaccine (dict/str): which vaccine to use; see below for dict parameters
             label        (str): if vaccine is supplied as a dict, the name of the vaccine
             sequence: Specify the order in which people should get vaccinated. This can be
+
                 - An array of person indices in order of vaccination priority
                 - A callable that takes in `cv.People` and returns an ordered sequence. For example, to
                   vaccinate people in descending age order, ``def age_sequence(people): return np.argsort(-people.age)``
                   would be suitable.
                   If not specified, people will be randomly ordered.
             num_doses: Specify the number of doses per day. This can take three forms
+
                 - A scalar number of doses per day
                 - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
                   Any dates are convered to simulation days in `initialize()` which will also copy the
