@@ -25,6 +25,6 @@ cd ../tests; pwd; sleep 0.5
 
 echo -e "\n\n\n\nSTEP 5: BUILDING DOCS"
 cd ../docs; pwd; sleep 0.5
-make html
+./build_docs
 
 echo -e '\n\n\n\nDONE.'

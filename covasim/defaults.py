@@ -96,7 +96,6 @@ class PeopleMeta(sc.prettyobj):
         self.nab_states = [
             'prior_symptoms',   # Float
             'peak_nab',         # Float, peak neutralization titre relative to convalescent plasma
-            'last_nab',         # Float, neutralization titre relative to convalescent plasma on day of boost
             'nab',              # Float, current neutralization titre relative to convalescent plasma
         ]
 

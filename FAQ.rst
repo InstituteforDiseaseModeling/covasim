@@ -98,6 +98,12 @@ Is it possible to model interacting geographical regions?
 Possible, but not easy. Your best option is to create a single simulation where the contact network structure reflects the different regions. Please `email us <mailto:covasim@idmod.org>`__ for more information.
 
 
+Is it possible to model births, non-COVID deaths, or migration?
+---------------------------------------------------------------------------------
+
+Not currently, but what you can do is create the final population size, and then remove all contacts for the people you want to be "absent". In terms of *transmission*, a susceptible person who is unconnected to anyone else is effectively identical to a person who doesn't exist. You can then "create" these people by adding or restoring their contacts to other people. However, be mindful that results that are population averages (e.g. prevalence) will be wrong since they will include these inactive people, and interventions (such as ``cv.test_num()``) will also apply to these people.
+
+
 I really don't like Python, can I run Covasim via R?
 ---------------------------------------------------------------------------------
 

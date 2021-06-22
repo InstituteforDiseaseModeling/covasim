@@ -17,9 +17,11 @@ pars = dict(
     verbose = 0, # Do not print any output
 )
 
-# Running with multisims -- see Tutorial 3
-s1 = cv.Sim(pars, label='Default')
-s2 = cv.Sim(pars, interventions=protect_elderly, label='Protect the elderly')
-msim = cv.MultiSim([s1, s2])
-msim.run()
-fig = msim.plot(to_plot=['cum_deaths', 'cum_infections'])
+if __name__ == '__main__':
+    
+    # Running with multisims -- see Tutorial 3
+    s1 = cv.Sim(pars, label='Default')
+    s2 = cv.Sim(pars, interventions=protect_elderly, label='Protect the elderly')
+    msim = cv.MultiSim([s1, s2])
+    msim.run()
+    fig = msim.plot(to_plot=['cum_deaths', 'cum_infections'])

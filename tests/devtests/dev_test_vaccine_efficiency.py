@@ -52,7 +52,7 @@ def subtarget(sim):
 # Initialize
 sims = []
 for vaccine in vaccines:
-    vx = cv.vaccinate(vaccine=vaccine, days=[start_trial], prob=0.0, subtarget=subtarget)
+    vx = cv.vaccinate_prob(vaccine=vaccine, days=[start_trial], prob=0.0, subtarget=subtarget)
     sim = cv.Sim(
         label=vaccine,
         use_waning=True,
