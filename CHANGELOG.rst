@@ -26,6 +26,11 @@ These are the major improvements we are currently working on. If there is a spec
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Version 3.0.7 (2021-06-23)
+--------------------------
+- Added optional ``capacity`` limit for ``cv.contact_tracing`` to cap the maximum number of people that can be traced each day
+
+
 Version 3.0.6 (2021-06-21)
 --------------------------
 - Added alpha, beta, and gamma as aliases for variants B117, B1351, and P1, respectively.
