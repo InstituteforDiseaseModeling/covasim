@@ -966,6 +966,7 @@ class contact_tracing(Intervention):
         trace_time  (float/dict): days required to trace, per layer (default: 0, i.e. no delay)
         start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
         end_day     (int):        intervention end day (default: no end)
+        presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
         capacity    (int):        optionally specify a maximum number of newly diagnosed people to trace each day
         quar_period (int):        number of days to quarantine when notified as a known contact. Default value is ``pars['quar_period']``
         kwargs      (dict):       passed to Intervention()
