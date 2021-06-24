@@ -442,35 +442,43 @@ def precompute_waning(length, pars=None):
     return output
 
 
-def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2):
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2, decay_time2):
     '''
     Returns an array of length 'length' containing the evaluated function nab growth/decay
     function at each point.
+
     Uses linear growth + exponential decay, with the rate of exponential decay also set to
-    exponentially decay (!) after 250 days.
+    decay linearly until it reaches a 10-year half life.
+
     Args:
         length (int): number of points
         growth_time (int): length of time NAbs grow (used to determine slope)
         decay_rate1 (float): initial rate of exponential decay
         decay_time1 (float): time on the first exponential decay
-        decay_rate2 (float): the rate at which the decay decays
+        decay_rate2 (float): the rate of exponential decay in late period
+        decay_time2 (float): how long it takes to transition to late decay period
     '''
 
-    def decay(t,x):
-        ''' Complex exponential decay '''
-        if t < decay_time1:
-            return -x*decay_rate1
-        else:
-            return -x*decay_rate1*np.exp(-(t - decay_time1) * decay_rate2)
+    def f1(t, growth_time):
+        '''Simple linear growth'''
+        return (1 / growth_time) * t
 
-    def compute_decay(t):
-        ''' Calculate the double exponential decay curve '''
-        return scipy.integrate.solve_ivp(decay, [t[0], t[-1]], [1], t_eval=t).y.ravel()
+    def f2(t, decay_time1, decay_time2, decay_rate1, decay_rate2):
+        decayRate = np.full(len(t), fill_value=decay_rate1)
+        decayRate[cvu.true(t>decay_time2)] = decay_rate2
+        slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
+        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(decay_time2 - decay_time1, dtype=cvu.default_int))
+        titre = np.zeros(len(t))
+        for i in range(1, len(t)):
+            titre[i] = titre[i-1]+decayRate[i]
+        return np.exp(-titre)
 
-    t = np.arange(length+1, dtype=cvd.default_int)
-    y = np.zeros(length)
-    y[0:growth_time] = 1/growth_time # Linear growth
-    y[growth_time:] = np.diff(compute_decay(t[growth_time:])) # Exponential decay
+    t1 = np.arange(growth_time, dtype=cvu.default_int)
+    t2 = np.arange(length - growth_time, dtype=cvu.default_int)
+    y1 = f1(t1, growth_time)
+    y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
+    y  = np.concatenate([y1,y2])
+
     return y
 
 
