@@ -16,7 +16,10 @@ orig_sim = cv.Sim(pars, label='Baseline')
 cb = cv.change_beta(days=['2020-04-15', '2020-05-01', '2020-05-15'], changes=[0.2, 1.5, 0.7])
 sim = cv.Sim(pars, interventions=cb, label='With beta changes')
 
-# Run and plot
-msim = cv.MultiSim([orig_sim, sim])
-msim.run()
-msim.plot()
+
+if __name__ == '__main__':
+
+    # Run and plot
+    msim = cv.MultiSim([orig_sim, sim])
+    msim.run()
+    msim.plot()

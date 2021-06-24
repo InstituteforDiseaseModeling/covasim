@@ -323,9 +323,9 @@ def get_variant_choices():
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
         'wild':  ['wild', 'default', 'pre-existing', 'original'],
-        'b117':  ['b117', 'uk', 'united kingdom'],
-        'b1351': ['b1351', 'sa', 'south africa'],
-        'p1':    ['p1', 'b11248', 'brazil'],
+        'b117':  ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
+        'b1351': ['beta', 'b1351', 'sa', 'south africa'],
+        'p1':    ['gamma', 'p1', 'b11248', 'brazil'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping

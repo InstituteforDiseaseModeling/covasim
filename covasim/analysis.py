@@ -45,6 +45,12 @@ class Analyzer(sc.prettyobj):
         self.finalized = False
         return
 
+    def __call__(self, *args, **kwargs):
+        # Makes Analyzer(sim) equivalent to Analyzer.apply(sim)
+        if not self.initialized:
+            errormsg = f'Analyzer (label={self.label}, {type(self)}) has not been initialized'
+            raise RuntimeError(errormsg)
+        return self.apply(*args, **kwargs)
 
     def initialize(self, sim=None):
         '''
@@ -1243,18 +1249,20 @@ class Calibration(Analyzer):
     for more information.
 
     Args:
-        sim (Sim): the simulation to calibrate
-        calib_pars (dict): a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
-        custom_fn (function): a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
-        n_trials (int): the number of trials per worker
-        n_workers (int): the number of parallel workers (default: maximum
-        total_trials (int): if n_trials is not supplied, calculate by dividing this number by n_workers)
-        name (str): the name of the database (default: 'covasim_calibration')
-        db_name (str): the name of the database file (default: 'covasim_calibration.db')
-        storage (str): the location of the database (default: sqlite)
-        label (str): a label for this calibration object
-        verbose (bool): whether to print details of the calibration
-        kwargs (dict): passed to cv.Calibration()
+        sim          (Sim)  : the simulation to calibrate
+        calib_pars   (dict) : a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
+        fit_args     (dict) : a dictionary of options that are passed to sim.compute_fit() to calculate the goodness-of-fit
+        par_samplers (dict) : an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_uniform
+        custom_fn    (func) : a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
+        n_trials     (int)  : the number of trials per worker
+        n_workers    (int)  : the number of parallel workers (default: maximum
+        total_trials (int)  : if n_trials is not supplied, calculate by dividing this number by n_workers)
+        name         (str)  : the name of the database (default: 'covasim_calibration')
+        db_name      (str)  : the name of the database file (default: 'covasim_calibration.db')
+        storage      (str)  : the location of the database (default: sqlite)
+        label        (str)  : a label for this calibration object
+        verbose      (bool) : whether to print details of the calibration
+        kwargs       (dict) : passed to cv.Calibration()
 
     Returns:
         A Calibration object
@@ -1270,7 +1278,7 @@ class Calibration(Analyzer):
     New in version 3.0.3.
     '''
 
-    def __init__(self, sim, calib_pars=None, custom_fn=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
+    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
         import multiprocessing as mp
@@ -1285,11 +1293,13 @@ class Calibration(Analyzer):
         self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, storage=storage)
 
         # Handle other inputs
-        self.sim        = sim
-        self.calib_pars = calib_pars
-        self.custom_fn  = custom_fn
-        self.verbose    = verbose
-        self.calibrated = False
+        self.sim          = sim
+        self.calib_pars   = calib_pars
+        self.fit_args     = sc.mergedicts(fit_args)
+        self.par_samplers = sc.mergedicts(par_samplers)
+        self.custom_fn    = custom_fn
+        self.verbose      = verbose
+        self.calibrated   = False
 
         # Handle if the sim has already been run
         if self.sim.complete:
@@ -1314,7 +1324,7 @@ class Calibration(Analyzer):
                 errormsg = f'The following parameters are not part of the sim, nor is a custom function specified to use them: {sc.strjoin(extra)}'
                 raise ValueError(errormsg)
         sim.run()
-        sim.compute_fit()
+        sim.compute_fit(**self.fit_args)
         if return_sim:
             return sim
         else:
@@ -1325,7 +1335,15 @@ class Calibration(Analyzer):
         ''' Define the objective for Optuna '''
         pars = {}
         for key, (best,low,high) in self.calib_pars.items():
-            pars[key] = trial.suggest_uniform(key, low, high) # Sample from values within this range
+            if key in self.par_samplers: # If a custom sampler is used, get it now
+                try:
+                    sampler_fn = getattr(trial, self.par_samplers[key])
+                except Exception as E:
+                    errormsg = 'The requested sampler function is not found: ensure it is a valid attribute of an Optuna Trial object'
+                    raise AttributeError(errormsg) from E
+            else:
+                sampler_fn = trial.suggest_uniform
+            pars[key] = sampler_fn(key, low, high) # Sample from values within this range
         mismatch = self.run_sim(pars)
         return mismatch
 
@@ -1589,7 +1607,7 @@ class TransTree(Analyzer):
 
         def df_to_arrdict(df):
             ''' Convert a dataframe to a dictionary of arrays '''
-            arrdict = dict()
+            arrdict = {}
             for col in df.columns:
                 arrdict[col] = df[col].values
             return arrdict
@@ -1651,8 +1669,8 @@ class TransTree(Analyzer):
 
         # Also re-parse the log and convert to a simpler dataframe
         targets = np.array(self.target_inds)
-        dtr = dict()
         infdates = dd['date'][targets]
+        dtr = {}
         dtr['date']      = infdates
         dtr['layer']     = dd['layer'][targets]
         dtr['s_asymp']   = np.isnan(dd['src_date_symptomatic'][targets])

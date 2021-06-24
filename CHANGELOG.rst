@@ -15,14 +15,28 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Continued updates to vaccine and variant parameters and workflows
-- Multi-region and geographical support
-- Economics and costing analysis
+- Adding the delta variant (planned for v3.0.7)
+- Updates to the NAb decay function (planned for v3.0.7)
+- Continued updates to vaccine and variant parameters and workflows (planned for v3.1)
+- Multi-region and geographical support (planned for v3.2)
+- Economics and costing analysis (planned for v3.3)
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 3.0.6 (2021-06-21)
+--------------------------
+- Added alpha, beta, and gamma as aliases for variants B117, B1351, and P1, respectively.
+- Split vaccine implementation to separate the state changes associated with vaccinating a person from the allocation/prioritization of vaccine distribution. The base class ``cv.BaseVaccination`` implements vaccinating individuals, and derived classes define the ``cv.BaseVaccination.select_people()`` method which determines who to vaccinate each timestep.
+- Added ``cv.vaccinate_num()`` as an alternate way to allocate vaccines. This intervention specifies the order in which to vaccinate people, and the number of doses to distribute each day.
+- Renamed ``cv.vaccinate()`` to ``cv.vaccinate_prob()``, but added ``cv.vaccinate()`` as an alias that can be used (more or less) interchangeably with ``cv.vaccinate_prob()``.
+- Updated NAb kinetics so that the NAb level no longer exceeds the peak NAb value after the second dose, and updated ``nab_growth_decay`` so that the NAb level no longer increases in the second decay phase (i.e. after 250 days by default). **Note**: we are in the process of changing the functional form for the NAb waning, so this will likely change again in version 3.0.7.
+- Vaccine parameters for simulations with multiple different vaccines are now correctly handled. Previously only the first vaccine's parameters were used.
+- Added a new ``fit_args`` argument to the ``Calibration`` class, allowing arguments to be passed to ``sim.compute_fit()``. Also added a ``par_samplers`` argument, allowing different Optuna samplers to be specified.
+- *Regression information*: ``cv.vaccination`` has been renamed to ``cv.vaccinate_prob`` (however, ``cv.vaccinate()`` is retained as an alias to ``cv.vaccinate_prob()``, so user code should not break). The correction to the NAb decay implementation means results in simulations with vaccines and a long duration (e.g., >250 days) may differ -- vaccines are expected to be slightly less effective.
+- *GitHub info*: PR `1088 <https://github.com/amath-idm/covasim/pull/1088>`_
 
 
 Version 3.0.5 (2021-05-26)

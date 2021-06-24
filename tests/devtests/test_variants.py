@@ -110,7 +110,7 @@ def test_vaccine_1variant(do_plot=False, do_show=True, do_save=False):
         'n_days': 120,
     })
 
-    pfizer = cv.vaccinate(days=[20], vaccine='pfizer')
+    pfizer = cv.vaccinate_prob(days=[20], vaccine='pfizer')
     sim = cv.Sim(
         use_waning=True,
         pars=pars,
@@ -127,7 +127,7 @@ def test_vaccine_1dose(do_plot=False, do_show=True, do_save=False):
         'beta': 0.015,
         'n_days': 120,
     })
-    janssen = cv.vaccinate(vaccine='janssen', days=[0])
+    janssen = cv.vaccinate_prob(vaccine='janssen', days=[0])
     sim = cv.Sim(
         use_waning=True,
         pars=pars,
@@ -153,7 +153,7 @@ def test_synthpops():
     sim.vxsubtarg.age = [75, 65, 50, 18]
     sim.vxsubtarg.prob = [.05, .05, .05, .05]
     sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
+    pfizer = cv.vaccinate_prob(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
     sim['interventions'] += [pfizer]
 
     sim.run()
@@ -175,7 +175,7 @@ def test_vaccine_1variant_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.age = [75, 65, 50, 18]
     base_sim.vxsubtarg.prob = [.05, .05, .05, .05]
     base_sim.vxsubtarg.days = subtarg_days = [20, 40, 60, 80]
-    pfizer = cv.vaccinate(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
+    pfizer = cv.vaccinate_prob(days=subtarg_days, vaccine='pfizer', subtarget=vacc_subtarg)
 
     # Define the scenarios
 
@@ -220,7 +220,7 @@ def test_vaccine_2variants_scen(do_plot=False, do_show=True, do_save=False):
     base_sim.vxsubtarg.age = [75, 65, 50, 18]
     base_sim.vxsubtarg.prob = [.01, .01, .01, .01]
     base_sim.vxsubtarg.days = subtarg_days = [60, 150, 200, 220]
-    jnj = cv.vaccinate(days=subtarg_days, vaccine='j&j', subtarget=vacc_subtarg)
+    jnj = cv.vaccinate_prob(days=subtarg_days, vaccine='j&j', subtarget=vacc_subtarg)
     b1351 = cv.variant('b1351', days=10, n_imports=20)
     p1 = cv.variant('p1', days=100, n_imports=100)
 

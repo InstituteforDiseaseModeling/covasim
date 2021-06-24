@@ -4,6 +4,7 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
+import scipy.integrate
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -144,86 +145,72 @@ def get_vaccine_pars(pars):
     return vaccine_pars
 
 
-def init_nab(people, inds, prior_inf=True):
+def update_peak_nab(people, inds, nab_pars, natural=True):
     '''
-    Draws a peak neutralizing antibody (NAb) level for individuals.
-    Can come from a natural infection or vaccination and depends on if there is prior immunity:
+    Update peak NAb level
+
+    This function updates the peak NAb level for individuals when a NAb boosting event occurs.
+    NAbs can come from a natural infection or vaccination and the peak level depends on if there
+    is prior immunity:
+
     1) a natural infection. If individual has no existing NAb, draw from distribution
     depending upon symptoms. If individual has existing NAb, multiply booster impact
     2) Vaccination. If individual has no existing NAb, draw from distribution
     depending upon vaccine source. If individual has existing NAb, multiply booster impact
+
+    Additionally, for people with no prior immunity and with natural infection, the peak NAb
+    is scaled by whether or not the person develops symptoms.
+
+    Args:
+        people: A people object
+        inds: Array of people indices
+        nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
+                    sim pars (for natural immunity) or vaccine pars
+        natural: If True, immunity is being changed due to infection rather than vaccination
+
+    Returns: None
     '''
 
-    nab_arrays = people.nab[inds]
-    prior_nab_inds = cvu.idefined(nab_arrays, inds) # Find people with prior NAb
-    no_prior_nab_inds = np.setdiff1d(inds, prior_nab_inds) # Find people without prior NAb
-    peak_nab = people.peak_nab[prior_nab_inds] # Find the prior peak for those with prior NAbs
-    pars = people.pars
+
+    has_nabs = people.nab[inds] > 0
+    no_prior_nab_inds = inds[~has_nabs]
+    prior_nab_inds = inds[has_nabs]
 
     # NAb from infection
-    if prior_inf:
-        nab_boost = pars['nab_boost']  # Boosting factor for natural infection
+    if natural:
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
             people.peak_nab[no_prior_nab_inds] = no_prior_nab
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
-            last_nab = people.nab[prior_nab_inds]
-            people.last_nab[prior_nab_inds] = last_nab
-            init_nab = peak_nab * nab_boost
-            people.peak_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
 
     # NAb from a vaccine
     else:
-        vaccine_pars = get_vaccine_pars(pars)
-
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**vaccine_pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             people.peak_nab[no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
-            last_nab = people.nab[prior_nab_inds]
-            people.last_nab[prior_nab_inds] = last_nab
-            nab_boost = vaccine_pars['nab_boost']  # Boosting factor for vaccination
-            init_nab = peak_nab * nab_boost
-            people.peak_nab[prior_nab_inds] = init_nab
+            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
 
     return
 
 
-def check_nab(t, people, inds=None):
-    ''' Determines current NAb based on date since recovered/vaccinated.
-        First step: determine if we are in the growth or decay period
-            If in growth, pull nabs of inds and add % of peak nabs
-            If in decay, % of peak nabs
+def update_nab(people, inds):
     '''
-    # Indices of people who've had some nab event
-    inf_inds = cvu.defined(people.date_exposed[inds])
-    vac_inds = cvu.defined(people.date_vaccinated[inds])
-    both_inds = np.intersect1d(inf_inds, vac_inds)
-
-    # Time since boost
-    t_since_boost = np.full(len(inds), np.nan, dtype=cvd.default_int)
-    t_since_boost[inf_inds] = t-people.date_exposed[inds[inf_inds]]
-    t_since_boost[vac_inds] = t-people.date_vaccinated[inds[vac_inds]]
-    t_since_boost[both_inds] = t-np.maximum(people.date_exposed[inds[both_inds]],people.date_vaccinated[inds[both_inds]])
-
-    # Determine which nabs are in decay (peak > current)
-    nabs = people.last_nab[inds]
-    if people.pars['nab_decay']['form'] == 'nab_growth_decay':
-        inds_in_decay = cvu.true(t_since_boost >= people.pars['nab_decay']['growth_time'])
-        nabs[inds_in_decay] = 0
-    nabs = np.nan_to_num(nabs)
-
-    # Set current NAb
-    people.nab[inds] = nabs + people.pars['nab_kin'][t_since_boost] * people.peak_nab[inds]
-
+    Step NAb levels forward in time
+    '''
+    t_since_boost = people.t-np.fmax(people.date_exposed[inds],people.date_vaccinated[inds]).astype(cvd.default_int)
+    people.nab[inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[inds]
+    people.nab[inds[people.nab[inds] < 0]] = 0 # Make sure nabs don't drop below 0
+    people.nab[inds[people.nab[inds] > people.peak_nab[inds]]] = people.peak_nab[inds[people.nab[inds] > people.peak_nab[inds]]] # Make sure nabs don't exceed peak_nab
     return
 
 
@@ -274,7 +261,7 @@ def nab_to_efficacy(nab, ax, pars):
     given in this paper: https://doi.org/10.1101/2021.03.09.21252641
 
     Args:
-        nab (arr): an array of NAb levels
+        nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
         ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
         pars (dict): dictionary of parameters for the vaccine efficacy
 
@@ -285,7 +272,6 @@ def nab_to_efficacy(nab, ax, pars):
     if ax not in choices:
         errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
         raise ValueError(errormsg)
-
     if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
     elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
     elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
@@ -412,9 +398,12 @@ def precompute_waning(length, pars=None):
     '''
     Process functional form and parameters into values:
 
+        - 'nab_growth_decay' : based on Khoury et al.
         - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
         - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
         - 'linear_decay': linear decay
+
+    A custom function can also be supplied.
 
     Args:
         length (float): length of array to return, i.e., for how long waning is calculated
@@ -430,8 +419,6 @@ def precompute_waning(length, pars=None):
         'nab_growth_decay', # Default if no form is provided
         'nab_decay',
         'exp_decay',
-        'linear_growth',
-        'linear_decay'
     ]
 
     # Process inputs
@@ -445,11 +432,8 @@ def precompute_waning(length, pars=None):
         if pars['half_life'] is None: pars['half_life'] = np.nan
         output = exp_decay(length, **pars)
 
-    elif form == 'linear_growth':
-        output = linear_growth(length, **pars)
-
-    elif form == 'linear_decay':
-        output = linear_decay(length, **pars)
+    elif callable(form):
+        output = form(length, **pars)
 
     else:
         errormsg = f'The selected functional form "{form}" is not implemented; choices are: {sc.strjoin(choices)}'
@@ -472,25 +456,23 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2)
         decay_rate2 (float): the rate at which the decay decays
     '''
 
-    def f1(t, growth_time):
-        '''Simple linear growth'''
-        return (1 / growth_time) * t
-
-    def f2(t, decay_rate1):
-        ''' Simple exponential decay '''
-        return np.exp(-t * decay_rate1)
-
-    def f3(t, decay_rate1, decay_time1, decay_rate2):
+    def decay(t,x):
         ''' Complex exponential decay '''
-        return np.exp(-t * (decay_rate1 * np.exp(-(t - decay_time1) * decay_rate2)))
+        if t < decay_time1:
+            return -x*decay_rate1
+        else:
+            return -x*decay_rate1*np.exp(-(t - decay_time1) * decay_rate2)
 
-    t = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t <= growth_time), growth_time)
-    y2 = f2(cvu.true(t <= decay_time1), decay_rate1)
-    y3 = f3(cvu.true(t > decay_time1), decay_rate1, decay_time1, decay_rate2)
-    y = np.concatenate([y1, y2, y3])
+    def compute_decay(t):
+        ''' Calculate the double exponential decay curve '''
+        return scipy.integrate.solve_ivp(decay, [t[0], t[-1]], [1], t_eval=t).y.ravel()
 
+    t = np.arange(length+1, dtype=cvd.default_int)
+    y = np.zeros(length)
+    y[0:growth_time] = 1/growth_time # Linear growth
+    y[growth_time:] = np.diff(compute_decay(t[growth_time:])) # Exponential decay
     return y
+
 
 def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     '''
@@ -517,8 +499,9 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
     t  = np.arange(length, dtype=cvd.default_int)
     y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
     y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
-    y  = np.concatenate([y1,y2])
-
+    y  = np.concatenate([[-np.inf],y1,y2])
+    y = np.diff(y)[0:length]
+    y[0] = 1
     return y
 
 
@@ -526,6 +509,7 @@ def exp_decay(length, init_val, half_life, delay=None):
     '''
     Returns an array of length t with values for the immunity at each time step after recovery
     '''
+    length = length+1
     decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
     if delay is not None:
         t = np.arange(length-delay, dtype=cvd.default_int)
@@ -535,18 +519,16 @@ def exp_decay(length, init_val, half_life, delay=None):
     else:
         t = np.arange(length, dtype=cvd.default_int)
         result = init_val * np.exp(-decay_rate * t)
-    return result
+    return np.diff(result)
 
 
 def linear_decay(length, init_val, slope):
     ''' Calculate linear decay '''
-    t = np.arange(length, dtype=cvd.default_int)
-    result = init_val - slope*t
-    result = np.maximum(result, 0)
+    result = -slope*np.ones(length)
+    result[0] = init_val
     return result
 
 
 def linear_growth(length, slope):
     ''' Calculate linear growth '''
-    t = np.arange(length, dtype=cvd.default_int)
-    return (slope * t)
+    return slope*np.ones(length)
