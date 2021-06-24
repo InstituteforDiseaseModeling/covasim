@@ -459,6 +459,7 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         decay_time2 (float): how long it takes to transition to late decay period
     '''
 
+
     def f1(t, growth_time):
         '''Simple linear growth'''
         return (1 / growth_time) * t
@@ -473,11 +474,13 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
             titre[i] = titre[i-1]+decayRate[i]
         return np.exp(-titre)
 
+    length = length + 1
     t1 = np.arange(growth_time, dtype=cvd.default_int)
     t2 = np.arange(length - growth_time, dtype=cvd.default_int)
     y1 = f1(t1, growth_time)
     y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
     y  = np.concatenate([y1,y2])
+    y = np.diff(y)[0:length]
 
     return y
 
