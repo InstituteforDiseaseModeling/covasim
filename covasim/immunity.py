@@ -467,14 +467,14 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         decayRate = np.full(len(t), fill_value=decay_rate1)
         decayRate[cvu.true(t>decay_time2)] = decay_rate2
         slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
-        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(decay_time2 - decay_time1, dtype=cvu.default_int))
+        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
         titre = np.zeros(len(t))
         for i in range(1, len(t)):
             titre[i] = titre[i-1]+decayRate[i]
         return np.exp(-titre)
 
-    t1 = np.arange(growth_time, dtype=cvu.default_int)
-    t2 = np.arange(length - growth_time, dtype=cvu.default_int)
+    t1 = np.arange(growth_time, dtype=cvd.default_int)
+    t2 = np.arange(length - growth_time, dtype=cvd.default_int)
     y1 = f1(t1, growth_time)
     y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
     y  = np.concatenate([y1,y2])
