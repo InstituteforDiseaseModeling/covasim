@@ -322,10 +322,11 @@ def get_variant_choices():
     '''
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
-        'wild':  ['wild', 'default', 'pre-existing', 'original'],
-        'b117':  ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
-        'b1351': ['beta', 'b1351', 'sa', 'south africa'],
-        'p1':    ['gamma', 'p1', 'b11248', 'brazil'],
+        'wild':   ['wild', 'default', 'pre-existing', 'original'],
+        'b117':   ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
+        'b1351':  ['beta', 'b1351', 'sa', 'south africa'],
+        'p1':     ['gamma', 'p1', 'b11248', 'brazil'],
+        'b16172': ['delta', 'b16172', 'india'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -384,6 +385,15 @@ def get_variant_pars(default=False):
             rel_severe_prob = 2.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
+        ),
+
+        b16172=dict(
+            rel_beta=2.2 ,
+            # Estimated to be 1.25-1.6-fold more transmissible than B117: https://www.researchsquare.com/article/rs-637724/v1
+            rel_symp_prob=1.0,
+            rel_severe_prob=3.2, # 2x more transmissible than alpha from https://mobile.twitter.com/dgurdasani1/status/1403293582279294983?s=20
+            rel_crit_prob=1.0,
+            rel_death_prob=1.0,
         )
     )
 
@@ -404,6 +414,7 @@ def get_cross_immunity(default=False):
             b117  = 0.5, # Assumption
             b1351 = 0.5, # Assumption
             p1    = 0.5, # Assumption
+            b16172 = 0.5, # Assumption
         ),
 
         b117 = dict(
@@ -411,6 +422,7 @@ def get_cross_immunity(default=False):
             b117  = 1.0, # Default for own-immunity
             b1351 = 0.8, # Assumption
             p1    = 0.8, # Assumption
+            b16172= 0.8  # Assumption
         ),
 
         b1351 = dict(
@@ -418,6 +430,7 @@ def get_cross_immunity(default=False):
             b117  = 0.5,   # Assumption
             b1351 = 1.0,   # Default for own-immunity
             p1    = 0.5,   # Assumption
+            b16172=0.5  # Assumption
         ),
 
         p1 = dict(
@@ -425,6 +438,15 @@ def get_cross_immunity(default=False):
             b117  = 0.4,  # Assumption based on the above
             b1351 = 0.4,  # Assumption based on the above
             p1    = 1.0,  # Default for own-immunity
+            b16172=0.8  # Assumption
+        ),
+
+        b16172=dict(
+            wild=0.374,# https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            b117=0.689, # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            b1351=0.086,  # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            p1=0.088,  # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            b16172=1.0 # Default for own-immunity
         ),
     )
 
@@ -445,6 +467,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1.0,
             b1351 = 1.0,
             p1    = 1.0,
+            b16172 = 1.0,
         ),
 
         pfizer = dict(
@@ -452,6 +475,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1/2.0,
             b1351 = 1/6.7,
             p1    = 1/6.5,
+            b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         moderna = dict(
@@ -459,6 +483,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1/1.8,
             b1351 = 1/4.5,
             p1    = 1/8.6,
+            b16172= 1/ 2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         az = dict(
@@ -466,6 +491,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1/2.3,
             b1351 = 1/9,
             p1    = 1/2.9,
+            b16172= 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         jj = dict(
@@ -473,6 +499,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1.0,
             b1351 = 1/6.7,
             p1    = 1/8.6,
+            b16172=1 / 6.2,  # assumption, no data available yet
         ),
 
         novavax = dict( # https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
@@ -480,6 +507,7 @@ def get_vaccine_variant_pars(default=False):
             b117  = 1/1.12,
             b1351 = 1/4.7,
             p1    = 1/8.6, # assumption, no data available yet
+            b16172=1 / 6.2,  # assumption, no data available yet
         ),
     )
 
