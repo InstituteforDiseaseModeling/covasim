@@ -175,6 +175,20 @@ class MultiSim(cvb.FlexPretty):
         return self
 
 
+    def _has_orig_sim(self):
+        ''' Helper method for determining if an original base sim is present '''
+        return hasattr(self, 'orig_base_sim')
+
+
+    def _rm_orig_sim(self, reset=False):
+        ''' Helper method for removing the original base sim, if present '''
+        if self._has_orig_sim():
+            if reset:
+                self.base_sim = self.orig_base_sim
+            delattr(self, 'orig_base_sim')
+        return
+
+
     def shrink(self, **kwargs):
         '''
         Not to be confused with reduce(), this shrinks each sim in the msim;
@@ -184,6 +198,7 @@ class MultiSim(cvb.FlexPretty):
             kwargs (dict): passed to sim.shrink() for each sim
         '''
         self.base_sim.shrink(**kwargs)
+        self._rm_orig_sim()
         for sim in self.sims:
             sim.shrink(**kwargs)
         return
@@ -191,9 +206,7 @@ class MultiSim(cvb.FlexPretty):
 
     def reset(self):
         ''' Undo a combine() or reduce() by resetting the base sim, which, and results '''
-        if hasattr(self, 'orig_base_sim'):
-            self.base_sim = self.orig_base_sim
-            delattr(self, 'orig_base_sim')
+        self._rm_orig_sim(reset=True)
         self.which = None
         self.results = None
         return

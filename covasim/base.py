@@ -1675,7 +1675,7 @@ class Layer(FlexDict):
         return contact_inds
 
 
-    def update(self, people=None, frac=1.0):
+    def update(self, people, frac=1.0):
         '''
         Regenerate contacts on each timestep.
 
