@@ -342,7 +342,7 @@ def get_vaccine_choices():
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech', 'pf', 'pfz', 'pz'],
         'moderna': ['moderna', 'md'],
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
-        'az':      ['astrazeneca', 'oxford', 'vaxzevria', 'az'],
+        'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
@@ -387,13 +387,12 @@ def get_variant_pars(default=False):
             rel_death_prob  = 1.0,
         ),
 
-        b16172=dict(
-            rel_beta=2.2 ,
-            # Estimated to be 1.25-1.6-fold more transmissible than B117: https://www.researchsquare.com/article/rs-637724/v1
-            rel_symp_prob=1.0,
-            rel_severe_prob=3.2, # 2x more transmissible than alpha from https://mobile.twitter.com/dgurdasani1/status/1403293582279294983?s=20
-            rel_crit_prob=1.0,
-            rel_death_prob=1.0,
+        b16172 = dict(
+            rel_beta        = 2.2, # Estimated to be 1.25-1.6-fold more transmissible than B117: https://www.researchsquare.com/article/rs-637724/v1
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 3.2, # 2x more transmissible than alpha from https://mobile.twitter.com/dgurdasani1/status/1403293582279294983
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
         )
     )
 
@@ -410,43 +409,43 @@ def get_cross_immunity(default=False):
     pars = dict(
 
         wild = dict(
-            wild  = 1.0, # Default for own-immunity
-            b117  = 0.5, # Assumption
-            b1351 = 0.5, # Assumption
-            p1    = 0.5, # Assumption
+            wild   = 1.0, # Default for own-immunity
+            b117   = 0.5, # Assumption
+            b1351  = 0.5, # Assumption
+            p1     = 0.5, # Assumption
             b16172 = 0.5, # Assumption
         ),
 
         b117 = dict(
-            wild  = 0.5, # Assumption
-            b117  = 1.0, # Default for own-immunity
-            b1351 = 0.8, # Assumption
-            p1    = 0.8, # Assumption
-            b16172= 0.8  # Assumption
+            wild   = 0.5, # Assumption
+            b117   = 1.0, # Default for own-immunity
+            b1351  = 0.8, # Assumption
+            p1     = 0.8, # Assumption
+            b16172 = 0.8  # Assumption
         ),
 
         b1351 = dict(
-            wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
-            b117  = 0.5,   # Assumption
-            b1351 = 1.0,   # Default for own-immunity
-            p1    = 0.5,   # Assumption
-            b16172=0.5  # Assumption
+            wild   = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
+            b117   = 0.5,   # Assumption
+            b1351  = 1.0,   # Default for own-immunity
+            p1     = 0.5,   # Assumption
+            b16172 = 0.5    # Assumption
         ),
 
         p1 = dict(
-            wild  = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
-            b117  = 0.4,  # Assumption based on the above
-            b1351 = 0.4,  # Assumption based on the above
-            p1    = 1.0,  # Default for own-immunity
-            b16172=0.8  # Assumption
+            wild   = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
+            b117   = 0.4,  # Assumption based on the above
+            b1351  = 0.4,  # Assumption based on the above
+            p1     = 1.0,  # Default for own-immunity
+            b16172 = 0.8   # Assumption
         ),
 
-        b16172=dict(
-            wild=0.374,# https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
-            b117=0.689, # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
-            b1351=0.086,  # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
-            p1=0.088,  # https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
-            b16172=1.0 # Default for own-immunity
+        b16172=dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            wild   = 0.374,
+            b117   = 0.689,
+            b1351  = 0.086,
+            p1     = 0.088,
+            b16172 = 1.0 # Default for own-immunity
         ),
     )
 
@@ -463,51 +462,51 @@ def get_vaccine_variant_pars(default=False):
     pars = dict(
 
         default = dict(
-            wild  = 1.0,
-            b117  = 1.0,
-            b1351 = 1.0,
-            p1    = 1.0,
+            wild   = 1.0,
+            b117   = 1.0,
+            b1351  = 1.0,
+            p1     = 1.0,
             b16172 = 1.0,
         ),
 
         pfizer = dict(
-            wild  = 1.0,
-            b117  = 1/2.0,
-            b1351 = 1/6.7,
-            p1    = 1/6.5,
+            wild   = 1.0,
+            b117   = 1/2.0,
+            b1351  = 1/6.7,
+            p1     = 1/6.5,
             b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         moderna = dict(
-            wild  = 1.0,
-            b117  = 1/1.8,
-            b1351 = 1/4.5,
-            p1    = 1/8.6,
-            b16172= 1/ 2.9,  # https://www.researchsquare.com/article/rs-637724/v1
+            wild   = 1.0,
+            b117   = 1/1.8,
+            b1351  = 1/4.5,
+            p1     = 1/8.6,
+            b16172 = 1/ 2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         az = dict(
-            wild  = 1.0,
-            b117  = 1/2.3,
-            b1351 = 1/9,
-            p1    = 1/2.9,
-            b16172= 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
+            wild   = 1.0,
+            b117   = 1/2.3,
+            b1351  = 1/9,
+            p1     = 1/2.9,
+            b16172 = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         jj = dict(
-            wild  = 1.0,
-            b117  = 1.0,
-            b1351 = 1/6.7,
-            p1    = 1/8.6,
-            b16172=1 / 6.2,  # assumption, no data available yet
+            wild   = 1.0,
+            b117   = 1.0,
+            b1351  = 1/6.7,
+            p1     = 1/8.6,
+            b16172 = 1/6.2,  # assumption, no data available yet
         ),
 
-        novavax = dict( # https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
-            wild  = 1.0,
-            b117  = 1/1.12,
-            b1351 = 1/4.7,
-            p1    = 1/8.6, # assumption, no data available yet
-            b16172=1 / 6.2,  # assumption, no data available yet
+        novavax = dict( # Data from https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
+            wild   = 1.0,
+            b117   = 1/1.12,
+            b1351  = 1/4.7,
+            p1     = 1/8.6, # assumption, no data available yet
+            b16172 = 1/6.2, # assumption, no data available yet
         ),
     )
 
