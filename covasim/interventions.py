@@ -977,7 +977,7 @@ class contact_tracing(Intervention):
         ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
         sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None, capacity=np.inf, **kwargs):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None, capacity=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
@@ -1046,7 +1046,7 @@ class contact_tracing(Intervention):
             inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
 
         # If there is a tracing capacity constraint, limit the number of agents that can be traced
-        if np.isfinite(self.capacity):
+        if self.capacity is not None:
             capacity = int(self.capacity / sim.rescale_vec[sim.t])  # Convert capacity into a number of agents
             if len(inds) > capacity:
                 inds = np.random.choice(inds, capacity, replace=False)
