@@ -989,12 +989,12 @@ class BasePeople(FlexPretty):
 
     def count(self, key):
         ''' Count the number of people for a given key '''
-        return self[key].count_nonzero()
+        return np.count_nonzero(self[key])
 
 
     def count_by_variant(self, key, variant):
         ''' Count the number of people for a given key '''
-        return self[key][variant,:].count_nonzero()
+        return np.count_nonzero(self[key][variant,:])
 
 
     def count_not(self, key):
