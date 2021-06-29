@@ -215,11 +215,12 @@ def update_nab(people, inds):
 
 def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
-    if nab > 0: # To avoid taking logarithm of 0
-        lo = alpha_inf + beta_inf*np.log(nab)
-        output = np.exp(lo)/(1+np.exp(lo)) # Inverse logit function
-    else:
-        output = 0
+    zero_nab    = nab == 0 # To avoid taking logarithm of 0
+    nonzero_nab = nab > 0
+    lo = alpha_inf + beta_inf*np.log(nab, where=nonzero_nab)
+    exp_lo = np.exp(lo, where=nonzero_nab)
+    exp_lo[zero_nab] = 0 # Re-insert zeros
+    output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
 

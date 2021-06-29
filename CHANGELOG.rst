@@ -31,7 +31,7 @@ Version 3.0.7 (2021-06-29)
 - Refactored the NAb decay function to match the published version of `Khoury et al. <https://www.nature.com/articles/s41591-021-01377-8>`__ (the previous implementation matched the preprint).
 - Added optional ``capacity`` limit for ``cv.contact_tracing`` to cap the maximum number of people that can be traced each day.
 - *Regression information*: Due to the change in NAb decay function, simulations run with ``use_waning = True`` will be slightly different than before. We are aiming to have a (relatively) stable version by Covasim v3.1; in the mean time, this aspect of the model may continue to receive frequent updates.
-- *GitHub info*: PR `1088 <https://github.com/amath-idm/covasim/pull/1088>`_
+- *GitHub info*: PR `1102 <https://github.com/amath-idm/covasim/pull/1102>`_
 
 
 Version 3.0.6 (2021-06-21)

@@ -1675,11 +1675,11 @@ class Layer(FlexDict):
         return contact_inds
 
 
-    def update(self, people, frac=1.0):
+    def update(self, people=None, frac=1.0):
         '''
         Regenerate contacts on each timestep.
 
-        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``.
+        This method gets called if the layer appears in ``sim.pars['dynam_layer']``.
         The Layer implements the update procedure so that derived classes can customize
         the update e.g. implementing over-dispersion/other distributions, random
         clusters, etc.
@@ -1689,6 +1689,7 @@ class Layer(FlexDict):
         changing contacts for people that are severe/critical).
 
         Args:
+            people (People): the Covasim People object, which is usually used to make new contacts
             frac (float): the fraction of contacts to update on each timestep
         '''
         # Choose how many contacts to make
