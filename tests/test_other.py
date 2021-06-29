@@ -301,7 +301,8 @@ def test_population():
     sim.initialize()
     cv.Sim(pop_size=100, popfile=pop_path, load_pop=True)
     with pytest.raises(ValueError):
-        cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)
+        sim = cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)
+        sim.initialize()
 
     remove_files(pop_path)
 

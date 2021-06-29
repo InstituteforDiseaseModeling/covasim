@@ -230,7 +230,8 @@ def test_decays(do_plot=False):
             growth_time = 22,
             decay_rate1 = np.log(2)/100,
             decay_time1 = 250,
-            decay_rate2 = 0.002587529,
+            decay_rate2 = np.log(2)/3650,
+            decay_time2 = 365,
         ),
 
         nab_decay = dict(

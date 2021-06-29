@@ -989,16 +989,17 @@ class BasePeople(FlexPretty):
 
     def count(self, key):
         ''' Count the number of people for a given key '''
-        return (self[key]>0).sum()
+        return np.count_nonzero(self[key])
+
 
     def count_by_variant(self, key, variant):
         ''' Count the number of people for a given key '''
-        return (self[key][variant,:]>0).sum()
+        return np.count_nonzero(self[key][variant,:])
 
 
     def count_not(self, key):
         ''' Count the number of people who do not have a property for a given key '''
-        return (self[key]==0).sum()
+        return len(self[key]) - self.count(key)
 
 
     def set_pars(self, pars=None):
@@ -1679,7 +1680,7 @@ class Layer(FlexDict):
         '''
         Regenerate contacts on each timestep.
 
-        This method gets called if the layer appears in ``sim.pars['dynam_lkeys']``.
+        This method gets called if the layer appears in ``sim.pars['dynam_layer']``.
         The Layer implements the update procedure so that derived classes can customize
         the update e.g. implementing over-dispersion/other distributions, random
         clusters, etc.
@@ -1689,6 +1690,7 @@ class Layer(FlexDict):
         changing contacts for people that are severe/critical).
 
         Args:
+            people (People): the Covasim People object, which is usually used to make new contacts
             frac (float): the fraction of contacts to update on each timestep
         '''
         # Choose how many contacts to make

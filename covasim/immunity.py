@@ -4,7 +4,6 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
-import scipy.integrate
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -216,8 +215,12 @@ def update_nab(people, inds):
 
 def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
-    lo = alpha_inf + beta_inf*np.log(nab)
-    output = np.exp(lo)/(1+np.exp(lo)) # Inverse logit function
+    zero_nab    = nab == 0 # To avoid taking logarithm of 0
+    nonzero_nab = nab > 0
+    lo = alpha_inf + beta_inf*np.log(nab, where=nonzero_nab)
+    exp_lo = np.exp(lo, where=nonzero_nab)
+    exp_lo[zero_nab] = 0 # Re-insert zeros
+    output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
 
@@ -398,7 +401,7 @@ def precompute_waning(length, pars=None):
     '''
     Process functional form and parameters into values:
 
-        - 'nab_growth_decay' : based on Khoury et al.
+        - 'nab_growth_decay' : based on Khoury et al. (https://www.nature.com/articles/s41591-021-01377-8)
         - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
         - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
         - 'linear_decay': linear decay
@@ -442,35 +445,46 @@ def precompute_waning(length, pars=None):
     return output
 
 
-def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2):
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2, decay_time2):
     '''
     Returns an array of length 'length' containing the evaluated function nab growth/decay
     function at each point.
+
     Uses linear growth + exponential decay, with the rate of exponential decay also set to
-    exponentially decay (!) after 250 days.
+    decay linearly until it reaches a 10-year half life.
+
     Args:
         length (int): number of points
         growth_time (int): length of time NAbs grow (used to determine slope)
         decay_rate1 (float): initial rate of exponential decay
         decay_time1 (float): time on the first exponential decay
-        decay_rate2 (float): the rate at which the decay decays
+        decay_rate2 (float): the rate of exponential decay in late period
+        decay_time2 (float): how long it takes to transition to late decay period
     '''
 
-    def decay(t,x):
-        ''' Complex exponential decay '''
-        if t < decay_time1:
-            return -x*decay_rate1
-        else:
-            return -x*decay_rate1*np.exp(-(t - decay_time1) * decay_rate2)
 
-    def compute_decay(t):
-        ''' Calculate the double exponential decay curve '''
-        return scipy.integrate.solve_ivp(decay, [t[0], t[-1]], [1], t_eval=t).y.ravel()
+    def f1(t, growth_time):
+        '''Simple linear growth'''
+        return (1 / growth_time) * t
 
-    t = np.arange(length+1, dtype=cvd.default_int)
-    y = np.zeros(length)
-    y[0:growth_time] = 1/growth_time # Linear growth
-    y[growth_time:] = np.diff(compute_decay(t[growth_time:])) # Exponential decay
+    def f2(t, decay_time1, decay_time2, decay_rate1, decay_rate2):
+        decayRate = np.full(len(t), fill_value=decay_rate1)
+        decayRate[cvu.true(t>decay_time2)] = decay_rate2
+        slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
+        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
+        titre = np.zeros(len(t))
+        for i in range(1, len(t)):
+            titre[i] = titre[i-1]+decayRate[i]
+        return np.exp(-titre)
+
+    length = length + 1
+    t1 = np.arange(growth_time, dtype=cvd.default_int)
+    t2 = np.arange(length - growth_time, dtype=cvd.default_int)
+    y1 = f1(t1, growth_time)
+    y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
+    y  = np.concatenate([y1,y2])
+    y = np.diff(y)[0:length]
+
     return y
 
 
