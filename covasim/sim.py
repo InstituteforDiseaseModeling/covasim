@@ -77,8 +77,8 @@ class Sim(cvb.BaseSim):
         self.set_metadata(simfile)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
         self.load_data(datafile, datacols) # Load the data, if provided
-        if self.load_pop:
-            self.load_population(popfile)  # Load the population, if provided
+        # if self.load_pop:
+        #     self.load_population(popfile)  # Load the population, if provided
 
         return
 
