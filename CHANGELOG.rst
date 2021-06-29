@@ -33,6 +33,7 @@ Version 3.0.7 (2021-06-29)
 - When loading a population from file, this is now done during sim initialization (``sim.initialize()``); previously this was done as part of sim creation (``cv.Sim()``). This fixed a bug with immunity characteristics not being initialized correctly. (Thanks to Paula Sanz-Leon for identifying and proposing a fix.)
 - Fixed a log of 0 warning with NAbs.
 - Fixed ``n_beds_hosp = 0`` and ``n_beds_icu = 0`` being ignored (for no limit, use ``n_beds_hosp = None`` or ``n_beds_hosp = np.inf``; thanks to Ankit Majhi for finding this bug).
+- Added a more helpful error message if you try to export a MultiSim to JSON or Excel without reducing it first. (Thanks to Andrew Clark for finding this bug.)
 - *Regression information*: Due to the change in NAb decay function, simulations run with ``use_waning = True`` will be slightly different than before. We are aiming to have a (relatively) stable version by Covasim v3.1; in the mean time, this aspect of the model may continue to receive frequent updates.
 - *GitHub info*: PR `1102 <https://github.com/amath-idm/covasim/pull/1102>`_
 
