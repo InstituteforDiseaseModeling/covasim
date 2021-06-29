@@ -398,7 +398,7 @@ def precompute_waning(length, pars=None):
     '''
     Process functional form and parameters into values:
 
-        - 'nab_growth_decay' : based on Khoury et al.
+        - 'nab_growth_decay' : based on Khoury et al. (https://www.nature.com/articles/s41591-021-01377-8)
         - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
         - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
         - 'linear_decay': linear decay
