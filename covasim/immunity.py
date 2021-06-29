@@ -4,7 +4,6 @@ Defines classes and methods for calculating immunity
 
 import numpy as np
 import sciris as sc
-import scipy.integrate
 from . import utils as cvu
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -216,8 +215,11 @@ def update_nab(people, inds):
 
 def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
-    lo = alpha_inf + beta_inf*np.log(nab)
-    output = np.exp(lo)/(1+np.exp(lo)) # Inverse logit function
+    if nab > 0: # To avoid taking logarithm of 0
+        lo = alpha_inf + beta_inf*np.log(nab)
+        output = np.exp(lo)/(1+np.exp(lo)) # Inverse logit function
+    else:
+        output = 0
     return output
 
 
