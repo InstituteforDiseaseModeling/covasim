@@ -989,16 +989,17 @@ class BasePeople(FlexPretty):
 
     def count(self, key):
         ''' Count the number of people for a given key '''
-        return (self[key]>0).sum()
+        return self[key].count_nonzero()
+
 
     def count_by_variant(self, key, variant):
         ''' Count the number of people for a given key '''
-        return (self[key][variant,:]>0).sum()
+        return self[key][variant,:].count_nonzero()
 
 
     def count_not(self, key):
         ''' Count the number of people who do not have a property for a given key '''
-        return (self[key]==0).sum()
+        return len(self[key]) - self.count(key)
 
 
     def set_pars(self, pars=None):
