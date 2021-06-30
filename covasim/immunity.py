@@ -457,9 +457,9 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         length (int): number of points
         growth_time (int): length of time NAbs grow (used to determine slope)
         decay_rate1 (float): initial rate of exponential decay
-        decay_time1 (float): time on the first exponential decay
+        decay_time1 (float): time of the first exponential decay
         decay_rate2 (float): the rate of exponential decay in late period
-        decay_time2 (float): how long it takes to transition to late decay period
+        decay_time2 (float): total time until late decay period (must be greater than decay_time1)
     '''
 
 
@@ -476,6 +476,10 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         for i in range(1, len(t)):
             titre[i] = titre[i-1]+decayRate[i]
         return np.exp(-titre)
+
+    if decay_time2 < decay_time1:
+        errormsg = f'Decay time 2 must be larger than decay time 1, but you supplied {decay_time2} which is smaller than {decay_time1}.'
+        raise ValueError(errormsg)
 
     length = length + 1
     t1 = np.arange(growth_time, dtype=cvd.default_int)
