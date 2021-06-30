@@ -1408,6 +1408,14 @@ class BaseVaccination(Intervention):
             inds = self.vaccinate(sim, inds)
         return inds
 
+    def shrink(self):
+        ''' Shrink vaccination intervention '''
+        self.vaccinated = None
+        self.vaccinations = None
+        self.vaccination_dates = None
+        if hasattr(self, 'second_dose_days'):
+            self.second_dose_days = None
+
 
 def vaccinate(*args, **kwargs):
     '''
