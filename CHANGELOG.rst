@@ -15,8 +15,6 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Adding the delta variant (planned for v3.0.7)
-- Updates to the NAb decay function (planned for v3.0.7)
 - Continued updates to vaccine and variant parameters and workflows (planned for v3.1)
 - Multi-region and geographical support (planned for v3.2)
 - Economics and costing analysis (planned for v3.3)
@@ -25,6 +23,20 @@ These are the major improvements we are currently working on. If there is a spec
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.0.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 3.0.7 (2021-06-29)
+--------------------------
+- Added parameters for the Delta variant.
+- Refactored the NAb decay function to match the published version of `Khoury et al. <https://www.nature.com/articles/s41591-021-01377-8>`__ (the previous implementation matched the preprint).
+- Added optional ``capacity`` limit for ``cv.contact_tracing`` to cap the maximum number of people that can be traced each day.
+- When loading a population from file, this is now done during sim initialization (``sim.initialize()``); previously this was done as part of sim creation (``cv.Sim()``). This fixed a bug with immunity characteristics not being initialized correctly. (Thanks to Paula Sanz-Leon for identifying and proposing a fix.)
+- Fixed a log of 0 warning with NAbs.
+- Fixed ``n_beds_hosp = 0`` and ``n_beds_icu = 0`` being ignored (for no limit, use ``n_beds_hosp = None`` or ``n_beds_hosp = np.inf``; thanks to Ankit Majhi for finding this bug).
+- Added a more helpful error message if you try to export a MultiSim to JSON or Excel without reducing it first. (Thanks to Andrew Clark for finding this bug.)
+- *Regression information*: Due to the change in NAb decay function, simulations run with ``use_waning = True`` will be slightly different than before. We are aiming to have a (relatively) stable version by Covasim v3.1; in the mean time, this aspect of the model may continue to receive frequent updates.
+- *GitHub info*: PR `1102 <https://github.com/amath-idm/covasim/pull/1102>`_
+
 
 Version 3.0.6 (2021-06-21)
 --------------------------

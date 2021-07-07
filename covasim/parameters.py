@@ -68,7 +68,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']      = False # Whether to use dynamically calculated immunity
     pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=0.002587529)
+    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
     pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
@@ -322,10 +322,11 @@ def get_variant_choices():
     '''
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
-        'wild':  ['wild', 'default', 'pre-existing', 'original'],
-        'b117':  ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
-        'b1351': ['beta', 'b1351', 'sa', 'south africa'],
-        'p1':    ['gamma', 'p1', 'b11248', 'brazil'],
+        'wild':   ['wild', 'default', 'pre-existing', 'original'],
+        'b117':   ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
+        'b1351':  ['beta', 'b1351', 'sa', 'south africa'],
+        'p1':     ['gamma', 'p1', 'b11248', 'brazil'],
+        'b16172': ['delta', 'b16172', 'india'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -341,7 +342,7 @@ def get_vaccine_choices():
         'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech', 'pf', 'pfz', 'pz'],
         'moderna': ['moderna', 'md'],
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
-        'az':      ['astrazeneca', 'oxford', 'vaxzevria', 'az'],
+        'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
@@ -364,10 +365,10 @@ def get_variant_pars(default=False):
 
         b117 = dict(
             rel_beta        = 1.67, # Midpoint of the range reported in https://science.sciencemag.org/content/372/6538/eabg3055
-            rel_symp_prob   = 1.0, # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
+            rel_symp_prob   = 1.0,  # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.64, # From https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3792894, and consistent with https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348 and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
-            rel_crit_prob   = 1.0, # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
-            rel_death_prob  = 1.0, # See comment above.
+            rel_crit_prob   = 1.0,  # Various studies have found increased mortality for B117 (summary here: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(21)00201-2/fulltext#tbl1), but not necessarily when conditioned on having developed severe disease
+            rel_death_prob  = 1.0,  # See comment above
         ),
 
         b1351 = dict(
@@ -382,6 +383,14 @@ def get_variant_pars(default=False):
             rel_beta        = 2.05, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
             rel_severe_prob = 2.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
+            rel_crit_prob   = 1.0,
+            rel_death_prob  = 1.0,
+        ),
+
+        b16172 = dict(
+            rel_beta        = 2.2, # Estimated to be 1.25-1.6-fold more transmissible than B117: https://www.researchsquare.com/article/rs-637724/v1
+            rel_symp_prob   = 1.0,
+            rel_severe_prob = 3.2, # 2x more transmissible than alpha from https://mobile.twitter.com/dgurdasani1/status/1403293582279294983
             rel_crit_prob   = 1.0,
             rel_death_prob  = 1.0,
         )
@@ -400,31 +409,43 @@ def get_cross_immunity(default=False):
     pars = dict(
 
         wild = dict(
-            wild  = 1.0, # Default for own-immunity
-            b117  = 0.5, # Assumption
-            b1351 = 0.5, # Assumption
-            p1    = 0.5, # Assumption
+            wild   = 1.0, # Default for own-immunity
+            b117   = 0.5, # Assumption
+            b1351  = 0.5, # Assumption
+            p1     = 0.5, # Assumption
+            b16172 = 0.5, # Assumption
         ),
 
         b117 = dict(
-            wild  = 0.5, # Assumption
-            b117  = 1.0, # Default for own-immunity
-            b1351 = 0.8, # Assumption
-            p1    = 0.8, # Assumption
+            wild   = 0.5, # Assumption
+            b117   = 1.0, # Default for own-immunity
+            b1351  = 0.8, # Assumption
+            p1     = 0.8, # Assumption
+            b16172 = 0.8  # Assumption
         ),
 
         b1351 = dict(
-            wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
-            b117  = 0.5,   # Assumption
-            b1351 = 1.0,   # Default for own-immunity
-            p1    = 0.5,   # Assumption
+            wild   = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
+            b117   = 0.5,   # Assumption
+            b1351  = 1.0,   # Default for own-immunity
+            p1     = 0.5,   # Assumption
+            b16172 = 0.5    # Assumption
         ),
 
         p1 = dict(
-            wild  = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
-            b117  = 0.4,  # Assumption based on the above
-            b1351 = 0.4,  # Assumption based on the above
-            p1    = 1.0,  # Default for own-immunity
+            wild   = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
+            b117   = 0.4,  # Assumption based on the above
+            b1351  = 0.4,  # Assumption based on the above
+            p1     = 1.0,  # Default for own-immunity
+            b16172 = 0.8   # Assumption
+        ),
+
+        b16172=dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            wild   = 0.374,
+            b117   = 0.689,
+            b1351  = 0.086,
+            p1     = 0.088,
+            b16172 = 1.0 # Default for own-immunity
         ),
     )
 
@@ -441,45 +462,51 @@ def get_vaccine_variant_pars(default=False):
     pars = dict(
 
         default = dict(
-            wild  = 1.0,
-            b117  = 1.0,
-            b1351 = 1.0,
-            p1    = 1.0,
+            wild   = 1.0,
+            b117   = 1.0,
+            b1351  = 1.0,
+            p1     = 1.0,
+            b16172 = 1.0,
         ),
 
         pfizer = dict(
-            wild  = 1.0,
-            b117  = 1/2.0,
-            b1351 = 1/6.7,
-            p1    = 1/6.5,
+            wild   = 1.0,
+            b117   = 1/2.0,
+            b1351  = 1/6.7,
+            p1     = 1/6.5,
+            b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         moderna = dict(
-            wild  = 1.0,
-            b117  = 1/1.8,
-            b1351 = 1/4.5,
-            p1    = 1/8.6,
+            wild   = 1.0,
+            b117   = 1/1.8,
+            b1351  = 1/4.5,
+            p1     = 1/8.6,
+            b16172 = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         az = dict(
-            wild  = 1.0,
-            b117  = 1/2.3,
-            b1351 = 1/9,
-            p1    = 1/2.9,
+            wild   = 1.0,
+            b117   = 1/2.3,
+            b1351  = 1/9,
+            p1     = 1/2.9,
+            b16172 = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         jj = dict(
-            wild  = 1.0,
-            b117  = 1.0,
-            b1351 = 1/6.7,
-            p1    = 1/8.6,
+            wild   = 1.0,
+            b117   = 1.0,
+            b1351  = 1/6.7,
+            p1     = 1/8.6,
+            b16172 = 1/6.2,  # Assumption, no data available yet
         ),
 
-        novavax = dict( # https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
-            wild  = 1.0,
-            b117  = 1/1.12,
-            b1351 = 1/4.7,
-            p1    = 1/8.6, # assumption, no data available yet
+        novavax = dict( # Data from https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
+            wild   = 1.0,
+            b117   = 1/1.12,
+            b1351  = 1/4.7,
+            p1     = 1/8.6, # Assumption, no data available yet
+            b16172 = 1/6.2, # Assumption, no data available yet
         ),
     )
 

@@ -967,6 +967,7 @@ class contact_tracing(Intervention):
         start_day   (int):        intervention start day (default: 0, i.e. the start of the simulation)
         end_day     (int):        intervention end day (default: no end)
         presumptive (bool):       whether or not to begin isolation and contact tracing on the presumption of a positive diagnosis (default: no)
+        capacity    (int):        optionally specify a maximum number of newly diagnosed people to trace each day
         quar_period (int):        number of days to quarantine when notified as a known contact. Default value is ``pars['quar_period']``
         kwargs      (dict):       passed to Intervention()
 
@@ -976,13 +977,14 @@ class contact_tracing(Intervention):
         ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
         sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
-    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None,  **kwargs):
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None, capacity=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.trace_probs = trace_probs
         self.trace_time  = trace_time
         self.start_day   = start_day
         self.end_day     = end_day
         self.presumptive = presumptive
+        self.capacity = capacity
         self.quar_period = quar_period # If quar_period is None, it will be drawn from sim.pars at initialization
         return
 
@@ -1042,6 +1044,13 @@ class contact_tracing(Intervention):
         else:
             just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
             inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+
+        # If there is a tracing capacity constraint, limit the number of agents that can be traced
+        if self.capacity is not None:
+            capacity = int(self.capacity / sim.rescale_vec[sim.t])  # Convert capacity into a number of agents
+            if len(inds) > capacity:
+                inds = np.random.choice(inds, capacity, replace=False)
+
         return inds
 
 
