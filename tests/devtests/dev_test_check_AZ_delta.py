@@ -1,5 +1,6 @@
 import numpy as np
 import sciris as sc
+assert sc.__version__ > '1.2.0'
 import covasim as cv
 
 if __name__ == '__main__':
@@ -29,7 +30,7 @@ if __name__ == '__main__':
             total_doses = 2.0e6
         else:
             total_doses = 0.0e5
-        extra_days = sc.daterange('2022-07-11', '2022-07-20')
+        extra_days = sc.daterange('2021-07-11', '2021-07-20')
         doses = int(total_doses / len(extra_days))
         for day in extra_days:
             vxdict[day] = doses
