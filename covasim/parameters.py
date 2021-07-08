@@ -497,7 +497,7 @@ def get_vaccine_variant_pars(default=False):
             b117   = 1/2.3,
             b1351  = 1/9,
             p1     = 1/2.9,
-            b16172 = 1/1.6,  # https://www.researchsquare.com/article/rs-637724/v1
+            b16172 = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         jj = dict(
