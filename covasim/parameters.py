@@ -478,9 +478,9 @@ def get_vaccine_variant_pars(default=False):
 
         pfizer = dict(
             wild   = 1.0,
-            b117   = 1/2.0,
-            b1351  = 1/6.7,
-            p1     = 1/6.5,
+            b117   = 1/2.0, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            b1351  = 1/10.3, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            p1     = 1/6.7, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
             b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
@@ -488,7 +488,7 @@ def get_vaccine_variant_pars(default=False):
             wild   = 1.0,
             b117   = 1/1.8,
             b1351  = 1/4.5,
-            p1     = 1/8.6,
+            p1     = 1/8.6, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
             b16172 = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
