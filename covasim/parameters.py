@@ -542,7 +542,7 @@ def get_vaccine_dose_pars(default=False):
 
         default = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=1, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
@@ -550,7 +550,7 @@ def get_vaccine_dose_pars(default=False):
 
         pfizer = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 21,
@@ -558,7 +558,7 @@ def get_vaccine_dose_pars(default=False):
 
         moderna = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 28,
