@@ -137,277 +137,290 @@ class PeopleMeta(sc.prettyobj):
 
 #%% Define other defaults
 
-# A subset of the above states are used for results
-result_stocks = {
-    'susceptible': 'Number susceptible',
-    'exposed':     'Number exposed',
-    'infectious':  'Number infectious',
-    'symptomatic': 'Number symptomatic',
-    'severe':      'Number of severe cases',
-    'critical':    'Number of critical cases',
-    'recovered':   'Number recovered',
-    'dead':        'Number dead',
-    'diagnosed':   'Number of confirmed cases',
-    'known_dead':  'Number of confirmed deaths',
-    'quarantined': 'Number in quarantine',
-    'vaccinated':  'Number of people vaccinated',
-}
+class Statistics:
+    ''' For getting the statistics '''
 
-result_stocks_by_variant = {
-    'exposed_by_variant':    'Number exposed by variant',
-    'infectious_by_variant': 'Number infectious by variant',
-}
+    def __init__(self):
 
-# The types of result that are counted as flows -- used in sim.py; value is the label suffix
-result_flows = {
-    'infections':   'infections',
-    'reinfections': 'reinfections',
-    'infectious':   'infectious',
-    'symptomatic':  'symptomatic cases',
-    'severe':       'severe cases',
-    'critical':     'critical cases',
-    'recoveries':   'recoveries',
-    'deaths':       'deaths',
-    'tests':        'tests',
-    'diagnoses':    'diagnoses',
-    'known_deaths': 'known deaths',
-    'quarantined':  'quarantined people',
-    'vaccinations': 'vaccinations',
-    'vaccinated':   'vaccinated people'
-}
+        # A subset of the above states are used for results
+        self.result_stocks = {
+            'susceptible': 'Number susceptible',
+            'exposed':     'Number exposed',
+            'infectious':  'Number infectious',
+            'symptomatic': 'Number symptomatic',
+            'severe':      'Number of severe cases',
+            'critical':    'Number of critical cases',
+            'recovered':   'Number recovered',
+            'dead':        'Number dead',
+            'diagnosed':   'Number of confirmed cases',
+            'known_dead':  'Number of confirmed deaths',
+            'quarantined': 'Number in quarantine',
+            'vaccinated':  'Number of people vaccinated',
+        }
 
-result_flows_by_variant = {
-    'infections_by_variant':  'infections by variant',
-    'symptomatic_by_variant': 'symptomatic by variant',
-    'severe_by_variant':      'severe by variant',
-    'infectious_by_variant':  'infectious by variant',
-}
+        self.result_stocks_by_variant = {
+            'exposed_by_variant':    'Number exposed by variant',
+            'infectious_by_variant': 'Number infectious by variant',
+        }
 
-result_imm = {
-    'pop_nabs':       'Population average nabs',
-    'pop_protection': 'Population average protective immunity'
-}
+        # The types of result that are counted as flows -- used in sim.py; value is the label suffix
+        self.result_flows = {
+            'infections':   'infections',
+            'reinfections': 'reinfections',
+            'infectious':   'infectious',
+            'symptomatic':  'symptomatic cases',
+            'severe':       'severe cases',
+            'critical':     'critical cases',
+            'recoveries':   'recoveries',
+            'deaths':       'deaths',
+            'tests':        'tests',
+            'diagnoses':    'diagnoses',
+            'known_deaths': 'known deaths',
+            'quarantined':  'quarantined people',
+            'vaccinations': 'vaccinations',
+            'vaccinated':   'vaccinated people'
+        }
 
-# Define new and cumulative flows
-new_result_flows = [f'new_{key}' for key in result_flows.keys()]
-cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
-new_result_flows_by_variant = [f'new_{key}' for key in result_flows_by_variant.keys()]
-cum_result_flows_by_variant = [f'cum_{key}' for key in result_flows_by_variant.keys()]
+        self.result_flows_by_variant = {
+            'infections_by_variant':  'infections by variant',
+            'symptomatic_by_variant': 'symptomatic by variant',
+            'severe_by_variant':      'severe by variant',
+            'infectious_by_variant':  'infectious by variant',
+        }
 
-# Parameters that can vary by variant
-variant_pars = [
-    'rel_imm_variant',
-    'rel_beta',
-    'rel_symp_prob',
-    'rel_severe_prob',
-    'rel_crit_prob',
-    'rel_death_prob',
-]
+        self.result_imm = {
+            'pop_nabs':       'Population average nabs',
+            'pop_protection': 'Population average protective immunity'
+        }
 
-# Immunity is broken down according to 3 axes, as listed here
-immunity_axes = ['sus', 'symp', 'sev']
+        # Define new and cumulative flows
+        self.new_result_flows = [f'new_{key}' for key in result_flows.keys()]
+        self.cum_result_flows = [f'cum_{key}' for key in result_flows.keys()]
+        self.new_result_flows_by_variant = [f'new_{key}' for key in result_flows_by_variant.keys()]
+        self.cum_result_flows_by_variant = [f'cum_{key}' for key in result_flows_by_variant.keys()]
 
-# Immunity protection also varies depending on your infection history
-immunity_sources = [
-    'asymptomatic',
-    'mild',
-    'severe',
-]
+        # Parameters that can vary by variant
+        self.variant_pars = [
+            'rel_imm_variant',
+            'rel_beta',
+            'rel_symp_prob',
+            'rel_severe_prob',
+            'rel_crit_prob',
+            'rel_death_prob',
+        ]
 
-# Default age data, based on Seattle 2018 census data -- used in population.py
-default_age_data = np.array([
-    [ 0,  4, 0.0605],
-    [ 5,  9, 0.0607],
-    [10, 14, 0.0566],
-    [15, 19, 0.0557],
-    [20, 24, 0.0612],
-    [25, 29, 0.0843],
-    [30, 34, 0.0848],
-    [35, 39, 0.0764],
-    [40, 44, 0.0697],
-    [45, 49, 0.0701],
-    [50, 54, 0.0681],
-    [55, 59, 0.0653],
-    [60, 64, 0.0591],
-    [65, 69, 0.0453],
-    [70, 74, 0.0312],
-    [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
-    [80, 84, 0.01344],
-    [85, 89, 0.01008],
-    [90, 99, 0.00672],
-])
+        # Immunity is broken down according to 3 axes, as listed here
+        self.immunity_axes = ['sus', 'symp', 'sev']
 
+        # Immunity protection also varies depending on your infection history
+        self.immunity_sources = [
+            'asymptomatic',
+            'mild',
+            'severe',
+        ]
 
-def get_default_colors():
-    '''
-    Specify plot colors -- used in sim.py.
-
-    NB, includes duplicates since stocks and flows are named differently.
-    '''
-    c = sc.objdict()
-    c.susceptible           = '#4d771e'
-    c.exposed               = '#c78f65'
-    c.exposed_by_variant    = '#c75649',
-    c.infectious            = '#e45226'
-    c.infectious_by_variant = c.infectious
-    c.infections            = '#b62413'
-    c.reinfections          = '#732e26'
-    c.infections_by_variant = '#b62413'
-    c.tests                 = '#aaa8ff'
-    c.diagnoses             = '#5f5cd2'
-    c.diagnosed             = c.diagnoses
-    c.quarantined           = '#5c399c'
-    c.vaccinations          = c.quarantined # TODO: new color
-    c.vaccinated            = c.quarantined
-    c.recoveries            = '#9e1149'
-    c.recovered             = c.recoveries
-    c.symptomatic           = '#c1ad71'
-    c.symptomatic_by_variant= c.symptomatic
-    c.severe                = '#c1981d'
-    c.severe_by_variant     = c.severe
-    c.critical              = '#b86113'
-    c.deaths                = '#000000'
-    c.dead                  = c.deaths
-    c.known_dead            = c.deaths
-    c.known_deaths          = c.deaths
-    c.default               = '#000000'
-    c.pop_nabs              = '#32733d'
-    c.pop_protection        = '#9e1149'
-    c.pop_symp_protection   = '#b86113'
-    return c
+        # Default age data, based on Seattle 2018 census data -- used in population.py
+        self.default_age_data = np.array([
+            [ 0,  4, 0.0605],
+            [ 5,  9, 0.0607],
+            [10, 14, 0.0566],
+            [15, 19, 0.0557],
+            [20, 24, 0.0612],
+            [25, 29, 0.0843],
+            [30, 34, 0.0848],
+            [35, 39, 0.0764],
+            [40, 44, 0.0697],
+            [45, 49, 0.0701],
+            [50, 54, 0.0681],
+            [55, 59, 0.0653],
+            [60, 64, 0.0591],
+            [65, 69, 0.0453],
+            [70, 74, 0.0312],
+            [75, 79, 0.02016], # Calculated based on 0.0504 total for >=75
+            [80, 84, 0.01344],
+            [85, 89, 0.01008],
+            [90, 99, 0.00672],
+        ])
 
 
-# Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
-overview_plots = [
-    'cum_infections',
-    'cum_severe',
-    'cum_critical',
-    'cum_deaths',
-    'cum_known_deaths',
-    'cum_diagnoses',
-    'new_infections',
-    'new_severe',
-    'new_critical',
-    'new_deaths',
-    'new_diagnoses',
-    'n_infectious',
-    'n_severe',
-    'n_critical',
-    'n_susceptible',
-    'new_tests',
-    'n_symptomatic',
-    'new_quarantined',
-    'n_quarantined',
-    'new_vaccinations',
-    'new_vaccinated',
-    'cum_vaccinated',
-    'cum_vaccinations',
-    'test_yield',
-    'r_eff',
-]
+class Colors:
+    ''' Getting default colors and plots for the graph '''
 
-overview_variant_plots = [
-    'cum_infections_by_variant',
-    'new_infections_by_variant',
-    'n_infectious_by_variant',
-    'cum_reinfections',
-    'new_reinfections',
-    'pop_nabs',
-    'pop_protection',
-    'pop_symp_protection',
-]
+    def get_default_colors():
+        '''
+        Specify plot colors -- used in sim.py.
 
-def get_default_plots(which='default', kind='sim', sim=None):
-    '''
-    Specify which quantities to plot; used in sim.py.
+        NB, includes duplicates since stocks and flows are named differently.
+        '''
+        c = sc.objdict()
+        c.susceptible           = '#4d771e'
+        c.exposed               = '#c78f65'
+        c.exposed_by_variant    = '#c75649',
+        c.infectious            = '#e45226'
+        c.infectious_by_variant = c.infectious
+        c.infections            = '#b62413'
+        c.reinfections          = '#732e26'
+        c.infections_by_variant = '#b62413'
+        c.tests                 = '#aaa8ff'
+        c.diagnoses             = '#5f5cd2'
+        c.diagnosed             = c.diagnoses
+        c.quarantined           = '#5c399c'
+        c.vaccinations          = c.quarantined # TODO: new color
+        c.vaccinated            = c.quarantined
+        c.recoveries            = '#9e1149'
+        c.recovered             = c.recoveries
+        c.symptomatic           = '#c1ad71'
+        c.symptomatic_by_variant= c.symptomatic
+        c.severe                = '#c1981d'
+        c.severe_by_variant     = c.severe
+        c.critical              = '#b86113'
+        c.deaths                = '#000000'
+        c.dead                  = c.deaths
+        c.known_dead            = c.deaths
+        c.known_deaths          = c.deaths
+        c.default               = '#000000'
+        c.pop_nabs              = '#32733d'
+        c.pop_protection        = '#9e1149'
+        c.pop_symp_protection   = '#b86113'
+        return c
 
-    Args:
-        which (str): either 'default' or 'overview'
-    '''
 
-    # Default plots -- different for sims and scenarios
-    if which in [None, 'default']:
+class Plots:
+    ''' Defining plots and getting the default plots '''
 
-        if 'sim' in kind:
-            plots = sc.odict({
-                    'Total counts': [
+    def __init__(self):
+        # Define the 'overview plots', i.e. the most useful set of plots to explore different aspects of a simulation
+        self.overview_plots = [
+            'cum_infections',
+            'cum_severe',
+            'cum_critical',
+            'cum_deaths',
+            'cum_known_deaths',
+            'cum_diagnoses',
+            'new_infections',
+            'new_severe',
+            'new_critical',
+            'new_deaths',
+            'new_diagnoses',
+            'n_infectious',
+            'n_severe',
+            'n_critical',
+            'n_susceptible',
+            'new_tests',
+            'n_symptomatic',
+            'new_quarantined',
+            'n_quarantined',
+            'new_vaccinations',
+            'new_vaccinated',
+            'cum_vaccinated',
+            'cum_vaccinations',
+            'test_yield',
+            'r_eff',
+        ]
+
+        self.overview_variant_plots = [
+            'cum_infections_by_variant',
+            'new_infections_by_variant',
+            'n_infectious_by_variant',
+            'cum_reinfections',
+            'new_reinfections',
+            'pop_nabs',
+            'pop_protection',
+            'pop_symp_protection',
+        ]
+
+
+    def get_default_plots(which='default', kind='sim', sim=None):
+        '''
+        Specify which quantities to plot; used in sim.py.
+
+        Args:
+            which (str): either 'default' or 'overview'
+        '''
+
+        # Default plots -- different for sims and scenarios
+        if which in [None, 'default']:
+
+            if 'sim' in kind:
+                plots = sc.odict({
+                        'Total counts': [
+                            'cum_infections',
+                            'n_infectious',
+                            'cum_diagnoses',
+                        ],
+                        'Daily counts': [
+                            'new_infections',
+                            'new_diagnoses',
+                        ],
+                        'Health outcomes': [
+                            'cum_severe',
+                            'cum_critical',
+                            'cum_deaths',
+                            'cum_known_deaths',
+                        ],
+                })
+
+            elif 'scen' in kind: # pragma: no cover
+                plots = sc.odict({
+                    'Cumulative infections': [
                         'cum_infections',
-                        'n_infectious',
-                        'cum_diagnoses',
                     ],
-                    'Daily counts': [
+                    'New infections per day': [
                         'new_infections',
+                    ],
+                    'Cumulative deaths': [
+                        'cum_deaths',
+                        'cum_known_deaths',
+                    ],
+                })
+
+            else:
+                errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+                raise ValueError(errormsg)
+
+        # Show an overview
+        elif which == 'overview': # pragma: no cover
+            plots = sc.dcp(overview_plots)
+
+        # Plot absolutely everything
+        elif which.lower() == 'all': # pragma: no cover
+            plots = sim.result_keys('all')
+
+        # Show an overview plus variants
+        elif 'overview' in which and 'variant' in which: # pragma: no cover
+            plots = sc.dcp(overview_plots) + sc.dcp(overview_variant_plots)
+
+        # Show default but with variants
+        elif 'variant' in which: # pragma: no cover
+            plots = sc.odict({
+                    'Cumulative infections by variant': [
+                        'cum_infections_by_variant',
+                    ],
+                    'New infections by variant': [
+                        'new_infections_by_variant',
+                    ],
+                    'Diagnoses': [
+                        'cum_diagnoses',
                         'new_diagnoses',
                     ],
                     'Health outcomes': [
                         'cum_severe',
                         'cum_critical',
                         'cum_deaths',
-                        'cum_known_deaths',
                     ],
             })
 
-        elif 'scen' in kind: # pragma: no cover
-            plots = sc.odict({
-                'Cumulative infections': [
-                    'cum_infections',
-                ],
-                'New infections per day': [
-                    'new_infections',
-                ],
-                'Cumulative deaths': [
-                    'cum_deaths',
-                    'cum_known_deaths',
-                ],
-            })
+        # Plot SEIR compartments
+        elif which.lower() == 'seir': # pragma: no cover
+            plots = [
+                'n_susceptible',
+                'n_preinfectious',
+                'n_infectious',
+                'n_removed',
+            ],
 
-        else:
-            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+        else: # pragma: no cover
+            errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir"'
             raise ValueError(errormsg)
 
-    # Show an overview
-    elif which == 'overview': # pragma: no cover
-        plots = sc.dcp(overview_plots)
-
-    # Plot absolutely everything
-    elif which.lower() == 'all': # pragma: no cover
-        plots = sim.result_keys('all')
-
-    # Show an overview plus variants
-    elif 'overview' in which and 'variant' in which: # pragma: no cover
-        plots = sc.dcp(overview_plots) + sc.dcp(overview_variant_plots)
-
-    # Show default but with variants
-    elif 'variant' in which: # pragma: no cover
-        plots = sc.odict({
-                'Cumulative infections by variant': [
-                    'cum_infections_by_variant',
-                ],
-                'New infections by variant': [
-                    'new_infections_by_variant',
-                ],
-                'Diagnoses': [
-                    'cum_diagnoses',
-                    'new_diagnoses',
-                ],
-                'Health outcomes': [
-                    'cum_severe',
-                    'cum_critical',
-                    'cum_deaths',
-                ],
-        })
-
-    # Plot SEIR compartments
-    elif which.lower() == 'seir': # pragma: no cover
-        plots = [
-            'n_susceptible',
-            'n_preinfectious',
-            'n_infectious',
-            'n_removed',
-        ],
-
-    else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir"'
-        raise ValueError(errormsg)
-
-    return plots
+        return plots

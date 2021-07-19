@@ -94,7 +94,7 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
 
     # If not specified or specified as a string, load defaults
     if to_plot is None or isinstance(to_plot, str):
-        to_plot = cvd.get_default_plots(to_plot, kind=kind, sim=sim)
+        to_plot = cvd.Plots().get_default_plots(to_plot, kind=kind, sim=sim)
 
     # If a list of keys has been supplied
     if isinstance(to_plot, list):
@@ -757,7 +757,7 @@ def plotly_sim(sim, do_show=False):
 
     go = import_plotly() # Load Plotly
     plots = []
-    to_plot = cvd.get_default_plots()
+    to_plot = cvd.Plots().get_default_plots()
     for p,title,keylabels in to_plot.enumitems():
         fig = go.Figure()
         for key in keylabels:

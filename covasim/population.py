@@ -130,7 +130,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     pop_size = int(sim['pop_size']) # Number of people
 
     # Load age data and household demographics based on 2018 Seattle demographics by default, or country if available
-    age_data = cvd.default_age_data
+    age_data = cvd.Statistics().default_age_data
     location = sim['location']
     if location is not None:
         if sim['verbose']:

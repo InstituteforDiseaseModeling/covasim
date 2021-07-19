@@ -288,13 +288,13 @@ class Sim(cvb.BaseSim):
             output = cvb.Result(*args, **kwargs, npts=self.npts)
             return output
 
-        dcols = cvd.get_default_colors() # Get default colors
+        dcols = cvd.Colors().get_default_colors() # Get default colors
 
         # Flows and cumulative flows
-        for key,label in cvd.result_flows.items():
+        for key,label in cvd.Statistics().result_flows.items():
             self.results[f'cum_{key}'] = init_res(f'Cumulative {label}', color=dcols[key])  # Cumulative variables -- e.g. "Cumulative infections"
 
-        for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
+        for key,label in cvd.Statistics().result_flows.items(): # Repeat to keep all the cumulative keys together
             self.results[f'new_{key}'] = init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
 
         # Stock variables
@@ -764,7 +764,7 @@ class Sim(cvb.BaseSim):
                 self.results['variant'][reskey].values = np.einsum('ij,j->ij', self.results['variant'][reskey].values, self.rescale_vec)
 
         # Calculate cumulative results
-        for key in cvd.result_flows.keys():
+        for key in cvd.Statistics().result_flows.keys():
             self.results[f'cum_{key}'][:] = np.cumsum(self.results[f'new_{key}'][:], axis=0)
         for key in cvd.result_flows_by_variant.keys():
             for variant in range(self['n_variants']):

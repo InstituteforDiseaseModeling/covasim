@@ -124,7 +124,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
     pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
     pars['variant_pars']  = dict(wild={}) # Populated just below
-    for sp in cvd.variant_pars:
+    for sp in cvd.Statistics().variant_pars:
         if sp in pars.keys():
             pars['variant_pars']['wild'][sp] = pars[sp]
 
