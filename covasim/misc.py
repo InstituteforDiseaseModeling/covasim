@@ -207,162 +207,168 @@ def savefig(filename=None, comments=None, **kwargs):
 
 __all__ += ['migrate']
 
-def migrate_lognormal(pars, revert=False, verbose=True):
-    '''
-    Small helper function to automatically migrate the standard deviation of lognormal
-    distributions to match pre-v2.1.0 runs (where it was treated as the variance instead).
-    To undo the migration, run with revert=True.
 
-    Args:
-        pars (dict): the parameters dictionary; or, alternatively, the sim object the parameters will be taken from
-        revert (bool): whether to reverse the update rather than make it
-        verbose (bool): whether to print out the old and new values
-    '''
-    # Handle different input types
-    from . import base as cvb
-    if isinstance(pars, cvb.BaseSim):
-        pars = pars.pars # It's actually a sim, not a pars object
+class migrate:
+    def __init__(self,pars,obj):
+        self.pars = pars
+        self.obj = obj
 
-    # Convert each value to the square root, since squared in the new version
-    for key,dur in pars['dur'].items():
-        if 'lognormal' in dur['dist']:
-            old = dur['par2']
-            if revert:
-                new = old**2
-            else:
-                new = np.sqrt(old)
-            dur['par2'] = new
-            if verbose > 1:
-                print(f'  Updating {key} std from {old:0.2f} to {new:0.2f}')
+    def migrate_lognormal(pars, revert=False, verbose=True):
+        '''
+        Small helper function to automatically migrate the standard deviation of lognormal
+        distributions to match pre-v2.1.0 runs (where it was treated as the variance instead).
+        To undo the migration, run with revert=True.
 
-    # Store whether migration has occurred so we don't accidentally do it twice
-    if not revert:
-        pars['migrated_lognormal'] = True
-    else:
-        pars.pop('migrated_lognormal', None)
+        Args:
+            pars (dict): the parameters dictionary; or, alternatively, the sim object the parameters will be taken from
+            revert (bool): whether to reverse the update rather than make it
+            verbose (bool): whether to print out the old and new values
+        '''
+        # Handle different input types
+        from . import base as cvb
+        if isinstance(pars, cvb.BaseSim):
+            pars = pars.pars # It's actually a sim, not a pars object
 
-    return
+        # Convert each value to the square root, since squared in the new version
+        for key,dur in pars['dur'].items():
+            if 'lognormal' in dur['dist']:
+                old = dur['par2']
+                if revert:
+                    new = old**2
+                else:
+                    new = np.sqrt(old)
+                dur['par2'] = new
+                if verbose > 1:
+                    print(f'  Updating {key} std from {old:0.2f} to {new:0.2f}')
 
+        # Store whether migration has occurred so we don't accidentally do it twice
+        if not revert:
+            pars['migrated_lognormal'] = True
+        else:
+            pars.pop('migrated_lognormal', None)
 
-def migrate_variants(pars, verbose=True):
-    '''
-    Small helper function to add necessary variant parameters.
-    '''
-    pars['use_waning'] = False
-    pars['n_variants'] = 1
-    pars['variants'] = []
-    return
+        return
 
 
-def migrate(obj, update=True, verbose=True, die=False):
-    '''
-    Define migrations allowing compatibility between different versions of saved
-    files. Usually invoked automatically upon load, but can be called directly by
-    the user to load custom objects, e.g. lists of sims.
-
-    Currently supported objects are sims, multisims, scenarios, and people.
-
-    Args:
-        obj (any): the object to migrate
-        update (bool): whether to update version information to current version after successful migration
-        verbose (bool): whether to print warnings if something goes wrong
-        die (bool): whether to raise an exception if something goes wrong
-
-    Returns:
-        The migrated object
-
-    **Example**::
-
-        sims = cv.load('my-list-of-sims.obj')
-        sims = [cv.migrate(sim) for sim in sims]
-    '''
-    # Import here to avoid recursion
-    from . import base as cvb
-    from . import run as cvr
-    from . import interventions as cvi
-
-    # Migrations for simulations
-    if isinstance(obj, cvb.BaseSim):
-        sim = obj
-
-        # Migration from <2.0.0 to 2.0.0
-        if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
-            if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
-
-            # Add missing attribute
-            if not hasattr(sim, '_default_ver'):
-                sim._default_ver = None
-
-            # Recursively migrate people if needed
-            if sim.people:
-                sim.people = migrate(sim.people, update=update)
-
-            # Rename intervention attribute
-            tps = sim.get_interventions(cvi.test_prob)
-            for tp in tps: # pragma: no cover
-                try:
-                    tp.sensitivity = tp.test_sensitivity
-                    del tp.test_sensitivity
-                except:
-                    pass
-
-        # Migration from <2.1.0 to 2.1.0
-        if sc.compareversions(sim.version, '2.1.0') == -1:
-            if verbose:
-                print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
-                print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
-            migrate_lognormal(sim.pars, verbose=verbose)
-
-        # Migration from <3.0.0 to 3.0.0
-        if sc.compareversions(sim.version, '3.0.0') == -1:
-            if verbose:
-                print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
-                print('Adding variant parameters')
-            migrate_variants(sim.pars, verbose=verbose)
-
-    # Migrations for People
-    elif isinstance(obj, cvb.BasePeople): # pragma: no cover
-        ppl = obj
-        if not hasattr(ppl, 'version'): # For people prior to 2.0
-            if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(ppl) # Set all metadata
-
-    # Migrations for MultiSims -- use recursion
-    elif isinstance(obj, cvr.MultiSim):
-        msim = obj
-        msim.base_sim = migrate(msim.base_sim, update=update)
-        msim.sims = [migrate(sim, update=update) for sim in msim.sims]
-        if not hasattr(msim, 'version'): # For msims prior to 2.0
-            if verbose: print(f'Migrating multisim from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(msim) # Set all metadata
-            msim.label = None
-
-    # Migrations for Scenarios
-    elif isinstance(obj, cvr.Scenarios):
-        scens = obj
-        scens.base_sim = migrate(scens.base_sim, update=update)
-        for key,simlist in scens.sims.items():
-            scens.sims[key] = [migrate(sim, update=update) for sim in simlist] # Nested loop
-        if not hasattr(scens, 'version'): # For scenarios prior to 2.0
-            if verbose: print(f'Migrating scenarios from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(scens) # Set all metadata
-            scens.label = None
-
-    # Unreconized object type
-    else:
-        errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
-        if die:
-            raise TypeError(errormsg)
-        elif verbose: # pragma: no cover
-            print(errormsg)
-            return
+    def migrate_variants(pars, verbose=True):
+        '''
+        Small helper function to add necessary variant parameters.
+        '''
+        pars['use_waning'] = False
+        pars['n_variants'] = 1
+        pars['variants'] = []
+        return
 
 
-    # If requested, update the stored version to the current version
-    if update:
-        obj.version = cvv.__version__
+    def migrate(obj, update=True, verbose=True, die=False):
+        '''
+        Define migrations allowing compatibility between different versions of saved
+        files. Usually invoked automatically upon load, but can be called directly by
+        the user to load custom objects, e.g. lists of sims.
 
-    return obj
+        Currently supported objects are sims, multisims, scenarios, and people.
+
+        Args:
+            obj (any): the object to migrate
+            update (bool): whether to update version information to current version after successful migration
+            verbose (bool): whether to print warnings if something goes wrong
+            die (bool): whether to raise an exception if something goes wrong
+
+        Returns:
+            The migrated object
+
+        **Example**::
+
+            sims = cv.load('my-list-of-sims.obj')
+            sims = [cv.migrate(sim) for sim in sims]
+        '''
+        # Import here to avoid recursion
+        from . import base as cvb
+        from . import run as cvr
+        from . import interventions as cvi
+
+        # Migrations for simulations
+        if isinstance(obj, cvb.BaseSim):
+            sim = obj
+
+            # Migration from <2.0.0 to 2.0.0
+            if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+                if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+
+                # Add missing attribute
+                if not hasattr(sim, '_default_ver'):
+                    sim._default_ver = None
+
+                # Recursively migrate people if needed
+                if sim.people:
+                    sim.people = migrate(sim.people, update=update)
+
+                # Rename intervention attribute
+                tps = sim.get_interventions(cvi.test_prob)
+                for tp in tps: # pragma: no cover
+                    try:
+                        tp.sensitivity = tp.test_sensitivity
+                        del tp.test_sensitivity
+                    except:
+                        pass
+
+            # Migration from <2.1.0 to 2.1.0
+            if sc.compareversions(sim.version, '2.1.0') == -1:
+                if verbose:
+                    print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+                    print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
+                migrate_lognormal(sim.pars, verbose=verbose)
+
+            # Migration from <3.0.0 to 3.0.0
+            if sc.compareversions(sim.version, '3.0.0') == -1:
+                if verbose:
+                    print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
+                    print('Adding variant parameters')
+                migrate_variants(sim.pars, verbose=verbose)
+
+        # Migrations for People
+        elif isinstance(obj, cvb.BasePeople): # pragma: no cover
+            ppl = obj
+            if not hasattr(ppl, 'version'): # For people prior to 2.0
+                if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
+                cvb.set_metadata(ppl) # Set all metadata
+
+        # Migrations for MultiSims -- use recursion
+        elif isinstance(obj, cvr.MultiSim):
+            msim = obj
+            msim.base_sim = migrate(msim.base_sim, update=update)
+            msim.sims = [migrate(sim, update=update) for sim in msim.sims]
+            if not hasattr(msim, 'version'): # For msims prior to 2.0
+                if verbose: print(f'Migrating multisim from version <2.0 to version {cvv.__version__}')
+                cvb.set_metadata(msim) # Set all metadata
+                msim.label = None
+
+        # Migrations for Scenarios
+        elif isinstance(obj, cvr.Scenarios):
+            scens = obj
+            scens.base_sim = migrate(scens.base_sim, update=update)
+            for key,simlist in scens.sims.items():
+                scens.sims[key] = [migrate(sim, update=update) for sim in simlist] # Nested loop
+            if not hasattr(scens, 'version'): # For scenarios prior to 2.0
+                if verbose: print(f'Migrating scenarios from version <2.0 to version {cvv.__version__}')
+                cvb.set_metadata(scens) # Set all metadata
+                scens.label = None
+
+        # Unreconized object type
+        else:
+            errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
+            if die:
+                raise TypeError(errormsg)
+            elif verbose: # pragma: no cover
+                print(errormsg)
+                return
+
+
+        # If requested, update the stored version to the current version
+        if update:
+            obj.version = cvv.__version__
+
+        return obj
 
 
 
