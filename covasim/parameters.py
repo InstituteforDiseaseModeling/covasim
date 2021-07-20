@@ -143,7 +143,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
         # Handle code change migration
         if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
-            cvm.migrate.migrate_lognormal(pars, verbose=pars['verbose'])
+            cvm.migrateVarious.migrate_lognormal(pars, verbose=pars['verbose'])
 
     return pars
 

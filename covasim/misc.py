@@ -127,7 +127,7 @@ def load(*args, do_migrate=True, update=True, verbose=True, **kwargs):
         if cmp != 0:
             print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
             if do_migrate:
-                obj = migrate(obj, update=update, verbose=verbose)
+                obj = migrateVarious.migrate(obj, update=update, verbose=verbose)
     return obj
 
 
@@ -208,7 +208,7 @@ def savefig(filename=None, comments=None, **kwargs):
 __all__ += ['migrate']
 
 
-class migrate:
+class migrateVarious:
     def __init__(self,pars,obj):
         self.pars = pars
         self.obj = obj
@@ -317,14 +317,14 @@ class migrate:
                 if verbose:
                     print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                     print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
-                migrate_lognormal(sim.pars, verbose=verbose)
+                self.migrate_lognormal(sim.pars, verbose=verbose)
 
             # Migration from <3.0.0 to 3.0.0
             if sc.compareversions(sim.version, '3.0.0') == -1:
                 if verbose:
                     print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                     print('Adding variant parameters')
-                migrate_variants(sim.pars, verbose=verbose)
+                self.migrate_variants(sim.pars, verbose=verbose)
 
         # Migrations for People
         elif isinstance(obj, cvb.BasePeople): # pragma: no cover
