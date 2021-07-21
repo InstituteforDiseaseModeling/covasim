@@ -290,7 +290,7 @@ class BaseSim(ParsObj):
         # Unless no seed is supplied, reset it
         if seed != -1:
             self['rand_seed'] = seed
-        cvu.set_seed(self['rand_seed'])
+        cvu.Samp_Seed().set_seed(self['rand_seed'])
         return
 
     @property
@@ -1668,7 +1668,7 @@ class Layer(FlexDict):
             inds = np.array(inds, dtype=np.int64)
 
         # Find the contacts
-        contact_inds = cvu.find_contacts(self['p1'], self['p2'], inds)
+        contact_inds = cvu.Compute().find_contacts(self['p1'], self['p2'], inds)
         if as_array:
             contact_inds = np.fromiter(contact_inds, dtype=cvd.default_int)
             contact_inds.sort()  # Sorting ensures that the results are reproducible for a given seed as well as being identical to previous versions of Covasim
@@ -1697,11 +1697,11 @@ class Layer(FlexDict):
         pop_size   = len(people) # Total number of people
         n_contacts = len(self) # Total number of contacts
         n_new = int(np.round(n_contacts*frac)) # Since these get looped over in both directions later
-        inds = cvu.choose(n_contacts, n_new)
+        inds = cvu.Probabilities().choose(n_contacts, n_new)
 
         # Create the contacts, not skipping self-connections
-        self['p1'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
-        self['p2'][inds]   = np.array(cvu.choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
+        self['p1'][inds]   = np.array(cvu.Probabilities().choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int) # Choose with replacement
+        self['p2'][inds]   = np.array(cvu.Probabilities().choose_r(max_n=pop_size, n=n_new), dtype=cvd.default_int)
         self['beta'][inds] = np.ones(n_new, dtype=cvd.default_float)
         return
 

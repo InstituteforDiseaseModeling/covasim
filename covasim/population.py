@@ -160,7 +160,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     age_data_range = age_data_max - age_data_min
     age_data_prob  = age_data[:,2]
     age_data_prob /= age_data_prob.sum() # Ensure it sums to 1
-    age_bins       = cvu.n_multinomial(age_data_prob, pop_size) # Choose age bins
+    age_bins       = cvu.Probabilities().n_multinomial(age_data_prob, pop_size) # Choose age bins
     ages           = age_data_min[age_bins] + age_data_range[age_bins]*np.random.random(pop_size) # Uniformly distribute within this age bin
 
     # Store output
@@ -207,13 +207,13 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
     # Precalculate contacts
     n_across_layers = np.sum(list(contacts.values()))
     n_all_contacts  = int(pop_size*n_across_layers*overshoot) # The overshoot is used so we won't run out of contacts if the Poisson draws happen to be higher than the expected value
-    all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
+    all_contacts    = cvu.Probabilities().choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
         if dispersion is None:
-            p_count = cvu.n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
+            p_count = cvu.Probabilities().n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
         else:
-            p_count = cvu.n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
+            p_count = cvu.Probabilities().n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
         p_counts[lkey] = np.array((p_count/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
@@ -250,7 +250,7 @@ def make_microstructured_contacts(pop_size, contacts):
         cluster_id = -1
         while n_remaining > 0:
             cluster_id += 1 # Assign cluster id
-            this_cluster =  cvu.poisson(cluster_size)  # Sample the cluster size
+            this_cluster =  cvu.Probabilities().poisson(cluster_size)  # Sample the cluster size
             if this_cluster > n_remaining:
                 this_cluster = n_remaining
 

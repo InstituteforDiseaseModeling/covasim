@@ -637,11 +637,11 @@ class clip_edges(Intervention):
                     n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
                     from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
                     if from_sim: # We're moving from the sim to the intervention
-                        inds = cvu.choose(max_n=n_sim, n=n_to_move)
+                        inds = cvu.Probabilities().choose(max_n=n_sim, n=n_to_move)
                         to_move = s_layer.pop_inds(inds)
                         i_layer.append(to_move)
                     else: # We're moving from the intervention back to the sim
-                        inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
+                        inds = cvu.Probabilities().choose(max_n=n_int, n=abs(n_to_move))
                         to_move = i_layer.pop_inds(inds)
                         s_layer.append(to_move)
                 else: # pragma: no cover
@@ -679,13 +679,13 @@ def get_quar_inds(quar_policy, sim):
     '''
     t = sim.t
     if   quar_policy is None:    quar_test_inds = np.array([])
-    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
-    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
-    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
-    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    elif quar_policy == 'start': quar_test_inds = cvu.Arr_Op().true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
+    elif quar_policy == 'end':   quar_test_inds = cvu.Arr_Op().true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.Arr_Op().true(sim.people.date_quarantined==t-1), cvu.Arr_Op().true(sim.people.date_end_quarantine==t+1)])
+    elif quar_policy == 'daily': quar_test_inds = cvu.Arr_Op().true(sim.people.quarantined)
     elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
         quar_policy = sc.promotetoarray(quar_policy)
-        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+        quar_test_inds = np.unique(np.concatenate([cvu.Arr_Op().true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
     else: # pragma: no cover
@@ -740,7 +740,7 @@ class test_num(Intervention):
         self.test_delay  = test_delay
         self.start_day   = start_day
         self.end_day     = end_day
-        self.pdf         = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.pdf         = cvu.Samp_Seed().get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
         return
 
 
@@ -785,7 +785,7 @@ class test_num(Intervention):
         test_probs = np.ones(sim.n) # Begin by assigning equal testing weight (converted to a probability) to everyone
 
         # Calculate test probabilities for people with symptoms
-        symp_inds = cvu.true(sim.people.symptomatic)
+        symp_inds = cvu.Arr_Op().true(sim.people.symptomatic)
         symp_test = self.symp_test
         if self.pdf: # Handle the onset to swab delay
             symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
@@ -800,7 +800,7 @@ class test_num(Intervention):
         if self.ili_prev is not None:
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
+                ili_inds = cvu.Probabilities().choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
                 test_probs[ili_inds] *= self.symp_test
 
@@ -814,7 +814,7 @@ class test_num(Intervention):
             test_probs[subtarget_inds] = test_probs[subtarget_inds]*subtarget_vals
 
         # Don't re-diagnose people
-        diag_inds  = cvu.true(sim.people.diagnosed)
+        diag_inds  = cvu.Arr_Op().true(sim.people.diagnosed)
         test_probs[diag_inds] = 0.0
 
         # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
@@ -873,7 +873,7 @@ class test_prob(Intervention):
         self.test_delay       = test_delay
         self.start_day        = start_day
         self.end_day          = end_day
-        self.pdf              = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.pdf              = cvu.Samp_Seed().get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
         return
 
 
@@ -899,7 +899,7 @@ class test_prob(Intervention):
             return
 
         # Find probablity for symptomatics to be tested
-        symp_inds  = cvu.true(sim.people.symptomatic)
+        symp_inds  = cvu.Arr_Op().true(sim.people.symptomatic)
         symp_prob = self.symp_prob
         if self.pdf:
             symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
@@ -918,7 +918,7 @@ class test_prob(Intervention):
             rel_t = t - start_day
             if rel_t < len(self.ili_prev):
                 n_ili = int(self.ili_prev[rel_t] * pop_size)  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(pop_size, n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                ili_inds = cvu.Probabilities().choose(pop_size, n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
 
         # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
@@ -928,7 +928,7 @@ class test_prob(Intervention):
         quar_test_inds = get_quar_inds(self.quar_policy, sim)
         symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
-        diag_inds       = cvu.true(sim.people.diagnosed)
+        diag_inds       = cvu.Arr_Op().true(sim.people.diagnosed)
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim['pop_size']) # Begin by assigning equal testing probability to everyone
@@ -941,7 +941,7 @@ class test_prob(Intervention):
             subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
             test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
-        test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
+        test_inds = cvu.Arr_Op().true(cvu.Probabilities().binomial_arr(test_probs)) # Finally, calculate who actually tests
 
         # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
@@ -1040,10 +1040,10 @@ class contact_tracing(Intervention):
         Return people to be traced at this time step
         '''
         if not self.presumptive:
-            inds = cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
+            inds = cvu.Arr_Op().true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
         else:
-            just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
-            inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+            just_tested = cvu.Arr_Op().true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
+            inds = cvu.Arr_Op().itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
 
         # If there is a tracing capacity constraint, limit the number of agents that can be traced
         if self.capacity is not None:
@@ -1082,7 +1082,7 @@ class contact_tracing(Intervention):
 
             traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
             if len(traceable_inds):
-                contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
+                contacts[self.trace_time[lkey]].extend(cvu.Probabilities().binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
 
         array_contacts = {}
         for trace_time, inds in contacts.items():
@@ -1105,7 +1105,7 @@ class contact_tracing(Intervention):
             sim: Simulation object
             contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
         '''
-        is_dead = cvu.true(sim.people.dead) # Find people who are not alive
+        is_dead = cvu.Arr_Op().true(sim.people.dead) # Find people who are not alive
         for trace_time, contact_inds in contacts.items():
             contact_inds = np.setdiff1d(contact_inds, is_dead) # Do not notify contacts who are dead
             sim.people.known_contact[contact_inds] = True
@@ -1190,7 +1190,7 @@ class simple_vaccine(Intervention):
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+            vacc_inds = cvu.Arr_Op().true(cvu.Probabilities().binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
             # Calculate the effect per person
             vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
@@ -1485,8 +1485,8 @@ class vaccinate_prob(BaseVaccination):
                     vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
                 else:
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
-                vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
-                vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+                vacc_probs[cvu.Arr_Op().true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
+                vacc_inds = cvu.Arr_Op().true(cvu.Probabilities().binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds

@@ -151,7 +151,7 @@ class People(cvb.BasePeople):
             '''
             return np.nonzero(age_cutoffs <= age)[0][-1]  # Index of the age bin to use
 
-        cvu.set_seed(pars['rand_seed'])
+        cvu.Samp_Seed().set_seed(pars['rand_seed'])
 
         progs = pars['prognoses'] # Shorten the name
         inds = np.fromiter((find_cutoff(progs['age_cutoffs'], this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self)) # Convert ages to indices
@@ -160,7 +160,7 @@ class People(cvb.BasePeople):
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
         self.rel_sus[:]     = progs['sus_ORs'][inds]  # Default susceptibilities
-        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
+        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.Samp_Seed().sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
         return
 
@@ -210,11 +210,11 @@ class People(cvb.BasePeople):
     def check_inds(self, current, date, filter_inds=None):
         ''' Return indices for which the current state is false and which meet the date criterion '''
         if filter_inds is None:
-            not_current = cvu.false(current)
+            not_current = cvu.Arr_Op().false(current)
         else:
-            not_current = cvu.ifalsei(current, filter_inds)
-        has_date = cvu.idefinedi(date, not_current)
-        inds     = cvu.itrue(self.t >= date[has_date], has_date)
+            not_current = cvu.Arr_Op().ifalsei(current, filter_inds)
+        has_date = cvu.Arr_Op().idefinedi(date, not_current)
+        inds     = cvu.Arr_Op().itrue(self.t >= date[has_date], has_date)
         return inds
 
 
@@ -224,7 +224,7 @@ class People(cvb.BasePeople):
         self.infectious[inds] = True
         self.infectious_variant[inds] = self.exposed_variant[inds]
         for variant in range(self.pars['n_variants']):
-            this_variant_inds = cvu.itrue(self.infectious_variant[inds] == variant, inds)
+            this_variant_inds = cvu.Arr_Op().itrue(self.infectious_variant[inds] == variant, inds)
             n_this_variant_inds = len(this_variant_inds)
             self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
             self.infectious_by_variant[variant, this_variant_inds] = True
@@ -327,7 +327,7 @@ class People(cvb.BasePeople):
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
-        quarantined = cvu.itruei(self.quarantined, diag_inds)
+        quarantined = cvu.Arr_Op().itruei(self.quarantined, diag_inds)
         self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
 
@@ -470,7 +470,7 @@ class People(cvb.BasePeople):
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)
-        self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
+        self.flows['new_reinfections'] += len(cvu.Arr_Op().defined(self.date_recovered[inds])) # Record reinfections
         self.flows_variant['new_infections_by_variant'][variant] += len(inds)
 
         # Record transmissions
@@ -479,7 +479,7 @@ class People(cvb.BasePeople):
             self.infection_log.append(entry)
 
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        self.dur_exp2inf[inds] = cvu.Samp_Seed().sample(**durpars['exp2inf'], size=n_infections)
         self.date_exposed[inds]   = self.t
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
@@ -489,59 +489,59 @@ class People(cvb.BasePeople):
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[variant, inds]) # Calculate their actual probability of being symptomatic
-        is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
+        is_symp = cvu.Probabilities().binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
         self.flows_variant['new_symptomatic_by_variant'][variant] += len(symp_inds)
 
         # CASE 1: Asymptomatic: may infect others, but have no symptoms and do not die
-        dur_asym2rec = cvu.sample(**durpars['asym2rec'], size=len(asymp_inds))
+        dur_asym2rec = cvu.Samp_Seed().sample(**durpars['asym2rec'], size=len(asymp_inds))
         self.date_recovered[asymp_inds] = self.date_infectious[asymp_inds] + dur_asym2rec  # Date they recover
         self.dur_disease[asymp_inds] = self.dur_exp2inf[asymp_inds] + dur_asym2rec  # Store how long this person had COVID-19
 
         # CASE 2: Symptomatic: can either be mild, severe, or critical
         n_symp_inds = len(symp_inds)
-        self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
+        self.dur_inf2sym[symp_inds] = cvu.Samp_Seed().sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
         sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[variant, symp_inds]) # Probability of these people being severe
-        is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
+        is_sev = cvu.Probabilities().binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
         self.flows_variant['new_severe_by_variant'][variant] += len(sev_inds)
 
         # CASE 2.1: Mild symptoms, no hospitalization required and no probability of death
-        dur_mild2rec = cvu.sample(**durpars['mild2rec'], size=len(mild_inds))
+        dur_mild2rec = cvu.Samp_Seed().sample(**durpars['mild2rec'], size=len(mild_inds))
         self.date_recovered[mild_inds] = self.date_symptomatic[mild_inds] + dur_mild2rec  # Date they recover
         self.dur_disease[mild_inds] = self.dur_exp2inf[mild_inds] + self.dur_inf2sym[mild_inds] + dur_mild2rec  # Store how long this person had COVID-19
 
         # CASE 2.2: Severe cases: hospitalization required, may become critical
-        self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
+        self.dur_sym2sev[sev_inds] = cvu.Samp_Seed().sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
         crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) # Probability of these people becoming critical - higher if no beds available
-        is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
+        is_crit = cvu.Probabilities().binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
 
         # CASE 2.2.1 Not critical - they will recover
-        dur_sev2rec = cvu.sample(**durpars['sev2rec'], size=len(non_crit_inds))
+        dur_sev2rec = cvu.Samp_Seed().sample(**durpars['sev2rec'], size=len(non_crit_inds))
         self.date_recovered[non_crit_inds] = self.date_severe[non_crit_inds] + dur_sev2rec  # Date they recover
         self.dur_disease[non_crit_inds] = self.dur_exp2inf[non_crit_inds] + self.dur_inf2sym[non_crit_inds] + self.dur_sym2sev[non_crit_inds] + dur_sev2rec  # Store how long this person had COVID-19
 
         # CASE 2.2.2: Critical cases: ICU required, may die
-        self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
+        self.dur_sev2crit[crit_inds] = cvu.Samp_Seed().sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
         death_probs = infect_pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.)# Probability they'll die
-        is_dead = cvu.binomial_arr(death_probs)  # Death outcome
+        is_dead = cvu.Probabilities().binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
 
         # CASE 2.2.2.1: Did not die
-        dur_crit2rec = cvu.sample(**durpars['crit2rec'], size=len(alive_inds))
+        dur_crit2rec = cvu.Samp_Seed().sample(**durpars['crit2rec'], size=len(alive_inds))
         self.date_recovered[alive_inds] = self.date_critical[alive_inds] + dur_crit2rec # Date they recover
         self.dur_disease[alive_inds] = self.dur_exp2inf[alive_inds] + self.dur_inf2sym[alive_inds] + self.dur_sym2sev[alive_inds] + self.dur_sev2crit[alive_inds] + dur_crit2rec  # Store how long this person had COVID-19
 
         # CASE 2.2.2.2: Did die
-        dur_crit2die = cvu.sample(**durpars['crit2die'], size=len(dead_inds))
+        dur_crit2die = cvu.Samp_Seed().sample(**durpars['crit2die'], size=len(dead_inds))
         self.date_dead[dead_inds] = self.date_critical[dead_inds] + dur_crit2die # Date of death
         self.dur_disease[dead_inds] = self.dur_exp2inf[dead_inds] + self.dur_inf2sym[dead_inds] + self.dur_sym2sev[dead_inds] + self.dur_sev2crit[dead_inds] + dur_crit2die   # Store how long this person had COVID-19
         self.date_recovered[dead_inds] = np.nan # If they did die, remove them from recovered
@@ -572,12 +572,12 @@ class People(cvb.BasePeople):
         self.tested[inds] = True
         self.date_tested[inds] = self.t # Only keep the last time they tested
 
-        is_infectious = cvu.itruei(self.infectious, inds)
-        pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
+        is_infectious = cvu.Arr_Op().itruei(self.infectious, inds)
+        pos_test      = cvu.Probabilities().n_binomial(test_sensitivity, len(is_infectious))
         is_inf_pos    = is_infectious[pos_test]
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
+        not_lost      = cvu.Probabilities().n_binomial(1.0-loss_prob, len(not_diagnosed))
         final_inds    = not_diagnosed[not_lost]
 
         # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive

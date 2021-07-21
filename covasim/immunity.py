@@ -117,7 +117,7 @@ class variant(sc.prettyobj):
     def apply(self, sim):
         ''' Introduce new infections with this variant '''
         for ind in cvi.find_day(self.days, sim.t, interv=self, sim=sim): # Time to introduce variant
-            susceptible_inds = cvu.true(sim.people.susceptible)
+            susceptible_inds = cvu.Arr_Op().true(sim.people.susceptible)
             rescale_factor = sim.rescale_vec[sim.t] if self.rescale else 1.0
             n_imports = sc.randround(self.n_imports/rescale_factor) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
@@ -179,7 +179,7 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     if natural:
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.Samp_Seed().sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
             people.peak_nab[no_prior_nab_inds] = no_prior_nab
@@ -192,7 +192,7 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     else:
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
+            init_nab = cvu.Samp_Seed().sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             people.peak_nab[no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
@@ -334,8 +334,8 @@ def check_immunity(people, variant, sus=True, inds=None):
     # Handle parameters and indices
     pars = people.pars
     vaccine_pars = get_vaccine_pars(pars)
-    was_inf  = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
-    is_vacc  = cvu.true(people.vaccinated)  # Vaccinated
+    was_inf  = cvu.Arr_Op().true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
+    is_vacc  = cvu.Arr_Op().true(people.vaccinated)  # Vaccinated
     date_rec = people.date_recovered  # Date recovered
     immunity = pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff  = pars['nab_eff']
@@ -348,8 +348,8 @@ def check_immunity(people, variant, sus=True, inds=None):
 
     # PART 1: Immunity to infection for susceptible individuals
     if sus:
-        is_sus = cvu.true(people.susceptible)  # Currently susceptible
-        was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
+        is_sus = cvu.Arr_Op().true(people.susceptible)  # Currently susceptible
+        was_inf_same = cvu.Arr_Op().true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
         was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
         is_sus_vacc = np.intersect1d(is_sus, is_vacc)  # Susceptible and vaccinated
         is_sus_vacc = np.setdiff1d(is_sus_vacc, was_inf)  # Susceptible, vaccinated without prior infection
@@ -370,7 +370,7 @@ def check_immunity(people, variant, sus=True, inds=None):
             prior_variants = people.recovered_variant[is_sus_was_inf_diff]
             prior_variants_unique = cvd.default_int(np.unique(prior_variants))
             for unique_variant in prior_variants_unique:
-                unique_inds = is_sus_was_inf_diff[cvu.true(prior_variants == unique_variant)]
+                unique_inds = is_sus_was_inf_diff[cvu.Arr_Op().true(prior_variants == unique_variant)]
                 current_nabs = people.nab[unique_inds]
                 people.sus_imm[variant, unique_inds] = nab_to_efficacy(current_nabs * immunity[variant, unique_variant], 'sus', nab_eff)
 
@@ -469,9 +469,9 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
 
     def f2(t, decay_time1, decay_time2, decay_rate1, decay_rate2):
         decayRate = np.full(len(t), fill_value=decay_rate1)
-        decayRate[cvu.true(t>decay_time2)] = decay_rate2
+        decayRate[cvu.Arr_Op().true(t>decay_time2)] = decay_rate2
         slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
-        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
+        decayRate[cvu.Arr_Op().true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.Arr_Op().true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
         titre = np.zeros(len(t))
         for i in range(1, len(t)):
             titre[i] = titre[i-1]+decayRate[i]
@@ -511,8 +511,8 @@ def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
         return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
 
     t  = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
-    y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
+    y1 = f1(cvu.Arr_Op().true(t<=decay_time1), decay_rate1)
+    y2 = f2(cvu.Arr_Op().true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
     y  = np.concatenate([[-np.inf],y1,y2])
     y = np.diff(y)[0:length]
     y[0] = 1

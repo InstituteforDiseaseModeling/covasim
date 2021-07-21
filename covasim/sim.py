@@ -431,12 +431,12 @@ class Sim(cvb.BaseSim):
 
         # Handle anyone who isn't susceptible
         if self['frac_susceptible'] < 1:
-            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+            inds = cvu.Probabilities().choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
             self.people.make_nonnaive(inds=inds)
 
         # Create the seed infections
         if self['pop_infected']:
-            inds = cvu.choose(self['pop_size'], self['pop_infected'])
+            inds = cvu.Probabilities().choose(self['pop_size'], self['pop_infected'])
             self.people.infect(inds=inds, layer='seed_infection')
 
         return
@@ -542,7 +542,7 @@ class Sim(cvb.BaseSim):
                     scaling_ratio = min(proposed_ratio, max_ratio) # We don't want to scale by more than the maximum ratio
                     self.rescale_vec[self.t:] *= scaling_ratio # Update the rescaling factor from here on
                     n = int(round(n_not_naive*(1.0-1.0/scaling_ratio))) # For example, rescaling by 2 gives n = 0.5*not_naive_inds
-                    choices = cvu.choose(max_n=n_not_naive, n=n) # Choose who to make naive again
+                    choices = cvu.Probabilities().choose(max_n=n_not_naive, n=n) # Choose who to make naive again
                     new_naive_inds = not_naive_inds[choices] # Convert these back into indices for people
                     self.people.make_naive(new_naive_inds) # Make people naive again
         return
@@ -570,9 +570,9 @@ class Sim(cvb.BaseSim):
 
         # Randomly infect some people (imported infections)
         if self['n_imports']:
-            n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
+            n_imports = cvu.Probabilities().poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
             if n_imports>0:
-                importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
+                importation_inds = cvu.Probabilities().choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
 
         # Add variants
@@ -593,7 +593,7 @@ class Sim(cvb.BaseSim):
         date_inf = people.date_infectious
         date_rec = people.date_recovered
         date_dead = people.date_dead
-        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
+        viral_load = cvu.Compute().compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten useful parameters
         nv = self['n_variants'] # Shorten number of variants
@@ -606,7 +606,7 @@ class Sim(cvb.BaseSim):
 
         # Check nabs.
         if self['use_waning']:
-            has_nabs = cvu.true(people.peak_nab)
+            has_nabs = cvu.Arr_Op().true(people.peak_nab)
             if len(has_nabs):
                 cvimm.update_nab(people, inds=has_nabs)
 
@@ -636,11 +636,11 @@ class Sim(cvb.BaseSim):
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer  = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+                rel_trans, rel_sus = cvu.Compute().compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                    source_inds, target_inds = cvu.Compute().compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
@@ -658,8 +658,8 @@ class Sim(cvb.BaseSim):
                 self.results['variant'][key][variant][t] += count[variant]
 
         # Update nab and immunity for this time step
-        inds_alive = cvu.false(people.dead)
-        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.true(people.nab[inds_alive])]])/len(inds_alive)
+        inds_alive = cvu.Arr_Op().false(people.dead)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.Arr_Op().true(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 
@@ -845,11 +845,11 @@ class Sim(cvb.BaseSim):
         '''
         # Absolute yield
         res = self.results
-        inds = cvu.true(res['new_tests'][:]) # Pull out non-zero numbers of tests
+        inds = cvu.Arr_Op().true(res['new_tests'][:]) # Pull out non-zero numbers of tests
         self.results['test_yield'][inds] = res['new_diagnoses'][inds]/res['new_tests'][inds] # Calculate the yield
 
         # Relative yield
-        inds = cvu.true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
+        inds = cvu.Arr_Op().true(res['n_infectious'][:]) # To avoid divide by zero if no one is infectious
         denom = res['n_infectious'][inds] / (res['n_alive'][inds] - res['cum_diagnoses'][inds]) # Alive + undiagnosed people might test; infectious people will test positive
         self.results['rel_test_yield'][inds] = self.results['test_yield'][inds]/denom # Calculate the relative yield
         return
@@ -938,10 +938,10 @@ class Sim(cvb.BaseSim):
 
                 # Sources are easy -- count up the arrays for all the people who became infections on that day
                 if method == 'infectious':
-                    inds = cvu.true(t == self.people.date_infectious) # Find people who became infectious on this timestep
+                    inds = cvu.Arr_Op().true(t == self.people.date_infectious) # Find people who became infectious on this timestep
                 elif method == 'outcome':
-                    recov_inds = cvu.true(t == self.people.date_recovered) # Find people who recovered on this timestep
-                    dead_inds  = cvu.true(t == self.people.date_dead)  # Find people who died on this timestep
+                    recov_inds = cvu.Arr_Op().true(t == self.people.date_recovered) # Find people who recovered on this timestep
+                    dead_inds  = cvu.Arr_Op().true(t == self.people.date_dead)  # Find people who died on this timestep
                     inds       = np.concatenate((recov_inds, dead_inds))
                 sources[t] = len(inds)
 

@@ -658,7 +658,7 @@ class daily_stats(Analyzer):
                 stats.stocks[key] = len(self.inds[key])
 
             # Transmission stats
-            newinfs = cvu.true(ppl.date_exposed == sim.t)
+            newinfs = cvu.Arr_Op().true(ppl.date_exposed == sim.t)
             stats.trans.new_infections = len(newinfs)
             for key in ['known_contact', 'quarantined']:
                 stats.trans[key] = len(self.intersect(newinfs, key))
@@ -676,7 +676,7 @@ class daily_stats(Analyzer):
                     stats.empty.source.append(key)
 
             # Testing stats
-            newtests = cvu.true(ppl.date_tested == sim.t)
+            newtests = cvu.Arr_Op().true(ppl.date_tested == sim.t)
             stats.test.new_tests = len(newtests)
             for key in self.keys:
                 stats.test[key] = len(self.intersect(newtests,key))
@@ -684,9 +684,9 @@ class daily_stats(Analyzer):
                     stats.empty.test.append(key)
 
             # Quarantine stats
-            q_inds = np.union1d(self.inds['quarantined'], cvu.true(ppl.date_end_quarantine == sim.t)) # Append people who finished quarantine today
-            eq_inds = cvu.true(ppl.date_quarantined == sim.t-1) # People entering quarantine the day before (their first full day of quarantine)
-            fq_inds = cvu.true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
+            q_inds = np.union1d(self.inds['quarantined'], cvu.Arr_Op().true(ppl.date_end_quarantine == sim.t)) # Append people who finished quarantine today
+            eq_inds = cvu.Arr_Op().true(ppl.date_quarantined == sim.t-1) # People entering quarantine the day before (their first full day of quarantine)
+            fq_inds = cvu.Arr_Op().true(ppl.date_end_quarantine == sim.t+1) # People finishing quarantine; +1 since on the date of quarantine end, they are released back and can get infected at normal rates
             stats.quar.in_quarantine = len(q_inds) # Similar to stats.quar.quarantined, but slightly more
             stats.quar.entered_quar  = len(eq_inds)
             stats.quar.finished_quar = len(fq_inds)
