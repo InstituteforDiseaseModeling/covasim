@@ -8,225 +8,394 @@ from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices']
-
-
-def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
-    '''
-    Create the parameters for the simulation. Typically, this function is used
-    internally rather than called by the user; e.g. typical use would be to do
-    sim = cv.Sim() and then inspect sim.pars, rather than calling this function
-    directly.
-
-    Args:
-        set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
-        prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
-        kwargs        (dict): any additional kwargs are interpreted as parameter names
-        version       (str):  if supplied, use parameters from this Covasim version
-
-    Returns:
-        pars (dict): the parameters of the simulation
-    '''
+class Parameters():
+    __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices']
+    # Define which parameters need to be specified as a dictionary by layer -- define here so it's available at the module level for sim.py
+    layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_factor']
     pars = {}
+    @classmethod
+    def make_pars(self, set_prognoses=False, prog_by_age=True, version=None, **kwargs) -> dict:
+        '''
+        Create the parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Population parameters
-    pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
-    pars['pop_infected'] = 20       # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
-    pars['location']     = None     # What location to load data from -- default Seattle
+        Args:
+            set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
+            prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
+            kwargs        (dict): any additional kwargs are interpreted as parameter names
+            version       (str):  if supplied, use parameters from this Covasim version
 
-    # Simulation parameters
-    pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['end_day']    = None         # End day of the simulation
-    pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
-    pars['rand_seed']  = 1            # Random seed, if None, don't reset
-    pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (default), 2 (everything)
+        Returns:
+            pars (dict): the parameters of the simulation
+        '''
+        Parameters.pars = {}
+        #pars is incrementally built by appeneding diffrent types of parameters.
+        Parameters.pars = self.make_pop_pars() # add population pars
+        Parameters.pars = self.make_sim_pars() # add simulation pars
+        Parameters.pars = self.make_network_pars() # add network pars
+        Parameters.pars = self.make_rescale_pars() # add rescaling pars
+        Parameters.pars = self.make_trans_pars() # add disease transmission parameters
+        Parameters.pars = self.make_multivar_pars() # add pars that control settings and defaults for multi-variant runs 
+        Parameters.pars = self.make_immunity_pars() # add the immunity pars
+        Parameters.pars = self.make_nab_efficacy_pars() # add pars which map nabs to efficacy.
+        Parameters.pars = self.make_varTrans_pars() # add variant-specifc disease transimssion pars
+        Parameters.pars = self.make_duration_pars() # add duration pars for disease progression and recovery 
+        Parameters.pars = self.make_severity_pars(Parameters.pars, prog_by_age) # add severity pars 
+        Parameters.pars = self.make_protect_efficy_pars() # add efficacy of protection measures pars
+        Parameters.pars = self.make_event_interv_pars() # add event and intervention pars
+        Parameters.pars = self.make_health_sys_pars() # add health system pars
+        
+        # Handle vaccine and variant parameters
+        Parameters.pars['vaccine_pars']  = {} # Vaccines that are being used; populated during initialization
+        Parameters.pars['vaccine_map']   = {} #Reverse mapping from number to vaccine key
+        Parameters.pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
+        Parameters.pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
+        Parameters.pars['variant_pars']  = dict(wild={}) # Populated just below
+        for sp in cvd.variant_pars:
+            if sp in Parameters.pars.keys():
+                Parameters.pars['variant_pars']['wild'][sp] = Parameters.pars[sp]
+        # Update with any supplied parameter values and generate things that need to be generated
+        Parameters.pars.update(kwargs)
+        self.reset_layer_pars()
+        if set_prognoses: # If not set here, gets set when the population is initialized
+            Parameters.pars['prognoses'] = get_prognoses(Parameters.pars['prog_by_age'], version=version) # Default to age-specific prognoses
+        # If version is specified, load old parameters
+        if version is not None:
+            version_pars = cvm.get_version_pars(version, verbose=Parameters.pars['verbose'])
+            for key in Parameters.pars.keys(): # Only loop over keys that have been populated
+                if key in version_pars: # Only replace keys that exist in the old version
+                    Parameters.pars[key] = version_pars[key]
+            # Handle code change migration
+            if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in Parameters.pars:
+                cvm.migrate_lognormal(Parameters.pars, verbose=Parameters.pars['verbose'])
+        return Parameters.pars
+    
+    def make_pop_pars() -> dict:
+        '''
+        Create the population parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Rescaling parameters
-    pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
-    pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
-    pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
-    pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
-    pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
-    pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
+        Returns:
+            pars          (dict): the parameters of the simulation with population parameters. 
+        '''
+        # Population parameters
+        Parameters.pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
+        Parameters.pars['pop_infected'] = 20       # Number of initial infections
+        Parameters.pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
+        Parameters.pars['location']     = None     # What location to load data from -- default Seattle
+        return Parameters.pars
+    
+    def make_sim_pars() -> dict:
+        '''
+        Create the simulation parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Network parameters, generally initialized after the population has been constructed
-    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
+        Returns:
+            pars          (dict): the parameters of the simulation with Simulation parameters. 
+        '''
+        # Simulation parameters
+        Parameters.pars['start_day']  = '2020-03-01' # Start day of the simulation
+        Parameters.pars['end_day']    = None         # End day of the simulation
+        Parameters.pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
+        Parameters.pars['rand_seed']  = 1            # Random seed, if None, don't reset
+        Parameters.pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1  (default), 2 (everything)
+        return Parameters.pars
 
-    # Basic disease transmission parameters
-    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
-    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    def make_rescale_pars() -> dict:
+        '''
+        Create the rescaling parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Parameters that control settings and defaults for multi-variant runs
-    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['n_variants'] = 1 # The number of variants circulating in the population
+        Returns:
+            pars          (dict): the parameters of the simulation with rescaling parameters. 
+        '''
+        # Rescaling parameters
+        Parameters.pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
+        Parameters.pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
+        Parameters.pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic  grows
+        Parameters.pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
+        Parameters.pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
+        Parameters.pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
+        return Parameters.pars
 
-    # Parameters used to calculate immunity
-    pars['use_waning']      = False # Whether to use dynamically calculated immunity
-    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
-    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
-    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
-    pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+    def make_network_pars() -> dict:
+        '''
+        Create the network parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
-    pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
+        Returns:
+            pars          (dict): the parameters of the simulation with network parameters. 
+        '''
+        # Network parameters, generally initialized after the population has been constructed
+        Parameters.pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
+        Parameters.pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
+        Parameters.pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
+        return Parameters.pars
 
-    # Duration parameters: time for disease progression
-    pars['dur'] = {}
-    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
-    pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
-    pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
-    pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1.5, par2=2.0) # Duration from severe symptoms to requiring ICU; average of 1.9 and 1.0; see Chen et al., https://www.sciencedirect.com/science/article/pii/S0163445320301195, 8.5 days total - 6.6 days sym2sev = 1.9 days; see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, Table 3, 1 day, IQR 0-3 days; std=2.0 is an estimate
+    def make_trans_pars() -> dict:
+        '''
+        Create the basic disease transmission parameters for the simulation. Typically, this function is used
+        internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with severe symptoms to recover, 24.7 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 18.1 days = 24.7 onset-to-recovery - 6.6 sym2sev; 6.3 = 0.35 coefficient of variation * 18.1; see also https://doi.org/10.1017/S0950268820001259 (22 days) and https://doi.org/10.3390/ijerph17207560 (3-10 days)
-    pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with critical symptoms to recover; as above (Verity et al.)
-    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=10.7, par2=4.8) # Duration from critical symptoms to death, 18.8 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 10.7 = 18.8 onset-to-death - 6.6 sym2sev - 1.5 sev2crit; 4.8 = 0.45 coefficient of variation * 10.7
+        Returns:
+            pars          (dict): the parameters of the simulation with Basic disease transmission parameters. 
+        '''
+        # Basic disease transmission parameters
+        Parameters.pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility;   dispersion from https://www.researchsquare.com/article/rs-29548/v1
+        Parameters.pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure    2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
+        Parameters.pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
+        Parameters.pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility:  https://www.sciencedirect.com/science/article/pii/S1201971220302502
+        return Parameters.pars
 
-    # Severity parameters: probabilities of symptom progression
-    pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
-    pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
-    pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
-    pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
-    pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
+    def make_multivar_pars() -> dict:
+        '''
+        Create the parameters that control settings and defaults for multi-variant runs, for the simulation. 
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Efficacy of protection measures
-    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
+        Returns:
+            pars          (dict): the parameters of the simulation with the parameters for control settings and defaults for multi-variant runs.
+        '''
+        # Parameters that control settings and defaults for multi-variant runs
+        Parameters.pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+        Parameters.pars['n_variants'] = 1 # The number of variants circulating in the population
+        return pars
 
-    # Events and interventions
-    pars['interventions'] = []   # The interventions present in this simulation; populated by the user
-    pars['analyzers']     = []   # Custom analysis functions; populated by the user
-    pars['timelimit']     = None # Time limit for the simulation (seconds)
-    pars['stopping_func'] = None # A function to call to stop the sim partway through
+    def make_immunity_pars() -> dict:
+        '''
+        Create the immunity parameters for the simulation. 
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Health system parameters
-    pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
-    pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
-    pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
-    pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+        Returns:
+            pars          (dict): the parameters of the simulation with the immunity parameters.
+        '''
+        # Parameters used to calculate immunity
+        Parameters.pars['use_waning']      = False # Whether to use dynamically calculated immunity
+        Parameters.pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following    natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+        Parameters.pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650,     decay_time2=365)
+        Parameters.pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
+        Parameters.pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+        Parameters.pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) 
+        return Parameters.pars
 
-    # Handle vaccine and variant parameters
-    pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
-    pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
-    pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
-    pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
-    pars['variant_pars']  = dict(wild={}) # Populated just below
-    for sp in cvd.variant_pars:
-        if sp in pars.keys():
-            pars['variant_pars']['wild'][sp] = pars[sp]
+    def make_nab_efficacy_pars() -> dict:
+        '''
+        Create the parameters to map nabs to efficacy.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Update with any supplied parameter values and generate things that need to be generated
-    pars.update(kwargs)
-    reset_layer_pars(pars)
-    if set_prognoses: # If not set here, gets set when the population is initialized
-        pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
+        Returns:
+            pars          (dict): the parameters of the simulation with the parameters to map nabs to efficacy.
+        '''
+        # Parameters to map nabs to efficacy
+        Parameters.pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+        Parameters.pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+        return Parameters.pars
 
-    # If version is specified, load old parameters
-    if version is not None:
-        version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
-        for key in pars.keys(): # Only loop over keys that have been populated
-            if key in version_pars: # Only replace keys that exist in the old version
-                pars[key] = version_pars[key]
+    def make_varTrans_pars() -> dict:
+        '''
+        Create the variant-specific disease transmission parameters for the simulation.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
+        
+        Returns:
+            pars          (dict): the parameters of the simulation with the variant-specific disease transmission parameters.
+        '''
+        # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple    variants
+        Parameters.pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
+        Parameters.pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
+        return Parameters.pars
 
-        # Handle code change migration
-        if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
-            cvm.migrate_lognormal(pars, verbose=pars['verbose'])
+    def make_duration_pars() -> dict:
+        '''
+        Create the duration parameters for the simulation which control the time for disease progression and disease recovery.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
+        
+        Returns:
+            pars          (dict): the parameters of the simulation with the duration parameters.
+        '''
+        # Duration parameters: time for disease progression
+        Parameters.pars['dur'] = {
+            'exp2inf': dict(dist='lognormal_int', par1=4.5, par2=1.5),# Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
+            'inf2sym': dict(dist='lognormal_int', par1=1.1, par2=0.9),# Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
+            'sym2sev': dict(dist='lognormal_int', par1=6.6, par2=4.9),# Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
+            'sev2crit': dict(dist='lognormal_int', par1=1.5, par2=2.0),# Duration from severe symptoms to requiring ICU; average of 1.9 and 1.0; see Chen et al., https://www.sciencedirect.com/science/article/pii/S0163445320301195, 8.5 days total - 6.6 days sym2sev = 1.9 days; see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, Table 3, 1 day, IQR 0-3 days; std=2.0 is an estimate
+            # Duration parameters: time for disease recovery
+            'asym2rec': dict(dist='lognormal_int', par1=8.0, par2=2.0),# Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+            'mild2rec': dict(dist='lognormal_int', par1=8.0, par2=2.0),# Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+            'sev2rec': dict(dist='lognormal_int', par1=18.1, par2=6.3),# Duration for people with severe symptoms to recover, 24.7 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 18.1 days = 24.7 onset-to-recovery - 6.6 sym2sev; 6.3 = 0.35 coefficient of variation * 18.1; see also https://doi.org/10.1017/S0950268820001259 (22 days) and https://doi.org/10.3390/ijerph17207560 (3-10 days)
+            'crit2rec': dict(dist='lognormal_int', par1=18.1, par2=6.3),# Duration for people with critical symptoms to recover; as above (Verity et al.)
+            'crit2die': dict(dist='lognormal_int', par1=10.7, par2=4.8),# Duration from critical symptoms to death, 18.8 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 10.7 = 18.8 onset-to-death - 6.6 sym2sev - 1.5 sev2crit; 4.8 = 0.45 coefficient of variation * 10.7
+        }
+        return Parameters.pars
 
-    return pars
+    def make_severity_pars(prog_by_age=True) -> dict:
+        '''
+        Create the severity parameters for the simulation which control the probabilities of symptom progression.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
+        Args:
+            prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
 
-# Define which parameters need to be specified as a dictionary by layer -- define here so it's available at the module level for sim.py
-layer_pars = ['beta_layer', 'contacts', 'dynam_layer', 'iso_factor', 'quar_factor']
+        Returns:
+            pars          (dict): the parameters of the simulation with the severity parameters.
+        '''
+         # Severity parameters: probabilities of symptom progression
+        Parameters.pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
+        Parameters.pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
+        Parameters.pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
+        Parameters.pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
+        Parameters.pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
+        Parameters.pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
+        return Parameters.pars
 
+    def make_protect_efficy_pars() -> dict:
+        '''
+        Create the efficacy of protection measures parameters for the simulation.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-def reset_layer_pars(pars, layer_keys=None, force=False):
-    '''
-    Helper function to set layer-specific parameters. If layer keys are not provided,
-    then set them based on the population type. This function is not usually called
-    directly by the user, although it can sometimes be used to fix layer key mismatches
-    (i.e. if the contact layers in the population do not match the parameters). More
-    commonly, however, mismatches need to be fixed explicitly.
+        Returns:
+            pars          (dict): the parameters of the simulation with the efficacy of protection measures parameters.
+        '''
+        # Efficacy of protection measures
+        Parameters.pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
+        Parameters.pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
+        Parameters.pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
+        return Parameters.pars
 
-    Args:
-        pars (dict): the parameters dictionary
-        layer_keys (list): the layer keys of the population, if available
-        force (bool): reset the parameters even if they already exist
-    '''
+    def make_event_interv_pars() -> dict:
+        '''
+        Create the events and interventions parameters for the simulation.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Specify defaults for random -- layer 'a' for 'all'
-    layer_defaults = {}
-    layer_defaults['random'] = dict(
-        beta_layer  = dict(a=1.0), # Default beta
-        contacts    = dict(a=20),  # Default number of contacts
-        dynam_layer = dict(a=0),   # Do not use dynamic layers by default
-        iso_factor  = dict(a=0.2), # Assumed isolation factor
-        quar_factor = dict(a=0.3), # Assumed quarantine factor
-    )
+        Returns:
+            pars          (dict): the parameters of the simulation with the events and interventions parameters.
+        '''
+        # Events and interventions
+        Parameters.pars['interventions'] = []   # The interventions present in this simulation; populated by the user
+        Parameters.pars['analyzers']     = []   # Custom analysis functions; populated by the user
+        Parameters.pars['timelimit']     = None # Time limit for the simulation (seconds)
+        Parameters.pars['stopping_func'] = None # A function to call to stop the sim partway through
+        return Parameters.pars
 
-    # Specify defaults for hybrid -- household, school, work, and community layers (h, s, w, c)
-    layer_defaults['hybrid'] = dict(
-        beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3),  # Per-population beta weights; relative; in part based on Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
-        contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
-        dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
-        iso_factor  = dict(h=0.3, s=0.1, w=0.1, c=0.1),  # Multiply beta by this factor for people in isolation
-        quar_factor = dict(h=0.6, s=0.2, w=0.2, c=0.2),  # Multiply beta by this factor for people in quarantine
-    )
+    def make_health_sys_pars() -> dict:
+        '''
+        Create the health system parameters parameters for the simulation.
+        Typically, this function is used internally rather than called by the user; e.g. typical use would be to do
+        sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+        directly.
 
-    # Specify defaults for SynthPops -- same as hybrid except for LTCF layer (l)
-    l_pars = dict(beta_layer=1.5,
-                  contacts=10,
-                  dynam_layer=0,
-                  iso_factor=0.2,
-                  quar_factor=0.3
-    )
-    layer_defaults['synthpops'] = sc.dcp(layer_defaults['hybrid'])
-    for key,val in l_pars.items():
-        layer_defaults['synthpops'][key]['l'] = val
+        Returns:
+            pars          (dict): the parameters of the simulation with the health system parameters.
+        '''
+        # Health system parameters
+        Parameters.pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
+        Parameters.pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
+        Parameters.pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
+        Parameters.pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+        return Parameters.pars
 
-    # Choose the parameter defaults based on the population type, and get the layer keys
-    try:
-        defaults = layer_defaults[pars['pop_type']]
-    except Exception as E:
-        errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, or synthpops'
-        raise ValueError(errormsg) from E
-    default_layer_keys = list(defaults['beta_layer'].keys()) # All layers should be the same, but use beta_layer for convenience
+    def reset_layer_pars(pars, layer_keys=None, force=False): 
+        '''
+        Helper function to set layer-specific parameters. If layer keys are not provided,
+        then set them based on the population type. This function is not usually called
+        directly by the user, although it can sometimes be used to fix layer key mismatches
+        (i.e. if the contact layers in the population do not match the parameters). More
+        commonly, however, mismatches need to be fixed explicitly.
 
-    # Actually set the parameters
-    for pkey in layer_pars:
-        par = {} # Initialize this parameter
-        default_val = layer_defaults['random'][pkey]['a'] # Get the default value for this parameter
+        Args:
+            pars (dict): the parameters dictionary
+            layer_keys (list): the layer keys of the population, if available
+            force (bool): reset the parameters even if they already exist
+        '''
 
-        # If forcing, we overwrite any existing parameter values
-        if force:
-            par_dict = defaults[pkey] # Just use defaults
-        else:
-            par_dict = sc.mergedicts(defaults[pkey], pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+        # Specify defaults for random -- layer 'a' for 'all'
+        layer_defaults = {}
+        layer_defaults['random'] = dict(
+            beta_layer  = dict(a=1.0), # Default beta
+            contacts    = dict(a=20),  # Default number of contacts
+            dynam_layer = dict(a=0),   # Do not use dynamic layers by default
+            iso_factor  = dict(a=0.2), # Assumed isolation factor
+            quar_factor = dict(a=0.3), # Assumed quarantine factor
+        )
 
-        # Figure out what the layer keys for this parameter are (may be different between parameters)
-        if layer_keys:
-            par_layer_keys = layer_keys # Use supplied layer keys
-        else:
-            par_layer_keys = list(sc.odict.fromkeys(default_layer_keys + list(par_dict.keys())))  # If not supplied, use the defaults, plus any extra from the par_dict; adapted from https://www.askpython.com/python/remove-duplicate-elements-from-list-python
+        # Specify defaults for hybrid -- household, school, work, and community layers (h, s, w, c)
+        layer_defaults['hybrid'] = dict(
+            beta_layer  = dict(h=3.0, s=0.6, w=0.6, c=0.3),  # Per-population beta weights; relative; in part based on Table S14 of https://science.sciencemag.org/content/sci/suppl/2020/04/28/science.abb8001.DC1/abb8001_Zhang_SM.pdf
+            contacts    = dict(h=2.0, s=20,  w=16,  c=20),   # Number of contacts per person per day, estimated
+            dynam_layer = dict(h=0,   s=0,   w=0,   c=0),    # Which layers are dynamic -- none by default
+            iso_factor  = dict(h=0.3, s=0.1, w=0.1, c=0.1),  # Multiply beta by this factor for people in isolation
+            quar_factor = dict(h=0.6, s=0.2, w=0.2, c=0.2),  # Multiply beta by this factor for people in quarantine
+        )
 
-        # Construct this parameter, layer by layer
-        for lkey in par_layer_keys: # Loop over layers
-            par[lkey] = par_dict.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
-        pars[pkey] = par # Save this parameter to the dictionary
+        # Specify defaults for SynthPops -- same as hybrid except for LTCF layer (l)
+        l_pars = dict(
+            beta_layer=1.5,
+            contacts=10,
+            dynam_layer=0,
+            iso_factor=0.2,
+            quar_factor=0.3
+        )
+        
+        layer_defaults['synthpops'] = sc.dcp(layer_defaults['hybrid'])
+        for key,val in l_pars.items():
+            layer_defaults['synthpops'][key]['l'] = val
 
-    return
+        # Choose the parameter defaults based on the population type, and get the layer keys
+        try:
+            defaults = layer_defaults[Parameters.pars['pop_type']]
+        except Exception as E:
+            errormsg = f'Cannot load defaults for population type "{Parameters.pars["pop_type"]}": must be hybrid, random, or synthpops'
+            raise ValueError(errormsg) from E
+        default_layer_keys = list(defaults['beta_layer'].keys()) # All layers should be the same, but use beta_layer for convenience
+
+        # Actually set the parameters
+        for pkey in Parameters.layer_pars:
+            par = {} # Initialize this parameter
+            default_val = layer_defaults['random'][pkey]['a'] # Get the default value for this parameter
+
+            # If forcing, we overwrite any existing parameter values
+            if force:
+                par_dict = defaults[pkey] # Just use defaults
+            else:
+                par_dict = sc.mergedicts(defaults[pkey], Parameters.pars.get(pkey, None)) # Use user-supplied parameters if available, else default
+
+            # Figure out what the layer keys for this parameter are (may be different between parameters)
+            if layer_keys:
+                par_layer_keys = layer_keys # Use supplied layer keys
+            else:
+                par_layer_keys = list(sc.odict.fromkeys(default_layer_keys + list(par_dict.keys())))  # If not supplied, use the defaults, plus any extra from the par_dict; adapted from https://www.askpython.com/python/remove-duplicate-elements-from-list-python
+                
+            # Construct this parameter, layer by layer
+            for lkey in par_layer_keys: # Loop over layers
+                par[lkey] = par_dict.get(lkey, default_val) # Get the value for this layer if available, else use the default for random
+            Parameters.pars[pkey] = par # Save this parameter to the dictionary
+        return
 
 
 def get_prognoses(by_age=True, version=None):

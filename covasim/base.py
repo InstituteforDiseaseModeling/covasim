@@ -261,7 +261,7 @@ class BaseSim(ParsObj):
 
             # Handle other special parameters
             if pars.get('pop_type'):
-                cvpar.reset_layer_pars(pars, force=False)
+                cvpar.Parameters.reset_layer_pars(pars, force=False)
             if pars.get('prog_by_age'):
                 pars['prognoses'] = cvpar.get_prognoses(by_age=pars['prog_by_age'], version=self._default_ver) # Reset prognoses
 

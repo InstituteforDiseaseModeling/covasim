@@ -421,7 +421,7 @@ class dynamic_pars(Intervention):
 
         # Find valid sim parameters and move matching keyword arguments to the pars dict
         pars = sc.mergedicts(pars) # Ensure it's a dictionary
-        sim_par_keys = list(cvpar.make_pars().keys()) # Get valid sim parameters
+        sim_par_keys = list(cvpar.Parameters.make_pars().keys()) # Get valid sim parameters
         kwarg_keys = [k for k in kwargs.keys() if k in sim_par_keys]
         for kkey in kwarg_keys:
             pars[kkey] = kwargs.pop(kkey)
