@@ -70,7 +70,7 @@ class Sim(cvb.BaseSim):
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Make default parameters (using values from parameters.py)
-        default_pars = cvpar.make_pars(version=version) # Start with default pars
+        default_pars = cvpar.parameters.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Now update everything
