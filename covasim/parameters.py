@@ -60,7 +60,7 @@ class Parameters:
         Parameters.pars.update(kwargs)
         self.reset_layer_pars()
         if set_prognoses: # If not set here, gets set when the population is initialized
-            Parameters.pars['prognoses'] = get_prognoses(Parameters.pars['prog_by_age'], version=version) # Default to age-specific prognoses
+            Parameters.pars['prognoses'] = Prognoses.get_prognoses(Parameters.pars['prog_by_age'], version=version) # Default to age-specific prognoses
         # If version is specified, load old parameters
         if version is not None:
             version_pars = cvm.get_version_pars(version, verbose=Parameters.pars['verbose'])
@@ -172,7 +172,7 @@ class Parameters:
         # Parameters that control settings and defaults for multi-variant runs
         Parameters.pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
         Parameters.pars['n_variants'] = 1 # The number of variants circulating in the population
-        return pars
+        return Parameters.pars
 
     def make_immunity_pars() -> dict:
         '''
