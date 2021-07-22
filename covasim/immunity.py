@@ -85,7 +85,7 @@ class variant(sc.prettyobj):
                 if key not in default_keys:
                     invalid.append(key)
             if len(invalid):
-                errormsg = f'Could not parse variant keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.Statistics().variant_pars)}"'
+                errormsg = f'Could not parse variant keys "{sc.strjoin(invalid)}"; valid keys are: "{sc.strjoin(cvd.Statistics.variant_pars)}"'
                 raise sc.KeyNotFoundError(errormsg)
 
             # ...and populate any that are missing

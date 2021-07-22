@@ -492,7 +492,7 @@ class MultiSim(cvb.FlexPretty):
             # Handle what to plot
             if to_plot is None:
                 kind = 'scens' if color_by_sim else 'sim'
-                to_plot = cvd.Plots().get_default_plots(kind=kind)
+                to_plot = cvd.Plots.get_default_plots(kind=kind)
 
             # Handle colors
             if colors is None:
