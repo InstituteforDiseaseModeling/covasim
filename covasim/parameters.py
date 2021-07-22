@@ -42,7 +42,7 @@ class Parameters():
         Parameters.pars = self.make_nab_efficacy_pars() # add pars which map nabs to efficacy.
         Parameters.pars = self.make_varTrans_pars() # add variant-specifc disease transimssion pars
         Parameters.pars = self.make_duration_pars() # add duration pars for disease progression and recovery 
-        Parameters.pars = self.make_severity_pars(Parameters.pars, prog_by_age) # add severity pars 
+        Parameters.pars = self.make_severity_pars(prog_by_age) # add severity pars 
         Parameters.pars = self.make_protect_efficy_pars() # add efficacy of protection measures pars
         Parameters.pars = self.make_event_interv_pars() # add event and intervention pars
         Parameters.pars = self.make_health_sys_pars() # add health system pars
