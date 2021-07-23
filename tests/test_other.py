@@ -446,7 +446,7 @@ def test_sim():
 
 def test_settings():
     sc.heading('Testing settings')
-    cv.options.help()
+    cv.options.get_values.get_help()
     cv.options.set(numba_parallel=False) # Don't actually change the default, but call this method
     return
 
