@@ -17,7 +17,7 @@ from . import immunity as cvi
 from collections import defaultdict
 
 
-#%% Generic intervention classes
+# %% Generic intervention classes
 
 __all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
 
@@ -50,7 +50,7 @@ def find_day(arr, t=None, interv=None, sim=None, which='first'):
         inds = [all_inds[0]]
     elif which == 'last':
         inds = [all_inds[-1]]
-    else: # pragma: no cover
+    else:  # pragma: no cover
         errormsg = f'Argument "which" must be "first", "last", or "all", not "{which}"'
         raise ValueError(errormsg)
     return inds
@@ -61,10 +61,10 @@ def preprocess_day(day, sim):
     Preprocess a day: leave it as-is if it's a function, or try to convert it to
     an integer if it's anything else.
     '''
-    if callable(day): # If it's callable, leave it as-is
+    if callable(day):  # If it's callable, leave it as-is
         return day
     else:
-        day = sim.day(day) # Otherwise, convert it to an int
+        day = sim.day(day)  # Otherwise, convert it to an int
     return day
 
 
@@ -73,9 +73,9 @@ def get_day(day, interv=None, sim=None):
     Return the day if it's an integer, or call it if it's a function.
     '''
     if callable(day):
-        return day(interv, sim) # If it's callable, call it
+        return day(interv, sim)  # If it's callable, call it
     else:
-        return day # Otherwise, leave it as-is
+        return day  # Otherwise, leave it as-is
 
 
 def process_days(sim, days, return_dates=False):
@@ -88,13 +88,15 @@ def process_days(sim, days, return_dates=False):
         return days
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
-    for d,day in enumerate(days):
+    for d, day in enumerate(days):
         if day in ['end', -1]:
             day = sim['end_day']
-        days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
-    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+        # Ensure it's an integer and not a string or something
+        days[d] = preprocess_day(day, sim)
+    # Ensure they're an array and in order
+    days = np.sort(sc.promotetoarray(days))
     if return_dates:
-        dates = [sim.date(day) for day in days] # Store as date strings
+        dates = [sim.date(day) for day in days]  # Store as date strings
         return days, dates
     else:
         return days
@@ -105,7 +107,7 @@ def process_changes(sim, changes, days):
     Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
     '''
     changes = sc.promotetoarray(changes)
-    if sc.isiterable(days) and len(days) != len(changes): # pragma: no cover
+    if sc.isiterable(days) and len(days) != len(changes):  # pragma: no cover
         errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
     return changes
@@ -129,9 +131,9 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
     # Handle string arguments
     if sc.isstring(daily_data):
         if daily_data == 'data':
-            daily_data = sim.data['new_tests'] # Use default name
+            daily_data = sim.data['new_tests']  # Use default name
         else:
-            try: # pragma: no cover
+            try:  # pragma: no cover
                 daily_data = sim.data[daily_data]
             except Exception as E:
                 errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
@@ -139,7 +141,8 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
 
     # Handle other arguments
     if sc.isnumber(daily_data):  # If a number, convert to an array
-        if as_int: daily_data = int(daily_data) # Make it an integer
+        if as_int:
+            daily_data = int(daily_data)  # Make it an integer
         daily_data = np.array([daily_data] * sim.npts)
     elif isinstance(daily_data, (pd.Series, pd.DataFrame)):
         start_date = sim['start_day'] + dt.timedelta(days=start_day)
@@ -167,27 +170,30 @@ def get_subtargets(subtarget, sim):
     if callable(subtarget):
         subtarget = subtarget(sim)
 
-    if 'inds' not in subtarget: # pragma: no cover
+    if 'inds' not in subtarget:  # pragma: no cover
         errormsg = f'The subtarget dict must have keys "inds" and "vals", but you supplied {subtarget}'
         raise ValueError(errormsg)
 
     # Handle the two options of type
-    if callable(subtarget['inds']): # A function has been provided
-        subtarget_inds = subtarget['inds'](sim) # Call the function to get the indices
+    if callable(subtarget['inds']):  # A function has been provided
+        # Call the function to get the indices
+        subtarget_inds = subtarget['inds'](sim)
     else:
-        subtarget_inds = subtarget['inds'] # The indices are supplied directly
+        subtarget_inds = subtarget['inds']  # The indices are supplied directly
 
     # Validate the values
-    if callable(subtarget['vals']): # A function has been provided
-        subtarget_vals = subtarget['vals'](sim) # Call the function to get the indices
+    if callable(subtarget['vals']):  # A function has been provided
+        # Call the function to get the indices
+        subtarget_vals = subtarget['vals'](sim)
     else:
-        subtarget_vals = subtarget['vals'] # The indices are supplied directly
+        subtarget_vals = subtarget['vals']  # The indices are supplied directly
     if sc.isiterable(subtarget_vals):
-        if len(subtarget_vals) != len(subtarget_inds): # pragma: no cover
+        if len(subtarget_vals) != len(subtarget_inds):  # pragma: no cover
             errormsg = f'Length of subtargeting indices ({len(subtarget_inds)}) does not match length of values ({len(subtarget_vals)})'
             raise ValueError(errormsg)
 
     return subtarget_inds, subtarget_vals
+
 
 def InterventionDict(which, pars):
     '''
@@ -199,14 +205,14 @@ def InterventionDict(which, pars):
         interv = cv.InterventionDict(which='change_beta', pars={'days': 30, 'changes': 0.5, 'layers': None})
     '''
     mapping = dict(
-        dynamic_pars    = dynamic_pars,
-        sequence        = sequence,
-        change_beta     = change_beta,
-        clip_edges      = clip_edges,
-        test_num        = test_num,
-        test_prob       = test_prob,
-        contact_tracing = contact_tracing,
-        )
+        dynamic_pars=dynamic_pars,
+        sequence=sequence,
+        change_beta=change_beta,
+        clip_edges=clip_edges,
+        test_num=test_num,
+        test_prob=test_prob,
+        contact_tracing=contact_tracing,
+    )
     try:
         IntervClass = mapping[which]
     except:
@@ -231,18 +237,22 @@ class Intervention:
         do_plot    (bool): whether or not to plot the intervention
         line_args  (dict): arguments passed to pl.axvline() when plotting
     '''
-    def __init__(self, label=None, show_label=False, do_plot=None, line_args=None):
-        self._store_args() # Store the input arguments so the intervention can be recreated
-        if label is None: label = self.__class__.__name__ # Use the class name if no label is supplied
-        self.label = label # e.g. "Close schools"
-        self.show_label = show_label # Do not show the label by default
-        self.do_plot = do_plot if do_plot is not None else True # Plot the intervention, including if None
-        self.line_args = sc.mergedicts(dict(linestyle='--', c='#aaa', lw=1.0), line_args) # Do not set alpha by default due to the issue of overlapping interventions
-        self.days = [] # The start and end days of the intervention
-        self.initialized = False # Whether or not it has been initialized
-        self.finalized = False # Whether or not it has been initialized
-        return
 
+    def __init__(self, label=None, show_label=False, do_plot=None, line_args=None):
+        self._store_args()  # Store the input arguments so the intervention can be recreated
+        if label is None:
+            label = self.__class__.__name__  # Use the class name if no label is supplied
+        self.label = label  # e.g. "Close schools"
+        self.show_label = show_label  # Do not show the label by default
+        # Plot the intervention, including if None
+        self.do_plot = do_plot if do_plot is not None else True
+        # Do not set alpha by default due to the issue of overlapping interventions
+        self.line_args = sc.mergedicts(
+            dict(linestyle='--', c='#aaa', lw=1.0), line_args)
+        self.days = []  # The start and end days of the intervention
+        self.initialized = False  # Whether or not it has been initialized
+        self.finalized = False  # Whether or not it has been initialized
+        return
 
     def __repr__(self, jsonify=False):
         ''' Return a JSON-friendly output if possible, else revert to short repr '''
@@ -252,14 +262,14 @@ class Intervention:
                 json = self.to_json()
                 which = json['which']
                 pars = json['pars']
-                parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
+                parstr = ', '.join([f'{k}={v}' for k, v in pars.items()])
                 output = f"cv.{which}({parstr})"
             except Exception as E:
-                output = type(self) + f' (error: {str(E)})' # If that fails, print why
+                # If that fails, print why
+                output = type(self) + f' (error: {str(E)})'
             return output
         else:
             return f'{self.__module__}.{self.__class__.__name__}()'
-
 
     def __call__(self, *args, **kwargs):
         # Makes Intervention(sim) equivalent to Intervention.apply(sim)
@@ -268,28 +278,26 @@ class Intervention:
             raise RuntimeError(errormsg)
         return self.apply(*args, **kwargs)
 
-
     def disp(self):
         ''' Print a detailed representation of the intervention '''
         return sc.pr(self)
 
-
     def _store_args(self):
         ''' Store the user-supplied arguments for later use in to_json '''
-        f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
-        f1 = inspect.getouterframes(f0) # The list of outer frames
-        parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
-        _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
+        f0 = inspect.currentframe()  # This "frame", i.e. Intervention.__init__()
+        f1 = inspect.getouterframes(f0)  # The list of outer frames
+        parent = f1[2].frame  # The parent frame, e.g. change_beta.__init__()
+        _, _, _, values = inspect.getargvalues(
+            parent)  # Get the values of the arguments
         if values:
             self.input_args = {}
-            for key,value in values.items():
-                if key == 'kwargs': # Store additional kwargs directly
-                    for k2,v2 in value.items():
-                        self.input_args[k2] = v2 # These are already a dict
-                elif key not in ['self', '__class__']: # Everything else, but skip these
+            for key, value in values.items():
+                if key == 'kwargs':  # Store additional kwargs directly
+                    for k2, v2 in value.items():
+                        self.input_args[k2] = v2  # These are already a dict
+                elif key not in ['self', '__class__']:  # Everything else, but skip these
                     self.input_args[key] = value
         return
-
 
     def initialize(self, sim=None):
         '''
@@ -300,7 +308,6 @@ class Intervention:
         self.finalized = False
         return
 
-
     def finalize(self, sim=None):
         '''
         Finalize intervention
@@ -309,10 +316,10 @@ class Intervention:
         final operations after the simulation is complete (e.g. rescaling)
         '''
         if self.finalized:
-            raise RuntimeError('Intervention already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+            # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
+            raise RuntimeError('Intervention already finalized')
         self.finalized = True
         return
-
 
     def apply(self, sim):
         '''
@@ -328,7 +335,6 @@ class Intervention:
             None
         '''
         raise NotImplementedError
-
 
     def plot_intervention(self, sim, ax=None, **kwargs):
         '''
@@ -360,17 +366,16 @@ class Intervention:
             else:
                 days = self.days
             if sc.isiterable(days):
-                label_shown = False # Don't show the label more than once
+                label_shown = False  # Don't show the label more than once
                 for day in days:
                     if sc.isnumber(day):
-                        if self.show_label and not label_shown: # Choose whether to include the label in the legend
+                        if self.show_label and not label_shown:  # Choose whether to include the label in the legend
                             label = self.label
                             label_shown = True
                         else:
                             label = None
                         ax.axvline(day, label=label, **line_args)
         return
-
 
     def to_json(self):
         '''
@@ -420,46 +425,50 @@ class dynamic_pars(Intervention):
     def __init__(self, pars=None, **kwargs):
 
         # Find valid sim parameters and move matching keyword arguments to the pars dict
-        pars = sc.mergedicts(pars) # Ensure it's a dictionary
-        sim_par_keys = list(cvpar.make_pars().keys()) # Get valid sim parameters
+        pars = sc.mergedicts(pars)  # Ensure it's a dictionary
+        # Get valid sim parameters
+        sim_par_keys = list(cvpar.make_pars().keys())
         kwarg_keys = [k for k in kwargs.keys() if k in sim_par_keys]
         for kkey in kwarg_keys:
             pars[kkey] = kwargs.pop(kkey)
 
         # Do standard initialization
-        super().__init__(**kwargs) # Initialize the Intervention object
+        super().__init__(**kwargs)  # Initialize the Intervention object
 
         # Handle the rest of the initialization
         subkeys = ['days', 'vals']
         for parkey in pars.keys():
             for subkey in subkeys:
-                if subkey not in pars[parkey].keys(): # pragma: no cover
+                if subkey not in pars[parkey].keys():  # pragma: no cover
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise sc.KeyNotFoundError(errormsg)
-                if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
-                    pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
+                # Allow scalar values or dicts, but leave everything else unchanged
+                if sc.isnumber(pars[parkey][subkey]):
+                    pars[parkey][subkey] = sc.promotetoarray(
+                        pars[parkey][subkey])
             days = pars[parkey]['days']
             vals = pars[parkey]['vals']
             if sc.isiterable(days):
                 len_days = len(days)
                 len_vals = len(vals)
-                if len_days != len_vals: # pragma: no cover
-                    raise ValueError(f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
+                if len_days != len_vals:  # pragma: no cover
+                    raise ValueError(
+                        f'Length of days ({len_days}) does not match length of values ({len_vals}) for parameter {parkey}')
         self.pars = pars
         return
-
 
     def apply(self, sim):
         ''' Loop over the parameters, and then loop over the days, applying them if any are found '''
         t = sim.t
-        for parkey,parval in self.pars.items():
+        for parkey, parval in self.pars.items():
             for ind in find_day(parval['days'], t, interv=self, sim=sim):
                 self.days.append(t)
                 val = parval['vals'][ind]
                 if isinstance(val, dict):
-                    sim[parkey].update(val) # Set the parameter if a nested dict
+                    # Set the parameter if a nested dict
+                    sim[parkey].update(val)
                 else:
-                    sim[parkey] = val # Set the parameter if not a dict
+                    sim[parkey] = val  # Set the parameter if not a dict
         return
 
 
@@ -481,13 +490,12 @@ class sequence(Intervention):
     '''
 
     def __init__(self, days, interventions, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
+        super().__init__(**kwargs)  # Initialize the Intervention object
         if sc.isiterable(days):
             assert len(days) == len(interventions)
         self.days = days
         self.interventions = interventions
         return
-
 
     def initialize(self, sim):
         ''' Fix the dates '''
@@ -498,7 +506,6 @@ class sequence(Intervention):
             intervention.initialize(sim)
         return
 
-
     def apply(self, sim):
         ''' Find the matching day, and see which intervention to activate '''
         inds = find_day(self.days_arr <= sim.t, which='last')
@@ -506,9 +513,9 @@ class sequence(Intervention):
             return self.interventions[inds[0]].apply(sim)
 
 
-#%% Beta interventions
+# %% Beta interventions
 
-__all__+= ['change_beta', 'clip_edges']
+__all__ += ['change_beta', 'clip_edges']
 
 
 class change_beta(Intervention):
@@ -532,20 +539,19 @@ class change_beta(Intervention):
     '''
 
     def __init__(self, days, changes, layers=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.days       = sc.dcp(days)
-        self.changes    = sc.dcp(changes)
-        self.layers     = sc.dcp(layers)
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.days = sc.dcp(days)
+        self.changes = sc.dcp(changes)
+        self.layers = sc.dcp(layers)
         self.orig_betas = None
         return
-
 
     def initialize(self, sim):
         ''' Fix days and store beta '''
         super().initialize()
-        self.days    = process_days(sim, self.days)
+        self.days = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
-        self.layers  = sc.promotetolist(self.layers, keepnone=True)
+        self.layers = sc.promotetolist(self.layers, keepnone=True)
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
@@ -555,12 +561,11 @@ class change_beta(Intervention):
 
         return
 
-
     def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
         for ind in find_day(self.days, sim.t, interv=self, sim=sim):
-            for lkey,new_beta in self.orig_betas.items():
+            for lkey, new_beta in self.orig_betas.items():
                 new_beta = new_beta * self.changes[ind]
                 if lkey == 'overall':
                     sim['beta'] = new_beta
@@ -598,17 +603,16 @@ class clip_edges(Intervention):
     '''
 
     def __init__(self, days, changes, layers=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.days     = sc.dcp(days)
-        self.changes  = sc.dcp(changes)
-        self.layers   = sc.dcp(layers)
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.days = sc.dcp(days)
+        self.changes = sc.dcp(changes)
+        self.layers = sc.dcp(layers)
         self.contacts = None
         return
 
-
     def initialize(self, sim):
         super().initialize()
-        self.days    = process_days(sim, self.days)
+        self.days = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
         if self.layers is None:
             self.layers = sim.layer_keys()
@@ -617,7 +621,6 @@ class clip_edges(Intervention):
         self.contacts = cvb.Contacts(layer_keys=self.layers)
         return
 
-
     def apply(self, sim):
 
         # If this day is found in the list, apply the intervention
@@ -625,42 +628,49 @@ class clip_edges(Intervention):
 
             # Do the contact moving
             for lkey in self.layers:
-                s_layer = sim.people.contacts[lkey] # Contact layer in the sim
-                i_layer = self.contacts[lkey] # Contact layer in the intervention
-                n_sim = len(s_layer) # Number of contacts in the simulation layer
-                n_int = len(i_layer) # Number of contacts in the intervention layer
-                n_contacts = n_sim + n_int # Total number of contacts
+                s_layer = sim.people.contacts[lkey]  # Contact layer in the sim
+                # Contact layer in the intervention
+                i_layer = self.contacts[lkey]
+                # Number of contacts in the simulation layer
+                n_sim = len(s_layer)
+                # Number of contacts in the intervention layer
+                n_int = len(i_layer)
+                n_contacts = n_sim + n_int  # Total number of contacts
                 if n_contacts:
-                    current_prop = n_sim/n_contacts # Current proportion of contacts in the sim, e.g. 1.0 initially
-                    desired_prop = self.changes[ind] # Desired proportion, e.g. 0.5
-                    prop_to_move = current_prop - desired_prop # Calculate the proportion of contacts to move
-                    n_to_move = int(prop_to_move*n_contacts) # Number of contacts to move
-                    from_sim = (n_to_move>0) # Check if we're moving contacts from the sim
-                    if from_sim: # We're moving from the sim to the intervention
+                    # Current proportion of contacts in the sim, e.g. 1.0 initially
+                    current_prop = n_sim/n_contacts
+                    # Desired proportion, e.g. 0.5
+                    desired_prop = self.changes[ind]
+                    # Calculate the proportion of contacts to move
+                    prop_to_move = current_prop - desired_prop
+                    # Number of contacts to move
+                    n_to_move = int(prop_to_move*n_contacts)
+                    # Check if we're moving contacts from the sim
+                    from_sim = (n_to_move > 0)
+                    if from_sim:  # We're moving from the sim to the intervention
                         inds = cvu.choose(max_n=n_sim, n=n_to_move)
                         to_move = s_layer.pop_inds(inds)
                         i_layer.append(to_move)
-                    else: # We're moving from the intervention back to the sim
+                    else:  # We're moving from the intervention back to the sim
                         inds = cvu.choose(max_n=n_int, n=abs(n_to_move))
                         to_move = i_layer.pop_inds(inds)
                         s_layer.append(to_move)
-                else: # pragma: no cover
-                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
+                else:  # pragma: no cover
+                    print(
+                        f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
         return
-
 
     def finalize(self, sim):
         ''' Ensure the edges get deleted at the end '''
         super().finalize()
         if sim.t == sim.tvec[-1]:
-            self.contacts = None # Reset to save memory
+            self.contacts = None  # Reset to save memory
         return
 
 
+# %% Testing interventions
 
-#%% Testing interventions
-
-__all__+= ['test_num', 'test_prob', 'contact_tracing']
+__all__ += ['test_num', 'test_prob', 'contact_tracing']
 
 
 def get_quar_inds(quar_policy, sim):
@@ -678,17 +688,26 @@ def get_quar_inds(quar_policy, sim):
         sim (Sim): the simulation object
     '''
     t = sim.t
-    if   quar_policy is None:    quar_test_inds = np.array([])
-    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
-    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
-    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
-    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    if quar_policy is None:
+        quar_test_inds = np.array([])
+    elif quar_policy == 'start':
+        # Actually do the day after since testing usually happens before contact tracing
+        quar_test_inds = cvu.true(sim.people.date_quarantined == t-1)
+    elif quar_policy == 'end':
+        # +1 since they are released on date_end_quarantine, so do the day before
+        quar_test_inds = cvu.true(sim.people.date_end_quarantine == t+1)
+    elif quar_policy == 'both':
+        quar_test_inds = np.concatenate([cvu.true(
+            sim.people.date_quarantined == t-1), cvu.true(sim.people.date_end_quarantine == t+1)])
+    elif quar_policy == 'daily':
+        quar_test_inds = cvu.true(sim.people.quarantined)
     elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
         quar_policy = sc.promotetoarray(quar_policy)
-        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+        quar_test_inds = np.unique(np.concatenate(
+            [cvu.true(sim.people.date_quarantined == t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
-    else: # pragma: no cover
+    else:  # pragma: no cover
         errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
         raise ValueError(errormsg)
     return quar_test_inds
@@ -728,21 +747,22 @@ class test_num(Intervention):
     def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
                  ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
                  start_day=0, end_day=None, swab_delay=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.daily_tests = daily_tests # Should be a list of length matching time
-        self.symp_test   = symp_test   # Set probability of testing symptomatics
-        self.quar_test   = quar_test # Probability of testing people in quarantine
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.daily_tests = daily_tests  # Should be a list of length matching time
+        self.symp_test = symp_test   # Set probability of testing symptomatics
+        self.quar_test = quar_test  # Probability of testing people in quarantine
         self.quar_policy = quar_policy if quar_policy else 'start'
-        self.subtarget   = subtarget  # Set any other testing criteria
-        self.ili_prev    = ili_prev     # Should be a list of length matching time or a float or a dataframe
+        self.subtarget = subtarget  # Set any other testing criteria
+        # Should be a list of length matching time or a float or a dataframe
+        self.ili_prev = ili_prev
         self.sensitivity = sensitivity
-        self.loss_prob   = loss_prob
-        self.test_delay  = test_delay
-        self.start_day   = start_day
-        self.end_day     = end_day
-        self.pdf         = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.loss_prob = loss_prob
+        self.test_delay = test_delay
+        self.start_day = start_day
+        self.end_day = end_day
+        # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.pdf = cvu.get_pdf(**sc.mergedicts(swab_delay))
         return
-
 
     def initialize(self, sim):
         ''' Fix the dates and number of tests '''
@@ -750,22 +770,23 @@ class test_num(Intervention):
         # Handle days
         super().initialize()
 
-        self.start_day   = preprocess_day(self.start_day, sim)
-        self.end_day     = preprocess_day(self.end_day,   sim)
-        self.days        = [self.start_day, self.end_day]
+        self.start_day = preprocess_day(self.start_day, sim)
+        self.end_day = preprocess_day(self.end_day,   sim)
+        self.days = [self.start_day, self.end_day]
 
         # Process daily data
-        self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
-        self.ili_prev    = process_daily_data(self.ili_prev,    sim, self.start_day)
+        self.daily_tests = process_daily_data(
+            self.daily_tests, sim, self.start_day)
+        self.ili_prev = process_daily_data(
+            self.ili_prev,    sim, self.start_day)
 
         return
-
 
     def apply(self, sim):
 
         t = sim.t
         start_day = get_day(self.start_day, self, sim)
-        end_day   = get_day(self.end_day,   self, sim)
+        end_day = get_day(self.end_day,   self, sim)
         if t < start_day:
             return
         elif end_day is not None and t > end_day:
@@ -774,33 +795,43 @@ class test_num(Intervention):
         # Check that there are still tests
         rel_t = t - start_day
         if rel_t < len(self.daily_tests):
-            n_tests = sc.randround(self.daily_tests[rel_t]/sim.rescale_vec[t]) # Correct for scaling that may be applied by rounding to the nearest number of tests
-            if not (n_tests and pl.isfinite(n_tests)): # If there are no tests today, abort early
+            # Correct for scaling that may be applied by rounding to the nearest number of tests
+            n_tests = sc.randround(self.daily_tests[rel_t]/sim.rescale_vec[t])
+            # If there are no tests today, abort early
+            if not (n_tests and pl.isfinite(n_tests)):
                 return
             else:
                 sim.results['new_tests'][t] += n_tests
         else:
             return
 
-        test_probs = np.ones(sim.n) # Begin by assigning equal testing weight (converted to a probability) to everyone
+        # Begin by assigning equal testing weight (converted to a probability) to everyone
+        test_probs = np.ones(sim.n)
 
         # Calculate test probabilities for people with symptoms
         symp_inds = cvu.true(sim.people.symptomatic)
         symp_test = self.symp_test
-        if self.pdf: # Handle the onset to swab delay
-            symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
-            inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
-            count = np.nan * np.ones(inv_count.shape) # Initialize the count
-            count[inv_count != 0] = 1/inv_count[inv_count != 0] # Update the counts where defined
-            symp_test *= self.pdf.pdf(symp_time) * count[symp_time] # Put it all together
+        if self.pdf:  # Handle the onset to swab delay
+            # Find time since symptom onset
+            symp_time = cvd.default_int(
+                t - sim.people.date_symptomatic[symp_inds])
+            # Find how many people have had symptoms of a set time and invert
+            inv_count = (np.bincount(symp_time)/len(symp_time))
+            count = np.nan * np.ones(inv_count.shape)  # Initialize the count
+            # Update the counts where defined
+            count[inv_count != 0] = 1/inv_count[inv_count != 0]
+            symp_test *= self.pdf.pdf(symp_time) * \
+                count[symp_time]  # Put it all together
 
-        test_probs[symp_inds] *= symp_test # Update the test probabilities
+        test_probs[symp_inds] *= symp_test  # Update the test probabilities
 
         # Handle symptomatic testing, taking into account prevalence of ILI symptoms
         if self.ili_prev is not None:
             if rel_t < len(self.ili_prev):
-                n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(sim['pop_size'], n_ili) # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
+                # Number with ILI symptoms on this day
+                n_ili = int(self.ili_prev[rel_t] * sim['pop_size'])
+                # Give some people some symptoms. Assuming that this is independent of COVID symptomaticity...
+                ili_inds = cvu.choose(sim['pop_size'], n_ili)
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
                 test_probs[ili_inds] *= self.symp_test
 
@@ -810,24 +841,34 @@ class test_num(Intervention):
 
         # Handle any other user-specified testing criteria
         if self.subtarget is not None:
-            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-            test_probs[subtarget_inds] = test_probs[subtarget_inds]*subtarget_vals
+            subtarget_inds, subtarget_vals = get_subtargets(
+                self.subtarget, sim)
+            test_probs[subtarget_inds] = test_probs[subtarget_inds] * \
+                subtarget_vals
 
         # Don't re-diagnose people
-        diag_inds  = cvu.true(sim.people.diagnosed)
+        diag_inds = cvu.true(sim.people.diagnosed)
         test_probs[diag_inds] = 0.0
 
         # With dynamic rescaling, we have to correct for uninfected people outside of the population who would test
-        if sim.rescale_vec[t]/sim['pop_scale'] < 1: # We still have rescaling to do
-            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t] # Total "testing weight" of people in the subsampled population
-            out_pop_tot_prob = sim.scaled_pop_size - sim.rescale_vec[t]*sim['pop_size'] # Find out how many people are missing and assign them each weight 1
-            in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob) # Fraction of tests which should fall in the sample population
-            n_tests = sc.randround(n_tests*in_frac) # Recompute the number of tests
+        if sim.rescale_vec[t]/sim['pop_scale'] < 1:  # We still have rescaling to do
+            # Total "testing weight" of people in the subsampled population
+            in_pop_tot_prob = test_probs.sum()*sim.rescale_vec[t]
+            # Find out how many people are missing and assign them each weight 1
+            out_pop_tot_prob = sim.scaled_pop_size - \
+                sim.rescale_vec[t]*sim['pop_size']
+            # Fraction of tests which should fall in the sample population
+            in_frac = in_pop_tot_prob/(in_pop_tot_prob + out_pop_tot_prob)
+            # Recompute the number of tests
+            n_tests = sc.randround(n_tests*in_frac)
 
         # Now choose who gets tested and test them
-        n_tests = min(n_tests, (test_probs!=0).sum()) # Don't try to test more people than have nonzero testing probability
-        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True) # Choose who actually tests
-        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay)
+        # Don't try to test more people than have nonzero testing probability
+        n_tests = min(n_tests, (test_probs != 0).sum())
+        # Choose who actually tests
+        test_inds = cvu.choose_w(probs=test_probs, n=n_tests, unique=True)
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity,
+                        loss_prob=self.loss_prob, test_delay=self.test_delay)
 
         return test_inds
 
@@ -858,52 +899,55 @@ class test_prob(Intervention):
         interv = cv.test_prob(symp_prob=0.1, asymp_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
         interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms
     '''
+
     def __init__(self, symp_prob, asymp_prob=0.0, symp_quar_prob=None, asymp_quar_prob=None, quar_policy=None, subtarget=None, ili_prev=None,
                  sensitivity=1.0, loss_prob=0.0, test_delay=0, start_day=0, end_day=None, swab_delay=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.symp_prob        = symp_prob
-        self.asymp_prob       = asymp_prob
-        self.symp_quar_prob   = symp_quar_prob  if  symp_quar_prob is not None else  symp_prob
-        self.asymp_quar_prob  = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
-        self.quar_policy      = quar_policy if quar_policy else 'start'
-        self.subtarget        = subtarget
-        self.ili_prev         = ili_prev
-        self.sensitivity      = sensitivity
-        self.loss_prob        = loss_prob
-        self.test_delay       = test_delay
-        self.start_day        = start_day
-        self.end_day          = end_day
-        self.pdf              = cvu.get_pdf(**sc.mergedicts(swab_delay)) # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.symp_prob = symp_prob
+        self.asymp_prob = asymp_prob
+        self.symp_quar_prob = symp_quar_prob if symp_quar_prob is not None else symp_prob
+        self.asymp_quar_prob = asymp_quar_prob if asymp_quar_prob is not None else asymp_prob
+        self.quar_policy = quar_policy if quar_policy else 'start'
+        self.subtarget = subtarget
+        self.ili_prev = ili_prev
+        self.sensitivity = sensitivity
+        self.loss_prob = loss_prob
+        self.test_delay = test_delay
+        self.start_day = start_day
+        self.end_day = end_day
+        # If provided, get the distribution's pdf -- this returns an empty dict if None is supplied
+        self.pdf = cvu.get_pdf(**sc.mergedicts(swab_delay))
         return
-
 
     def initialize(self, sim):
         ''' Fix the dates '''
         super().initialize()
         self.start_day = preprocess_day(self.start_day, sim)
-        self.end_day   = preprocess_day(self.end_day,   sim)
-        self.days      = [self.start_day, self.end_day]
-        self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
+        self.end_day = preprocess_day(self.end_day,   sim)
+        self.days = [self.start_day, self.end_day]
+        self.ili_prev = process_daily_data(self.ili_prev, sim, self.start_day)
         return
-
 
     def apply(self, sim):
         ''' Perform testing '''
 
         t = sim.t
         start_day = get_day(self.start_day, self, sim)
-        end_day   = get_day(self.end_day,   self, sim)
+        end_day = get_day(self.end_day,   self, sim)
         if t < start_day:
             return
         elif end_day is not None and t > end_day:
             return
 
         # Find probablity for symptomatics to be tested
-        symp_inds  = cvu.true(sim.people.symptomatic)
+        symp_inds = cvu.true(sim.people.symptomatic)
         symp_prob = self.symp_prob
         if self.pdf:
-            symp_time = cvd.default_int(t - sim.people.date_symptomatic[symp_inds]) # Find time since symptom onset
-            inv_count = (np.bincount(symp_time)/len(symp_time)) # Find how many people have had symptoms of a set time and invert
+            # Find time since symptom onset
+            symp_time = cvd.default_int(
+                t - sim.people.date_symptomatic[symp_inds])
+            # Find how many people have had symptoms of a set time and invert
+            inv_count = (np.bincount(symp_time)/len(symp_time))
             count = np.nan * np.ones(inv_count.shape)
             count[inv_count != 0] = 1/inv_count[inv_count != 0]
             symp_prob = np.ones(len(symp_time))
@@ -917,35 +961,49 @@ class test_prob(Intervention):
         if self.ili_prev is not None:
             rel_t = t - start_day
             if rel_t < len(self.ili_prev):
-                n_ili = int(self.ili_prev[rel_t] * pop_size)  # Number with ILI symptoms on this day
-                ili_inds = cvu.choose(pop_size, n_ili) # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                # Number with ILI symptoms on this day
+                n_ili = int(self.ili_prev[rel_t] * pop_size)
+                # Give some people some symptoms, assuming that this is independent of COVID symptomaticity...
+                ili_inds = cvu.choose(pop_size, n_ili)
                 ili_inds = np.setdiff1d(ili_inds, symp_inds)
 
         # Define asymptomatics: those who neither have COVID symptoms nor ILI symptoms
-        asymp_inds = np.setdiff1d(np.setdiff1d(np.arange(pop_size), symp_inds), ili_inds)
+        asymp_inds = np.setdiff1d(np.setdiff1d(
+            np.arange(pop_size), symp_inds), ili_inds)
 
         # Handle quarantine and other testing criteria
         quar_test_inds = get_quar_inds(self.quar_policy, sim)
-        symp_quar_inds  = np.intersect1d(quar_test_inds, symp_inds)
+        symp_quar_inds = np.intersect1d(quar_test_inds, symp_inds)
         asymp_quar_inds = np.intersect1d(quar_test_inds, asymp_inds)
-        diag_inds       = cvu.true(sim.people.diagnosed)
+        diag_inds = cvu.true(sim.people.diagnosed)
 
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-        test_probs = np.zeros(sim['pop_size']) # Begin by assigning equal testing probability to everyone
-        test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
-        test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
-        test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
-        test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
-        test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
+        # Begin by assigning equal testing probability to everyone
+        test_probs = np.zeros(sim['pop_size'])
+        # People with symptoms (true positive)
+        test_probs[symp_inds] = symp_prob
+        # People with symptoms (false positive)
+        test_probs[ili_inds] = symp_prob
+        test_probs[asymp_inds] = self.asymp_prob      # People without symptoms
+        # People with symptoms in quarantine
+        test_probs[symp_quar_inds] = self.symp_quar_prob
+        # People without symptoms in quarantine
+        test_probs[asymp_quar_inds] = self.asymp_quar_prob
         if self.subtarget is not None:
-            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-            test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-        test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
-        test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
+            subtarget_inds, subtarget_vals = get_subtargets(
+                self.subtarget, sim)
+            # People being explicitly subtargeted
+            test_probs[subtarget_inds] = subtarget_vals
+        test_probs[diag_inds] = 0.0  # People who are diagnosed don't test
+        # Finally, calculate who actually tests
+        test_inds = cvu.true(cvu.binomial_arr(test_probs))
 
         # Actually test people
-        sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
-        sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
+        sim.people.test(test_inds, test_sensitivity=self.sensitivity,
+                        loss_prob=self.loss_prob, test_delay=self.test_delay)  # Actually test people
+        # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
+        sim.results['new_tests'][t] += int(len(test_inds)
+                                           * sim['pop_scale']/sim.rescale_vec[t])
 
         return test_inds
 
@@ -977,24 +1035,25 @@ class contact_tracing(Intervention):
         ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
         sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect
     '''
+
     def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None, capacity=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
+        super().__init__(**kwargs)  # Initialize the Intervention object
         self.trace_probs = trace_probs
-        self.trace_time  = trace_time
-        self.start_day   = start_day
-        self.end_day     = end_day
+        self.trace_time = trace_time
+        self.start_day = start_day
+        self.end_day = end_day
         self.presumptive = presumptive
         self.capacity = capacity
-        self.quar_period = quar_period # If quar_period is None, it will be drawn from sim.pars at initialization
+        # If quar_period is None, it will be drawn from sim.pars at initialization
+        self.quar_period = quar_period
         return
-
 
     def initialize(self, sim):
         ''' Process the dates and dictionaries '''
         super().initialize()
         self.start_day = preprocess_day(self.start_day, sim)
-        self.end_day   = preprocess_day(self.end_day,   sim)
-        self.days      = [self.start_day, self.end_day]
+        self.end_day = preprocess_day(self.end_day,   sim)
+        self.days = [self.start_day, self.end_day]
         if self.trace_probs is None:
             self.trace_probs = 1.0
         if self.trace_time is None:
@@ -1003,12 +1062,11 @@ class contact_tracing(Intervention):
             self.quar_period = sim['quar_period']
         if sc.isnumber(self.trace_probs):
             val = self.trace_probs
-            self.trace_probs = {k:val for k in sim.people.layer_keys()}
+            self.trace_probs = {k: val for k in sim.people.layer_keys()}
         if sc.isnumber(self.trace_time):
             val = self.trace_time
-            self.trace_time = {k:val for k in sim.people.layer_keys()}
+            self.trace_time = {k: val for k in sim.people.layer_keys()}
         return
-
 
     def apply(self, sim):
         '''
@@ -1023,7 +1081,7 @@ class contact_tracing(Intervention):
         '''
         t = sim.t
         start_day = get_day(self.start_day, self, sim)
-        end_day   = get_day(self.end_day,   self, sim)
+        end_day = get_day(self.end_day,   self, sim)
         if t < start_day:
             return
         elif end_day is not None and t > end_day:
@@ -1034,25 +1092,27 @@ class contact_tracing(Intervention):
         self.notify_contacts(sim, contacts)
         return contacts
 
-
     def select_cases(self, sim):
         '''
         Return people to be traced at this time step
         '''
         if not self.presumptive:
-            inds = cvu.true(sim.people.date_diagnosed == sim.t) # Diagnosed this time step, time to trace
+            # Diagnosed this time step, time to trace
+            inds = cvu.true(sim.people.date_diagnosed == sim.t)
         else:
-            just_tested = cvu.true(sim.people.date_tested == sim.t) # Tested this time step, time to trace
-            inds = cvu.itruei(sim.people.exposed, just_tested) # This is necessary to avoid infinite chains of asymptomatic testing
+            # Tested this time step, time to trace
+            just_tested = cvu.true(sim.people.date_tested == sim.t)
+            # This is necessary to avoid infinite chains of asymptomatic testing
+            inds = cvu.itruei(sim.people.exposed, just_tested)
 
         # If there is a tracing capacity constraint, limit the number of agents that can be traced
         if self.capacity is not None:
-            capacity = int(self.capacity / sim.rescale_vec[sim.t])  # Convert capacity into a number of agents
+            # Convert capacity into a number of agents
+            capacity = int(self.capacity / sim.rescale_vec[sim.t])
             if len(inds) > capacity:
                 inds = np.random.choice(inds, capacity, replace=False)
 
         return inds
-
 
     def identify_contacts(self, sim, trace_inds):
         '''
@@ -1080,16 +1140,19 @@ class contact_tracing(Intervention):
             if this_trace_prob == 0:
                 continue
 
-            traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
+            traceable_inds = sim.people.contacts[lkey].find_contacts(
+                trace_inds)
             if len(traceable_inds):
-                contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
+                # Filter the indices according to the probability of being able to trace this layer
+                contacts[self.trace_time[lkey]].extend(
+                    cvu.binomial_filter(this_trace_prob, traceable_inds))
 
         array_contacts = {}
         for trace_time, inds in contacts.items():
-            array_contacts[trace_time] = np.fromiter(inds, dtype=cvd.default_int)
+            array_contacts[trace_time] = np.fromiter(
+                inds, dtype=cvd.default_int)
 
         return array_contacts
-
 
     def notify_contacts(self, sim, contacts):
         '''
@@ -1105,19 +1168,23 @@ class contact_tracing(Intervention):
             sim: Simulation object
             contacts: {trace_time: np.array(inds)} dictionary storing which people to notify
         '''
-        is_dead = cvu.true(sim.people.dead) # Find people who are not alive
+        is_dead = cvu.true(sim.people.dead)  # Find people who are not alive
         for trace_time, contact_inds in contacts.items():
-            contact_inds = np.setdiff1d(contact_inds, is_dead) # Do not notify contacts who are dead
+            # Do not notify contacts who are dead
+            contact_inds = np.setdiff1d(contact_inds, is_dead)
             sim.people.known_contact[contact_inds] = True
-            sim.people.date_known_contact[contact_inds] = np.fmin(sim.people.date_known_contact[contact_inds], sim.t + trace_time)
-            sim.people.schedule_quarantine(contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)  # Schedule quarantine for the notified people to start on the date they will be notified
+            sim.people.date_known_contact[contact_inds] = np.fmin(
+                sim.people.date_known_contact[contact_inds], sim.t + trace_time)
+            # Schedule quarantine for the notified people to start on the date they will be notified
+            sim.people.schedule_quarantine(
+                contact_inds, start_date=sim.t + trace_time, period=self.quar_period - trace_time)
         return
 
 
+# %% Treatment and prevention interventions
 
-#%% Treatment and prevention interventions
-
-__all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate', 'vaccinate_prob', 'vaccinate_num']
+__all__ += ['simple_vaccine', 'BaseVaccination',
+            'vaccinate', 'vaccinate_prob', 'vaccinate_num']
 
 
 class simple_vaccine(Intervention):
@@ -1150,34 +1217,41 @@ class simple_vaccine(Intervention):
         interv = cv.simple_vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
         interv = cv.simple_vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose
     '''
+
     def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.days      = sc.dcp(days)
-        self.prob      = prob
-        self.rel_sus   = rel_sus
-        self.rel_symp  = rel_symp
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.days = sc.dcp(days)
+        self.prob = prob
+        self.rel_sus = rel_sus
+        self.rel_symp = rel_symp
         self.subtarget = subtarget
         if cumulative in [0, False]:
-            cumulative = [1,0] # First dose has full efficacy, second has none
+            # First dose has full efficacy, second has none
+            cumulative = [1, 0]
         elif cumulative in [1, True]:
-            cumulative = [1] # All doses have full efficacy
-        self.cumulative = np.array(cumulative, dtype=cvd.default_float) # Ensure it's an array
+            cumulative = [1]  # All doses have full efficacy
+        self.cumulative = np.array(
+            cumulative, dtype=cvd.default_float)  # Ensure it's an array
         return
-
 
     def initialize(self, sim):
         ''' Fix the dates and store the vaccinations '''
         super().initialize()
         self.days = process_days(sim, self.days)
-        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
-        self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
-        self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
-        self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
-        self.mod_symp_prob     = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
-        self.vacc_inds         = None
+        # Number of doses given per person
+        self.vaccinations = np.zeros(sim.n, dtype=cvd.default_int)
+        # Store the dates when people are vaccinated
+        self.vaccination_dates = [[] for p in range(sim.n)]
+        # Keep a copy of pre-vaccination susceptibility
+        self.orig_rel_sus = sc.dcp(sim.people.rel_sus)
+        # ...and symptom probability
+        self.orig_symp_prob = sc.dcp(sim.people.symp_prob)
+        # Store the final modifiers
+        self.mod_rel_sus = np.ones(sim.n, dtype=cvd.default_float)
+        # Store the final modifiers
+        self.mod_symp_prob = np.ones(sim.n, dtype=cvd.default_float)
+        self.vacc_inds = None
         return
-
 
     def apply(self, sim):
         ''' Perform vaccination '''
@@ -1186,25 +1260,32 @@ class simple_vaccine(Intervention):
         for ind in find_day(self.days, sim.t, interv=self, sim=sim):
 
             # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
-            vacc_probs = np.full(sim.n, self.prob) # Begin by assigning equal vaccination probability to everyone
+            # Begin by assigning equal vaccination probability to everyone
+            vacc_probs = np.full(sim.n, self.prob)
             if self.subtarget is not None:
-                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+                subtarget_inds, subtarget_vals = get_subtargets(
+                    self.subtarget, sim)
+                # People being explicitly subtargeted
+                vacc_probs[subtarget_inds] = subtarget_vals
+            # Calculate who actually gets vaccinated
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))
 
             # Calculate the effect per person
-            vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
-            eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
-            vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
-            rel_sus_eff  = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
+            # Calculate current doses
+            vacc_doses = self.vaccinations[vacc_inds]
+            # Convert to a valid index
+            eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1)
+            # Pull out corresponding effect sizes
+            vacc_eff = self.cumulative[eff_doses]
+            rel_sus_eff = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
             rel_symp_eff = (1.0 - vacc_eff) + vacc_eff*self.rel_symp
 
             # Apply the vaccine to people
-            sim.people.rel_sus[vacc_inds]   *= rel_sus_eff
+            sim.people.rel_sus[vacc_inds] *= rel_sus_eff
             sim.people.symp_prob[vacc_inds] *= rel_symp_eff
 
             # Update counters
-            self.mod_rel_sus[vacc_inds]   *= rel_sus_eff
+            self.mod_rel_sus[vacc_inds] *= rel_sus_eff
             self.mod_symp_prob[vacc_inds] *= rel_symp_eff
             self.vaccinations[vacc_inds] += 1
             for v_ind in vacc_inds:
@@ -1215,6 +1296,7 @@ class simple_vaccine(Intervention):
             sim.people.vaccinations[vacc_inds] += 1
 
         return
+
 
 class BaseVaccination(Intervention):
     '''
@@ -1257,18 +1339,18 @@ class BaseVaccination(Intervention):
 
 
     '''
+
     def __init__(self, vaccine, label=None, **kwargs):
-        super().__init__(**kwargs) # Initialize the Intervention object
-        self.index     = None # Index of the vaccine in the sim; set later
-        self.label     = None # Vaccine label (used as a dict key)
-        self.p         = None # Vaccine parameters
-        self.vaccinated  = None  # Store a list of indices of people vaccinated each day
-        self.vaccinations = None # Record the number of doses given per person
-        self.vaccination_dates = None # Store the dates that each person was last vaccinated
+        super().__init__(**kwargs)  # Initialize the Intervention object
+        self.index = None  # Index of the vaccine in the sim; set later
+        self.label = None  # Vaccine label (used as a dict key)
+        self.p = None  # Vaccine parameters
+        self.vaccinated = None  # Store a list of indices of people vaccinated each day
+        self.vaccinations = None  # Record the number of doses given per person
+        self.vaccination_dates = None  # Store the dates that each person was last vaccinated
 
-        self._parse_vaccine_pars(vaccine=vaccine, label=label) # Populate
+        self._parse_vaccine_pars(vaccine=vaccine, label=label)  # Populate
         return
-
 
     def _parse_vaccine_pars(self, vaccine=None, label=None):
         ''' Unpack vaccine information, which may be given as a string or dict '''
@@ -1286,8 +1368,9 @@ class BaseVaccination(Intervention):
 
             if label in mapping:
                 label = mapping[label]
-                vaccine_pars = sc.mergedicts(variant_pars[label], dose_pars[label])
-            else: # pragma: no cover
+                vaccine_pars = sc.mergedicts(
+                    variant_pars[label], dose_pars[label])
+            else:  # pragma: no cover
                 errormsg = f'The selected vaccine "{vaccine}" is not implemented; choices are:\n{sc.pp(choices, doprint=False)}'
                 raise NotImplementedError(errormsg)
 
@@ -1299,11 +1382,12 @@ class BaseVaccination(Intervention):
 
             # Parse label
             vaccine_pars = vaccine
-            label = vaccine_pars.pop('label', label) # Allow including the label in the parameters
+            # Allow including the label in the parameters
+            label = vaccine_pars.pop('label', label)
             if label is None:
                 label = 'custom'
 
-        else: # pragma: no cover
+        else:  # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
@@ -1312,7 +1396,6 @@ class BaseVaccination(Intervention):
         self.p = sc.objdict(vaccine_pars)
 
         return
-
 
     def initialize(self, sim):
         super().initialize()
@@ -1324,9 +1407,9 @@ class BaseVaccination(Intervention):
 
         # Populate any missing keys -- must be here, after variants are initialized
         default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
-        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
-        variant_labels       = list(sim['variant_pars'].keys())
-        dose_keys           = list(default_dose_pars.keys())
+        default_dose_pars = cvpar.get_vaccine_dose_pars(default=True)
+        variant_labels = list(sim['variant_pars'].keys())
+        dose_keys = list(default_dose_pars.keys())
 
         # Handle dose keys
         for key in dose_keys:
@@ -1340,16 +1423,23 @@ class BaseVaccination(Intervention):
                     val = default_variant_pars[key]
                 else:
                     val = 1.0
-                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
+                    if sim['verbose']:
+                        print(
+                            'Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
                 self.p[key] = val
 
-        self.vaccinated           = [None]*sim.npts # Keep track of inds of people vaccinated on each day
-        self.vaccinations         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates    = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
+        # Keep track of inds of people vaccinated on each day
+        self.vaccinated = [None]*sim.npts
+        # Number of doses given per person
+        self.vaccinations = np.zeros(sim['pop_size'], dtype=cvd.default_int)
+        # Store the dates when people are vaccinated
+        self.vaccination_dates = np.full(sim['pop_size'], np.nan)
 
-        sim['vaccine_pars'][self.label] = self.p # Store the parameters
-        self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
-        sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
+        sim['vaccine_pars'][self.label] = self.p  # Store the parameters
+        self.index = list(sim['vaccine_pars'].keys()).index(
+            self.label)  # Find where we are in the list
+        # Use that to populate the reverse mapping
+        sim['vaccine_map'][self.index] = self.label
 
         return
 
@@ -1367,7 +1457,6 @@ class BaseVaccination(Intervention):
         """
         raise NotImplementedError
 
-
     def vaccinate(self, sim, vacc_inds):
         '''
         Vaccinate people
@@ -1384,8 +1473,10 @@ class BaseVaccination(Intervention):
         Returns: An array of person indices of people vaccinated
         '''
 
-        vacc_inds = vacc_inds[~sim.people.dead[vacc_inds]] # Skip anyone that is dead
-        vacc_inds = vacc_inds[self.vaccinations[vacc_inds] < self.p['doses']] # Skip anyone that is already fully vaccinated. Otherwise, they will receive the 2nd dose boost cumulatively for every subsequent dose
+        # Skip anyone that is dead
+        vacc_inds = vacc_inds[~sim.people.dead[vacc_inds]]
+        # Skip anyone that is already fully vaccinated. Otherwise, they will receive the 2nd dose boost cumulatively for every subsequent dose
+        vacc_inds = vacc_inds[self.vaccinations[vacc_inds] < self.p['doses']]
 
         if len(vacc_inds):
             self.vaccinations[vacc_inds] += 1
@@ -1395,10 +1486,10 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = sim.t
-            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
+            cvi.Update_Nab.update_peak_nab(
+                sim.people, vacc_inds, nab_pars=self.p, natural=False)
 
         return vacc_inds
-
 
     def apply(self, sim):
         ''' Perform vaccination each timestep '''
@@ -1456,23 +1547,28 @@ class vaccinate_prob(BaseVaccination):
         pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
+
     def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
-        super().__init__(vaccine,label=label,**kwargs) # Initialize the Intervention object
-        self.days      = sc.dcp(days)
-        self.prob      = prob
+        # Initialize the Intervention object
+        super().__init__(vaccine, label=label, **kwargs)
+        self.days = sc.dcp(days)
+        self.prob = prob
         self.subtarget = subtarget
         self.second_dose_days = None  # Track scheduled second doses
         return
 
     def initialize(self, sim):
         super().initialize(sim)
-        self.days = process_days(sim, self.days) # days that group becomes eligible
-        self.second_dose_days     = [None]*sim.npts # People who get second dose (if relevant)
+        # days that group becomes eligible
+        self.days = process_days(sim, self.days)
+        # People who get second dose (if relevant)
+        self.second_dose_days = [None]*sim.npts
         return
 
     def select_people(self, sim):
 
-        vacc_inds = np.array([], dtype=int)  # Initialize in case no one gets their first dose
+        # Initialize in case no one gets their first dose
+        vacc_inds = np.array([], dtype=int)
 
         if sim.t >= np.min(self.days):
 
@@ -1481,12 +1577,17 @@ class vaccinate_prob(BaseVaccination):
                 vacc_probs = np.zeros(sim['pop_size'])
                 unvacc_inds = sc.findinds(~sim.people.vaccinated)
                 if self.subtarget is not None:
-                    subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+                    subtarget_inds, subtarget_vals = get_subtargets(
+                        self.subtarget, sim)
+                    # People being explicitly subtargeted
+                    vacc_probs[subtarget_inds] = subtarget_vals
                 else:
-                    vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
-                vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
-                vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+                    # Assign equal vaccination probability to everyone
+                    vacc_probs[unvacc_inds] = self.prob
+                # Do not vaccinate dead people
+                vacc_probs[cvu.true(sim.people.dead)] *= 0.0
+                # Calculate who actually gets vaccinated
+                vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))
 
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
@@ -1500,11 +1601,10 @@ class vaccinate_prob(BaseVaccination):
             # Also, if appropriate, vaccinate people with their second dose
             vacc_inds_dose2 = self.second_dose_days[sim.t]
             if vacc_inds_dose2 is not None:
-                vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
+                vacc_inds = np.concatenate(
+                    (vacc_inds, vacc_inds_dose2), axis=None)
 
         return vacc_inds
-
-
 
 
 class vaccinate_num(BaseVaccination):
@@ -1543,10 +1643,11 @@ class vaccinate_num(BaseVaccination):
             cv.Sim(interventions=pfizer, use_waning=True).run().plot()
 
         """
-        super().__init__(vaccine,**kwargs) # Initialize the Intervention object
+        super().__init__(vaccine, **kwargs)  # Initialize the Intervention object
         self.sequence = sequence
         self.num_doses = num_doses
-        self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
+        self._scheduled_doses = defaultdict(
+            set)  # Track scheduled second doses
         return
 
     def initialize(self, sim):
@@ -1554,7 +1655,7 @@ class vaccinate_num(BaseVaccination):
 
         # Convert any dates to simulation days
         if isinstance(self.num_doses, dict):
-            self.num_doses = {sim.day(k):v for k, v in self.num_doses.items()}
+            self.num_doses = {sim.day(k): v for k, v in self.num_doses.items()}
 
         if callable(self.sequence):
             self.sequence = self.sequence(sim.people)
@@ -1564,7 +1665,8 @@ class vaccinate_num(BaseVaccination):
             self.sequence = sc.promotetoarray(self.sequence)
 
         if self.p['doses'] > 2:
-            raise NotImplementedError('Scheduling three or more doses not yet supported')
+            raise NotImplementedError(
+                'Scheduling three or more doses not yet supported')
 
         return
 
@@ -1585,8 +1687,11 @@ class vaccinate_num(BaseVaccination):
 
         # First, see how many scheduled doses we are going to deliver
         if self._scheduled_doses[sim.t]:
-            scheduled = np.fromiter(self._scheduled_doses[sim.t], dtype=cvd.default_int) # Everyone scheduled today
-            scheduled = scheduled[(sim.people.vaccinations[scheduled]<self.p['doses']) & ~sim.people.dead[scheduled]] # Remove fully vaccinated or dead
+            # Everyone scheduled today
+            scheduled = np.fromiter(
+                self._scheduled_doses[sim.t], dtype=cvd.default_int)
+            scheduled = scheduled[(sim.people.vaccinations[scheduled] < self.p['doses'])
+                                  & ~sim.people.dead[scheduled]]  # Remove fully vaccinated or dead
 
             # If there are more people due for a second dose than there are doses, vaccinate as many second doses
             # as possible, and add the remainder to tomorrow's vaccinations. At the moment, they don't get priority
@@ -1594,8 +1699,9 @@ class vaccinate_num(BaseVaccination):
             # before being allocated their second dose) but then there is some flexibility in the dosing schedules anyway
             # e.g. Pfizer being 3-6 weeks in some jurisdictions
             if len(scheduled) > num_agents:
-                np.random.shuffle(scheduled) # Randomly pick who to defer
-                self._scheduled_doses[sim.t+1].update(scheduled[num_agents:]) # Defer any extras
+                np.random.shuffle(scheduled)  # Randomly pick who to defer
+                # Defer any extras
+                self._scheduled_doses[sim.t+1].update(scheduled[num_agents:])
                 return scheduled[:num_agents]
         else:
             scheduled = np.array([], dtype=cvd.default_int)
@@ -1603,28 +1709,32 @@ class vaccinate_num(BaseVaccination):
         # Next, work out who is eligible for a first dose
         # Anyone who has received at least one dose of a vaccine would have had subsequent doses scheduled
         # and therefore should not be selected here
-        first_dose_eligible = self.sequence[~sim.people.vaccinated[self.sequence] & ~sim.people.dead[self.sequence]]
+        first_dose_eligible = self.sequence[~sim.people.vaccinated[self.sequence]
+                                            & ~sim.people.dead[self.sequence]]
 
         if len(first_dose_eligible) == 0:
             return scheduled  # Just return anyone that is scheduled
         elif len(first_dose_eligible) > num_agents:
             # Truncate it to the number of agents for performance when checking whether anyone scheduled overlaps with first doses to allocate
-            first_dose_eligible = first_dose_eligible[:num_agents] # This is the maximum number of people we could vaccinate this timestep, if there are no second doses allocated
+            # This is the maximum number of people we could vaccinate this timestep, if there are no second doses allocated
+            first_dose_eligible = first_dose_eligible[:num_agents]
 
         # It's *possible* that someone has been *scheduled* for a first dose by some other mechanism externally
         # Therefore, we need to check and remove them from the first dose list, otherwise they could be vaccinated
         # twice here (which would amount to wasting a dose)
-        first_dose_eligible = first_dose_eligible[~np.in1d(first_dose_eligible, scheduled)]
+        first_dose_eligible = first_dose_eligible[~np.in1d(
+            first_dose_eligible, scheduled)]
 
         if (len(first_dose_eligible)+len(scheduled)) > num_agents:
-            first_dose_inds = first_dose_eligible[:(num_agents - len(scheduled))]
+            first_dose_inds = first_dose_eligible[:(
+                num_agents - len(scheduled))]
         else:
             first_dose_inds = first_dose_eligible
 
         # Schedule subsequent doses
         # For vaccines with >2 doses, scheduled doses will also need to be checked
         if self.p['doses'] > 1:
-            self._scheduled_doses[sim.t+self.p['interval']].update(first_dose_inds)
+            self._scheduled_doses[sim.t +
+                                  self.p['interval']].update(first_dose_inds)
 
         return np.concatenate([scheduled, first_dose_inds])
-
