@@ -212,50 +212,58 @@ def update_nab(people, inds):
     people.nab[inds[people.nab[inds] > people.peak_nab[inds]]] = people.peak_nab[inds[people.nab[inds] > people.peak_nab[inds]]] # Make sure nabs don't exceed peak_nab
     return
 
+class vaccineEfficacy:
 
-def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
-    zero_nab    = nab == 0 # To avoid taking logarithm of 0
-    nonzero_nab = nab > 0
-    lo = alpha_inf + beta_inf*np.log(nab, where=nonzero_nab)
-    exp_lo = np.exp(lo, where=nonzero_nab)
-    exp_lo[zero_nab] = 0 # Re-insert zeros
-    output = exp_lo/(1+exp_lo) # Inverse logit function
-    return output
+
+    def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
+        zero_nab    = nab == 0 # To avoid taking logarithm of 0
+        nonzero_nab = nab > 0
+        lo = alpha_inf + beta_inf*np.log(nab, where=nonzero_nab)
+        exp_lo = np.exp(lo, where=nonzero_nab)
+        exp_lo[zero_nab] = 0 # Re-insert zeros
+        output = exp_lo/(1+exp_lo) # Inverse logit function
+        return output
+
+class sym_inf_VE:
+    
+    ''' This class computes vaccine efficacy based on symptoms and infection '''
+    
+    def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
+        ''' As above, for symptoms given infection '''
+        inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
+        symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+        output  = 1 - (1-inf_VE) * (1-symp_VE)
+        return output
 
 
-def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
-    ''' As above, for symptoms given infection '''
-    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
-    output  = 1 - (1-inf_VE) * (1-symp_VE)
-    return output
+    def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
+        ''' As above, for symptoms and infection '''
+        VE_inf  = calc_VE(alpha_inf, beta_inf, nab)
+        VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+        output = 1 - ((1-VE_symp)/(1-VE_inf))
+        return output
+
+class severe_disease_VE:
+
+    ''' This class computes vaccine efficacy based on severe disease parameters '''
+
+    def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
+        ''' As above, for severe disease '''
+        inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
+        symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+        sev_VE  = calc_VE(alpha_sev_symp, beta_sev_symp, nab)
+        output  = 1 - (1-inf_VE) * (1-symp_VE) * (1-sev_VE)
+        return output
 
 
-def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
-    ''' As above, for severe disease '''
-    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
-    sev_VE  = calc_VE(alpha_sev_symp, beta_sev_symp, nab)
-    output  = 1 - (1-inf_VE) * (1-symp_VE) * (1-sev_VE)
-    return output
-
-
-def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
-    ''' As above, for symptoms and infection '''
-    VE_inf  = calc_VE(alpha_inf, beta_inf, nab)
-    VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    output = 1 - ((1-VE_symp)/(1-VE_inf))
-    return output
-
-
-def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
-    ''' As above, for severe disease '''
-    VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
-    VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
-    output      = 1 - ((1-VE_sev)/((1-VE_inf)*(1-VE_symp_inf)))
-    return output
+    def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
+        ''' As above, for severe disease '''
+        VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
+        VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+        VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
+        output      = 1 - ((1-VE_sev)/((1-VE_inf)*(1-VE_symp_inf)))
+        return output
 
 
 def nab_to_efficacy(nab, ax, pars):
