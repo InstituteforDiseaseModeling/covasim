@@ -319,7 +319,7 @@ class plot_styl_form:
         # Set xticks as dates
         if date_args.as_dates:
 
-            date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
+            plot_styl_form.date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
             if not date_args.interval:
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
@@ -386,15 +386,15 @@ class plot2D:
         ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
         # Handle inputs
-        args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+        args = plotting.handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
                         legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
-        to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
-        fig, figs = create_figs(args, sep_figs, fig, ax)
+        to_plot, n_cols, n_rows = plotting.handle_to_plot('sim', to_plot, n_cols, sim=sim)
+        fig, figs = plotting.create_figs(args, sep_figs, fig, ax)
 
         # Do the plotting
         variant_keys = sim.result_keys('variant')
         for pnum,title,keylabels in to_plot.enumitems():
-            ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+            ax = plotting.create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
             for resnum,reskey in enumerate(keylabels):
                 res_t = sim.results['t']
                 if reskey in variant_keys:
@@ -409,21 +409,21 @@ class plot2D:
                         ax.plot(res_t, res.values[variant,:], label=label, **args.plot, c=color)  # Actually plot the sim!
                 else:
                     res = sim.results[reskey]
-                    color = set_line_options(colors, reskey, resnum, res.color)  # Choose the color
-                    label = set_line_options(labels, reskey, resnum, res.name)  # Choose the label
+                    color = plot_styl_form.set_line_options(colors, reskey, resnum, res.color)  # Choose the color
+                    label = plot_styl_form.set_line_options(labels, reskey, resnum, res.name)  # Choose the label
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low, res.high, color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(res_t, res.values, label=label, **args.plot, c=color)  # Actually plot the sim!
                 if args.show['data']:
-                    plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
+                    plotting.plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
                 if args.show['ticks']:
-                    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    plot_styl_form.reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
             if args.show['interventions']:
-                plot_interventions(sim, ax) # Plot the interventions
+                plotting.plot_interventions(sim, ax) # Plot the interventions
             if args.show['legend']:
-                title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+                plot_styl_form.title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
 
-        return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+        return plot_styl_form.tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
     def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
@@ -433,15 +433,15 @@ class plot2D:
         ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
         # Handle inputs
-        args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
+        args = plotting.handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
                     legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
-        to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
-        fig, figs = create_figs(args, sep_figs, fig, ax)
+        to_plot, n_cols, n_rows = plotting.handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
+        fig, figs = plotting.create_figs(args, sep_figs, fig, ax)
 
         # Do the plotting
         default_colors = sc.gridcolors(ncolors=len(scens.sims))
         for pnum,title,reskeys in to_plot.enumitems():
-            ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+            ax = plotting.create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
             reskeys = sc.promotetolist(reskeys) # In case it's a string
             for reskey in reskeys:
                 resdata = scens.results[reskey]
@@ -458,24 +458,24 @@ class plot2D:
                             ax.fill_between(scens.tvec, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
                             ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                             if args.show['data']:
-                                plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
+                                plotting.plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
                     else:
                         res_y = scendata.best
-                        color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
-                        label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
+                        color = plot_styl_form.set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
+                        label = plot_styl_form.set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
                         ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
                         ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                         if args.show['data']:
-                            plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
+                            plotting.plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
                     if args.show['interventions']:
-                        plot_interventions(sim, ax) # Plot the interventions
+                        plot_styl_form.plot_interventions(sim, ax) # Plot the interventions
                     if args.show['ticks']:
-                        reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                        plot_styl_form.reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
             if args.show['legend']:
-                title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+                plot_styl_form.title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-        return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+        return plot_styl_form.tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
     def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
@@ -487,9 +487,9 @@ class plot2D:
         sep_figs = False # Only one figure
         fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
         axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-        args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
+        args = plotting.handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
                         date_args=date_args, mpl_args=mpl_args, **kwargs)
-        fig, figs = create_figs(args, sep_figs, fig, ax)
+        fig, figs = plotting.create_figs(args, sep_figs, fig, ax)
 
         # Gather results
         res = sim.results[key]
@@ -510,12 +510,12 @@ class plot2D:
         if res.low is not None and res.high is not None:
             ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
         ax.plot(res_t, res.values, c=color, label=label, **args.plot)
-        plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
-        plot_interventions(sim, ax) # Plot the interventions
-        title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
-        reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+        plotting.plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
+        plotting.plot_interventions(sim, ax) # Plot the interventions
+        plot_styl_form.title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+        plot_styl_form.reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-        return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+        return plot_styl_form.tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
     def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, mpl_args=None, grid=False,
@@ -525,8 +525,8 @@ class plot2D:
         # Handle inputs
         fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
         axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-        args = handle_args(fig_args=fig_args, axis_args=axis_args, mpl_args=mpl_args, **kwargs)
-        fig, figs = create_figs(args, sep_figs=False, fig=fig)
+        args = plotting.handle_args(fig_args=fig_args, axis_args=axis_args, mpl_args=mpl_args, **kwargs)
+        fig, figs = plotting.create_figs(args, sep_figs=False, fig=fig)
 
         # Map from results into different categories
         mapping = {
@@ -750,7 +750,7 @@ class plotly3D:
 
     def plotly_interventions(sim, fig, add_to_legend=False):
         ''' Add vertical lines for interventions to the plot '''
-        go = import_plotly() # Load Plotly
+        go = plotly3D.import_plotly() # Load Plotly
         if sim['interventions']:
             for interv in sim['interventions']:
                 if hasattr(interv, 'days'):
@@ -766,7 +766,7 @@ class plotly3D:
     def plotly_sim(sim, do_show=False):
         ''' Main simulation results -- parallel of sim.plot() '''
 
-        go = import_plotly() # Load Plotly
+        go = plotly3D.import_plotly() # Load Plotly
         plots = []
         to_plot = cvd.get_default_plots()
         for p,title,keylabels in to_plot.enumitems():
@@ -782,7 +782,7 @@ class plotly3D:
                     ydata = sim.data[key]
                     fig.add_trace(go.Scatter(x=xdata, y=ydata, mode='markers', name=label + ' (data)', line_color=this_color))
 
-            plotly_interventions(sim, fig, add_to_legend=(p==0)) # Only add the intervention label to the legend for the first plot
+            plotly3D.plotly_interventions(sim, fig, add_to_legend=(p==0)) # Only add the intervention label to the legend for the first plot
             fig.update_layout(title={'text':title}, yaxis_title='Count', autosize=True, **plotly_legend)
 
             plots.append(fig)
@@ -797,8 +797,8 @@ class plotly3D:
     def plotly_people(sim, do_show=False):
         ''' Plot a "cascade" of people moving through different states '''
 
-        go = import_plotly() # Load Plotly
-        z, states = get_individual_states(sim)
+        go = plotly3D.import_plotly() # Load Plotly
+        z, states = plotly3D.get_individual_states(sim)
         fig = go.Figure()
 
         for state in states[::-1]:  # Reverse order for plotting
@@ -813,7 +813,7 @@ class plotly3D:
                 name=state['name']
             ))
 
-        plotly_interventions(sim, fig)
+        plotly3D.plotly_interventions(sim, fig)
         fig.update_layout(yaxis_range=(0, sim.n))
         fig.update_layout(title={'text': 'Numbers of people by health state'}, yaxis_title='People', autosize=True, **plotly_legend)
 
@@ -826,8 +826,8 @@ class plotly3D:
     def plotly_animate(sim, do_show=False):
         ''' Plot an animation of each person in the sim '''
 
-        go = import_plotly() # Load Plotly
-        z, states = get_individual_states(sim)
+        go = plotly3D.import_plotly() # Load Plotly
+        z, states = plotly3D.get_individual_states(sim)
 
         min_color = min(states, key=lambda x: x['value'])['value']
         max_color = max(states, key=lambda x: x['value'])['value']
@@ -940,7 +940,7 @@ class plotly3D:
         )
 
 
-        fig.update_layout(title={'text': 'Epidemic over time'}, **plotly_legend)
+        fig.update_layout(title={'text': 'Epidemic over time'}, **plotly3D.plotly_legend)
 
         if do_show:
             fig.show()

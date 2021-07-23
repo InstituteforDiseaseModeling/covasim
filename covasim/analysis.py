@@ -554,7 +554,7 @@ class daily_age_stats(Analyzer):
                     ax.legend()
                     ax.set_xlabel('Day')
                     ax.set_ylabel('Count')
-                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+                    cvpl.plot_styl_form.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
 
             # Plot total histograms
             else:
@@ -1201,7 +1201,7 @@ class Fit(Analyzer):
                         ax.set_xlabel('Date')
                         ax.set_ylabel(ylabel)
                         ax.set_title(title)
-                        cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
+                        cvpl.plot_styl_form.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
                         ax.legend()
 
             ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
@@ -1229,7 +1229,7 @@ class Fit(Analyzer):
 
             if daylabel == 'Date':
                 for ax in [ts_ax, diff_ax, loss_ax]:
-                    cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
+                    cvpl.plot_styl_form.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
 
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
@@ -1750,7 +1750,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
+            cvpl.plot_styl_form.date_formatter(start_day=self.sim_start, ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(

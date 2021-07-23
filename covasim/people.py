@@ -629,7 +629,7 @@ class People(cvb.BasePeople):
             do_show   (bool)  : whether to show the plot
             fig       (fig)   : handle of existing figure to plot into
         '''
-        fig = cvplt.plot_people(people=self, *args, **kwargs)
+        fig = cvplt.plot2D.plot_people(people=self, *args, **kwargs)
         return fig
 
 

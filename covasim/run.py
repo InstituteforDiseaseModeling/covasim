@@ -582,7 +582,7 @@ class MultiSim(cvb.FlexPretty):
             fig: Figure handle
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
-        cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
+        cvplt.plot2D.plot_compare(df, log_scale=log_scale, **kwargs)
 
 
     def save(self, filename=None, keep_people=False, **kwargs):
@@ -1099,7 +1099,7 @@ class Scenarios(cvb.ParsObj):
             scens.run()
             scens.plot()
         '''
-        fig = cvplt.plot_scens(scens=self, *args, **kwargs)
+        fig = cvplt.plot2D.plot_scens(scens=self, *args, **kwargs)
         return fig
 
 

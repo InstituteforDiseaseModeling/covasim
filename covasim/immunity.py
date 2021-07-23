@@ -231,16 +231,16 @@ class sym_inf_VE:
     
     def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
         ''' As above, for symptoms given infection '''
-        inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-        symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+        inf_VE  = vaccineEfficacy.calc_VE(alpha_inf,      beta_inf,      nab)
+        symp_VE = vaccineEfficacy.calc_VE(alpha_symp_inf, beta_symp_inf, nab)
         output  = 1 - (1-inf_VE) * (1-symp_VE)
         return output
 
 
     def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
         ''' As above, for symptoms and infection '''
-        VE_inf  = calc_VE(alpha_inf, beta_inf, nab)
-        VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+        VE_inf  = vaccineEfficacy.calc_VE(alpha_inf, beta_inf, nab)
+        VE_symp = sym_inf_VE.calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
         output = 1 - ((1-VE_symp)/(1-VE_inf))
         return output
 
@@ -250,18 +250,18 @@ class severe_disease_VE:
 
     def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
         ''' As above, for severe disease '''
-        inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-        symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
-        sev_VE  = calc_VE(alpha_sev_symp, beta_sev_symp, nab)
+        inf_VE  = vaccineEfficacy.calc_VE(alpha_inf,      beta_inf,      nab)
+        symp_VE = vaccineEfficacy.calc_VE(alpha_symp_inf, beta_symp_inf, nab)
+        sev_VE  = vaccineEfficacy.calc_VE(alpha_sev_symp, beta_sev_symp, nab)
         output  = 1 - (1-inf_VE) * (1-symp_VE) * (1-sev_VE)
         return output
 
 
     def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
         ''' As above, for severe disease '''
-        VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
-        VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-        VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
+        VE_inf      = vaccineEfficacy.calc_VE(alpha_inf, beta_inf, nab)
+        VE_symp_inf = sym_inf_VE.calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
+        VE_sev      = severe_disease_VE.calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
         output      = 1 - ((1-VE_sev)/((1-VE_inf)*(1-VE_symp_inf)))
         return output
 
@@ -283,9 +283,9 @@ def nab_to_efficacy(nab, ax, pars):
     if ax not in choices:
         errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
         raise ValueError(errormsg)
-    if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
-    elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
-    elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
+    if   ax == 'sus':  efficacy = vaccineEfficacy.calc_VE(nab=nab, **pars)
+    elif ax == 'symp': efficacy = sym_inf_VE.calc_VE_symp_inf(nab=nab, **pars)
+    elif ax == 'sev':  efficacy = severe_disease_VE.calc_VE_sev_symp(nab=nab, **pars)
     return efficacy
 
 
