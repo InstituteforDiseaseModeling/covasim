@@ -45,6 +45,7 @@ def remove_contacts_from_layer(layer, inds, sim):
 
 sim = cv.Sim(pop_type='hybrid', pop_size=2e4)
 sim.initialize()
+population = cv.Population(sim)
 
 # Set alf parameters to look like household
 for key in ['contacts', 'dynam_layer', 'beta_layer', 'quar_eff']:
@@ -57,7 +58,7 @@ layer_keys = ['alf']
 alf_inds = cv.binomial_filter(alf_prob, sc.findinds(sim.people.age >= min_alf_age))
 assert max(alf_inds) < pop_size
 contacts_list = [{key: [] for key in layer_keys} for i in range(pop_size)]
-alf_contacts, _, clusters = cv.make_microstructured_contacts(len(alf_inds), {'alf': n_alf_contacts})
+alf_contacts, _, clusters = population.make_microstructured_contacts(len(alf_inds), {'alf': n_alf_contacts})
 alf_dict = clusters['alf']
 
 for i, ind in enumerate(alf_inds):

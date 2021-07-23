@@ -19,7 +19,8 @@ sc.toc(label='from people')
 ppl3 = people + ppl2
 
 sim = cv.Sim(pop_type='random', pop_size=20000)
-cv.make_people(sim)
+population = cv.Population(sim)
+population.make_people(sim)
 ppl4 = sim.people
 
 sc.toc(label='as sim')
@@ -39,12 +40,13 @@ sc.toc(label='prognoses')
 
 
 #%% Test contacts creation
-contacts_list, contact_keys = cv.make_random_contacts(100, {'a':10, 'b':20})
+contacts_list, contact_keys = population.make_random_contacts(100, {'a':10, 'b':20})
 
 
 #%% Test layers
 
 sim2 = cv.Sim(pop_type='random', use_layers=True, pop_size=500)
-popdict = cv.make_randpop(sim2, microstructure=sim['pop_type'])
-cv.make_people(sim2)
+population2 = cv.Population(sim2)
+popdict = population2.make_randpop(sim2, microstructure=sim['pop_type'])
+population2.make_people(sim2)
 ppl5 = sim2.people

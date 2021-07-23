@@ -145,7 +145,8 @@ def test_vaccine_1dose(do_plot=False, do_show=True, do_save=False):
 
 def test_synthpops():
     sim = cv.Sim(use_waning=True, **sc.mergedicts(base_pars, dict(pop_size=5000, pop_type='synthpops')))
-    sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
+    population = cv.Population(sim)
+    sim.popdict = population.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF': 'f'})
     sim.reset_layer_pars()
 
     # Vaccinate 75+, then 65+, then 50+, then 18+ on days 20, 40, 60, 80

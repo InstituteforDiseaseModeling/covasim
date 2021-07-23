@@ -56,7 +56,8 @@ ssp.run()
 
 sc.heading('SynthPops + LTCF test')
 sf = cv.Sim(pop_size=2000, pop_type='synthpops')
-sf.popdict = cv.make_synthpop(sf, with_facilities=True, layer_mapping={'LTCF':'f'})
+population = cv.Population(sf)
+sf.popdict = population.make_synthpop(sf, with_facilities=True, layer_mapping={'LTCF':'f'})
 cv.save('synth.pop', sf.popdict)
 with pytest.raises(sc.KeyNotFoundError): # Layer key mismatch, f is not initialized
     sf.run()

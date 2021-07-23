@@ -9,11 +9,12 @@ from test_baselines import make_sim
 sim = make_sim(use_defaults=False, do_plot=False) # Use the same sim as from the regression/benchmarking tests
 to_profile = 'step' # Must be one of the options listed below
 
+population = cv.Population(sim)
 func_options = {
-    'make_contacts': cv.make_random_contacts,
-    'make_randpop':  cv.make_randpop,
+    'make_contacts': population.make_random_contacts,
+    'make_randpop':  population.make_randpop,
     'person':        cv.Person.__init__,
-    'make_people':   cv.make_people,
+    'make_people':   population.make_people,
     'init_people':   sim.init_people,
     'initialize':    sim.initialize,
     'run':           sim.run,

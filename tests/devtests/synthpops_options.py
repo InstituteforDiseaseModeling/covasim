@@ -10,7 +10,8 @@ which = ['simple', 'complex'][1]
 if which == 'simple':
 
     sim = cv.Sim(pop_size=5000, pop_type='synthpops')
-    sim.popdict = cv.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF':'f'})
+    population = cv.Population(sim)
+    sim.popdict = population.make_synthpop(sim, with_facilities=True, layer_mapping={'LTCF':'f'})
     sim.reset_layer_pars()
     sim.run()
 
@@ -27,7 +28,8 @@ else:
     for ltcf in [False, True]:
         print(f'Running LTCF {ltcf}')
         sim = cv.Sim(pars)
-        sim.popdict = cv.make_synthpop(sim, with_facilities=ltcf, layer_mapping={'LTCF':'f'})
+        population = cv.Population(sim)
+        sim.popdict = population.make_synthpop(sim, with_facilities=ltcf, layer_mapping={'LTCF':'f'})
         sim.reset_layer_pars()
         sims.append(sim)
 
