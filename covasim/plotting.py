@@ -331,7 +331,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     if do_save:
         if fig_path is not None: # No figpath provided - see whether do_save is a figpath
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        cvm.manage_data.savefig(filename=fig_path) # Save the figure
+        cvm.manage_data.savefig(filename=fig_path) # Save the figure (changed)
 
     # Show the figure, or close it
     do_show = cvset.handle_show(do_show)
