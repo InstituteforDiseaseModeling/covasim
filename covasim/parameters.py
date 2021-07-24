@@ -10,25 +10,7 @@ from . import defaults as cvd
 
 __all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices']
 
-
-def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
-    '''
-    Create the parameters for the simulation. Typically, this function is used
-    internally rather than called by the user; e.g. typical use would be to do
-    sim = cv.Sim() and then inspect sim.pars, rather than calling this function
-    directly.
-
-    Args:
-        set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
-        prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
-        kwargs        (dict): any additional kwargs are interpreted as parameter names
-        version       (str):  if supplied, use parameters from this Covasim version
-
-    Returns:
-        pars (dict): the parameters of the simulation
-    '''
-    pars = {}
-
+def para_default():
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
     pars['pop_infected'] = 20       # Number of initial infections
@@ -124,6 +106,25 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
     pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
     pars['variant_pars']  = dict(wild={}) # Populated just below
+    return pars
+    
+def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
+    '''
+    Create the parameters for the simulation. Typically, this function is used
+    internally rather than called by the user; e.g. typical use would be to do
+    sim = cv.Sim() and then inspect sim.pars, rather than calling this function
+    directly.
+
+    Args:
+        set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
+        prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
+        kwargs        (dict): any additional kwargs are interpreted as parameter names
+        version       (str):  if supplied, use parameters from this Covasim version
+
+    Returns:
+        pars (dict): the parameters of the simulation
+    '''
+    pars = {para_default}
     for sp in cvd.variant_pars:
         if sp in pars.keys():
             pars['variant_pars']['wild'][sp] = pars[sp]
