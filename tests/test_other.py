@@ -3,7 +3,7 @@ Tests for things that are not tested in other files, typically because they are
 corner cases or otherwise not part of major workflows.
 '''
 
-# %% Imports and settings
+#%% Imports and settings
 import os
 import pytest
 import numpy as np
@@ -12,10 +12,10 @@ import covasim as cv
 
 do_plot = 1
 verbose = -1
-debug = 1  # This runs without parallelization; faster with pytest
-csv_file = os.path.join(sc.thisdir(), 'example_data.csv')
+debug   = 1 # This runs without parallelization; faster with pytest
+csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
-cv.options.set(interactive=False)  # Assume not running interactively
+cv.options.set(interactive=False) # Assume not running interactively
 
 
 def remove_files(*args):
@@ -27,13 +27,13 @@ def remove_files(*args):
     return
 
 
-# %% Define the tests
+#%% Define the tests
 
 def test_base():
     sc.heading('Testing base.py sim...')
 
     json_path = 'base_tests.json'
-    sim_path = 'base_tests.sim'
+    sim_path  = 'base_tests.sim'
 
     # Create a small sim for later use
     sim = cv.Sim(pop_size=100, verbose=verbose)
@@ -41,8 +41,8 @@ def test_base():
 
     # Check setting invalid key
     with pytest.raises(sc.KeyNotFoundError):
-        po = cv.ParsObj(pars={'a': 2, 'b': 3})
-        po.update_pars({'c': 4})
+        po = cv.ParsObj(pars={'a':2, 'b':3})
+        po.update_pars({'c':4})
 
     # Printing result
     r = cv.Result()
@@ -90,15 +90,14 @@ def test_basepeople():
     ppl.date_keys()
     ppl.dur_keys()
     ppl.indices()
-    # This only resizes the arrays, not actually create new people
-    ppl._resize_arrays(new_size=200)
-    ppl._resize_arrays(new_size=100)  # Change back
+    ppl._resize_arrays(new_size=200) # This only resizes the arrays, not actually create new people
+    ppl._resize_arrays(new_size=100) # Change back
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
     people = ppl.to_people()
     ppl.from_people(people)
-    ppl.make_edgelist([{'new_key': [0, 1, 2]}])
+    ppl.make_edgelist([{'new_key':[0,1,2]}])
     ppl.brief()
 
     # Contacts methods
@@ -135,22 +134,21 @@ def test_basepeople():
     assert len(layer2.keys()) == 5
 
     # Test dynamic layers, plotting, and stories
-    pars = dict(pop_size=100, n_days=10, verbose=verbose,
-                pop_type='hybrid', beta=0.02)
-    s1 = cv.Sim(pars, dynam_layer={'c': 1})
+    pars = dict(pop_size=100, n_days=10, verbose=verbose, pop_type='hybrid', beta=0.02)
+    s1 = cv.Sim(pars, dynam_layer={'c':1})
     s1.run()
     s1.people.plot()
     for person in [0, 50]:
         s1.people.story(person)
 
     # Run without dynamic layers and assert that the results are different
-    s2 = cv.Sim(pars, dynam_layer={'c': 0})
+    s2 = cv.Sim(pars, dynam_layer={'c':0})
     s2.run()
     assert cv.diff_sims(s1, s2, output=True)
 
     # Create a bare People object
     ppl = cv.People(100)
-    with pytest.raises(sc.KeyNotFoundError):  # Need additional parameters
+    with pytest.raises(sc.KeyNotFoundError): # Need additional parameters
         ppl.initialize()
 
     return
@@ -183,7 +181,7 @@ def test_misc():
     assert d2 == ds[0]
 
     with pytest.raises(ValueError):
-        cv.date([(2020, 4, 4)])  # Raises a TypeError which raises a ValueError
+        cv.date([(2020,4,4)]) # Raises a TypeError which raises a ValueError
 
     with pytest.raises(ValueError):
         cv.date('Not a date')
@@ -201,7 +199,7 @@ def test_misc():
     cv.load(filename=sim_path)
 
     # Version checks
-    cv.check_version('0.0.0')  # Nonsense version
+    cv.check_version('0.0.0') # Nonsense version
     print('↑ Should complain about version')
     with pytest.raises(ValueError):
         cv.check_version('0.0.0', die=True)
@@ -228,8 +226,7 @@ def test_misc():
     # Test versions
     with pytest.raises(ValueError):
         cv.check_save_version('1.3.2', die=True)
-    cv.check_save_version(
-        cv.__version__, filename=gitinfo_path, comments='Test')
+    cv.check_save_version(cv.__version__, filename=gitinfo_path, comments='Test')
 
     # Test PNG
     try:
@@ -237,8 +234,7 @@ def test_misc():
         assert metadata['Covasim version'] == cv.__version__
         assert metadata['Covasim comments'] == fig_comments
     except ImportError as E:
-        print(
-            f'Cannot test PNG function since pillow not installed ({str(E)}), skipping')
+        print(f'Cannot test PNG function since pillow not installed ({str(E)}), skipping')
 
     # Tidy up
     remove_files(sim_path, json_path, fig_path, gitinfo_path)
@@ -253,14 +249,13 @@ def test_plotting():
 
     # Create sim with data and interventions
     ce = cv.clip_edges(**{'days': 10, 'changes': 0.5})
-    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file,
-                 interventions=ce, verbose=verbose)
+    sim = cv.Sim(pop_size=100, n_days=60, datafile=csv_file, interventions=ce, verbose=verbose)
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
-    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=[
-             'Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
     print('↑ May print a warning about zero values')
+
 
     # Handle Plotly functions
     try:
@@ -268,8 +263,7 @@ def test_plotting():
         cv.plotly_people(sim)
         cv.plotly_animate(sim)
     except Exception as E:
-        print(
-            f'Plotly plotting failed ({str(E)}), but not essential so continuing')
+        print(f'Plotly plotting failed ({str(E)}), but not essential so continuing')
 
     # Tidy up
     remove_files(fig_path)
@@ -284,8 +278,7 @@ def test_population():
 
     # Test locations, including ones that don't work
     cv.Sim(pop_size=100, pop_type='hybrid', location='nigeria').initialize()
-    cv.Sim(pop_size=100, pop_type='hybrid',
-           location='not_a_location').initialize()
+    cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
     print('↑ Should complain about location not found')
     cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
     print('↑ Should complain about missing h layer')
@@ -316,6 +309,7 @@ def test_population():
     return
 
 
+
 def test_requirements():
     sc.heading('Testing requirements')
 
@@ -333,7 +327,7 @@ def test_requirements():
 def test_run():
     sc.heading('Testing run')
 
-    msim_path = 'run_test.msim'
+    msim_path  = 'run_test.msim'
     scens_path = 'run_test.scens'
 
     # Test creation
@@ -349,7 +343,7 @@ def test_run():
     msim.base_sim = None
     with pytest.raises(ValueError):
         msim.result_keys()
-    msim.base_sim = msim.sims[0]  # Restore
+    msim.base_sim = msim.sims[0] # Restore
 
     # Run
     msim.run(verbose=verbose)
@@ -361,7 +355,7 @@ def test_run():
     # Plot
     for i in range(2):
         if i == 1:
-            msim.reset()  # Reset as if reduce() was not called
+            msim.reset() # Reset as if reduce() was not called
         msim.plot()
         msim.plot_result('r_eff')
     print('↑ May print some plotting warnings')
@@ -371,7 +365,7 @@ def test_run():
         msim.save(filename=msim_path, keep_people=keep_people)
 
     # Scenarios
-    scens = cv.Scenarios(sim=s1, metapars={'n_runs': 1})
+    scens = cv.Scenarios(sim=s1, metapars={'n_runs':1})
     scens.run(keep_people=True, verbose=verbose, debug=debug)
     for keep_people in [True, False]:
         scens.save(scens_path, keep_people=keep_people)
@@ -396,7 +390,7 @@ def test_sim():
     sim['pop_size'] = 'invalid'
     with pytest.raises(ValueError):
         sim.validate_pars()
-    sim['pop_size'] = 100  # Restore
+    sim['pop_size'] = 100 # Restore
 
     # Handle missing start day
     sim['start_day'] = None
@@ -412,32 +406,30 @@ def test_sim():
     sim['n_days'] = None
     with pytest.raises(ValueError):
         sim.validate_pars()
-    sim['n_days'] = 30  # Restore
+    sim['n_days'] = 30 # Restore
 
     # Check layer pars are internally consistent
-    sim['quar_factor'] = {'invalid': 30}
+    sim['quar_factor'] = {'invalid':30}
     with pytest.raises(sc.KeyNotFoundError):
         sim.validate_pars()
-    sim.reset_layer_pars()  # Restore
+    sim.reset_layer_pars() # Restore
 
     # Check mismatch with population
     for key in ['beta_layer', 'contacts', 'quar_factor']:
-        sim[key] = {'invalid': 1}
+        sim[key] = {'invalid':1}
     with pytest.raises(sc.KeyNotFoundError):
         sim.validate_pars()
-    sim.reset_layer_pars()  # Restore
+    sim.reset_layer_pars() # Restore
 
     # Convert interventions dict to intervention
-    sim['interventions'] = {'which': 'change_beta',
-                            'pars': {'days': 10, 'changes': 0.5}}
+    sim['interventions'] = {'which': 'change_beta', 'pars': {'days': 10, 'changes': 0.5}}
     sim.validate_pars()
 
     # Check conversion to absolute parameters
     cv.parameters.absolute_prognoses(sim['prognoses'])
 
     # Test intervention functions and results analyses
-    cv.Sim(pop_size=100, verbose=0, interventions=lambda sim: (sim.t == 20 and (sim.__setitem__('beta', 0) or print(
-        f'Applying lambda intervention to set beta=0 on day {sim.t}')))).run()  # ...This is not the recommended way of defining interventions.
+    cv.Sim(pop_size=100, verbose=0, interventions=lambda sim: (sim.t==20 and (sim.__setitem__('beta', 0) or print(f'Applying lambda intervention to set beta=0 on day {sim.t}')))).run() # ...This is not the recommended way of defining interventions.
 
     # Test other outputs
     sim = cv.Sim(pop_size=100, verbose=0, n_days=30)
@@ -455,12 +447,11 @@ def test_sim():
 def test_settings():
     sc.heading('Testing settings')
     cv.options.help()
-    # Don't actually change the default, but call this method
-    cv.options.set(numba_parallel=False)
+    cv.options.set(numba_parallel=False) # Don't actually change the default, but call this method
     return
 
 
-# %% Run as a script
+#%% Run as a script
 if __name__ == '__main__':
 
     # Start timing and optionally enable interactive plotting
