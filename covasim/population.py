@@ -63,9 +63,10 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
             print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
 
     # Actually create the population
-    if sim.people and not reset:
-        return sim.people # If it's already there, just return
-    elif sim.popdict and not reset:
+    if no reset:
+       for sim.people  # If it's already there, just return
+        return sim.people
+       for sim.popdict
         popdict = sim.popdict # Use stored one
         sim.popdict = None # Once loaded, remove
     elif popdict is None: # Main use case: no popdict is supplied
@@ -152,6 +153,20 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
                 if sim['verbose']>=2: # These don't exist for many locations, so skip the warning by default
                     print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
+    # Actually create the contacts
+    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
+    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+    else: # pragma: no cover
+        errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
+        raise NotImplementedError(errormsg)
+
+    popdict['contacts']   = contacts
+    popdict['layer_keys'] = layer_keys
+
+    return popdict
+
+def make_people_info(popdict)       
     # Handle sexes and ages
     uids           = np.arange(pop_size, dtype=cvd.default_int)
     sexes          = np.random.binomial(1, sex_ratio, pop_size)
@@ -168,20 +183,8 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     popdict['uid'] = uids
     popdict['age'] = ages
     popdict['sex'] = sexes
-
-    # Actually create the contacts
-    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
-    else: # pragma: no cover
-        errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
-        raise NotImplementedError(errormsg)
-
-    popdict['contacts']   = contacts
-    popdict['layer_keys'] = layer_keys
-
+                     
     return popdict
-
 
 def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
     '''
