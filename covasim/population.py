@@ -96,8 +96,8 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
             errormsg = 'Please specify a file to save to using the popfile kwarg'
             raise FileNotFoundError(errormsg)
         else:
-            filepath = sc.makefilepath(filename=popfile)
-            cvm.manage_data.save(filepath, people)
+             filepath = sc.makefilepath(filename=popfile)
+             cvm.manage_data.save(filepath, people)
             if verbose:
                 print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
 
