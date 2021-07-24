@@ -1,6 +1,7 @@
 '''
 Set the parameters for Covasim.
 '''
+
 import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
@@ -135,8 +136,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # If version is specified, load old parameters
     if version is not None:
-         version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
-         for key in pars.keys(): # Only loop over keys that have been populated
+        version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
+        for key in pars.keys(): # Only loop over keys that have been populated
             if key in version_pars: # Only replace keys that exist in the old version
                 pars[key] = version_pars[key]
 
