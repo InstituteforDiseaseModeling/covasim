@@ -1,7 +1,7 @@
 '''
 Set the parameters for Covasim.
 '''
-
+# just for test a pull request
 import numpy as np
 import sciris as sc
 from .settings import options as cvo # For setting global options
