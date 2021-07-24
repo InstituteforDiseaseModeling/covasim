@@ -426,7 +426,7 @@ class Sim(cvb.BaseSim):
             self.load_population(popfile=popfile)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
+        self.people = cvpop.Population().make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize() # Fully initialize the people
 
         # Handle anyone who isn't susceptible
