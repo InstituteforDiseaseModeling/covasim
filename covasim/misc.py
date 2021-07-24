@@ -1,7 +1,7 @@
 '''
 Miscellaneous functions that do not belong anywhere else
 '''
- 
+
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -24,183 +24,183 @@ date_range = sc.daterange
 #%% Loading/saving functions
 
 __all__ += ['load_data', 'load', 'save', 'savefig']
- 
-class manage_data:
-    def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
-        '''
-        Load data for comparing to the model output, either from file or from a dataframe.
 
-        Args:
-            datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
-            columns (list): list of column names (otherwise, load all)
-            calculate (bool): whether to calculate cumulative values from daily counts
-            check_date (bool): whether to check that a 'date' column is present
-            start_day (date): if the 'date' column is provided as integer number of days, consider them relative to this
-            kwargs (dict): passed to pd.read_excel()
 
-        Returns:
-            data (dataframe): pandas dataframe of the loaded data
-        '''
+def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
+    '''
+    Load data for comparing to the model output, either from file or from a dataframe.
 
-        # Load data
-        if isinstance(datafile, Path): # Convert to a string
-            datafile = str(datafile)
-        if isinstance(datafile, str):
-            df_lower = datafile.lower()
-            if df_lower.endswith('csv'):
-                raw_data = pd.read_csv(datafile, **kwargs)
-            elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
-                raw_data = pd.read_excel(datafile, **kwargs)
-            elif df_lower.endswith('json'):
-                raw_data = pd.read_json(datafile, **kwargs)
-            else:
-                errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
-                raise NotImplementedError(errormsg)
-        elif isinstance(datafile, pd.DataFrame):
-            raw_data = datafile
-        else: # pragma: no cover
-            errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
-            raise TypeError(errormsg)
+    Args:
+        datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
+        columns (list): list of column names (otherwise, load all)
+        calculate (bool): whether to calculate cumulative values from daily counts
+        check_date (bool): whether to check that a 'date' column is present
+        start_day (date): if the 'date' column is provided as integer number of days, consider them relative to this
+        kwargs (dict): passed to pd.read_excel()
 
-        # Confirm data integrity and simplify
-        if columns is not None:
-            for col in columns:
-                if col not in raw_data.columns: # pragma: no cover
-                    errormsg = f'Column "{col}" is missing from the loaded data'
-                    raise ValueError(errormsg)
-            data = raw_data[columns]
+    Returns:
+        data (dataframe): pandas dataframe of the loaded data
+    '''
+
+    # Load data
+    if isinstance(datafile, Path): # Convert to a string
+        datafile = str(datafile)
+    if isinstance(datafile, str):
+        df_lower = datafile.lower()
+        if df_lower.endswith('csv'):
+            raw_data = pd.read_csv(datafile, **kwargs)
+        elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
+            raw_data = pd.read_excel(datafile, **kwargs)
+        elif df_lower.endswith('json'):
+            raw_data = pd.read_json(datafile, **kwargs)
         else:
-            data = raw_data
+            errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
+            raise NotImplementedError(errormsg)
+    elif isinstance(datafile, pd.DataFrame):
+        raw_data = datafile
+    else: # pragma: no cover
+        errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
+        raise TypeError(errormsg)
 
-        # Calculate any cumulative columns that are missing
-        if calculate:
-            columns = data.columns
-            for col in columns:
-                if col.startswith('new'):
-                    cum_col = col.replace('new_', 'cum_')
-                    if cum_col not in columns:
-                        data[cum_col] = np.cumsum(data[col])
-                        if verbose:
-                            print(f'  Automatically adding cumulative column {cum_col} from {col}')
-
-        # Ensure required columns are present and reset the index
-        if check_date:
-            if 'date' not in data.columns:
-                errormsg = f'Required column "date" not found; columns are {data.columns}'
+    # Confirm data integrity and simplify
+    if columns is not None:
+        for col in columns:
+            if col not in raw_data.columns: # pragma: no cover
+                errormsg = f'Column "{col}" is missing from the loaded data'
                 raise ValueError(errormsg)
-            else:
-                if data['date'].dtype == np.int64: # If it's integers, treat it as days from the start day
-                    data['date'] = sc.date(data['date'].values, start_date=start_day)
-                else: # Otherwise, use Pandas to convert it
-                    data['date'] = pd.to_datetime(data['date']).dt.date
-            data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
+        data = raw_data[columns]
+    else:
+        data = raw_data
 
-        return data
+    # Calculate any cumulative columns that are missing
+    if calculate:
+        columns = data.columns
+        for col in columns:
+            if col.startswith('new'):
+                cum_col = col.replace('new_', 'cum_')
+                if cum_col not in columns:
+                    data[cum_col] = np.cumsum(data[col])
+                    if verbose:
+                        print(f'  Automatically adding cumulative column {cum_col} from {col}')
 
+    # Ensure required columns are present and reset the index
+    if check_date:
+        if 'date' not in data.columns:
+            errormsg = f'Required column "date" not found; columns are {data.columns}'
+            raise ValueError(errormsg)
+        else:
+            if data['date'].dtype == np.int64: # If it's integers, treat it as days from the start day
+                data['date'] = sc.date(data['date'].values, start_date=start_day)
+            else: # Otherwise, use Pandas to convert it
+                data['date'] = pd.to_datetime(data['date']).dt.date
+        data.set_index('date', inplace=True, drop=False) # Don't drop so sim.data['date'] can still be accessed
 
-    def load(*args, do_migrate=True, update=True, verbose=True, **kwargs):
-        '''
-        Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
-        cv.Scenarios.load().
-
-        Args:
-            filename (str): file to load
-            do_migrate (bool): whether to migrate if loading an old object
-            update (bool): whether to modify the object to reflect the new version
-            verbose (bool): whether to print migration information
-            args (list): passed to sc.loadobj()
-            kwargs (dict): passed to sc.loadobj()
-
-        Returns:
-            Loaded object
-
-        **Examples**::
-
-            sim = cv.load('calib.sim') # Equivalent to cv.Sim.load('calib.sim')
-            scens = cv.load(filename='school-closures.scens', folder='schools')
-        '''
-        obj = sc.loadobj(*args, **kwargs)
-        if hasattr(obj, 'version'):
-            v_curr = cvv.__version__
-            v_obj = obj.version
-            cmp = check_version(v_obj, verbose=False)
-            if cmp != 0:
-                print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
-                if do_migrate:
-                    obj = migrate(obj, update=update, verbose=verbose)
-        return obj
+    return data
 
 
-    def save(*args, **kwargs):
-        '''
-        Convenience method for sc.saveobj() and equivalent to cv.save() or
-        cv.Scenarios.save().
+def load(*args, do_migrate=True, update=True, verbose=True, **kwargs):
+    '''
+    Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or
+    cv.Scenarios.load().
 
-        Args:
-            filename (str): file to save to
-            obj (object): object to save
-            args (list): passed to sc.saveobj()
-            kwargs (dict): passed to sc.saveobj()
+    Args:
+        filename (str): file to load
+        do_migrate (bool): whether to migrate if loading an old object
+        update (bool): whether to modify the object to reflect the new version
+        verbose (bool): whether to print migration information
+        args (list): passed to sc.loadobj()
+        kwargs (dict): passed to sc.loadobj()
 
-        Returns:
-            Filename the object is saved to
+    Returns:
+        Loaded object
 
-        **Examples**::
+    **Examples**::
 
-            cv.save('calib.sim', sim) # Equivalent to sim.manage_data.save('calib.sim')
-            cv.save(filename='school-closures.scens', folder='schools', obj=scens)
-        '''
-        filepath = sc.saveobj(*args, **kwargs)
-        return filepath
+        sim = cv.load('calib.sim') # Equivalent to cv.Sim.load('calib.sim')
+        scens = cv.load(filename='school-closures.scens', folder='schools')
+    '''
+    obj = sc.loadobj(*args, **kwargs)
+    if hasattr(obj, 'version'):
+        v_curr = cvv.__version__
+        v_obj = obj.version
+        cmp = check_version(v_obj, verbose=False)
+        if cmp != 0:
+            print(f'Note: you have Covasim v{v_curr}, but are loading an object from v{v_obj}')
+            if do_migrate:
+                obj = migrate(obj, update=update, verbose=verbose)
+    return obj
 
 
-    def savefig(filename=None, comments=None, **kwargs):
-        '''
-        Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-        metadata in the figure. By default, saves (git) information from both the Covasim
-        version and the calling function. Additional comments can be added to the saved
-        file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
-        also be stored for SVG and PDF formats, but cannot be automatically retrieved.
+def save(*args, **kwargs):
+    '''
+    Convenience method for sc.saveobj() and equivalent to cv.Sim.save() or
+    cv.Scenarios.save().
 
-        Args:
-            filename (str): name of the file to save to (default, timestamp)
-            comments (str): additional metadata to save to the figure
-            kwargs (dict): passed to savefig()
+    Args:
+        filename (str): file to save to
+        obj (object): object to save
+        args (list): passed to sc.saveobj()
+        kwargs (dict): passed to sc.saveobj()
 
-        **Example**::
+    Returns:
+        Filename the object is saved to
 
-            cv.Sim().run(do_plot=True)
-            filename = cv.savefig()
-        '''
+    **Examples**::
 
-        # Handle inputs
-        dpi = kwargs.pop('dpi', 150)
-        metadata = kwargs.pop('metadata', {})
+        cv.save('calib.sim', sim) # Equivalent to sim.save('calib.sim')
+        cv.save(filename='school-closures.scens', folder='schools', obj=scens)
+    '''
+    filepath = sc.saveobj(*args, **kwargs)
+    return filepath
 
-        if filename is None: # pragma: no cover
-            now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
-            filename = f'covasim_{now}.png'
 
-        metadata = {}
-        metadata['Covasim version'] = cvv.__version__
-        gitinfo = git_info()
-        for key,value in gitinfo['covasim'].items():
-            metadata[f'Covasim {key}'] = value
-        for key,value in gitinfo['called_by'].items():
-            metadata[f'Covasim caller {key}'] = value
-        metadata['Covasim current time'] = sc.getdate()
-        metadata['Covasim calling file'] = sc.getcaller()
-        if comments:
-            metadata['Covasim comments'] = comments
+def savefig(filename=None, comments=None, **kwargs):
+    '''
+    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
+    metadata in the figure. By default, saves (git) information from both the Covasim
+    version and the calling function. Additional comments can be added to the saved
+    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
+    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
 
-        # Handle different formats
-        lcfn = filename.lower() # Lowercase filename
-        if lcfn.endswith('pdf') or lcfn.endswith('svg'):
-            metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+    Args:
+        filename (str): name of the file to save to (default, timestamp)
+        comments (str): additional metadata to save to the figure
+        kwargs (dict): passed to savefig()
 
-        # Save the figure
-        pl.manage_data.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
-        return filename
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        filename = cv.savefig()
+    '''
+
+    # Handle inputs
+    dpi = kwargs.pop('dpi', 150)
+    metadata = kwargs.pop('metadata', {})
+
+    if filename is None: # pragma: no cover
+        now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
+        filename = f'covasim_{now}.png'
+
+    metadata = {}
+    metadata['Covasim version'] = cvv.__version__
+    gitinfo = git_info()
+    for key,value in gitinfo['covasim'].items():
+        metadata[f'Covasim {key}'] = value
+    for key,value in gitinfo['called_by'].items():
+        metadata[f'Covasim caller {key}'] = value
+    metadata['Covasim current time'] = sc.getdate()
+    metadata['Covasim calling file'] = sc.getcaller()
+    if comments:
+        metadata['Covasim comments'] = comments
+
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
+    # Save the figure
+    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+    return filename
 
 
 #%% Migration functions
