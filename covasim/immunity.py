@@ -122,12 +122,7 @@ class variant(sc.prettyobj):
             n_imports = sc.randround(self.n_imports/rescale_factor) # Round stochastically to the nearest number of imports
             importation_inds = np.random.choice(susceptible_inds, n_imports)
             sim.people.infect(inds=importation_inds, layer='importation', variant=self.index)
-        return
-
-
-
-
-#%% Neutralizing antibody methods
+        return'
 
 def get_vaccine_pars(pars):
     '''
@@ -143,6 +138,11 @@ def get_vaccine_pars(pars):
 
     return vaccine_pars
 
+
+
+#%% Neutralizing antibody methods
+
+class nab:
 
 def update_peak_nab(people, inds, nab_pars, natural=True):
     '''
@@ -212,6 +212,150 @@ def update_nab(people, inds):
     people.nab[inds[people.nab[inds] > people.peak_nab[inds]]] = people.peak_nab[inds[people.nab[inds] > people.peak_nab[inds]]] # Make sure nabs don't exceed peak_nab
     return
 
+def nab_to_efficacy(nab, ax, pars):
+    '''
+    Convert NAb levels to immunity protection factors, using the functional form
+    given in this paper: https://doi.org/10.1101/2021.03.09.21252641
+
+    Args:
+        nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
+        ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+        pars (dict): dictionary of parameters for the vaccine efficacy
+
+    Returns:
+        an array the same size as NAb, containing the immunity protection factors for the specified axis
+     '''
+    choices = ['sus', 'symp', 'sev']
+    if ax not in choices:
+        errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
+        raise ValueError(errormsg)
+    if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
+    elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
+    elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
+    return efficacy
+
+def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
+    '''
+    Returns an array of length 'length' containing the evaluated function nab decay
+    function at each point.
+
+    Uses exponential decay, with the rate of exponential decay also set to exponentially
+    decay (!) after 250 days.
+
+    Args:
+        length (int): number of points
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate at which the decay decays
+    '''
+    def f1(t, decay_rate1):
+        ''' Simple exponential decay '''
+        return np.exp(-t*decay_rate1)
+
+    def f2(t, decay_rate1, decay_time1, decay_rate2):
+        ''' Complex exponential decay '''
+        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
+
+    t  = np.arange(length, dtype=cvd.default_int)
+    y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
+    y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
+    y  = np.concatenate([[-np.inf],y1,y2])
+    y = np.diff(y)[0:length]
+    y[0] = 1
+    return y
+    
+def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2, decay_time2):
+    '''
+    Returns an array of length 'length' containing the evaluated function nab growth/decay
+    function at each point.
+
+    Uses linear growth + exponential decay, with the rate of exponential decay also set to
+    decay linearly until it reaches a 10-year half life.
+
+    Args:
+        length (int): number of points
+        growth_time (int): length of time NAbs grow (used to determine slope)
+        decay_rate1 (float): initial rate of exponential decay
+        decay_time1 (float): time on the first exponential decay
+        decay_rate2 (float): the rate of exponential decay in late period
+        decay_time2 (float): how long it takes to transition to late decay period
+    '''
+
+
+    def f1(t, growth_time):
+        '''Simple linear growth'''
+        return (1 / growth_time) * t
+
+    def f2(t, decay_time1, decay_time2, decay_rate1, decay_rate2):
+        decayRate = np.full(len(t), fill_value=decay_rate1)
+        decayRate[cvu.true(t>decay_time2)] = decay_rate2
+        slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
+        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
+        titre = np.zeros(len(t))
+        for i in range(1, len(t)):
+            titre[i] = titre[i-1]+decayRate[i]
+        return np.exp(-titre)
+
+    length = length + 1
+    t1 = np.arange(growth_time, dtype=cvd.default_int)
+    t2 = np.arange(length - growth_time, dtype=cvd.default_int)
+    y1 = f1(t1, growth_time)
+    y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
+    y  = np.concatenate([y1,y2])
+    y = np.diff(y)[0:length]
+
+    return y
+
+#%% Methods for computing waning
+
+def precompute_waning(length, pars=None):
+    '''
+    Process functional form and parameters into values:
+
+        - 'nab_growth_decay' : based on Khoury et al. (https://www.nature.com/articles/s41591-021-01377-8)
+        - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
+        - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
+        - 'linear_decay': linear decay
+
+    A custom function can also be supplied.
+
+    Args:
+        length (float): length of array to return, i.e., for how long waning is calculated
+        pars (dict): passed to individual immunity functions
+
+    Returns:
+        array of length 'length' of values
+    '''
+
+    pars = sc.dcp(pars)
+    form = pars.pop('form')
+    choices = [
+        'nab_growth_decay', # Default if no form is provided
+        'nab_decay',
+        'exp_decay',
+    ]
+
+    # Process inputs
+    if form is None or form == 'nab_growth_decay':
+        output = nab_growth_decay(length, **pars)
+
+    elif form == 'nab_decay':
+        output = nab_decay(length, **pars)
+
+    elif form == 'exp_decay':
+        if pars['half_life'] is None: pars['half_life'] = np.nan
+        output = exp_decay(length, **pars)
+
+    elif callable(form):
+        output = form(length, **pars)
+
+    else:
+        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {sc.strjoin(choices)}'
+        raise NotImplementedError(errormsg)
+
+    return output
+
+class vaccine_effieciency:
 
 def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
     ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
@@ -258,32 +402,9 @@ def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_s
     return output
 
 
-def nab_to_efficacy(nab, ax, pars):
-    '''
-    Convert NAb levels to immunity protection factors, using the functional form
-    given in this paper: https://doi.org/10.1101/2021.03.09.21252641
-
-    Args:
-        nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
-        ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
-        pars (dict): dictionary of parameters for the vaccine efficacy
-
-    Returns:
-        an array the same size as NAb, containing the immunity protection factors for the specified axis
-     '''
-    choices = ['sus', 'symp', 'sev']
-    if ax not in choices:
-        errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
-        raise ValueError(errormsg)
-    if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
-    elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
-    elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
-    return efficacy
-
-
-
 # %% Immunity methods
 
+class immune_methods:
 def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all variants that will eventually be in the sim'''
 
@@ -395,129 +516,7 @@ def check_immunity(people, variant, sus=True, inds=None):
 
 
 
-#%% Methods for computing waning
-
-def precompute_waning(length, pars=None):
-    '''
-    Process functional form and parameters into values:
-
-        - 'nab_growth_decay' : based on Khoury et al. (https://www.nature.com/articles/s41591-021-01377-8)
-        - 'nab_decay'   : specific decay function taken from https://doi.org/10.1101/2021.03.09.21252641
-        - 'exp_decay'   : exponential decay. Parameters should be init_val and half_life (half_life can be None/nan)
-        - 'linear_decay': linear decay
-
-    A custom function can also be supplied.
-
-    Args:
-        length (float): length of array to return, i.e., for how long waning is calculated
-        pars (dict): passed to individual immunity functions
-
-    Returns:
-        array of length 'length' of values
-    '''
-
-    pars = sc.dcp(pars)
-    form = pars.pop('form')
-    choices = [
-        'nab_growth_decay', # Default if no form is provided
-        'nab_decay',
-        'exp_decay',
-    ]
-
-    # Process inputs
-    if form is None or form == 'nab_growth_decay':
-        output = nab_growth_decay(length, **pars)
-
-    elif form == 'nab_decay':
-        output = nab_decay(length, **pars)
-
-    elif form == 'exp_decay':
-        if pars['half_life'] is None: pars['half_life'] = np.nan
-        output = exp_decay(length, **pars)
-
-    elif callable(form):
-        output = form(length, **pars)
-
-    else:
-        errormsg = f'The selected functional form "{form}" is not implemented; choices are: {sc.strjoin(choices)}'
-        raise NotImplementedError(errormsg)
-
-    return output
-
-
-def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2, decay_time2):
-    '''
-    Returns an array of length 'length' containing the evaluated function nab growth/decay
-    function at each point.
-
-    Uses linear growth + exponential decay, with the rate of exponential decay also set to
-    decay linearly until it reaches a 10-year half life.
-
-    Args:
-        length (int): number of points
-        growth_time (int): length of time NAbs grow (used to determine slope)
-        decay_rate1 (float): initial rate of exponential decay
-        decay_time1 (float): time on the first exponential decay
-        decay_rate2 (float): the rate of exponential decay in late period
-        decay_time2 (float): how long it takes to transition to late decay period
-    '''
-
-
-    def f1(t, growth_time):
-        '''Simple linear growth'''
-        return (1 / growth_time) * t
-
-    def f2(t, decay_time1, decay_time2, decay_rate1, decay_rate2):
-        decayRate = np.full(len(t), fill_value=decay_rate1)
-        decayRate[cvu.true(t>decay_time2)] = decay_rate2
-        slowing = (1 / (decay_time2 - decay_time1)) * (decay_rate1 - decay_rate2)
-        decayRate[cvu.true((t>decay_time1)*(t<=decay_time2))] = decay_rate1 - slowing * (np.arange(len(cvu.true((t>decay_time1)*(t<=decay_time2))), dtype=cvd.default_int))
-        titre = np.zeros(len(t))
-        for i in range(1, len(t)):
-            titre[i] = titre[i-1]+decayRate[i]
-        return np.exp(-titre)
-
-    length = length + 1
-    t1 = np.arange(growth_time, dtype=cvd.default_int)
-    t2 = np.arange(length - growth_time, dtype=cvd.default_int)
-    y1 = f1(t1, growth_time)
-    y2 = f2(t2, decay_time1, decay_time2, decay_rate1, decay_rate2)
-    y  = np.concatenate([y1,y2])
-    y = np.diff(y)[0:length]
-
-    return y
-
-
-def nab_decay(length, decay_rate1, decay_time1, decay_rate2):
-    '''
-    Returns an array of length 'length' containing the evaluated function nab decay
-    function at each point.
-
-    Uses exponential decay, with the rate of exponential decay also set to exponentially
-    decay (!) after 250 days.
-
-    Args:
-        length (int): number of points
-        decay_rate1 (float): initial rate of exponential decay
-        decay_time1 (float): time on the first exponential decay
-        decay_rate2 (float): the rate at which the decay decays
-    '''
-    def f1(t, decay_rate1):
-        ''' Simple exponential decay '''
-        return np.exp(-t*decay_rate1)
-
-    def f2(t, decay_rate1, decay_time1, decay_rate2):
-        ''' Complex exponential decay '''
-        return np.exp(-t*(decay_rate1*np.exp(-(t-decay_time1)*decay_rate2)))
-
-    t  = np.arange(length, dtype=cvd.default_int)
-    y1 = f1(cvu.true(t<=decay_time1), decay_rate1)
-    y2 = f2(cvu.true(t>decay_time1), decay_rate1, decay_time1, decay_rate2)
-    y  = np.concatenate([[-np.inf],y1,y2])
-    y = np.diff(y)[0:length]
-    y[0] = 1
-    return y
-
+class slope_functions:
 
 def exp_decay(length, init_val, half_life, delay=None):
     '''
