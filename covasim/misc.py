@@ -1,7 +1,7 @@
 '''
 Miscellaneous functions that do not belong anywhere else
 '''
-
+ 
 import numpy as np
 import pandas as pd
 import pylab as pl
