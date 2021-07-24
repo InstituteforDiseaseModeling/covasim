@@ -24,7 +24,7 @@ date_range = sc.daterange
 #%% Loading/saving functions
 
 __all__ += ['load_data', 'load', 'save', 'savefig']
-
+ 
 class manage_data:
     def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
         '''
