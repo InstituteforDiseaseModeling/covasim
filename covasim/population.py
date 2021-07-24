@@ -21,7 +21,7 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-class population():
+class population(people):
     def make_people(self, sim, popdict=None, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
         '''
         Make the actual people for the simulation. Usually called via sim.initialize(),
