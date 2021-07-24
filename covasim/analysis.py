@@ -2,7 +2,7 @@
 Additional analysis functions that are not part of the core Covasim workflow,
 but which are useful for particular investigations.
 '''
- 
+
 import os
 import numpy as np
 import pylab as pl
@@ -293,7 +293,7 @@ class age_histogram(Analyzer):
         # Handle the data file
         if self.datafile is not None:
             if sc.isstring(self.datafile):
-                self.data = cvm.manage_data.load_data(self.datafile, check_date=False)
+                self.data = cvm.load_data(self.datafile, check_date=False)
             else:
                 self.data = self.datafile # Use it directly
                 self.datafile = None
