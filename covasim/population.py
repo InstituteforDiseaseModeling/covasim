@@ -404,3 +404,4 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     popdict['layer_keys'] = list(layer_mapping.values())
 
     return popdict
+    

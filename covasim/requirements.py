@@ -3,14 +3,14 @@ Check that correct versions of each library are installed, and print warnings
 or errors if not.
 '''
 
-# %% Housekeeping
+#%% Housekeeping
 
 __all__ = ['min_versions', 'check_sciris', 'check_synthpops']
 
-min_versions = {'sciris': '1.0.0'}
+min_versions = {'sciris':'1.0.0'}
 
 
-# %% Check dependencies
+#%% Check dependencies
 
 class check_dependencies:
     def check_sciris():
