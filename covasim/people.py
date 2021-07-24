@@ -160,7 +160,7 @@ class People(cvb.BasePeople):
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
         self.death_prob[:]  = progs['death_probs'][inds] # Probability of death
         self.rel_sus[:]     = progs['sus_ORs'][inds]  # Default susceptibilities
-        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
+        self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.class_init.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
         return
 

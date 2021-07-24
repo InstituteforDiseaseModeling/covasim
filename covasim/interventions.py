@@ -1080,7 +1080,7 @@ class contact_tracing(Intervention):
             if this_trace_prob == 0:
                 continue
 
-            traceable_inds = sim.people.contacts[lkey].find_contacts(trace_inds)
+            traceable_inds = sim.people.contacts[lkey].compute_infects.find_contacts(trace_inds)
             if len(traceable_inds):
                 contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
 

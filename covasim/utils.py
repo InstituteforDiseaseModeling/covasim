@@ -36,6 +36,7 @@ cache = cvo.numba_cache # Turning this off can help switching parallelization op
 
 
 #%% The core Covasim functions -- compute the infections
+class compute_infects:
 
 @nb.njit(             (nbint, nbfloat[:], nbfloat[:],     nbfloat[:], nbfloat,   nbfloat,    nbfloat), cache=cache, parallel=safe_parallel)
 def compute_viral_load(t,     time_start, time_recovered, time_dead,  frac_time, load_ratio, high_cap): # pragma: no cover
@@ -138,6 +139,7 @@ def find_contacts(p1, p2, inds): # pragma: no cover
 
 __all__ += ['sample', 'get_pdf', 'set_seed']
 
+class init:
 
 def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     '''
@@ -288,6 +290,7 @@ def set_seed(seed=None):
 __all__ += ['n_binomial', 'binomial_filter', 'binomial_arr', 'n_multinomial',
             'poisson', 'n_poisson', 'n_neg_binomial', 'choose', 'choose_r', 'choose_w']
 
+class math_functions: 
 def n_binomial(prob, n):
     '''
     Perform multiple binomial (Bernolli) trials
@@ -427,6 +430,7 @@ def choose(max_n, n):
     '''
     return np.random.choice(max_n, n, replace=False)
 
+class subset_selection: 
 
 @nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose_r(max_n, n):
@@ -475,7 +479,8 @@ __all__ += ['true',   'false',   'defined',   'undefined',
             'itrue',  'ifalse',  'idefined',  'iundefined',
             'itruei', 'ifalsei', 'idefinedi', 'iundefinedi']
 
-
+class array_ops:
+    
 def true(arr):
     '''
     Returns the indices of the values of the array that are true: just an alias

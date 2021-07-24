@@ -593,7 +593,7 @@ class Sim(cvb.BaseSim):
         date_inf = people.date_infectious
         date_rec = people.date_recovered
         date_dead = people.date_dead
-        viral_load = cvu.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
+        viral_load = cvu.compute_infects.compute_viral_load(t, date_inf, date_rec, date_dead, frac_time, load_ratio, high_cap)
 
         # Shorten useful parameters
         nv = self['n_variants'] # Shorten number of variants
@@ -636,11 +636,11 @@ class Sim(cvb.BaseSim):
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer  = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+                rel_trans, rel_sus = cvu.compute_infects.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
                 for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                    source_inds, target_inds = cvu.compute_infects.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
