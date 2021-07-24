@@ -164,7 +164,7 @@ class People(cvb.BasePeople):
 
         return
 
-
+    # appling aggregate pattern
     class update_state:
         def update_states_pre(self, t):
             ''' Perform all state updates at the current timestep '''
