@@ -621,7 +621,7 @@ class MultiSim(cvb.FlexPretty):
             for sim in sims:
                 obj.sims.append(sim.shrink(in_place=False))
 
-        cvm.save(filename=msimfile, obj=obj) # Actually save
+        cvm.manage_data.save(filename=msimfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
         return msimfile
@@ -643,7 +643,7 @@ class MultiSim(cvb.FlexPretty):
 
             msim = cv.MultiSim.load('my-multisim.msim')
         '''
-        msim = cvm.load(msimfile, *args, **kwargs)
+        msim = cvm.manage_data.load(msimfile, *args, **kwargs)
         if not isinstance(msim, MultiSim):
             errormsg = f'Cannot load object of {type(msim)} as a MultiSim object'
             raise TypeError(errormsg)
@@ -1202,7 +1202,7 @@ class Scenarios(cvb.ParsObj):
                     for sim in sims[key]:
                         obj.sims[key].append(sim.shrink(in_place=False))
 
-        cvm.save(filename=scenfile, obj=obj) # Actually save
+        cvm.manage_data.save(filename=scenfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
         return scenfile
@@ -1224,7 +1224,7 @@ class Scenarios(cvb.ParsObj):
 
             scens = cv.Scenarios.load('my-scenarios.scens')
         '''
-        scens = cvm.load(scenfile, *args, **kwargs)
+        scens = cvm.manage_data.load(scenfile, *args, **kwargs)
         if not isinstance(scens, Scenarios):
             errormsg = f'Cannot load object of {type(scens)} as a Scenarios object'
             raise TypeError(errormsg)
