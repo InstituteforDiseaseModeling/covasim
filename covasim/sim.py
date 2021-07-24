@@ -86,7 +86,7 @@ class Sim(cvb.BaseSim):
         if verbose is None:
             verbose = self['verbose']
         self.datafile = datafile # Store this
-        if datafile is not None: # If a data file is provided, load it
+        if datafile is not None: # If a data file is provided, load it (changed)
             self.data = cvm.manage_data.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
