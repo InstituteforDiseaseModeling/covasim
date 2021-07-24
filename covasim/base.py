@@ -3,7 +3,7 @@ Base classes for Covasim. These classes handle a lot of the boilerplate of the
 People and Sim classes (e.g. loading, saving, key lookups, etc.), so those classes
 can be focused on the disease-specific functionality.
 '''
- 
+
 import numpy as np
 import pandas as pd
 import sciris as sc
@@ -680,7 +680,7 @@ class BaseSim(ParsObj):
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
-        cvm.manage_data.save(filename=filename, obj=obj)
+        cvm.save(filename=filename, obj=obj)
 
         return filename
 
@@ -701,7 +701,7 @@ class BaseSim(ParsObj):
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
-        sim = cvm.manage_data.load(filename, *args, **kwargs)
+        sim = cvm.load(filename, *args, **kwargs)
         if not isinstance(sim, BaseSim): # pragma: no cover
             errormsg = f'Cannot load object of {type(sim)} as a Sim object'
             raise TypeError(errormsg)
