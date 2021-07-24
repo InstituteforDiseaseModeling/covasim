@@ -447,7 +447,7 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         if self.pars['use_waning']:
-            cvi.check_immunity(self, variant, sus=False, inds=inds)
+            cvi.Immunity.check_immunity(self, variant, sus=False, inds=inds)
 
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
@@ -551,7 +551,7 @@ class People(cvb.BasePeople):
             self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
+            cvi.NAb.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
 
         return n_infections # For incrementing counters
 

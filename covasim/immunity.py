@@ -236,7 +236,7 @@ class NAb:
 
         elif form == 'exp_decay':
             if pars['half_life'] is None: pars['half_life'] = np.nan
-            output = NAb.exp_decay(length, **pars)
+            output = Immunity.exp_decay(length, **pars)
 
         elif callable(form):
             output = form(length, **pars)
@@ -320,39 +320,6 @@ class NAb:
         y = np.diff(y)[0:length]
         y[0] = 1
         return y
-
-
-    def exp_decay(length, init_val, half_life, delay=None):
-        '''
-        Returns an array of length t with values for the immunity at each time step after recovery
-        '''
-        length = length+1
-        decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
-        if delay is not None:
-            t = np.arange(length-delay, dtype=cvd.default_int)
-            growth = NAb.linear_growth(delay, init_val/delay)
-            decay = init_val * np.exp(-decay_rate * t)
-            result = np.concatenate([growth, decay], axis=None)
-        else:
-            t = np.arange(length, dtype=cvd.default_int)
-            result = init_val * np.exp(-decay_rate * t)
-        return np.diff(result)
-
-
-    def linear_decay(length, init_val, slope):
-        ''' Calculate linear decay '''
-        result = -slope*np.ones(length)
-        result[0] = init_val
-        return result
-
-
-    def linear_growth(length, slope):
-        ''' Calculate linear growth '''
-        return slope*np.ones(length)
-
-
-
-    
 
 class Efficacy:
     
@@ -455,10 +422,8 @@ class Immunity:
 
         # Next, precompute the NAb kinetics and store these for access during the sim
         sim['nab_kin'] = NAb.precompute_waning(length=sim.npts, pars=sim['nab_decay'])
-
         return
-
-
+    
     def check_immunity(people, variant, sus=True, inds=None):
         '''
         Calculate people's immunity on this timestep from prior infections + vaccination
@@ -533,6 +498,34 @@ class Immunity:
                 people.sev_imm[variant, was_inf] = Efficacy.nab_to_efficacy(current_nabs, 'sev', nab_eff)
 
         return
+    
+    def exp_decay(length, init_val, half_life, delay=None):
+        '''
+        Returns an array of length t with values for the immunity at each time step after recovery
+        '''
+        length = length+1
+        decay_rate = np.log(2) / half_life if ~np.isnan(half_life) else 0.
+        if delay is not None:
+            t = np.arange(length-delay, dtype=cvd.default_int)
+            growth = NAb.linear_growth(delay, init_val/delay)
+            decay = init_val * np.exp(-decay_rate * t)
+            result = np.concatenate([growth, decay], axis=None)
+        else:
+            t = np.arange(length, dtype=cvd.default_int)
+            result = init_val * np.exp(-decay_rate * t)
+        return np.diff(result)
+
+
+    def linear_decay(length, init_val, slope):
+        ''' Calculate linear decay '''
+        result = -slope*np.ones(length)
+        result[0] = init_val
+        return result
+
+
+    def linear_growth(length, slope):
+        ''' Calculate linear growth '''
+        return slope*np.ones(length)
 
 
 
