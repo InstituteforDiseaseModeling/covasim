@@ -179,6 +179,77 @@ class Result(object):
         return len(self.values)
 
 
+class Results:
+    def __init__(self, sim):
+        '''
+        Create the main results structure.
+        We differentiate between flows, stocks, and cumulative results
+        The prefix "new" is used for flow variables, i.e. counting new events (infections/deaths/recoveries) on each timestep
+        The prefix "n" is used for stock variables, i.e. counting the total number in any given state (sus/inf/rec/etc) on any particular timestep
+        The prefix "cum" is used for cumulative variables, i.e. counting the total number that have ever been in a given state at some point in the sim
+        Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions
+        '''
+
+        self.sim = sim
+        self.results = {}
+        dcols = cvd.get_default_colors() # Get default colors
+
+        # Flows and cumulative flows
+        for key,label in cvd.result_flows.items():
+            self.results[f'cum_{key}'] = self.init_res(f'Cumulative {label}', color=dcols[key])  # Cumulative variables -- e.g. "Cumulative infections"
+
+        for key,label in cvd.result_flows.items(): # Repeat to keep all the cumulative keys together
+            self.results[f'new_{key}'] = self.init_res(f'Number of new {label}', color=dcols[key]) # Flow variables -- e.g. "Number of new infections"
+
+        # Stock variables
+        for key,label in cvd.result_stocks.items():
+            self.results[f'n_{key}'] = self.init_res(label, color=dcols[key])
+
+        # Other variables
+        self.results['n_alive']             = self.init_res('Number alive', scale=True)
+        self.results['n_naive']             = self.init_res('Number never infected', scale=True)
+        self.results['n_preinfectious']     = self.init_res('Number preinfectious', scale=True, color=dcols.exposed)
+        self.results['n_removed']           = self.init_res('Number removed', scale=True, color=dcols.recovered)
+        self.results['prevalence']          = self.init_res('Prevalence', scale=False)
+        self.results['incidence']           = self.init_res('Incidence', scale=False)
+        self.results['r_eff']               = self.init_res('Effective reproduction number', scale=False)
+        self.results['doubling_time']       = self.init_res('Doubling time', scale=False)
+        self.results['test_yield']          = self.init_res('Testing yield', scale=False)
+        self.results['rel_test_yield']      = self.init_res('Relative testing yield', scale=False)
+        self.results['frac_vaccinated']     = self.init_res('Proportion vaccinated', scale=False)
+        self.results['pop_nabs']            = self.init_res('Population nab levels', scale=False, color=dcols.pop_nabs)
+        self.results['pop_protection']      = self.init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
+        self.results['pop_symp_protection'] = self.init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
+
+        # Handle variants
+        nv = sim['n_variants']
+        self.results['variant'] = {}
+        self.results['variant']['prevalence_by_variant'] = self.init_res('Prevalence by variant', scale=False, n_variants=nv)
+        self.results['variant']['incidence_by_variant']  = self.init_res('Incidence by variant', scale=False, n_variants=nv)
+        for key,label in cvd.result_flows_by_variant.items():
+            self.results['variant'][f'cum_{key}'] = self.init_res(f'Cumulative {label}', color=dcols[key], n_variants=nv)  # Cumulative variables -- e.g. "Cumulative infections"
+        for key,label in cvd.result_flows_by_variant.items():
+            self.results['variant'][f'new_{key}'] = self.init_res(f'Number of new {label}', color=dcols[key], n_variants=nv) # Flow variables -- e.g. "Number of new infections"
+        for key,label in cvd.result_stocks_by_variant.items():
+            self.results['variant'][f'n_{key}'] = self.init_res(label, color=dcols[key], n_variants=nv)
+
+        # Populate the rest of the results
+        if sim['rescale']:
+            scale = 1
+        else:
+            scale = sim['pop_scale']
+        sim.rescale_vec   = scale*np.ones(sim.npts) # Not included in the results, but used to scale them
+        self.results['date'] = sim.datevec
+        self.results['t']    = sim.tvec
+        
+        return
+
+    def init_res(self, *args, **kwargs):
+        ''' Initialize a single result object '''
+        output = Result(*args, **kwargs, npts=self.sim.npts)
+        return output
+
+
 def set_metadata(obj):
     ''' Set standard metadata for an object '''
     obj.created = sc.now()
