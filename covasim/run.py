@@ -621,7 +621,7 @@ class MultiSim(cvb.FlexPretty):
             for sim in sims:
                 obj.sims.append(sim.shrink(in_place=False))
 
-        cvm.manage_data.save(filename=msimfile, obj=obj) # Actually save
+         cvm.manage_data.save(filename=msimfile, obj=obj) # Actually save
 
         self.sims = sims # Restore
         return msimfile
