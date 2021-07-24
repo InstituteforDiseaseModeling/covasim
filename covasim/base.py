@@ -3,7 +3,7 @@ Base classes for Covasim. These classes handle a lot of the boilerplate of the
 People and Sim classes (e.g. loading, saving, key lookups, etc.), so those classes
 can be focused on the disease-specific functionality.
 '''
-
+ 
 import numpy as np
 import pandas as pd
 import sciris as sc
