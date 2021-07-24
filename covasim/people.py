@@ -165,193 +165,194 @@ class People(cvb.BasePeople):
         return
 
 
-    def update_states_pre(self, t):
-        ''' Perform all state updates at the current timestep '''
+    class update_state:
+        def update_states_pre(self, t):
+            ''' Perform all state updates at the current timestep '''
 
-        # Initialize
-        self.t = t
-        self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
+            # Initialize
+            self.t = t
+            self.is_exp = self.true('exposed') # For storing the interim values since used in every subsequent calculation
 
-        # Perform updates
-        self.init_flows()
-        self.flows['new_infectious']    += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        self.flows['new_symptomatic']   += self.check_symptomatic()
-        self.flows['new_severe']        += self.check_severe()
-        self.flows['new_critical']      += self.check_critical()
-        self.flows['new_recoveries']    += self.check_recovery()
-        new_deaths, new_known_deaths    = self.check_death()
-        self.flows['new_deaths']        += new_deaths
-        self.flows['new_known_deaths']  += new_known_deaths
+            # Perform updates
+            self.init_flows()
+            self.flows['new_infectious']    += self.check_state.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
+            self.flows['new_symptomatic']   += self.check_state.check_symptomatic()
+            self.flows['new_severe']        += self.check_state.check_severe()
+            self.flows['new_critical']      += self.check_state.check_critical()
+            self.flows['new_recoveries']    += self.check_state.check_recovery()
+            new_deaths, new_known_deaths    = self.check_state.check_death()
+            self.flows['new_deaths']        += new_deaths
+            self.flows['new_known_deaths']  += new_known_deaths
 
-        return
-
-
-    def update_states_post(self):
-        ''' Perform post-timestep updates '''
-        self.flows['new_diagnoses']   += self.check_diagnosed()
-        self.flows['new_quarantined'] += self.check_quar()
-        del self.is_exp  # Tidy up
-
-        return
+            return
 
 
-    def update_contacts(self):
-        ''' Refresh dynamic contacts, e.g. community '''
-        # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
-        for lkey, is_dynam in self.pars['dynam_layer'].items():
-            if is_dynam:
-                self.contacts[lkey].update(self)
+        def update_states_post(self):
+            ''' Perform post-timestep updates '''
+            self.flows['new_diagnoses']   += self.check_state.check_diagnosed()
+            self.flows['new_quarantined'] += self.check_state.check_quar()
+            del self.is_exp  # Tidy up
 
-        return self.contacts
+            return
+
+
+        def update_contacts(self):
+            ''' Refresh dynamic contacts, e.g. community '''
+            # Figure out if anything needs to be done -- e.g. {'h':False, 'c':True}
+            for lkey, is_dynam in self.pars['dynam_layer'].items():
+                if is_dynam:
+                    self.contacts[lkey].update(self)
+
+            return self.contacts
 
 
     #%% Methods for updating state
-
-    def check_inds(self, current, date, filter_inds=None):
-        ''' Return indices for which the current state is false and which meet the date criterion '''
-        if filter_inds is None:
-            not_current = cvu.false(current)
-        else:
-            not_current = cvu.ifalsei(current, filter_inds)
-        has_date = cvu.idefinedi(date, not_current)
-        inds     = cvu.itrue(self.t >= date[has_date], has_date)
-        return inds
-
-
-    def check_infectious(self):
-        ''' Check if they become infectious '''
-        inds = self.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
-        self.infectious[inds] = True
-        self.infectious_variant[inds] = self.exposed_variant[inds]
-        for variant in range(self.pars['n_variants']):
-            this_variant_inds = cvu.itrue(self.infectious_variant[inds] == variant, inds)
-            n_this_variant_inds = len(this_variant_inds)
-            self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
-            self.infectious_by_variant[variant, this_variant_inds] = True
-        return len(inds)
+    class check_state:
+        def check_inds(self, current, date, filter_inds=None):
+            ''' Return indices for which the current state is false and which meet the date criterion '''
+            if filter_inds is None:
+                not_current = cvu.false(current)
+            else:
+                not_current = cvu.ifalsei(current, filter_inds)
+            has_date = cvu.idefinedi(date, not_current)
+            inds     = cvu.itrue(self.t >= date[has_date], has_date)
+            return inds
 
 
-    def check_symptomatic(self):
-        ''' Check for new progressions to symptomatic '''
-        inds = self.check_inds(self.symptomatic, self.date_symptomatic, filter_inds=self.is_exp)
-        self.symptomatic[inds] = True
-        return len(inds)
+        def check_infectious(self):
+            ''' Check if they become infectious '''
+            inds = self.check_state.check_inds(self.infectious, self.date_infectious, filter_inds=self.is_exp)
+            self.infectious[inds] = True
+            self.infectious_variant[inds] = self.exposed_variant[inds]
+            for variant in range(self.pars['n_variants']):
+                this_variant_inds = cvu.itrue(self.infectious_variant[inds] == variant, inds)
+                n_this_variant_inds = len(this_variant_inds)
+                self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
+                self.infectious_by_variant[variant, this_variant_inds] = True
+            return len(inds)
 
 
-    def check_severe(self):
-        ''' Check for new progressions to severe '''
-        inds = self.check_inds(self.severe, self.date_severe, filter_inds=self.is_exp)
-        self.severe[inds] = True
-        return len(inds)
+        def check_symptomatic(self):
+            ''' Check for new progressions to symptomatic '''
+            inds = self.check_state.check_inds(self.symptomatic, self.date_symptomatic, filter_inds=self.is_exp)
+            self.symptomatic[inds] = True
+            return len(inds)
 
 
-    def check_critical(self):
-        ''' Check for new progressions to critical '''
-        inds = self.check_inds(self.critical, self.date_critical, filter_inds=self.is_exp)
-        self.critical[inds] = True
-        return len(inds)
+        def check_severe(self):
+            ''' Check for new progressions to severe '''
+            inds = self.check_state.check_inds(self.severe, self.date_severe, filter_inds=self.is_exp)
+            self.severe[inds] = True
+            return len(inds)
 
 
-    def check_recovery(self, inds=None, filter_inds='is_exp'):
-        '''
-        Check for recovery.
-
-        More complex than other functions to allow for recovery to be manually imposed
-        for a specified set of indices.
-        '''
-
-        # Handle more flexible options for setting indices
-        if filter_inds == 'is_exp':
-            filter_inds = self.is_exp
-        if inds is None:
-            inds = self.check_inds(self.recovered, self.date_recovered, filter_inds=filter_inds)
-
-        # Now reset all disease states
-        self.exposed[inds]          = False
-        self.infectious[inds]       = False
-        self.symptomatic[inds]      = False
-        self.severe[inds]           = False
-        self.critical[inds]         = False
-        self.recovered[inds]        = True
-        self.recovered_variant[inds] = self.exposed_variant[inds]
-        self.infectious_variant[inds] = np.nan
-        self.exposed_variant[inds]    = np.nan
-        self.exposed_by_variant[:, inds] = False
-        self.infectious_by_variant[:, inds] = False
+        def check_critical(self):
+            ''' Check for new progressions to critical '''
+            inds = self.check_state.check_inds(self.critical, self.date_critical, filter_inds=self.is_exp)
+            self.critical[inds] = True
+            return len(inds)
 
 
-        # Handle immunity aspects
-        if self.pars['use_waning']:
+        def check_recovery(self, inds=None, filter_inds='is_exp'):
+            '''
+            Check for recovery.
 
-            # Reset additional states
-            self.susceptible[inds] = True
-            self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
+            More complex than other functions to allow for recovery to be manually imposed
+            for a specified set of indices.
+            '''
 
-        return len(inds)
+            # Handle more flexible options for setting indices
+            if filter_inds == 'is_exp':
+                filter_inds = self.is_exp
+            if inds is None:
+                inds = self.check_state.check_inds(self.recovered, self.date_recovered, filter_inds=filter_inds)
 
-
-    def check_death(self):
-        ''' Check whether or not this person died on this timestep  '''
-        inds = self.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
-        self.dead[inds]             = True
-        diag_inds = inds[self.diagnosed[inds]] # Check whether the person was diagnosed before dying
-        self.known_dead[diag_inds]  = True
-        self.susceptible[inds]      = False
-        self.exposed[inds]          = False
-        self.infectious[inds]       = False
-        self.symptomatic[inds]      = False
-        self.severe[inds]           = False
-        self.critical[inds]         = False
-        self.known_contact[inds]    = False
-        self.quarantined[inds]      = False
-        self.recovered[inds]        = False
-        self.infectious_variant[inds] = np.nan
-        self.exposed_variant[inds]    = np.nan
-        self.recovered_variant[inds]  = np.nan
-        return len(inds), len(diag_inds)
+            # Now reset all disease states
+            self.exposed[inds]          = False
+            self.infectious[inds]       = False
+            self.symptomatic[inds]      = False
+            self.severe[inds]           = False
+            self.critical[inds]         = False
+            self.recovered[inds]        = True
+            self.recovered_variant[inds] = self.exposed_variant[inds]
+            self.infectious_variant[inds] = np.nan
+            self.exposed_variant[inds]    = np.nan
+            self.exposed_by_variant[:, inds] = False
+            self.infectious_by_variant[:, inds] = False
 
 
-    def check_diagnosed(self):
-        '''
-        Check for new diagnoses. Since most data are reported with diagnoses on
-        the date of the test, this function reports counts not for the number of
-        people who received a positive test result on a day, but rather, the number
-        of people who were tested on that day who are schedule to be diagnosed in
-        the future.
-        '''
+            # Handle immunity aspects
+            if self.pars['use_waning']:
 
-        # Handle people who tested today who will be diagnosed in future
-        test_pos_inds = self.check_inds(self.diagnosed, self.date_pos_test, filter_inds=None) # Find people who will be diagnosed in future
-        self.date_pos_test[test_pos_inds] = np.nan # Clear date of having will-be-positive test
+                # Reset additional states
+                self.susceptible[inds] = True
+                self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
 
-        # Handle people who were actually diagnosed today
-        diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
-        self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
-        quarantined = cvu.itruei(self.quarantined, diag_inds)
-        self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
-        self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
-
-        return len(test_pos_inds)
+            return len(inds)
 
 
-    def check_quar(self):
-        ''' Update quarantine state '''
+        def check_death(self):
+            ''' Check whether or not this person died on this timestep  '''
+            inds = self.check_state.check_inds(self.dead, self.date_dead, filter_inds=self.is_exp)
+            self.dead[inds]             = True
+            diag_inds = inds[self.diagnosed[inds]] # Check whether the person was diagnosed before dying
+            self.known_dead[diag_inds]  = True
+            self.susceptible[inds]      = False
+            self.exposed[inds]          = False
+            self.infectious[inds]       = False
+            self.symptomatic[inds]      = False
+            self.severe[inds]           = False
+            self.critical[inds]         = False
+            self.known_contact[inds]    = False
+            self.quarantined[inds]      = False
+            self.recovered[inds]        = False
+            self.infectious_variant[inds] = np.nan
+            self.exposed_variant[inds]    = np.nan
+            self.recovered_variant[inds]  = np.nan
+            return len(inds), len(diag_inds)
 
-        n_quarantined = 0 # Number of people entering quarantine
-        for ind,end_day in self._pending_quarantine[self.t]:
-            if self.quarantined[ind]:
-                self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
-                self.quarantined[ind] = True
-                self.date_quarantined[ind] = self.t
-                self.date_end_quarantine[ind] = end_day
-                n_quarantined += 1
 
-        # If someone on quarantine has reached the end of their quarantine, release them
-        end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
-        self.quarantined[end_inds] = False # Release from quarantine
+        def check_diagnosed(self):
+            '''
+            Check for new diagnoses. Since most data are reported with diagnoses on
+            the date of the test, this function reports counts not for the number of
+            people who received a positive test result on a day, but rather, the number
+            of people who were tested on that day who are schedule to be diagnosed in
+            the future.
+            '''
 
-        return n_quarantined
+            # Handle people who tested today who will be diagnosed in future
+            test_pos_inds = self.check_state.check_inds(self.diagnosed, self.date_pos_test, filter_inds=None) # Find people who will be diagnosed in future
+            self.date_pos_test[test_pos_inds] = np.nan # Clear date of having will-be-positive test
+
+            # Handle people who were actually diagnosed today
+            diag_inds  = self.check_state.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
+            self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
+            quarantined = cvu.itruei(self.quarantined, diag_inds)
+            self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
+            self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
+
+            return len(test_pos_inds)
+
+
+        def check_quar(self):
+            ''' Update quarantine state '''
+
+            n_quarantined = 0 # Number of people entering quarantine
+            for ind,end_day in self._pending_quarantine[self.t]:
+                if self.quarantined[ind]:
+                    self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
+                elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
+                    self.quarantined[ind] = True
+                    self.date_quarantined[ind] = self.t
+                    self.date_end_quarantine[ind] = end_day
+                    n_quarantined += 1
+
+            # If someone on quarantine has reached the end of their quarantine, release them
+            end_inds = self.check_state.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
+            self.quarantined[end_inds] = False # Release from quarantine
+
+            return n_quarantined
 
 
     #%% Methods to make events occur (infection and diagnosis)
@@ -402,7 +403,7 @@ class People(cvb.BasePeople):
 
         if set_recovered:
             self.date_recovered[inds] = date_recovered # Reset date recovered
-            self.check_recovered(inds=inds, filter_inds=None) # Set recovered
+            self.check_state.check_recovered(inds=inds, filter_inds=None) # Set recovered
 
         return
 
@@ -447,7 +448,7 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         if self.pars['use_waning']:
-            cvi.check_immunity(self, variant, sus=False, inds=inds)
+            cvi.check_state.check_immunity(self, variant, sus=False, inds=inds)
 
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
@@ -598,7 +599,7 @@ class People(cvb.BasePeople):
         is reached.
 
         Args:
-            inds (int): indices of who to quarantine, specified by check_quar()
+            inds (int): indices of who to quarantine, specified by check_state.check_quar()
             start_date (int): day to begin quarantine (defaults to the current day, `sim.t`)
             period (int): quarantine duration (defaults to ``pars['quar_period']``)
         '''
