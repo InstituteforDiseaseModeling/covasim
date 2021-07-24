@@ -265,7 +265,6 @@ class age_histogram(Analyzer):
 
     def initialize(self, sim):
         super().initialize()
-
         # Handle days
         self.start_day = sc.date(sim['start_day'], as_date=False) # Get the start day, as a string
         self.end_day   = sc.date(sim['end_day'],   as_date=False) # Get the start day, as a string
