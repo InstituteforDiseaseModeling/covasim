@@ -2,7 +2,7 @@
 Additional analysis functions that are not part of the core Covasim workflow,
 but which are useful for particular investigations.
 '''
-
+ 
 import os
 import numpy as np
 import pylab as pl
