@@ -87,7 +87,7 @@ class Sim(cvb.BaseSim):
             verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
+            self.data = cvm.manage_data.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
 
@@ -365,7 +365,7 @@ class Sim(cvb.BaseSim):
             # Load from disk or use directly
             if isinstance(popfile, str): # It's a string, assume it's a filename
                 filepath = sc.makefilepath(filename=popfile, **kwargs)
-                obj = cvm.load(filepath)
+                obj = cvm.manage_data.load(filepath)
                 if self['verbose']:
                     print(f'Loading population from {filepath}')
             else:
