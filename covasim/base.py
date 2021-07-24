@@ -680,7 +680,7 @@ class BaseSim(ParsObj):
             obj = self.shrink(skip_attrs=skip_attrs, in_place=False)
         else:
             obj = self
-        cvm.save(filename=filename, obj=obj)
+        cvm.manage_data.save(filename=filename, obj=obj)
 
         return filename
 
@@ -701,7 +701,7 @@ class BaseSim(ParsObj):
 
             sim = cv.Sim.load('my-simulation.sim')
         '''
-        sim = cvm.load(filename, *args, **kwargs)
+        sim = cvm.manage_data.load(filename, *args, **kwargs)
         if not isinstance(sim, BaseSim): # pragma: no cover
             errormsg = f'Cannot load object of {type(sim)} as a Sim object'
             raise TypeError(errormsg)
