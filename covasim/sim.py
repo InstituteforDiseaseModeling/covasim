@@ -570,7 +570,7 @@ class Sim(cvb.BaseSim):
 
         # Randomly infect some people (imported infections)
         if self['n_imports']:
-            n_imports = cvu.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
+            n_imports = cvu.math_functions.poisson(self['n_imports']/self.rescale_vec[self.t]) # Imported cases
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')

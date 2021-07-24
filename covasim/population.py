@@ -154,7 +154,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
 
     # Handle sexes and ages
     uids           = np.arange(pop_size, dtype=cvd.default_int)
-    sexes          = np.random.binomial(1, sex_ratio, pop_size)
+    sexes          = np.random.math_functions.binomial(1, sex_ratio, pop_size)
     age_data_min   = age_data[:,0]
     age_data_max   = age_data[:,1] + 1 # Since actually e.g. 69.999
     age_data_range = age_data_max - age_data_min
@@ -211,9 +211,9 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
     p_counts = {}
     for lkey in layer_keys:
         if dispersion is None:
-            p_count = cvu.n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
+            p_count = cvu.math_functions.n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
         else:
-            p_count = cvu.n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
+            p_count = cvu.math_functions.n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
         p_counts[lkey] = np.array((p_count/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
@@ -250,7 +250,7 @@ def make_microstructured_contacts(pop_size, contacts):
         cluster_id = -1
         while n_remaining > 0:
             cluster_id += 1 # Assign cluster id
-            this_cluster =  cvu.poisson(cluster_size)  # Sample the cluster size
+            this_cluster =  cvu.math_functions.poisson(cluster_size)  # Sample the cluster size
             if this_cluster > n_remaining:
                 this_cluster = n_remaining
 

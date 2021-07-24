@@ -489,7 +489,7 @@ class People(cvb.BasePeople):
 
         # Use prognosis probabilities to determine what happens to them
         symp_probs = infect_pars['rel_symp_prob']*self.symp_prob[inds]*(1-self.symp_imm[variant, inds]) # Calculate their actual probability of being symptomatic
-        is_symp = cvu.binomial_arr(symp_probs) # Determine if they develop symptoms
+        is_symp = cvu.math_functions.binomial_arr(symp_probs) # Determine if they develop symptoms
         symp_inds = inds[is_symp]
         asymp_inds = inds[~is_symp] # Asymptomatic
         self.flows_variant['new_symptomatic_by_variant'][variant] += len(symp_inds)
@@ -504,7 +504,7 @@ class People(cvb.BasePeople):
         self.dur_inf2sym[symp_inds] = cvu.sample(**durpars['inf2sym'], size=n_symp_inds) # Store how long this person took to develop symptoms
         self.date_symptomatic[symp_inds] = self.date_infectious[symp_inds] + self.dur_inf2sym[symp_inds] # Date they become symptomatic
         sev_probs = infect_pars['rel_severe_prob'] * self.severe_prob[symp_inds]*(1-self.sev_imm[variant, symp_inds]) # Probability of these people being severe
-        is_sev = cvu.binomial_arr(sev_probs) # See if they're a severe or mild case
+        is_sev = cvu.math_functions.binomial_arr(sev_probs) # See if they're a severe or mild case
         sev_inds = symp_inds[is_sev]
         mild_inds = symp_inds[~is_sev] # Not severe
         self.flows_variant['new_severe_by_variant'][variant] += len(sev_inds)
@@ -518,7 +518,7 @@ class People(cvb.BasePeople):
         self.dur_sym2sev[sev_inds] = cvu.sample(**durpars['sym2sev'], size=len(sev_inds)) # Store how long this person took to develop severe symptoms
         self.date_severe[sev_inds] = self.date_symptomatic[sev_inds] + self.dur_sym2sev[sev_inds]  # Date symptoms become severe
         crit_probs = infect_pars['rel_crit_prob'] * self.crit_prob[sev_inds] * (self.pars['no_hosp_factor'] if hosp_max else 1.) # Probability of these people becoming critical - higher if no beds available
-        is_crit = cvu.binomial_arr(crit_probs)  # See if they're a critical case
+        is_crit = cvu.math_functions.binomial_arr(crit_probs)  # See if they're a critical case
         crit_inds = sev_inds[is_crit]
         non_crit_inds = sev_inds[~is_crit]
 
@@ -531,7 +531,7 @@ class People(cvb.BasePeople):
         self.dur_sev2crit[crit_inds] = cvu.sample(**durpars['sev2crit'], size=len(crit_inds))
         self.date_critical[crit_inds] = self.date_severe[crit_inds] + self.dur_sev2crit[crit_inds]  # Date they become critical
         death_probs = infect_pars['rel_death_prob'] * self.death_prob[crit_inds] * (self.pars['no_icu_factor'] if icu_max else 1.)# Probability they'll die
-        is_dead = cvu.binomial_arr(death_probs)  # Death outcome
+        is_dead = cvu.math_functions.binomial_arr(death_probs)  # Death outcome
         dead_inds = crit_inds[is_dead]
         alive_inds = crit_inds[~is_dead]
 
@@ -573,11 +573,11 @@ class People(cvb.BasePeople):
         self.date_tested[inds] = self.t # Only keep the last time they tested
 
         is_infectious = cvu.itruei(self.infectious, inds)
-        pos_test      = cvu.n_binomial(test_sensitivity, len(is_infectious))
+        pos_test      = cvu.math_functions.n_binomial(test_sensitivity, len(is_infectious))
         is_inf_pos    = is_infectious[pos_test]
 
         not_diagnosed = is_inf_pos[np.isnan(self.date_diagnosed[is_inf_pos])]
-        not_lost      = cvu.n_binomial(1.0-loss_prob, len(not_diagnosed))
+        not_lost      = cvu.math_functions.n_binomial(1.0-loss_prob, len(not_diagnosed))
         final_inds    = not_diagnosed[not_lost]
 
         # Store the date the person will be diagnosed, as well as the date they took the test which will come back positive

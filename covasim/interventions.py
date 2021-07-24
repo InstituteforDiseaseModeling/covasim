@@ -941,7 +941,7 @@ class test_prob(Intervention):
             subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
             test_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
         test_probs[diag_inds] = 0.0 # People who are diagnosed don't test
-        test_inds = cvu.true(cvu.binomial_arr(test_probs)) # Finally, calculate who actually tests
+        test_inds = cvu.true(cvu.math_functions.binomial_arr(test_probs)) # Finally, calculate who actually tests
 
         # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
@@ -1082,7 +1082,7 @@ class contact_tracing(Intervention):
 
             traceable_inds = sim.people.contacts[lkey].compute_infects.find_contacts(trace_inds)
             if len(traceable_inds):
-                contacts[self.trace_time[lkey]].extend(cvu.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
+                contacts[self.trace_time[lkey]].extend(cvu.math_functions.binomial_filter(this_trace_prob, traceable_inds)) # Filter the indices according to the probability of being able to trace this layer
 
         array_contacts = {}
         for trace_time, inds in contacts.items():
@@ -1190,7 +1190,7 @@ class simple_vaccine(Intervention):
             if self.subtarget is not None:
                 subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                 vacc_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
+            vacc_inds = cvu.true(cvu.math_functions.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
             # Calculate the effect per person
             vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
@@ -1486,7 +1486,7 @@ class vaccinate_prob(BaseVaccination):
                 else:
                     vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
                 vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
-                vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+                vacc_inds = cvu.true(cvu.math_functions.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds

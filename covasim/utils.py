@@ -206,8 +206,8 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     elif dist in ['norm', 'normal']:  samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
     elif dist == 'normal_pos':        samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
     elif dist == 'normal_int':        samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
-    elif dist == 'poisson':           samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
-    elif dist == 'neg_binomial':      samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
+    elif dist == 'poisson':           samples = math_functions.n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
+    elif dist == 'neg_binomial':      samples = math_functions.n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
     elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
         if par1>0:
             mean  = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Computes the mean of the underlying normal distribution
@@ -415,6 +415,7 @@ def n_neg_binomial(rate, dispersion, n, step=1): # Numba not used due to incompa
     return samples
 
 
+class subset_selection: 
 @nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose(max_n, n):
     '''
@@ -429,8 +430,6 @@ def choose(max_n, n):
         choices = cv.choose(5, 2) # choose 2 out of 5 people with equal probability (without repeats)
     '''
     return np.random.choice(max_n, n, replace=False)
-
-class subset_selection: 
 
 @nb.njit((nbint, nbint), cache=cache) # Numba hugely increases performance
 def choose_r(max_n, n):
