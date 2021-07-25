@@ -915,7 +915,8 @@ class Fit(Analyzer):
         fit = sim.compute_fit()
         fit.plot()
     '''
-
+    com = Compute()
+    
     def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
 
@@ -974,10 +975,10 @@ class Fit(Analyzer):
     def compute(self):
         ''' Perform all required computations '''
         self.reconcile_inputs() # Find matching values
-        self.compute_diffs() # Perform calculations
-        self.compute_gofs()
-        self.compute_losses()
-        self.compute_mismatch()
+        self.com.compute_diffs() # Perform calculations
+        self.com.compute_gofs()
+        self.com.compute_losses()
+        self.com.compute_mismatch()
         return self.mismatch
 
 
@@ -1073,58 +1074,6 @@ class Fit(Analyzer):
                 print('Warning: ', errormsg)
 
         return
-
-
-    def compute_diffs(self, absolute=False):
-        ''' Find the differences between the sim and the data '''
-        for key in self.pair.keys():
-            self.diffs[key] = self.pair[key].sim - self.pair[key].data
-            if absolute:
-                self.diffs[key] = np.abs(self.diffs[key])
-        return
-
-
-    def compute_gofs(self, **kwargs):
-        ''' Compute the goodness-of-fit '''
-        kwargs = sc.mergedicts(self.gof_kwargs, kwargs)
-        for key in self.pair.keys():
-            actual    = sc.dcp(self.pair[key].data)
-            predicted = sc.dcp(self.pair[key].sim)
-            self.gofs[key] = cvm.compute_gof(actual, predicted, **kwargs)
-        return
-
-
-    def compute_losses(self):
-        ''' Compute the weighted goodness-of-fit '''
-        for key in self.gofs.keys():
-            if key in self.weights:
-                weight = self.weights[key]
-                if sc.isiterable(weight): # It's an array
-                    len_wt = len(weight)
-                    len_sim = self.sim_npts
-                    len_match = len(self.gofs[key])
-                    if len_wt == len_match: # If the weight already is the right length, do nothing
-                        pass
-                    elif len_wt == len_sim: # Most typical case: it's the length of the simulation, must trim
-                        weight = weight[self.inds.sim[key]] # Trim to matching indices
-                    else: # pragma: no cover
-                        errormsg = f'Could not map weight array of length {len_wt} onto simulation of length {len_sim} or data-model matches of length {len_match}'
-                        raise ValueError(errormsg)
-            else:
-                weight = 1.0
-            self.losses[key] = self.gofs[key]*weight
-        return
-
-
-    def compute_mismatch(self, use_median=False):
-        ''' Compute the final mismatch '''
-        for key in self.losses.keys():
-            if use_median:
-                self.mismatches[key] = np.median(self.losses[key])
-            else:
-                self.mismatches[key] = np.sum(self.losses[key])
-        self.mismatch = self.mismatches[:].sum()
-        return self.mismatch
 
 
     def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
@@ -1234,6 +1183,59 @@ class Fit(Analyzer):
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
         return fig
+
+
+class Compute(Analyzer):
+    def compute_diffs(self, absolute=False):
+        ''' Find the differences between the sim and the data '''
+        for key in self.pair.keys():
+            self.diffs[key] = self.pair[key].sim - self.pair[key].data
+            if absolute:
+                self.diffs[key] = np.abs(self.diffs[key])
+        return
+
+
+    def compute_gofs(self, **kwargs):
+        ''' Compute the goodness-of-fit '''
+        kwargs = sc.mergedicts(self.gof_kwargs, kwargs)
+        for key in self.pair.keys():
+            actual    = sc.dcp(self.pair[key].data)
+            predicted = sc.dcp(self.pair[key].sim)
+            self.gofs[key] = cvm.compute_gof(actual, predicted, **kwargs)
+        return
+
+
+    def compute_losses(self):
+        ''' Compute the weighted goodness-of-fit '''
+        for key in self.gofs.keys():
+            if key in self.weights:
+                weight = self.weights[key]
+                if sc.isiterable(weight): # It's an array
+                    len_wt = len(weight)
+                    len_sim = self.sim_npts
+                    len_match = len(self.gofs[key])
+                    if len_wt == len_match: # If the weight already is the right length, do nothing
+                        pass
+                    elif len_wt == len_sim: # Most typical case: it's the length of the simulation, must trim
+                        weight = weight[self.inds.sim[key]] # Trim to matching indices
+                    else: # pragma: no cover
+                        errormsg = f'Could not map weight array of length {len_wt} onto simulation of length {len_sim} or data-model matches of length {len_match}'
+                        raise ValueError(errormsg)
+            else:
+                weight = 1.0
+            self.losses[key] = self.gofs[key]*weight
+        return
+
+
+    def compute_mismatch(self, use_median=False):
+        ''' Compute the final mismatch '''
+        for key in self.losses.keys():
+            if use_median:
+                self.mismatches[key] = np.median(self.losses[key])
+            else:
+                self.mismatches[key] = np.sum(self.losses[key])
+        self.mismatch = self.mismatches[:].sum()
+        return self.mismatch
 
 
 
