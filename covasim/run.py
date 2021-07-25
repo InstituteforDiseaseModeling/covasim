@@ -19,18 +19,18 @@ from .settings import options as cvo
 __all__ = ['make_metapars', 'MultiSim', 'Scenarios', 'single_run', 'multi_run']
 
 
-
-def make_metapars():
-    ''' Create default metaparameters for a Scenarios run '''
-    metapars = sc.objdict(
-        n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
-        noise     = 0.0, # Use noise, optionally
-        noisepar  = 'beta',
-        rand_seed = 1,
-        quantiles = {'low':0.1, 'high':0.9},
-        verbose   = cvo.verbose,
-    )
-    return metapars
+class Make():
+    def make_metapars():
+        ''' Create default metaparameters for a Scenarios run '''
+        metapars = sc.objdict(
+            n_runs    = 3, # Number of parallel runs; change to 3 for quick, 11 for real
+            noise     = 0.0, # Use noise, optionally
+            noisepar  = 'beta',
+            rand_seed = 1,
+            quantiles = {'low':0.1, 'high':0.9},
+            verbose   = cvo.verbose,
+        )
+        return metapars
 
 
 class MultiSim(cvb.FlexPretty):
@@ -69,6 +69,7 @@ class MultiSim(cvb.FlexPretty):
         msim = cv.MultiSim(sims) # Convert to multisim
         msim.plot() # Plot as single sim
     '''
+    make = Make()
 
     def __init__(self, sims=None, base_sim=None, label=None, initialize=False, **kwargs):
 
@@ -879,7 +880,7 @@ class Scenarios(cvb.ParsObj):
     def __init__(self, sim=None, metapars=None, scenarios=None, basepars=None, scenfile=None, label=None):
 
         # For this object, metapars are the foundation
-        default_pars = make_metapars() # Start with default pars
+        default_pars = make.make_metapars() # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
         cvb.set_metadata(self) # Set version, date, and git info
 
