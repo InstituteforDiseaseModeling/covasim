@@ -129,7 +129,7 @@ class immunity:
 
 
 #%% Neutralizing antibody methods
-    class nab:
+    class nab(immunity):
         def get_vaccine_pars(pars):
             '''
             Temporary helper function to get vaccine parameters; to be refactored
@@ -397,7 +397,7 @@ class immunity:
 
 
     #%% Methods for computing waning
-    class waning:
+    class waning(immunity):
         def precompute_waning(length, pars=None):
             '''
             Process functional form and parameters into values:
