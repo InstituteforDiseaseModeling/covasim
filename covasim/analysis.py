@@ -86,6 +86,19 @@ class Analyzer(sc.prettyobj):
         raise NotImplementedError
 
 
+    def shrink(self, in_place=False):
+        '''
+        Remove any excess stored data from the intervention; for use with sim.shrink().
+
+        Args:
+            in_place (bool): whether to shrink the intervention (else shrink a copy)
+        '''
+        if in_place:
+            return self
+        else:
+            return sc.dcp(self)
+
+
     def to_json(self):
         '''
         Return JSON-compatible representation

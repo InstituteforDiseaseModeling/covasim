@@ -17,10 +17,7 @@ from . import immunity as cvi
 from collections import defaultdict
 
 
-#%% Generic intervention classes
-
-__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
-
+#%% Helper functions
 
 def find_day(arr, t=None, interv=None, sim=None, which='first'):
     '''
@@ -217,6 +214,12 @@ def InterventionDict(which, pars):
     return intervention
 
 
+
+#%% Generic intervention classes
+
+__all__ = ['InterventionDict', 'Intervention', 'dynamic_pars', 'sequence']
+
+
 class Intervention:
     '''
     Base class for interventions. By default, interventions are printed using a
@@ -328,6 +331,19 @@ class Intervention:
             None
         '''
         raise NotImplementedError
+
+
+    def shrink(self, in_place=False):
+        '''
+        Remove any excess stored data from the intervention; for use with sim.shrink().
+
+        Args:
+            in_place (bool): whether to shrink the intervention (else shrink a copy)
+        '''
+        if in_place:
+            return self
+        else:
+            return sc.dcp(self)
 
 
     def plot_intervention(self, sim, ax=None, **kwargs):
@@ -1409,13 +1425,16 @@ class BaseVaccination(Intervention):
             inds = self.vaccinate(sim, inds)
         return inds
 
-    def shrink(self):
+
+    def shrink(self, in_place=True):
         ''' Shrink vaccination intervention '''
-        self.vaccinated = None
-        self.vaccinations = None
-        self.vaccination_dates = None
-        if hasattr(self, 'second_dose_days'):
-            self.second_dose_days = None
+        obj = super().shrink(in_place=in_place)
+        obj.vaccinated = None
+        obj.vaccinations = None
+        obj.vaccination_dates = None
+        if hasattr(obj, 'second_dose_days'):
+            obj.second_dose_days = None
+        return obj
 
 
 def vaccinate(*args, **kwargs):

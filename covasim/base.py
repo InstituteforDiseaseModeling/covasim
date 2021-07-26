@@ -628,7 +628,7 @@ class BaseSim(ParsObj):
             skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people"
 
         Returns:
-            shrunken_sim (Sim): a Sim object with the listed attributes removed
+            shrunken (Sim): a Sim object with the listed attributes removed
         '''
 
         # By default, skip people (~90% of memory), the popdict (which is usually empty anyway), and _orig_pars (which is just a backup)
@@ -637,13 +637,25 @@ class BaseSim(ParsObj):
 
         # Create the new object, and copy original dict, skipping the skipped attributes
         if in_place:
+            shrunken = self
             for attr in skip_attrs:
                 setattr(self, attr, None)
             return
         else:
-            shrunken_sim = object.__new__(self.__class__)
-            shrunken_sim.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
-            return shrunken_sim
+            shrunken = object.__new__(self.__class__)
+            shrunken.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
+
+        # Shrink interventions and analyzers, with a lot of checking along the way
+        if hasattr(shrunken, 'pars'): # In case the user removes this
+            for key in ['interventions', 'analyzers']:
+                ia_list = self.pars[key] # List of interventions or analyzers
+                self.pars[key] = [ia.shrink(in_place=in_place) for ia in ia_list] # Actually shrink, and re-store
+
+        # Don't return if in place
+        if in_place:
+            return
+        else:
+            return shrunken
 
 
     def save(self, filename=None, keep_people=None, skip_attrs=None, **kwargs):
