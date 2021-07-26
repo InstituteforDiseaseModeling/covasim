@@ -71,7 +71,14 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
+    pars['nab_eff']         = dict( # Parameters to map nabs to efficacy
+        alpha_inf=2.1238829151987986,
+        beta_inf=0.605829675352584,
+        alpha_symp_inf=-1.9999999981702656,
+        beta_symp_inf=1.6107573711547896,
+        alpha_sev_symp=1.0266617843930277,
+        beta_sev_symp=0.03960555611994232
+    )
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
@@ -411,7 +418,7 @@ def get_cross_immunity(default=False):
         wild = dict(
             wild   = 1.0, # Default for own-immunity
             b117   = 0.5, # Assumption
-            b1351  = 0.5, # Assumption
+            b1351  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
             p1     = 0.5, # Assumption
             b16172 = 0.5, # Assumption
         ),
@@ -471,9 +478,9 @@ def get_vaccine_variant_pars(default=False):
 
         pfizer = dict(
             wild   = 1.0,
-            b117   = 1/2.0,
-            b1351  = 1/6.7,
-            p1     = 1/6.5,
+            b117   = 1/2.0, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            b1351  = 1/10.3, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            p1     = 1/6.7, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
             b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
@@ -481,7 +488,7 @@ def get_vaccine_variant_pars(default=False):
             wild   = 1.0,
             b117   = 1/1.8,
             b1351  = 1/4.5,
-            p1     = 1/8.6,
+            p1     = 1/8.6, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
             b16172 = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
@@ -496,9 +503,9 @@ def get_vaccine_variant_pars(default=False):
         jj = dict(
             wild   = 1.0,
             b117   = 1.0,
-            b1351  = 1/6.7,
-            p1     = 1/8.6,
-            b16172 = 1/6.2,  # Assumption, no data available yet
+            b1351  = 1/3.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
+            p1     = 1/3.4,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
+            b16172 = 1/1.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
         ),
 
         novavax = dict( # Data from https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
@@ -523,19 +530,19 @@ def get_vaccine_dose_pars(default=False):
 
     # Default vaccine NAb efficacy is nearly identical to infection -- only alpha_inf differs
     default_nab_eff = dict(
-        alpha_inf      =  1.11,
-        beta_inf       =  1.219,
-        alpha_symp_inf = -1.06,
-        beta_symp_inf  =  0.867,
-        alpha_sev_symp =  0.268,
-        beta_sev_symp  =  3.4
+        alpha_inf      =  1.161680688637602,
+        beta_inf       =  0.605829675352584,
+        alpha_symp_inf = -1.9999999981702656,
+        beta_symp_inf  =  1.6107573711547896,
+        alpha_sev_symp =  1.0266617843930277,
+        beta_sev_symp  =  0.03960555611994232
     )
 
     pars = dict(
 
         default = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 2,
             doses     = 1,
             interval  = None,
@@ -543,7 +550,7 @@ def get_vaccine_dose_pars(default=False):
 
         pfizer = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 21,
@@ -551,7 +558,7 @@ def get_vaccine_dose_pars(default=False):
 
         moderna = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=2, par2=2),
+            nab_init  = dict(dist='normal', par1=0, par2=2),
             nab_boost = 3,
             doses     = 2,
             interval  = 28,
