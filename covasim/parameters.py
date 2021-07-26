@@ -71,14 +71,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict( # Parameters to map nabs to efficacy
-        alpha_inf=2.1238829151987986,
-        beta_inf=0.605829675352584,
-        alpha_symp_inf=-1.9999999981702656,
-        beta_symp_inf=1.6107573711547896,
-        alpha_sev_symp=1.0266617843930277,
-        beta_sev_symp=0.03960555611994232
-    )
+    pars['nab_eff']         = dict(alpha_inf=2.12, beta_inf=0.61, alpha_symp_inf=-2.0, beta_symp_inf=1.61, alpha_sev_symp=1.03, beta_sev_symp=0.04) # Parameters to map nabs to efficacy for natural infection -- see below for vaccine-derived
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
 
@@ -530,12 +523,12 @@ def get_vaccine_dose_pars(default=False):
 
     # Default vaccine NAb efficacy is nearly identical to infection -- only alpha_inf differs
     default_nab_eff = dict(
-        alpha_inf      =  1.161680688637602,
-        beta_inf       =  0.605829675352584,
-        alpha_symp_inf = -1.9999999981702656,
-        beta_symp_inf  =  1.6107573711547896,
-        alpha_sev_symp =  1.0266617843930277,
-        beta_sev_symp  =  0.03960555611994232
+        alpha_inf      =  1.16,
+        beta_inf       =  0.61,
+        alpha_symp_inf = -2.0,
+        beta_symp_inf  =  1.61,
+        alpha_sev_symp =  1.03,
+        beta_sev_symp  =  0.04,
     )
 
     pars = dict(
