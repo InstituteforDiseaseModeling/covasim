@@ -1390,8 +1390,8 @@ class BaseVaccination(Intervention):
         if len(vacc_inds):
             self.vaccinations[vacc_inds] += 1
             self.vaccination_dates[vacc_inds] = sim.t
-            sim.people.flows['new_vaccinations'] += len(vacc_inds)
-            sim.people.flows['new_vaccinated']   += np.sum(sim.people.vaccinations[vacc_inds] == 0)
+            sim.people.flows['new_vaccinations'] += len(vacc_inds) # Count number of doses given
+            sim.people.flows['new_vaccinated']   += np.sum(sim.people.vaccinations[vacc_inds] == 0) # Count number of people not already vaccinated given doses
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
@@ -1491,8 +1491,6 @@ class vaccinate_prob(BaseVaccination):
 
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
-                    #sim.people.flows['new_vaccinations'] += len(vacc_inds)
-                    #sim.people.flows['new_vaccinated'] += len(vacc_inds)
                     if self.p.interval is not None:
                         next_dose_day = sim.t + self.p.interval
                         if next_dose_day < sim['n_days']:
@@ -1608,7 +1606,7 @@ class vaccinate_num(BaseVaccination):
 
         if len(first_dose_eligible) == 0:
             return scheduled  # Just return anyone that is scheduled
-        elif len(first_dose_eligible) > num_agents: 
+        elif len(first_dose_eligible) > num_agents:
             # Truncate it to the number of agents for performance when checking whether anyone scheduled overlaps with first doses to allocate
             first_dose_eligible = first_dose_eligible[:num_agents] # This is the maximum number of people we could vaccinate this timestep, if there are no second doses allocated
 
