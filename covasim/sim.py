@@ -1227,6 +1227,42 @@ class Sim(cvb.BaseSim):
             return
 
 
+    def make_recontree(self, test_label, prop_seq, *args, output=True, **kwargs):
+        '''
+        Create a ReconTree (reconstructed tree) object, for use in phylodynamic
+        analysis. See cv.ReconTree() for more information.
+
+        Args:
+            test_label (str): the label of the testing intervention to sample diagnoses from.
+            prop_seq (float): the probability of including a diagnosed individual.
+            args   (list): passed to cv.ReconTree() and cv.TransTree()
+            output (bool): whether or not to return the ReconTree; if not, store in sim.results
+            kwargs (dict): passed to cv.ReconTree() and cv.TransTree()
+
+        **Example**::
+            test_label = "my_testing"
+            testing = cv.test_prob(label=test_label, symp_prob=0.5)
+            sim = cv.Sim(interventions = testing)
+            sim.run()
+            rt = sim.make_recontree(test_label, 0.5)
+        '''
+        assert 0 < prop_seq and prop_seq < 1
+        # it only makes sense to ask for a reconstructed tree if there were
+        # positive tests so better to fail early if there was not a
+        maybe_test = self.get_intervention(label=test_label)
+        assert isinstance(maybe_test, cvi.test_prob) or isinstance(maybe_test, cvi.test_num)
+        del maybe_test
+
+        tt = self.make_transtree(*args, output=True, to_networkx=True, **kwargs)
+        rt = cva.ReconTree(self, tt, test_label, prop_seq, *args, **kwargs)
+        if output:
+            return rt
+        else: # pragma: no cover
+            self.results.transtree = tt
+            self.results.recontree = rt
+            return
+
+
     def plot(self, *args, **kwargs):
         '''
         Plot the results of a single simulation.

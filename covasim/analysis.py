@@ -2012,3 +2012,35 @@ class TransTree(Analyzer):
 
         return fig
 
+
+class ReconTree(Analyzer):
+    '''
+    A class for holding a reconstructed tree.
+
+    Args:
+        tt (TransTree): the transmission tree object
+        test_label (str): the label of the testing intervention to sample diagnoses from.
+        prop_seq (float): the probability of including a diagnosed individual.
+
+    **Example**::
+
+        test_label = "my_testing"
+        testing = cv.test_prob(label=test_label, symp_prob=0.5)
+        sim = cv.Sim(interventions = testing)
+        sim.run()
+        rt = sim.make_recontree(test_label, 0.5)
+    '''
+
+    def __init__(self, tt, test_label, prop_seq, **kwargs):
+        super().__init__(**kwargs) # Initialize the Analyser object
+
+        self.test_label = test_label
+        self.prop_seq = prop_seq
+
+        return
+
+    def to_newick(self):
+        '''
+        Return a Newick string representation of the reconstructed tree.
+        '''
+        raise NotImplementedError
