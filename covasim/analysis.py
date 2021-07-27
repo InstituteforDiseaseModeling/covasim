@@ -1539,7 +1539,8 @@ class TransTree(Analyzer):
 
             # Next, add edges from linelist
             for edge in people.infection_log:
-                self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
+                if edge['source'] is not None: # Skip seed infections
+                    self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
 
         return
 
