@@ -188,11 +188,11 @@ def test_recontree():
 
     test_label = 'my_test'
     tp = cv.test_prob(label=test_label, symp_prob=0.9)
-    sim = cv.Sim(interventions = tp)
+    sim = cv.Sim(pop_size = 200, interventions = tp)
     sim.run()
 
     try:
-        recontree = sim.make_recontree(test_label, prop_seq=0.5)
+        recontree = sim.make_recontree(test_label, prop_seq=0.9)
         recontree.to_newick()
     except ImportError as E:
         print(f'Could not test conversion to networkx ({str(E)})')
