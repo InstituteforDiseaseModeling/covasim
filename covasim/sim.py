@@ -1227,7 +1227,7 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def make_recontree(self, test_label, prop_seq, *args, output=True, **kwargs):
+    def make_recontree(self, test_label, prop_seq, output=True, **kwargs):
         '''
         Create a ReconTree (reconstructed tree) object, for use in phylodynamic
         analysis. See cv.ReconTree() for more information.
@@ -1253,7 +1253,7 @@ class Sim(cvb.BaseSim):
         assert isinstance(maybe_test, cvi.test_prob) or isinstance(maybe_test, cvi.test_num)
         del maybe_test
 
-        tt = self.make_transtree(*args, output=True, to_networkx=True, **kwargs)
+        tt = self.make_transtree(output=True, to_networkx=True)
 
         all_people = self.people
         rt = cva.ReconTree(all_people, tt, test_label, prop_seq, **kwargs)
