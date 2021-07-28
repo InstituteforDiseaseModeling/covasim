@@ -1254,7 +1254,9 @@ class Sim(cvb.BaseSim):
         del maybe_test
 
         tt = self.make_transtree(*args, output=True, to_networkx=True, **kwargs)
-        rt = cva.ReconTree(self, tt, test_label, prop_seq, *args, **kwargs)
+
+        all_people = self.people
+        rt = cva.ReconTree(all_people, tt, test_label, prop_seq, **kwargs)
         if output:
             return rt
         else: # pragma: no cover
