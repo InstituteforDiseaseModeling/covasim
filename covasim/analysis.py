@@ -2125,7 +2125,7 @@ class ReconTree(Analyzer):
 
             test_label = "my_testing"
             testing = cv.test_prob(label=test_label, symp_prob=0.5)
-            sim = cv.Sim(interventions = testing)
+            sim = cv.Sim(pop_size=500, interventions = testing)
             sim.run()
             rt = sim.make_recontree(test_label, 0.5)
             rt.to_newick()
