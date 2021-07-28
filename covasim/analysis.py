@@ -2342,7 +2342,13 @@ class ReconTree(Analyzer):
         return
 
     def _split_diagnosed(self, rt, curr_node, pred, succs):
-
+        '''
+        Args:
+            rt: current tree object.
+            curr_node: the node to be split.
+            pred: the predecessor of the current node.
+            succs: a list of the successor nodes of the current node.
+        '''
         if self.verbose == 2:
             print("splitting the node of {curr_node}".format(curr_node=curr_node))
 
@@ -2350,37 +2356,38 @@ class ReconTree(Analyzer):
         inf_dates = list(set(self._infection_date[s] for s in succs))
         inf_dates.sort()
 
-        if diag_date in inf_dates:
-            raise NotImplemented("case of diagnosis occurring on the same day as infection.")
-        else:
-            pre_diag_inf_dates = filter(lambda d: d < diag_date, inf_dates)
-            post_diag_inf_dates = filter(lambda d: d > diag_date, inf_dates)
+        # Section 2.1 of the covasim paper says that in interventions are
+        # applied before transmission events on each day. Hence when a
+        # diagnosis and an infection occur on the same day, we can assume that
+        # the diagnosis happened first.
+        pre_diag_inf_dates = filter(lambda d: d < diag_date, inf_dates)
+        post_diag_inf_dates = filter(lambda d: d >= diag_date, inf_dates)
 
-            tmp = pred
-            for inf_d in pre_diag_inf_dates:
-                ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
-                inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
-                rt.add_node(inf_node_id)
-                rt.add_edge(tmp, inf_node_id)
-                for s in ss:
-                    rt.add_edge(inf_node_id, s)
-                tmp = inf_node_id
+        tmp = pred
+        for inf_d in pre_diag_inf_dates:
+            ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
+            inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
+            rt.add_node(inf_node_id)
+            rt.add_edge(tmp, inf_node_id)
+            for s in ss:
+                rt.add_edge(inf_node_id, s)
+            tmp = inf_node_id
 
-            nid = "diagnosis of {n} on {d}".format(n=curr_node, d=diag_date)
-            rt.add_node(nid)
-            rt.add_edge(tmp, nid)
-            tmp = nid
+        nid = "diagnosis of {n} on {d}".format(n=curr_node, d=diag_date)
+        rt.add_node(nid)
+        rt.add_edge(tmp, nid)
+        tmp = nid
 
-            for inf_d in post_diag_inf_dates:
-                ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
-                inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
-                rt.add_node(inf_node_id)
-                rt.add_edge(tmp, inf_node_id)
-                for s in ss:
-                    rt.add_edge(inf_node_id, s)
-                tmp = inf_node_id
+        for inf_d in post_diag_inf_dates:
+            ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
+            inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
+            rt.add_node(inf_node_id)
+            rt.add_edge(tmp, inf_node_id)
+            for s in ss:
+                rt.add_edge(inf_node_id, s)
+            tmp = inf_node_id
 
-            rt.remove_node(curr_node)
+        rt.remove_node(curr_node)
 
         return
 
