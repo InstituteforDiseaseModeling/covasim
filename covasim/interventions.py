@@ -1776,8 +1776,6 @@ class historical_vaccinate_prob(BaseVaccination):
 
                 if len(vacc_inds):
                     self.vaccinated[rel_t] = vacc_inds
-                    sim.people.flows['new_vaccinations'] += len(vacc_inds)
-                    sim.people.flows['new_vaccinated'] += len(vacc_inds)
                     if self.p.interval is not None:
                         next_dose_day = rel_t + self.p.interval
                         if next_dose_day < sim['n_days']:
@@ -1790,53 +1788,6 @@ class historical_vaccinate_prob(BaseVaccination):
 
         return vacc_inds
 
-    def run_vaccination(self, t, sim):
-
-        # our vaccination arrays are prepended with extra days
-        rel_t = t + self.extra_days
-
-        # Vaccinate people with their first dose
-        vacc_inds = np.array([], dtype=int)  # Initialize in case no one gets their first dose
-        for _ in find_day(self.days, t, interv=self, sim=sim):
-            vacc_probs = np.zeros(sim['pop_size'])
-            unvacc_inds = sc.findinds(~sim.people.vaccinated)
-            if self.subtarget is not None:
-                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
-                if len(subtarget_vals):
-                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
-            else:
-                vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
-            vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
-            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
-
-            if len(vacc_inds):
-                self.vaccinated[rel_t] = vacc_inds
-                sim.people.flows['new_vaccinations'] += len(vacc_inds)
-                sim.people.flows['new_vaccinated'] += len(vacc_inds)
-                if self.p.interval is not None:
-                    next_dose_day = rel_t + self.p.interval
-                    if next_dose_day < sim['n_days']:
-                        self.second_dose_days[next_dose_day] = vacc_inds
-
-        # Also, if appropriate, vaccinate people with their second dose
-        vacc_inds_dose2 = self.second_dose_days[rel_t]
-        if vacc_inds_dose2 is not None:
-            vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
-            sim.people.flows['new_vaccinations'] += len(vacc_inds_dose2)
-
-        # Update vaccine attributes in sim
-        if len(vacc_inds):
-            sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccine_source[vacc_inds] = self.index
-            self.vaccinations[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = sim.t
-
-            # Update vaccine attributes in sim
-            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
-            sim.people.date_vaccinated[vacc_inds] = sim.t
-            cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
-
-        return
 
     @staticmethod
     def process_days(sim, days, return_dates=False):
