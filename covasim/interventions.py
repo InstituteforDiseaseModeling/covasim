@@ -1656,7 +1656,7 @@ class vaccinate_num(BaseVaccination):
 
 #%% Prior/historical immunity interventions
 
-__all__ += ['historical_vaccinate_prob']
+__all__ += ['historical_vaccinate_prob', 'historical_wave']
 
 
 class historical_vaccinate_prob(BaseVaccination):
@@ -1718,6 +1718,7 @@ class historical_vaccinate_prob(BaseVaccination):
         times = np.arange(np.min(self.days), 0)
         for t in times:
             # step through time, init flows
+            # issue: this would be zeroing out the seed infections.
             sim.people.init_flows()
 
             # run daily vaccination
@@ -1800,6 +1801,7 @@ class historical_vaccinate_prob(BaseVaccination):
             coverage: target coverage of campaign
 
         **Example**::
+
             prob = historical_vaccinate.estimate_prob(duration=180, coverage=0.70)
         '''
 
@@ -1823,4 +1825,107 @@ class historical_vaccinate_prob(BaseVaccination):
         '''note that the NB distribution shows the fraction '''
         return 1 - sp.special.betainc(k + 1, r, p)
         # return 1 - sp.special.betainc(k + 1, r, p) * sp.special.beta(k + 1, r)
+
+
+class historical_wave(Intervention):
+
+    def __init__(self, day_prior, prob, dist=None, subtarget=None, variant=None, **kwargs):
+        '''
+        Imprint a historical (pre t=0) wave of infections in the population NAbs
+
+        Args:
+            day_prior  (int)   : offset relative to t=0 for the wave (median/par1 value)
+            prob       (float) : probability of infection during the wave
+            dist       (dict)  : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
+            subtarget  (dict)  : subtarget intervention to people with particular indices  (see test_num() for details)
+            variant    (str)   : name of variant associated with the wave
+            kwargs     (dict)  : passed to Intervention()
+
+        **Example**::
+            cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
+        '''
+        super().__init__(**kwargs)
+        self.day_prior = day_prior
+        self.dist = {'dist': 'normal', 'par1': 0, 'par2': 5*7/2.355} if dist is None else dist # default is FWHM 5 weeks
+        self.prob = prob
+        self.subtarget = subtarget
+        self.variant = 'wild' if variant is None else variant
+
+    def initialize(self, sim):
+
+        # Check that the simulation parameters are correct
+        if not sim['use_waning']:
+            errormsg = 'The cv.historical_wave() intervention requires use_waning=True. Please enable waning.'
+            raise RuntimeError(errormsg)
+
+        # pick variant mapping index (integer value)
+        choices, mapping = cvpar.get_variant_choices()
+        if self.variant in mapping:
+            # get variant index
+            variant_name = mapping[self.variant]
+            choices = sim['variant_map']
+            mapping = {name: key for key, synonyms in choices.items() for name in [synonyms]}
+            variant = mapping[variant_name]
+        else:
+            raise ValueError('historical_wave intervention cannot hand non default variant:{}'.format(self.variant))
+
+        # initialize intervention
+        super().initialize()
+
+        # per-individual probability to be part of the wave
+        wave_probs = np.ones(sim['pop_size']) * self.prob
+        if self.subtarget is not None:
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            wave_probs[subtarget_inds] = subtarget_vals # People being explicitly subtargeted
+
+        # select members of the population to be infected
+        wave_inds = cvu.true(cvu.binomial_arr(wave_probs)) # Finally, calculate who actually was infected
+
+        # select day for those to be infected / exposed
+        inf_offset_days = cvu.sample(**self.dist, size=len(wave_inds)) - self.day_prior
+
+        # require that all offsets are before the start of the sim?
+        filtered_wave_inds = cvu.true(inf_offset_days <= 0)
+        wave_inds = wave_inds[filtered_wave_inds]
+        inf_offset_days = np.round(inf_offset_days[filtered_wave_inds]).astype(cvd.default_int)
+
+        # we use the people object often
+        people = sim.people
+
+        # set infection state
+        people.infect(wave_inds, layer='historical', variant=variant)
+
+        # update time info for historical wave (otherwise was sim.t)
+        # we also update the state of the person to include in final results
+        for states in ['exposed', 'infectious', 'symptomatic', 'severe', 'critical', 'dead', 'recovered']:
+            state_filter = cvu.defined(people['date_'+states][wave_inds])
+            people['date_'+states][wave_inds[state_filter]] = inf_offset_days[state_filter]
+            # people[states][wave_inds[state_filter]] = True
+
+        # we will need to extend the nab profiles
+        new_nab_length = sim.npts - np.floor(np.min(inf_offset_days)).astype(cvd.default_int)
+        if new_nab_length > len(sim.pars['nab_kin']):
+            sim.pars['nab_kin'] = cvi.precompute_waning(length=new_nab_length, pars=sim['nab_decay'])
+            people.pars['nab_kin'] = sim['nab_kin']
+
+        # update states and count flows
+        for t in np.arange(np.min(inf_offset_days), np.max(inf_offset_days)+1):
+            # this is potentially an issue with multiple waves close together as someone who is technically still
+            # exposed from the first wave would be re-exposed during the second (assuming they are recovered by t=0)
+            people.update_states_pre(t=t)
+
+            # Update counts for t=0 step: flows
+            # Does this count the seed infections twice?
+            for key,count in people.flows.items():
+                sim.results[key][0] += count
+            for key,count in people.flows_variant.items():
+                for variant in range(sim['n_variants']):
+                    sim.results['variant'][key][variant][0] += count[variant]
+
+        # update states for t=0
+        people.update_states_pre(t=0)
+
+    def apply(self, sim):
+        # nothing to do!
+        return
 
