@@ -136,7 +136,23 @@ def examplew2():
 
     scens.plot()
 
+def examplep0():
+    intv = cv.prior_immunity(vaccine='pfizer', days=[-30], prob=0.7)
+    cv.Sim(pars={'use_waning':True}, interventions=intv).run().plot()
+
+
+def examplep1():
+    intv = cv.prior_immunity(120, 0.05)
+    cv.Sim(pars={'use_waning':True}, interventions=intv).run().plot()
+
 if __name__ == "__main__":
+
+    ## PRIOR IMMUNITY EXAMPLE
+    # use prior_immunity to add historical vaccination
+    examplep0()
+
+    # use prior_immunity to add historical_wave
+    examplep1()
 
     # ## VACCINATION EXAMPLES
     #
@@ -150,11 +166,11 @@ if __name__ == "__main__":
     # example_estimate_prob()
 
     ## PREVIOUS WAVE EXAMPLES
-    # basic example
-    examplew0()
-
-    # single vaccination example
-    examplew1()
-
-    # multi-wave comparison
-    examplew2()
+    # # basic example
+    # examplew0()
+    #
+    # # single vaccination example
+    # examplew1()
+    #
+    # # multi-wave comparison
+    # examplew2()
