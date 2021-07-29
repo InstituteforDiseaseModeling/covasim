@@ -87,6 +87,39 @@ def example2():
 
     scens.plot()
 
+def example3():
+    pars = {'use_waning': True}
+    variants = [cv.variant('b117', days=30, n_imports=10)]
+    sim = cv.Sim(pars=pars, variants=variants)
+
+    # length of our base campaign
+    duration = 30
+    # estimate per-day probability needed for a coverage of 30%
+    prob = cv.historical_vaccinate_prob.estimate_prob(duration=duration, coverage=0.30)
+    print('using per-day probability of ', prob)
+
+    scenarios = {
+        'scen1':{
+            'name': 'both doses',
+            'pars': {
+                'interventions':[cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-duration, 0), prob=prob)]
+            }
+        },
+        'scen3': {
+            'name': 'first dose only',
+            'pars': {
+                'interventions': [cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-duration, 0), prob=prob, compliance=[1.0, 0.0])]
+            }
+        },
+    }
+
+    scens = cv.Scenarios(sim=sim, scenarios=scenarios)
+    scens.run()
+    to_plot = cv.get_default_plots(kind='scenarios')
+    to_plot.pop(2)
+    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_vaccinations']})
+    scens.plot(to_plot=to_plot)
+
 
 def examplew0():
     cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
@@ -145,14 +178,15 @@ def examplep1():
     intv = cv.prior_immunity(120, 0.05)
     cv.Sim(pars={'use_waning':True}, interventions=intv).run().plot()
 
+
 if __name__ == "__main__":
 
-    ## PRIOR IMMUNITY EXAMPLE
-    # use prior_immunity to add historical vaccination
-    examplep0()
-
-    # use prior_immunity to add historical_wave
-    examplep1()
+    # ## PRIOR IMMUNITY EXAMPLE
+    # # use prior_immunity to add historical vaccination
+    # examplep0()
+    #
+    # # use prior_immunity to add historical_wave
+    # examplep1()
 
     # ## VACCINATION EXAMPLES
     #
@@ -161,6 +195,8 @@ if __name__ == "__main__":
     #
     # # compare vaccinate and historical vaccinate
     # example2()
+    # compare vaccinate and historical vaccinate
+    example3()
     #
     # # examples using estimate_prob
     # example_estimate_prob()
