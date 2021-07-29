@@ -1,6 +1,7 @@
 import covasim as cv
 import numpy as np
 
+
 def example_estimate_prob():
     import matplotlib.pyplot as plt
 
@@ -34,7 +35,11 @@ def example1():
     sim = cv.Sim(interventions=pfizer, use_waning=True)
 
     sim.run()
-    sim.plot()
+
+    to_plot = cv.get_default_plots(kind='sim')
+    to_plot['Total counts'] += ['cum_vaccinated']
+    to_plot['Daily counts'] += ['new_vaccinations']
+    sim.plot(to_plot=to_plot)
 
 
 def example2():
