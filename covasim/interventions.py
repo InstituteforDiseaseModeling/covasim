@@ -1656,7 +1656,24 @@ class vaccinate_num(BaseVaccination):
 
 #%% Prior/historical immunity interventions
 
-__all__ += ['historical_vaccinate_prob', 'historical_wave']
+__all__ += ['prior_immunity', 'historical_vaccinate_prob', 'historical_wave']
+
+
+def prior_immunity(*args, **kwargs):
+    '''
+    Wrapper function for ``historical_wave`` and ``historical_vaccinate_prob``. If ``vaccine`` keyword is set
+    to ``vaccine`` then ``historical_vaccinate_prob`` will be used. Otherwise ``historical_wave`` is used.
+
+    **Examples**::
+
+        pim1 = cv.prior_immunity(vaccine='pfizer', days=[-30], prob=0.7)
+        pim2 = cv.prior_immunity(120, 0.05)
+    '''
+
+    if 'vaccine' in kwargs:
+        return historical_vaccinate_prob(*args, **kwargs)
+    else:
+        return historical_wave(*args, **kwargs)
 
 
 class historical_vaccinate_prob(BaseVaccination):
