@@ -1706,11 +1706,12 @@ class historical_vaccinate_prob(BaseVaccination):
 
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
-        label        (str): if vaccine is supplied as a dict, the name of the vaccine
-        days     (int/arr): the day or array of days to apply the interventions
-        prob       (float): probability of being vaccinated (i.e., fraction of the population)
-        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        kwargs     (dict): passed to Intervention()
+        label        (str)     : if vaccine is supplied as a dict, the name of the vaccine
+        days     (int/arr)     : the day or array of days to apply the interventions
+        prob       (float)     : probability of being vaccinated (i.e., fraction of the population)
+        subtarget  (dict)      : subtarget intervention to people with particular indices (see test_num() for details)
+        compliance (float/arr) : compliance of the person to take each dose (if scalar than applied per dose)
+        kwargs     (dict)      : passed to Intervention()
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
@@ -1728,16 +1729,24 @@ class historical_vaccinate_prob(BaseVaccination):
         pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-30,0), prob=0.007)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self,  vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
+    def __init__(self,  vaccine, days, label=None, prob=1.0, subtarget=None, compliance=1.0, **kwargs):
 
         super().__init__(vaccine, label=label, **kwargs)
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.subtarget = subtarget
+        self.compliance = sc.dcp(compliance)
+
         return
 
     def initialize(self, sim):
         super().initialize(sim)
+
+        if isinstance(self.compliance, (int, float)):
+            self.compliance = 2*[self.compliance]
+        else:
+            if len(self.compliance) != 2:
+                raise ValueError('compliance must either be a scalar or 2 element vector')
 
         # extend nab profiles
         self.extra_days = np.abs(np.min(self.days).astype(cvd.default_int))
@@ -1792,12 +1801,17 @@ class historical_vaccinate_prob(BaseVaccination):
                 vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
                 vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
+                # first dose compliance
+                vacc_inds = cvu.binomial_filter(self.compliance[0], vacc_inds)
+
                 if len(vacc_inds):
                     self.vaccinated[rel_t] = vacc_inds
                     if self.p.interval is not None:
                         next_dose_day = rel_t + self.p.interval
                         if next_dose_day < sim['n_days']:
-                            self.second_dose_days[next_dose_day] = vacc_inds
+                            # second dose compliance
+                            second_dose_vacc_inds = cvu.binomial_filter(self.compliance[1], vacc_inds)
+                            self.second_dose_days[next_dose_day] = second_dose_vacc_inds
 
             # Also, if appropriate, vaccinate people with their second dose
             vacc_inds_dose2 = self.second_dose_days[rel_t]
