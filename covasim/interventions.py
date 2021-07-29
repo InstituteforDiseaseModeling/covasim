@@ -1674,3 +1674,222 @@ class vaccinate_num(BaseVaccination):
 
         return np.concatenate([scheduled, first_dose_inds])
 
+#%% Prior/historical immunity interventions
+
+__all__ += ['historical_vaccinate_prob']
+
+
+class historical_vaccinate_prob(BaseVaccination):
+    '''
+    Probability-based historical vaccination
+
+    This vaccine intervention allocates vaccines parametrized by the daily probability
+    of being vaccinated.  Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into
+    the simulation)
+
+    Args:
+        vaccine (dict/str): which vaccine to use; see below for dict parameters
+        label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        days     (int/arr): the day or array of days to apply the interventions
+        prob       (float): probability of being vaccinated (i.e., fraction of the population)
+        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        kwargs     (dict): passed to Intervention()
+
+    If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
+
+        - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
+        - ``nab_init``:  the initial antibody level (higher = more protection)
+        - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
+        - ``doses``:     the number of doses required to be fully vaccinated
+        - ``interval``:  the interval between doses
+        - entries for efficacy against each of the strains (e.g. ``b117``)
+
+    See ``parameters.py`` for additional examples of these parameters.
+
+    **Example**::
+
+        pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-30,0), prob=0.007)
+        cv.Sim(interventions=pfizer, use_waning=True).run().plot()
+    '''
+    def __init__(self,  vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
+
+        super().__init__(vaccine, label=label, **kwargs)
+        self.days      = sc.dcp(days)
+        self.prob      = prob
+        self.subtarget = subtarget
+        return
+
+    def initialize(self, sim):
+        super().initialize(sim)
+
+        # extend nab profiles
+        self.extra_days = np.abs(np.min(self.days).astype(cvd.default_int))
+        new_nab_length = sim.npts + self.extra_days
+        if new_nab_length > len(sim.pars['nab_kin']):
+            sim.pars['nab_kin'] = cvi.precompute_waning(length=new_nab_length, pars=sim['nab_decay'])
+            sim.people.pars['nab_kin'] = sim['nab_kin']
+
+        # cannot use process days
+        self.days = self.process_days(sim, self.days) # days that group becomes eligible
+        self.second_dose_days     = [None]*(sim.npts+self.extra_days) # People who get second dose (if relevant)
+        self.vaccinated           = [None]*(sim.npts+self.extra_days) # Keep track of inds of people vaccinated on each day
+
+        # administer vaccines before t=0
+        times = np.arange(np.min(self.days), 0)
+        for t in times:
+            # step through time, init flows
+            sim.people.init_flows()
+
+            # run daily vaccination
+            inds = self.select_people(sim, t)
+            if len(inds):
+                inds = self.vaccinate(sim, inds)
+
+            # Update counts for this time step: flows
+            for key,count in sim.people.flows.items():
+                if key in ['new_vaccinations', 'new_vaccinated']:
+                    sim.results[key][0] += count
+
+    def select_people(self, sim, t=None):
+
+        vacc_inds = np.array([], dtype=int)  # Initialize in case no one gets their first dose
+
+        if t is None:
+            t = sim.t
+
+        # our vaccination arrays are prepended with extra days
+        rel_t = t + self.extra_days
+
+        if t >= np.min(self.days):
+
+            # Vaccinate people with their first dose
+            for _ in find_day(self.days, t, interv=self, sim=sim):
+                vacc_probs = np.zeros(sim['pop_size'])
+                unvacc_inds = sc.findinds(~sim.people.vaccinated)
+                if self.subtarget is not None:
+                    subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+                else:
+                    vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
+                vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
+                vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+
+                if len(vacc_inds):
+                    self.vaccinated[rel_t] = vacc_inds
+                    sim.people.flows['new_vaccinations'] += len(vacc_inds)
+                    sim.people.flows['new_vaccinated'] += len(vacc_inds)
+                    if self.p.interval is not None:
+                        next_dose_day = rel_t + self.p.interval
+                        if next_dose_day < sim['n_days']:
+                            self.second_dose_days[next_dose_day] = vacc_inds
+
+            # Also, if appropriate, vaccinate people with their second dose
+            vacc_inds_dose2 = self.second_dose_days[rel_t]
+            if vacc_inds_dose2 is not None:
+                vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
+
+        return vacc_inds
+
+    def run_vaccination(self, t, sim):
+
+        # our vaccination arrays are prepended with extra days
+        rel_t = t + self.extra_days
+
+        # Vaccinate people with their first dose
+        vacc_inds = np.array([], dtype=int)  # Initialize in case no one gets their first dose
+        for _ in find_day(self.days, t, interv=self, sim=sim):
+            vacc_probs = np.zeros(sim['pop_size'])
+            unvacc_inds = sc.findinds(~sim.people.vaccinated)
+            if self.subtarget is not None:
+                subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+                if len(subtarget_vals):
+                    vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
+            else:
+                vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
+            vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
+            vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
+
+            if len(vacc_inds):
+                self.vaccinated[rel_t] = vacc_inds
+                sim.people.flows['new_vaccinations'] += len(vacc_inds)
+                sim.people.flows['new_vaccinated'] += len(vacc_inds)
+                if self.p.interval is not None:
+                    next_dose_day = rel_t + self.p.interval
+                    if next_dose_day < sim['n_days']:
+                        self.second_dose_days[next_dose_day] = vacc_inds
+
+        # Also, if appropriate, vaccinate people with their second dose
+        vacc_inds_dose2 = self.second_dose_days[rel_t]
+        if vacc_inds_dose2 is not None:
+            vacc_inds = np.concatenate((vacc_inds, vacc_inds_dose2), axis=None)
+            sim.people.flows['new_vaccinations'] += len(vacc_inds_dose2)
+
+        # Update vaccine attributes in sim
+        if len(vacc_inds):
+            sim.people.vaccinated[vacc_inds] = True
+            sim.people.vaccine_source[vacc_inds] = self.index
+            self.vaccinations[vacc_inds] += 1
+            self.vaccination_dates[vacc_inds] = sim.t
+
+            # Update vaccine attributes in sim
+            sim.people.vaccinations[vacc_inds] = self.vaccinations[vacc_inds]
+            sim.people.date_vaccinated[vacc_inds] = sim.t
+            cvi.init_nab(sim.people, vacc_inds, prior_inf=False)
+
+        return
+
+    @staticmethod
+    def process_days(sim, days, return_dates=False):
+        '''
+        Ensure lists of days are in consistent format. Used by change_beta, clip_edges,
+        and some analyzers.
+        Optionally return dates as well as days. If days is callable, leave unchanged.
+        '''
+        if callable(days):
+            return days
+        if sc.isstring(days) or not sc.isiterable(days):
+            days = sc.promotetolist(days)
+        for d,day in enumerate(days):
+            days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
+        days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+        if return_dates:
+            dates = [sim.date(day) for day in days] # Store as date strings
+            return days, dates
+        else:
+            return days
+
+    @staticmethod
+    def estimate_prob(duration, coverage):
+        '''
+        Estimate the per-day probability to achieve desired population coverage for a campaign of fixed duration and
+        fixed per-day probability of a person being vaccinated
+
+        Args:
+            duration: length of campign in days
+            coverage: target coverage of campaign
+
+        **Example**::
+            prob = historical_vaccinate.estimate_prob(duration=180, coverage=0.70)
+        '''
+
+        # Note that NB distribution is defined as k number of successes *before* r=1 failures (vaccination) occur.
+        # Mapping onto the vaccination campaign this means we need k+1 days of a campaign (k days to not be
+        # vaccinated prior) before 1 day of getting the vaccine. p is the probability of *not* being vaccinated
+        k = duration - 1
+        # since the probability of not being vaccinated is ~ 1 and newton method is defined without bounds, we'll use the
+        # inverse logit function to map onto [0,1]
+        def invlogit(y):
+            return np.exp(y)/(np.exp(y)+1)
+        # this method can be finicky
+        import scipy as sp
+        p = sp.optimize.newton(lambda y: historical_vaccinate_prob.NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
+        # p is the probability of *not* being vaccinated per day so we return 1-p
+        return 1 - invlogit(p)
+
+    @staticmethod
+    def NB_cdf(k, p, r=1):
+        import scipy as sp
+        '''note that the NB distribution shows the fraction '''
+        return 1 - sp.special.betainc(k + 1, r, p)
+        # return 1 - sp.special.betainc(k + 1, r, p) * sp.special.beta(k + 1, r)
+
