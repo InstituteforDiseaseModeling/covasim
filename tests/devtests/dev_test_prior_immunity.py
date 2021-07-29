@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     ## PREVIOUS WAVE EXAMPLES
     # basic example
-    example10()
+    examplew0()
 
     # single vaccination example
     examplew1()
