@@ -88,13 +88,73 @@ def example2():
     scens.plot()
 
 
+def examplew0():
+    cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
+
+
+def examplew1():
+    # run single sim
+    pars = {'use_waning': True}
+    variants = [cv.variant('b117', days=30, n_imports=10)]
+    sim = cv.Sim(pars=pars, variants=variants)
+    sim['interventions'] += [cv.historical_wave(prob=0.05, day_prior=150), cv.historical_wave(prob=0.05, day_prior=50)]
+    sim.run()
+    # sim.plot();
+    sim.plot('variants')
+
+
+def examplew2():
+    pars = {'use_waning': True}
+    variants = [cv.variant('b117', days=30, n_imports=10)]
+    sim = cv.Sim(pars=pars, variants=variants)
+
+    scenarios = {
+        # 'base':{
+        #     'name': 'baseline',
+        #     'pars': {}
+        # },
+        'scen1':{
+            'name': '1 wave',
+            'pars': {
+                'interventions':[cv.historical_wave(prob=0.10, day_prior=50)]
+            }
+        },
+        'scen2': {
+            'name': '2 waves',
+            'pars': {
+                'interventions': [cv.historical_wave(prob=0.05, day_prior=150),
+                                  cv.historical_wave(prob=0.05, day_prior=50)]
+            }
+        }
+    }
+
+    metapars = cv.make_metapars()
+    metapars.update({'n_runs':3})
+    scens = cv.Scenarios(sim=sim, scenarios=scenarios, metapars=metapars)
+
+    scens.run()
+
+    scens.plot()
+
 if __name__ == "__main__":
 
-    # single vaccine campaign example
-    example1()
+    # ## VACCINATION EXAMPLES
+    #
+    # # single vaccine campaign example
+    # example1()
+    #
+    # # compare vaccinate and historical vaccinate
+    # example2()
+    #
+    # # examples using estimate_prob
+    # example_estimate_prob()
 
-    # compare vaccinate and historical vaccinate
-    example2()
+    ## PREVIOUS WAVE EXAMPLES
+    # basic example
+    example10()
 
-    # examples using estimate_prob
-    example_estimate_prob()
+    # single vaccination example
+    examplew1()
+
+    # multi-wave comparison
+    examplew2()
