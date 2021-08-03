@@ -131,8 +131,10 @@ def examplev3():
 
 
 def examplev4():
-    pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-100], prob=0.5)
-    sim = cv.Sim(pars={'n_days':1}, interventions=pfizer, use_waning=True, analyzers=cv.nab_histogram(days=[0], edges=np.linspace(-4,2,12+1)))
+    pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-360], prob=0.5)
+    # pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-60], prob=0.5)
+    sim = cv.Sim(pars={'n_days':1}, interventions=pfizer, use_waning=True,
+                 analyzers=cv.nab_histogram(days=[0], edges=np.linspace(-4,2,12+1)))
     sim.run()
 
     sim['analyzers'][0].plot()
@@ -190,6 +192,16 @@ def examplew2():
 
     scens.plot()
 
+def examplew3():
+    pars = {'use_waning': True, 'n_days':1}
+    sim = cv.Sim(pars=pars)
+    sim['interventions'] += [cv.historical_wave(prob=0.05, day_prior=150)]
+    sim['analyzers'] += [cv.nab_histogram(days=[0])]
+    sim.run()
+    # sim.plot();
+    # sim.plot('variants')
+    sim['analyzers'][0].plot()
+
 ###################################################
 # Example prior immunity
 ###################################################
@@ -226,7 +238,7 @@ if __name__ == "__main__":
     # examplev3()
     #
     # # example using NAb histogram
-    examplev4()
+    # examplev4()
     # # examples using estimate_prob
     # example_estimate_prob()
 
@@ -240,3 +252,6 @@ if __name__ == "__main__":
     #
     # # multi-wave comparison
     # examplew2()
+    #
+    # # example using NAb histogram
+    # examplew3()
