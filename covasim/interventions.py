@@ -1757,6 +1757,10 @@ class historical_vaccinate_prob(BaseVaccination):
                 if key in ['new_vaccinations', 'new_vaccinated']:
                     sim.results[key][0] += count
 
+            # Update vaccination dates (otherwise used sim.t=0)
+            sim.people.date_vaccinated[inds] = t
+            self.vaccination_dates[inds] = t
+
     def select_people(self, sim, t=None):
 
         vacc_inds = np.array([], dtype=int)  # Initialize in case no one gets their first dose
