@@ -95,6 +95,7 @@ def examplev2():
 
     scens.plot()
 
+
 def examplev3():
     pars = {'use_waning': True}
     variants = [cv.variant('b117', days=30, n_imports=10)]
@@ -127,6 +128,15 @@ def examplev3():
     to_plot.pop(2)
     to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_vaccinations']})
     scens.plot(to_plot=to_plot)
+
+
+def examplev4():
+    pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-100], prob=0.5)
+    sim = cv.Sim(pars={'n_days':1}, interventions=pfizer, use_waning=True, analyzers=cv.nab_histogram(days=[0], edges=np.linspace(-4,2,12+1)))
+    sim.run()
+
+    sim['analyzers'][0].plot()
+
 
 ###################################################
 # Example wave examples
@@ -206,7 +216,7 @@ if __name__ == "__main__":
     # ## VACCINATION EXAMPLES
     #
     # basic example
-    examplev0()
+    # examplev0()
     # # single vaccine campaign example
     # examplev1()
     #
@@ -215,8 +225,11 @@ if __name__ == "__main__":
     # compare vaccinate and historical vaccinate
     # examplev3()
     #
+    # # example using NAb histogram
+    examplev4()
     # # examples using estimate_prob
     # example_estimate_prob()
+
 
     ## PREVIOUS WAVE EXAMPLES
     # # basic example
