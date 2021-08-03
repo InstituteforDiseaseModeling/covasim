@@ -1704,6 +1704,10 @@ class historical_vaccinate_prob(BaseVaccination):
     of being vaccinated.  Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into
     the simulation)
 
+    If any people are infected at the t=0 timestep (e.g. seed infections), this finds those people and will re-infect
+    them at the end of the historical vaccination.  Thus you may have breakthrough infections and this might affect
+    other interventions to initialize a population.
+
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str)     : if vaccine is supplied as a dict, the name of the vaccine
@@ -1760,6 +1764,10 @@ class historical_vaccinate_prob(BaseVaccination):
         self.second_dose_days     = [None]*(sim.npts+self.extra_days) # People who get second dose (if relevant)
         self.vaccinated           = [None]*(sim.npts+self.extra_days) # Keep track of inds of people vaccinated on each day
 
+        # find the seed infections (set during sim.init_people()) and blank them out
+        seed_inds = cvu.true(sim.people.date_exposed == 0)
+        sim.people.make_naive(seed_inds)
+
         # administer vaccines before t=0
         times = np.arange(np.min(self.days), 0)
         for t in times:
@@ -1780,6 +1788,17 @@ class historical_vaccinate_prob(BaseVaccination):
             # Update vaccination dates (otherwise used sim.t=0)
             sim.people.date_vaccinated[inds] = t
             self.vaccination_dates[inds] = t
+
+            # we need to update the NAbs as it is a cumulative effect
+            # this will mess up those who are the seed infections
+            sim.people.t = t
+            has_nabs = cvu.true(sim.people.peak_nab)
+            if len(has_nabs):
+                cvi.update_nab(sim.people, inds=has_nabs)
+
+        # reset the seed infections
+        sim.people.infect(seed_inds, layer='seed_infection')
+
 
     def select_people(self, sim, t=None):
 
