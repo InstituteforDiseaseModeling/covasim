@@ -1790,7 +1790,7 @@ class historical_vaccinate_prob(BaseVaccination):
             self.vaccination_dates[inds] = t
 
             # we need to update the NAbs as it is a cumulative effect
-            # this will mess up those who are the seed infections
+            # this will mess up those who are the seed infections if not reset to naive (see above)
             sim.people.t = t
             has_nabs = cvu.true(sim.people.peak_nab)
             if len(has_nabs):
@@ -1831,7 +1831,7 @@ class historical_vaccinate_prob(BaseVaccination):
                     self.vaccinated[rel_t] = vacc_inds
                     if self.p.interval is not None:
                         next_dose_day = rel_t + self.p.interval
-                        if next_dose_day < sim['n_days']:
+                        if next_dose_day < (sim['n_days'] + self.extra_days):
                             # second dose compliance
                             second_dose_vacc_inds = cvu.binomial_filter(self.compliance[1], vacc_inds)
                             self.second_dose_days[next_dose_day] = second_dose_vacc_inds
