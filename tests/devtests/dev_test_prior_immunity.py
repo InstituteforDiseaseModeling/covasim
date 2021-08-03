@@ -27,6 +27,11 @@ def example_estimate_prob():
     plt.show()
 
 
+def examplev0():
+    pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-30, 0), prob=0.007)
+    cv.Sim(interventions=pfizer, use_waning=True).run().plot()
+
+
 def examplev1():
     # length of our base campaign
     duration = 30
@@ -200,13 +205,15 @@ if __name__ == "__main__":
 
     # ## VACCINATION EXAMPLES
     #
+    # basic example
+    examplev0()
     # # single vaccine campaign example
     # examplev1()
     #
     # # compare vaccinate and historical vaccinate
     # examplev2()
     # compare vaccinate and historical vaccinate
-    examplev3()
+    # examplev3()
     #
     # # examples using estimate_prob
     # example_estimate_prob()
