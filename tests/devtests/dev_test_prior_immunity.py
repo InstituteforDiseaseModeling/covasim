@@ -175,6 +175,10 @@ def examplew2():
 
     scens.plot()
 
+###################################################
+# Example prior immunity
+###################################################
+
 def examplep0():
     intv = cv.prior_immunity(vaccine='pfizer', days=[-30], prob=0.7)
     cv.Sim(pars={'use_waning':True}, interventions=intv).run().plot()
