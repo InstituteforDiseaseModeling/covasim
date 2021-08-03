@@ -1926,6 +1926,10 @@ class historical_wave(Intervention):
         # initialize intervention
         super().initialize()
 
+        # find the seed infections (set during sim.init_people()) and blank them out
+        seed_inds = cvu.true(sim.people.date_exposed == 0)
+        sim.people.make_naive(seed_inds)
+
         # per-individual probability to be part of the wave
         wave_probs = np.ones(sim['pop_size']) * self.prob
         if self.subtarget is not None:
@@ -1962,8 +1966,8 @@ class historical_wave(Intervention):
             sim.pars['nab_kin'] = cvi.precompute_waning(length=new_nab_length, pars=sim['nab_decay'])
             people.pars['nab_kin'] = sim['nab_kin']
 
-        # update states and count flows
-        for t in np.arange(np.min(inf_offset_days), np.max(inf_offset_days)+1):
+        # update nab, states, and count flows
+        for t in np.arange(np.min(inf_offset_days), 0):
             # this is potentially an issue with multiple waves close together as someone who is technically still
             # exposed from the first wave would be re-exposed during the second (assuming they are recovered by t=0)
             people.update_states_pre(t=t)
@@ -1976,8 +1980,18 @@ class historical_wave(Intervention):
                 for variant in range(sim['n_variants']):
                     sim.results['variant'][key][variant][0] += count[variant]
 
+            # we need to update the NAbs as it is a cumulative effect
+            # this will mess up those who are the seed infections if not reset to naive (see above)
+            sim.people.t = t
+            has_nabs = cvu.true(sim.people.date_exposed <= t)
+            if len(has_nabs):
+                cvi.update_nab(sim.people, inds=has_nabs)
+
         # update states for t=0
         people.update_states_pre(t=0)
+
+        # reset the seed infections
+        sim.people.infect(seed_inds, layer='seed_infection')
 
     def apply(self, sim):
         # nothing to do!
