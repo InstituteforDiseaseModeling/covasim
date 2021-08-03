@@ -1,6 +1,9 @@
 import covasim as cv
 import numpy as np
 
+###################################################
+## Vaccination examples
+###################################################
 
 def example_estimate_prob():
     import matplotlib.pyplot as plt
@@ -24,7 +27,7 @@ def example_estimate_prob():
     plt.show()
 
 
-def example1():
+def examplev1():
     # length of our base campaign
     duration = 30
     # estimate per-day probability needed for a coverage of 30%
@@ -42,7 +45,7 @@ def example1():
     sim.plot(to_plot=to_plot)
 
 
-def example2():
+def examplev2():
     pars = {'use_waning': True}
     variants = [cv.variant('b117', days=30, n_imports=10)]
     sim = cv.Sim(pars=pars, variants=variants)
@@ -87,7 +90,7 @@ def example2():
 
     scens.plot()
 
-def example3():
+def examplev3():
     pars = {'use_waning': True}
     variants = [cv.variant('b117', days=30, n_imports=10)]
     sim = cv.Sim(pars=pars, variants=variants)
@@ -120,6 +123,9 @@ def example3():
     to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_vaccinations']})
     scens.plot(to_plot=to_plot)
 
+###################################################
+# Example wave examples
+###################################################
 
 def examplew0():
     cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
@@ -191,12 +197,12 @@ if __name__ == "__main__":
     # ## VACCINATION EXAMPLES
     #
     # # single vaccine campaign example
-    # example1()
+    # examplev1()
     #
     # # compare vaccinate and historical vaccinate
-    # example2()
+    # examplev2()
     # compare vaccinate and historical vaccinate
-    example3()
+    examplev3()
     #
     # # examples using estimate_prob
     # example_estimate_prob()
