@@ -150,42 +150,43 @@ def examplew0():
 
 def examplew1():
     # run single sim
-    pars = {'use_waning': True}
-    variants = [cv.variant('b117', days=30, n_imports=10)]
+    pars = {'use_waning': True, 'rand_seed':1}
+    variants = [cv.variant('delta', days=15, n_imports=10)]
+    # variants = [cv.variant('b117', days=30, n_imports=10)]
+
     sim = cv.Sim(pars=pars, variants=variants)
-    sim['interventions'] += [cv.historical_wave(prob=0.05, day_prior=150), cv.historical_wave(prob=0.05, day_prior=50)]
+    sim['interventions'] += [cv.historical_wave(variant='wild', prob=[0.05, 0.05], days_prior=[150, 50])]
     sim.run()
-    # sim.plot();
+    sim.plot();
     sim.plot('variants')
 
 
 def examplew2():
-    pars = {'use_waning': True}
-    variants = [cv.variant('b117', days=30, n_imports=10)]
-    sim = cv.Sim(pars=pars, variants=variants)
-
+    pars = {'use_waning': True, 'n_days':180}
+    # variants = [cv.variant('b117', days=30, n_imports=10)]
+    # sim = cv.Sim(pars=pars, variants=variants)
+    sim = cv.Sim(pars=pars)
     scenarios = {
-        # 'base':{
-        #     'name': 'baseline',
-        #     'pars': {}
-        # },
+        'base':{
+            'name': 'baseline',
+            'pars': {}
+        },
         'scen1':{
             'name': '1 wave',
             'pars': {
-                'interventions':[cv.historical_wave(prob=0.10, day_prior=50)]
+                'interventions':[cv.historical_wave(prob=0.25, days_prior=50)]
             }
         },
         'scen2': {
             'name': '2 waves',
             'pars': {
-                'interventions': [cv.historical_wave(prob=0.05, day_prior=150),
-                                  cv.historical_wave(prob=0.05, day_prior=50)]
+                'interventions': [cv.historical_wave(prob=[0.20, 0.05], days_prior=[360, 50])]
             }
         }
     }
 
     metapars = cv.make_metapars()
-    metapars.update({'n_runs':3})
+    metapars.update({'n_runs':8})
     scens = cv.Scenarios(sim=sim, scenarios=scenarios, metapars=metapars)
 
     scens.run()
@@ -195,7 +196,11 @@ def examplew2():
 def examplew3():
     pars = {'use_waning': True, 'n_days':1}
     sim = cv.Sim(pars=pars)
-    sim['interventions'] += [cv.historical_wave(prob=0.05, day_prior=150)]
+    # sim['interventions'] += [cv.historical_wave(prob=0.05, days_prior=50)]
+    # sim['interventions'] += [cv.historical_wave(prob=0.05, days_prior=150)]
+    # sim['interventions'] += [cv.historical_wave(prob=[0.05, 0.05], days_prior=[360, 50])]
+    sim['interventions'] += [cv.historical_wave(prob=[0.05, 0.05], days_prior=[100, 50])]
+
     sim['analyzers'] += [cv.nab_histogram(days=[0])]
     sim.run()
     # sim.plot();
@@ -243,15 +248,15 @@ if __name__ == "__main__":
     # example_estimate_prob()
 
 
-    ## PREVIOUS WAVE EXAMPLES
+    # ## PREVIOUS WAVE EXAMPLES
     # # basic example
     # examplew0()
     #
-    # # single vaccination example
+    # # 2 wave example
     # examplew1()
     #
     # # multi-wave comparison
-    # examplew2()
+    examplew2()
     #
-    # # example using NAb histogram
+    # example using NAb histogram
     # examplew3()
