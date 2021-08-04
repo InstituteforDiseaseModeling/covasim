@@ -74,6 +74,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_eff']         = dict(alpha_inf=2.08, beta_inf=0.967, alpha_symp_inf=-0.739, beta_symp_inf=0.038, alpha_sev_symp=-0.014, beta_sev_symp=0.079) # Parameters to map nabs to efficacy for natural infection -- see below for vaccine-derived
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+    pars['trans_redux']     = 0.59  # https://www.medrxiv.org/content/10.1101/2021.07.13.21260393v
 
     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant

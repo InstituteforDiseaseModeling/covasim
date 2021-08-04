@@ -227,11 +227,11 @@ def test_decays(do_plot=False):
         nab_growth_decay = dict(
             func = cv.immunity.nab_growth_decay,
             length = n,
-            growth_time = 22,
-            decay_rate1 = np.log(2)/100,
-            decay_time1 = 250,
-            decay_rate2 = np.log(2)/3650,
-            decay_time2 = 365,
+            growth_time = 21,
+            decay_rate1 = 0.007,
+            decay_time1 = 47,
+            decay_rate2 = .002,
+            decay_time2 = 106,
         ),
 
         nab_decay = dict(
