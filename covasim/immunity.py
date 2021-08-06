@@ -148,7 +148,7 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     '''
     Update peak NAb level
 
-    This function updates the peak NAb level for individuals when a NAb boosting event occurs.
+    This function updates the peak NAb level for individuals when a NAb event occurs.
     NAbs can come from a natural infection or vaccination and the peak level depends on if there
     is prior immunity:
 
