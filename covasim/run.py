@@ -13,6 +13,7 @@ from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvplt
 from .settings import options as cvo
+from abc import ABCMeta, abstractstaticmethod
 
 
 # Specify all externally visible functions this file defines
@@ -626,6 +627,26 @@ class MultiSim(cvb.FlexPretty):
         self.sims = sims # Restore
         return msimfile
 
+    class IPerson(metaclass=ABCMeta):
+        @abstractstaticmethod
+        def get_data():
+            """ do something """
+        
+    class PersonSingleton(IPerson):
+        __instance = None
+
+        @staticmethod
+        def get_instance():
+            if PersonSingleton.__instance == None:
+                PersonSingleton("set the person")
+            return PersonSingleton.__instance
+
+        def __init__(parameters):
+            if PersonSingleton.__instance == None:
+                self.parameters = parameters
+                PersonSingleton.__instance = self
+            else:
+                raise Exception("Cannot create more than one object of a singleton")
 
     @staticmethod
     def load(msimfile, *args, **kwargs):

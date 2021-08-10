@@ -12,54 +12,94 @@ To reset default options, use::
 import os
 import pylab as pl
 import sciris as sc
+from abc import ABCMeta, abstractstaticmethod
 
 __all__ = ['options']
 
 
-def set_default_options():
-    '''
-    Set the default options for Covasim -- not to be called by the user, use
-    ``cv.options.set('defaults')`` instead.
-    '''
+class IPerson(metaclass=ABCMeta):
+    @abstractstaticmethod
+    def get_data():
+        """ do something """
+    
+class PersonSingleton(IPerson):
+    __instance = None
 
-    # Options acts like a class, but is actually an objdict for simplicity
-    optdesc = sc.objdict() # Help for the options
-    options = sc.objdict() # The options
+    @staticmethod
+    def get_instance():
+        if PersonSingleton.__instance == None:
+            PersonSingleton("set the person")
+        return PersonSingleton.__instance
 
-    optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
-    options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
+    def __init__(parameters):
+        if PersonSingleton.__instance == None:
+            self.parameters = parameters
+            PersonSingleton.__instance = self
+        else:
+            raise Exception("Cannot create more than one object of a singleton")
 
-    optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
-    options.show = int(os.getenv('COVASIM_SHOW', True))
+class DefaultOptions(metaclass=ABCMeta):
+    @abstractstaticmethod
+    def set_default_options():
+        '''
+        Set the default options for Covasim -- not to be called by the user, use
+        ``cv.options.set('defaults')`` instead.
+        '''
 
-    optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
-    options.close = int(os.getenv('COVASIM_CLOSE', False))
+        # Options acts like a class, but is actually an objdict for simplicity
+        optdesc = sc.objdict() # Help for the options
+        options = sc.objdict() # The options
 
-    optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-    options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
+        optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
+        options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
-    optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
-    options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
+        optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
+        options.show = int(os.getenv('COVASIM_SHOW', True))
 
-    optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-    options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
+        optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
+        options.close = int(os.getenv('COVASIM_CLOSE', False))
 
-    optdesc.font_size = 'Set the default font size'
-    options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+        optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
+        options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
 
-    optdesc.font_family = 'Set the default font family (e.g., Arial)'
-    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
+        optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
+        options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
-    optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
-    options.precision = int(os.getenv('COVASIM_PRECISION', 32))
+        optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
+        options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
-    optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
-    options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
+        optdesc.font_size = 'Set the default font size'
+        options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
 
-    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
-    options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
+        optdesc.font_family = 'Set the default font family (e.g., Arial)'
+        options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
 
-    return options, optdesc
+        optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
+        options.precision = int(os.getenv('COVASIM_PRECISION', 32))
+
+        optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
+        options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
+
+        optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
+        options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
+
+        return options, optdesc
+
+class OptionsSingleton(DefaultOptions):
+    __instance = None
+
+    @staticmethod
+    def get_instance():
+        if OptionsSingleton.__instance == None:
+            OptionsSingleton("set the person")
+        return OptionsSingleton.__instance
+
+    def __init__(parameters):
+        if OptionsSingleton.__instance == None:
+            self.parameters = parameters
+            OptionsSingleton.__instance = self
+        else:
+            raise Exception("Cannot create more than one object of a singleton")
 
 
 # Actually set the options
