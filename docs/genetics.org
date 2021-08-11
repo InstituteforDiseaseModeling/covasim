@@ -1,0 +1,40 @@
+#+title: Phylogenetics
+
+To compile this document to RST use the following command.
+
+#+begin_src sh
+pandoc --from=org --to=rst --output=genetics.rst genetics.org 
+#+end_src
+
+* Epidemic trees
+
+A simulation can be represented by a tree in several ways. The /transmission
+tree/ is more popular in epidemiology while the /reconstructed tree/ is the main
+object of study in phylodynamics ([[https://doi.org/10.1534/genetics.113.154856][Ypma /et al/ (2013)]]).
+
+** =TransTree=
+
+The =TransTree= class corresponds to a transmission tree, a representation of a
+simulation where each node is an infected individual and edges correspond to
+infection. This tree represents who infected whom in the whole simulation, with
+attributes of the nodes encoding when these events occurred. Since there can be
+multiple seed infections this is actually a forest rather than a single tree.
+
+** =ReconTree=
+
+The =ReconTree= class corresponds to a reconstructed tree, a representation of
+the reconstructed tree generated from a random sample of the diagnosed
+individuals (assuming there is sufficient genetic signal to correctly resolve
+the genealogy). In this tree, internal nodes correspond to infection events and
+leaf nodes correspond to sequenced viral samples. Due to the assumptions of
+discrete time (days) and the possibility of post-diagnosis infections in covasim
+the reconstructed tree can be [[https://en.wikipedia.org/wiki/Phylogenetic_tree#Bifurcating_versus_multifurcating][multifurcating]] and have [[https://doi.org/10.1371/journal.pcbi.1003919][sampled ancestors]]. Since
+there can be multiple seed infections the reconstructed tree is actually a
+forest.
+
+The computation of the reconstructed tree requires two traversals of the
+transmission tree: the first goes from the leaves to root to determine which
+nodes are relevant to the reconstructed tree, ie which have sequenced
+descendents, the second traversal (on a copy of the transmission tree containing
+just those relevant nodes) goes from root to leaf splitting each node into
+multiple nodes representing infection and testing events.

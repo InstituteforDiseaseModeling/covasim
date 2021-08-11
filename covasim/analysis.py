@@ -2034,6 +2034,13 @@ class ReconTree(Analyzer):
         prob_seq (float): the probability of including a diagnosed individual.
         verbose (int): the level of verbosity while computing from 0 to 2
 
+    Attributes:
+        reconstructed_tree (dict): a dictionary containing the reconstructed
+            trees index by the seed infection.
+        newick (dict): a dictionary containing the Newick string representations
+            indexed by the seed infection. Available after a call to the
+            `to_newick` method.
+
     **Example**::
 
         test_label = "my_testing"
@@ -2042,6 +2049,12 @@ class ReconTree(Analyzer):
         sim.run()
         rt = sim.make_recontree(test_label, 0.5)
 
+    Todo:
+        * Provide an option to contruct an ete3 tree.
+        * Use node and edge attributes rather than the intermediate string
+            encoding for performance.
+        * Avoid the hard-coded safety limit of 1000 iterations in the traversal
+            depth.
     '''
 
     def __init__(self, people, tt, test_label, prob_seq, verbose=0, **kwargs):
@@ -2259,11 +2272,15 @@ class ReconTree(Analyzer):
                         next_people.add(np)
 
             if len(next_people) > 0:
+                # there are still people that need to be processed so we add
+                # them to the result and loop back.
                 for p in next_people:
                     result.add(p)
                 curr_people, next_people = next_people, set()
                 loop_counter += 1
             else:
+                # there is no-one left to process so we can break out of the
+                # loop and return the result.
                 break
 
         return result
