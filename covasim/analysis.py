@@ -8,10 +8,12 @@ import numpy as np
 import pylab as pl
 import pandas as pd
 import sciris as sc
+import re as re
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
 from . import settings as cvset
+from . import people as cvppl
 from . import plotting as cvpl
 from . import run as cvr
 try:
@@ -19,7 +21,12 @@ try:
 except ImportError as E: # pragma: no cover
     errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
     op = ImportError(errormsg)
-
+try:
+    import networkx as nx
+except ImportError as E: # pragma: no cover
+    errormsg = f'NetworkX import failed ({str(E)}), please install first (pip install networkx)'
+    op = ImportError(errormsg)
+import warnings
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'Calibration', 'TransTree']
 
@@ -1526,8 +1533,8 @@ class TransTree(Analyzer):
 
             # Next, add edges from linelist
             for edge in people.infection_log:
-                self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
-
+                if edge['source'] is not None: # Skip seed infections
+                    self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
         return
 
 
@@ -2012,3 +2019,424 @@ class TransTree(Analyzer):
 
         return fig
 
+
+class ReconTree(Analyzer):
+    '''A class for holding a reconstructed tree.
+
+    This works by taking a subsample of the diagnosed infections from a
+    particular intervention and then computes the reconstructed tree from this
+    sample (without error).
+
+    Args:
+        people (People): the people in the simulation
+        tt (TransTree): the transmission tree object
+        test_label (str): the label of the testing intervention to sample diagnoses from.
+        prob_seq (float): the probability of including a diagnosed individual.
+        verbose (int): the level of verbosity while computing from 0 to 2
+
+    Attributes:
+        reconstructed_tree (dict): a dictionary containing the reconstructed
+            trees index by the seed infection.
+        newick (dict): a dictionary containing the Newick string representations
+            indexed by the seed infection. Available after a call to the
+            `to_newick` method.
+
+    **Example**::
+
+        test_label = "my_testing"
+        testing = cv.test_prob(label=test_label, symp_prob=0.5)
+        sim = cv.Sim(interventions = testing)
+        sim.run()
+        rt = sim.make_recontree(test_label, 0.5)
+
+    Todo:
+        * Provide an option to contruct an ete3 tree.
+        * Use node and edge attributes rather than the intermediate string
+            encoding for performance.
+        * Avoid the hard-coded safety limit of 1000 iterations in the traversal
+            depth.
+    '''
+
+    def __init__(self, people, tt, test_label, prob_seq, verbose=0, **kwargs):
+
+        super().__init__(**kwargs) # Initialize the Analyser object
+
+        assert isinstance(people, cvppl.People)
+        assert isinstance(tt, TransTree)
+        assert isinstance(test_label, str)
+        assert 0 < prob_seq and prob_seq < 1
+
+        self.people = people
+        self.tt = tt
+        self.test_label = test_label
+        self.prob_seq = prob_seq
+        self.verbose = verbose
+
+        if self.verbose == 2:
+            print("verbosity set to level 2 in ReconTree.")
+
+        self._inf_log = tt.infection_log
+        if self.verbose == 2:
+            print("finding the UIDs of the seed nodes from the infection log...")
+        self._seed_uids = set(e["target"] for e in self._inf_log
+                              if e["layer"] == "seed_infection")
+        if self.verbose >= 1:
+             print("The UIDs of the seed infections are")
+             print(self._seed_uids)
+
+        self._diagnosed = set(p for p in self.people if p.diagnosed)
+        self._is_diagnosed = {p.uid: p.diagnosed for p in self.people}
+        self._diagnosis_date = {dp.uid: dp.date_diagnosed
+                                for dp in self._diagnosed}
+        self._infection_date = {p.uid: p.date_exposed for p in self.people
+                                if not np.isnan(p.date_exposed)}
+
+        self._sequenced = None
+        self._subset_diagnosed_for_sequencing()
+
+        self._leaf_nodes = None
+        self._compute_leaf_nodes_dict()
+
+        self.reconstructed_tree = {s: None for s in self._seed_uids}
+        self.root_label = {s: None for s in self._seed_uids}
+        self._reconstruct_trees()
+
+        self._parse_root_id = self.__parse_factory(r'^root ([0-9]+) infected on [\.0-9]+$', lambda x: x)
+        self._parse_diag = self.__parse_factory(r'^diagnosis of ([0-9]+) on [\.0-9]+$', lambda x: x)
+        self._parse_node_time = self.__parse_factory(r'on ([\.0-9]+)$', float)
+        self.newick = {s: None for s in self._seed_uids}
+
+        return
+
+
+    def __parse_factory(self, pattern, finalise):
+        '''
+        Closure for a parser which can be used to extract values from the node
+        labels.
+        '''
+
+        def parser(string):
+            if self.verbose == 2:
+                print("parser with pattern {p} called on string {s}".format(p=pattern, s=string))
+
+            maybe_match = re.search(pattern, string)
+            if maybe_match is None:
+                raise Exception('could not parse the string: ' +
+                                string +
+                                '\ngiven pattern: ' +
+                                pattern)
+            else:
+                return finalise(maybe_match.group(1))
+        return parser
+
+
+    def to_newick(self):
+        '''
+        Return a Newick string representation of the reconstructed tree.
+
+        **Example**::
+
+            test_label = "my_testing"
+            testing = cv.test_prob(label=test_label, symp_prob=0.5)
+            sim = cv.Sim(pop_size=500, interventions = testing)
+            sim.run()
+            rt = sim.make_recontree(test_label, 0.5)
+            rt.to_newick()
+
+        '''
+        for s in self.reconstructed_tree:
+            if len(list(self.reconstructed_tree[s].nodes)) > 2:
+                self._make_newick(s)
+
+        return self.newick
+
+
+    def _make_newick(self, seed_uid):
+        '''
+        tree ==> descendant_list [ root_label ] [ : branch_length ] ;
+        '''
+        if self.verbose == 2:
+             print("making newick for node {n}".format(n=seed_uid))
+
+        r_label = self._parse_root_id(self.root_label[seed_uid])
+        r_time = self._parse_node_time(self.root_label[seed_uid])
+        ss = list(self.reconstructed_tree[seed_uid].successors(self.root_label[seed_uid]))
+        s_time = self._parse_node_time(ss[0])
+        b_length = str(s_time - r_time)
+        d_string = self._descendent_list(
+            self.reconstructed_tree[seed_uid],
+            self.root_label[seed_uid], r_time
+        )
+        self.newick[seed_uid] = d_string + r_label + ':' + b_length + ';'
+
+        return
+
+
+    def _descendent_list(self, rt, n_label, pred_time):
+        '''
+        descendant_list ==> ( subtree { , subtree } )
+        '''
+        succs = list(rt.successors(n_label))
+        return '(' + ','.join([self._subtree(rt, succ, pred_time) for succ in succs])+ ')'
+
+
+    def _subtree(self, rt, n_label, pred_time):
+        '''
+        subtree ==> descendant_list [internal_node_label] [: branch_length]
+                ==> leaf_label [: branch_length]
+        '''
+        ss = list(rt.successors(n_label))
+        curr_time = self._parse_node_time(n_label)
+        if ss:
+            succ_time = self._parse_node_time(ss[0])
+            branch_length = str(succ_time - curr_time)
+            if len(ss) > 1:
+                assert succ_time > curr_time, 'current time is {c} but successor time is {s}'.format(c=curr_time, s=succ_time)
+                return self._descendent_list(rt, n_label, curr_time) + ':' + branch_length
+            else:
+                is_inf = re.match(r'^infection by ([0-9]+) on [\.0-9]+$', n_label)
+                if is_inf:
+                    assert succ_time > curr_time, 'current time is {c} but successor time is {s}'.format(c=curr_time, s=succ_time)
+                    return self._descendent_list(rt, n_label, curr_time) + ':' + branch_length
+                else:
+                    return self._descendent_list(rt, n_label, curr_time) + self._parse_diag(n_label) + ':' + branch_length
+        else:
+            _diag_time = self._parse_node_time(n_label)
+            branch_length = str(_diag_time - pred_time)
+            return self._parse_diag(n_label) + ':' + branch_length
+
+
+    def _subset_diagnosed_for_sequencing(self):
+        '''randomly subsample the diagnosed individuals for inclusion in the
+        reconstructed tree.'''
+        if self.verbose > 0:
+            print("subsampling the diagnosed individuals for sequencing.")
+        if self._sequenced is None:
+            num_seq = np.random.binomial(len(self._diagnosed), self.prob_seq)
+            if self.verbose > 1:
+                print("{num_seq} diagnosed individuals were selected for sequencing.".format(num_seq=num_seq))
+            self._sequenced = set(
+                np.random.choice(
+                    np.array(list(self._diagnosed)),
+                    size = num_seq,
+                    replace = False
+                )
+            )
+
+        return
+
+    def seeding_ancestor(self, n):
+        '''the seed that has the given node as a descendent.'''
+        if self.verbose == 2:
+            print("looking for the ancestor of {n}".format(n=n))
+        assert self.tt.graph.has_node(n)
+        ancs = list(self.tt.graph.predecessors(n))
+        if len(ancs) == 0:
+            return n
+        else:
+            return self.seeding_ancestor(ancs[0])
+
+    def _compute_leaf_nodes_dict(self):
+        '''construct the dictionary of sequenced samples descending from each seed to
+        act as the leaves of each tree.'''
+        self._leaf_nodes = {s: set() for s in self._seed_uids}
+        for seq_node in self._sequenced:
+            self._leaf_nodes[self.seeding_ancestor(seq_node.uid)].add(seq_node.uid)
+
+        return
+
+
+    def _reconstruct_trees(self):
+        for seed_uid in self._seed_uids:
+            l2r_uids = self._leaf_to_root(seed_uid)
+            self._root_to_leaf(seed_uid, l2r_uids)
+
+        return
+
+
+    def _leaf_to_root(self, seed_uid):
+        '''return the UIDs of the people that are relevant to the reconstruction of the
+        tree with the seed and with the given leaves.'''
+        leaf_people = self._leaf_nodes[seed_uid]
+        curr_people = set(leaf_people)
+        next_people = set()
+        result = set(p for p in curr_people)
+
+        loop_counter = 0
+        max_loops = 1000        # TODO this should be equal to the number of
+                                # generations of transmission.
+        while loop_counter < max_loops:
+            for cp in curr_people:
+                for np in self.tt.graph.predecessors(cp):
+                    if np is not None:
+                        next_people.add(np)
+
+            if len(next_people) > 0:
+                # there are still people that need to be processed so we add
+                # them to the result and loop back.
+                for p in next_people:
+                    result.add(p)
+                curr_people, next_people = next_people, set()
+                loop_counter += 1
+            else:
+                # there is no-one left to process so we can break out of the
+                # loop and return the result.
+                break
+
+        return result
+
+    def _root_to_leaf(self, seed_uid, l2r_uids):
+        rt = self.tt.graph.subgraph(l2r_uids).copy()
+        curr_nodes = [seed_uid]
+        loop_count = 0
+
+        # TODO this should be equal to the depth of the current value of the
+        # reconstructed tree.
+        max_loops = 1000
+
+        while len(curr_nodes) > 0 and loop_count < max_loops:
+            loop_count += 1
+            cn = curr_nodes.pop()
+
+            if not rt.has_node(cn) and cn in self._seed_uids:
+                warnings.warn("node {cn} does not appear where expected...".format(cn=cn), RuntimeWarning)
+                continue
+
+            succs = list(rt.successors(cn))
+            num_succs = len(succs)
+            curr_nodes = succs + curr_nodes
+
+            preds = list(rt.predecessors(cn))
+            num_preds = len(preds)
+            if num_preds == 1:
+                if num_succs == 1:
+                    if self._is_diagnosed[cn]:
+                        self._resolve_diagnosed(rt, cn)
+                    else:
+                        self._remove_undiagnosed(rt, cn)
+                elif num_succs > 1:
+                    self._split_node(rt, cn, preds[0], succs)
+                else:
+                    # because in this branch we know the number of successors
+                    # is zero so this must be a diagnosis node because we are
+                    # working with the reduced tree..
+                    leaf_name = "diagnosis of {cn} on {d}".format(cn=cn, d=self._diagnosis_date[cn])
+
+                    if self.verbose == 2:
+                        print("relabelling node {cn} to \"{nn}\"".format(cn=cn, nn=leaf_name))
+
+                    nx.relabel.relabel_nodes(rt, {cn: leaf_name}, copy=False)
+            elif num_preds == 0:
+                root_label = "root {cn} infected on {inf_d}".format(cn=cn, inf_d=self._infection_date[cn])
+                self.root_label[seed_uid] = root_label
+                nx.relabel.relabel_nodes(rt, {cn: root_label}, copy=False)
+            else:
+                raise Exception("violation of tree structure.")
+
+        self.reconstructed_tree[seed_uid] = rt
+
+        return
+
+
+    def _resolve_diagnosed(self, rt, curr_node):
+
+        new_id = "diagnosis of {curr_node} on {diag_date}".format(
+            curr_node=curr_node,
+            diag_date=self._diagnosis_date[curr_node]
+        )
+
+        if self.verbose == 2:
+            print("relabelling node {cn} to \"{nn}\"".format(cn=curr_node, nn=new_id))
+
+        nx.relabel.relabel_nodes(rt, {curr_node: new_id}, copy=False)
+        return
+
+    def _split_node(self, rt, curr_node, pred, succs):
+        if self._is_diagnosed[curr_node]:
+            self._split_diagnosed(rt, curr_node, pred, succs)
+        else:
+            self._split_undiagnosed(rt, curr_node)
+        return
+
+    def _split_diagnosed(self, rt, curr_node, pred, succs):
+        '''
+        Args:
+            rt: current tree object.
+            curr_node: the node to be split.
+            pred: the predecessor of the current node.
+            succs: a list of the successor nodes of the current node.
+        '''
+        if self.verbose == 2:
+            print("splitting the node of {curr_node}".format(curr_node=curr_node))
+
+        diag_date = self._diagnosis_date[curr_node]
+        inf_dates = list(set(self._infection_date[s] for s in succs))
+        inf_dates.sort()
+
+        # Section 2.1 of the covasim paper says that in interventions are
+        # applied before transmission events on each day. Hence when a
+        # diagnosis and an infection occur on the same day, we can assume that
+        # the diagnosis happened first.
+        pre_diag_inf_dates = filter(lambda d: d < diag_date, inf_dates)
+        post_diag_inf_dates = filter(lambda d: d >= diag_date, inf_dates)
+
+        tmp = pred
+        for inf_d in pre_diag_inf_dates:
+            ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
+            inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
+            rt.add_node(inf_node_id)
+            rt.add_edge(tmp, inf_node_id)
+            for s in ss:
+                rt.add_edge(inf_node_id, s)
+            tmp = inf_node_id
+
+        nid = "diagnosis of {n} on {d}".format(n=curr_node, d=diag_date)
+        rt.add_node(nid)
+        rt.add_edge(tmp, nid)
+        tmp = nid
+
+        for inf_d in post_diag_inf_dates:
+            ss = filter(lambda s: self._infection_date[s] == inf_d, succs)
+            inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
+            rt.add_node(inf_node_id)
+            rt.add_edge(tmp, inf_node_id)
+            for s in ss:
+                rt.add_edge(inf_node_id, s)
+            tmp = inf_node_id
+
+        rt.remove_node(curr_node)
+
+        return
+
+
+    def _split_undiagnosed(self, rt, curr_node):
+        preds = list(rt.predecessors(curr_node))
+        succs = list(rt.successors(curr_node))
+
+        inf_dates = list(set(self._infection_date[s] for s in succs))
+        inf_dates.sort()
+
+        tmp = preds[0]
+        for inf_d in inf_dates:
+             ss = [s for s in succs if self._infection_date[s] == inf_d]
+             inf_node_id = "infection by {n} on {inf_d}".format(n=curr_node, inf_d=inf_d)
+             rt.add_node(inf_node_id)
+             rt.add_edge(tmp, inf_node_id)
+             for s in ss:
+                 rt.add_edge(inf_node_id, s)
+             tmp = inf_node_id
+        rt.remove_node(curr_node)
+        return
+
+
+    def _remove_undiagnosed(self, rt, curr_node):
+
+        preds = list(rt.predecessors(curr_node))
+        succs = list(rt.successors(curr_node))
+
+        assert len(preds) == 1 and len(succs) == 1
+
+        rt.add_edge(preds[0], succs[0])
+        rt.remove_node(curr_node)
+
+        return

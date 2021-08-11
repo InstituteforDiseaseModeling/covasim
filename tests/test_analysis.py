@@ -183,6 +183,22 @@ def test_transtree():
     return transtree
 
 
+def test_recontree():
+    sc.heading('Testing reconstructed tree')
+
+    test_label = 'my_test'
+    tp = cv.test_prob(label=test_label, symp_prob=0.9)
+    sim = cv.Sim(pop_size = 200, interventions = tp)
+    sim.run()
+
+    try:
+        recontree = sim.make_recontree(test_label, prop_seq=0.9)
+        recontree.to_newick()
+    except ImportError as E:
+        print(f'Could not test conversion to networkx ({str(E)})')
+
+    return recontree
+
 #%% Run as a script
 if __name__ == '__main__':
 
@@ -197,6 +213,7 @@ if __name__ == '__main__':
     fit       = test_fit()
     calib     = test_calibration()
     transtree = test_transtree()
+    recontree = test_recontree()
 
     print('\n'*2)
     sc.toc(T)
