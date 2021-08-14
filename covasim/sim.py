@@ -16,9 +16,22 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import immunity as cvimm
 from . import analysis as cva
+import copy
 
 # Almost everything in this file is contained in the Sim class
 __all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
+
+class Prototype(object):
+    def __init__(self): 
+        self._objects = {}
+
+    def clone(self):
+        pass
+ 
+    def deep_clone(self):
+        pass
+
+
 
 
 class Sim(cvb.BaseSim):
@@ -1303,6 +1316,17 @@ class Sim(cvb.BaseSim):
         '''
         fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
         return fig
+
+    def clone(self):
+        return copy(self)
+        
+ 
+    def deep_clone(self):
+        return deepcopy(self)
+
+
+
+
 
 
 def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
