@@ -1325,8 +1325,49 @@ class BasePeople(FlexPretty):
         df = df[df['p1'] != df['p2']] # Remove self connections
         df.reset_index(inplace=True, drop=True)
         return df
+class Singleton:
+    '''
+    Sington implementation for the decorated Person class. 
+    
+    // Code created with the help of Stack Overflow question
+    // https://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons
+    // Question by Jamie:
+    // https://stackoverflow.com/users/3363/jamie
+    // Answer by Paul Manta:
+    // https://stackoverflow.com/users/451672/andrew-dunnThis implementation was 
+    '''
 
+    '''
+    Instantiate class, passing an instance of the Singleton class into the 
+    variable self._decorated
+    '''
+    def __init__(self, decorated):
+        self._decorated = decorated
 
+    '''
+    Instance method to instantiate singleton, or return existing instance
+    '''
+    def get_instance(self):
+        '''
+        If this instance already exists we can return it, otherwise the 
+        return statement will raise an AttributeError. In which case we 
+        must create an instance of the decorated singleton class and assign
+        it to the variable 'self._decorated'
+        '''
+        try:
+            return self._instance   
+        except AttributeError:
+            self._instance = self._decorated()
+            return self._instance
+
+    '''
+    Returns an error if an attempt is made to create an instance of the singleton class 
+    without using the get_instance method.
+    '''
+    def __call__(self):
+        raise TypeError('Singletons must be accessed through `get_instance()`.')
+
+@Singleton
 class Person(sc.prettyobj):
     '''
     Class for a single person. Note: this is largely deprecated since sim.people
