@@ -421,7 +421,7 @@ class dynamic_pars(Intervention):
 
         # Find valid sim parameters and move matching keyword arguments to the pars dict
         pars = sc.mergedicts(pars) # Ensure it's a dictionary
-        sim_par_keys = list(cvpar.make_pars().keys()) # Get valid sim parameters
+        sim_par_keys = list(cvpar.GenParsBuilder.make_pars().keys()) # Get valid sim parameters
         kwarg_keys = [k for k in kwargs.keys() if k in sim_par_keys]
         for kkey in kwarg_keys:
             pars[kkey] = kwargs.pop(kkey)
@@ -1276,9 +1276,9 @@ class BaseVaccination(Intervention):
         # Option 1: vaccines can be chosen from a list of pre-defined vaccines
         if isinstance(vaccine, str):
 
-            choices, mapping = cvpar.get_vaccine_choices()
-            variant_pars = cvpar.get_vaccine_variant_pars()
-            dose_pars = cvpar.get_vaccine_dose_pars()
+            choices, mapping = cvpar.GenParsBuilder.get_vaccine_choices()
+            variant_pars = cvpar.GenParsBuilder.get_vaccine_variant_pars()
+            dose_pars = cvpar.GenParsBuilder.get_vaccine_dose_pars()
 
             label = vaccine.lower()
             for txt in ['.', ' ', '&', '-', 'vaccine']:
@@ -1323,8 +1323,8 @@ class BaseVaccination(Intervention):
             raise RuntimeError(errormsg)
 
         # Populate any missing keys -- must be here, after variants are initialized
-        default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
-        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        default_variant_pars = cvpar.GenParsBuilder.get_vaccine_variant_pars(default=True)
+        default_dose_pars   = cvpar.GenParsBuilder.get_vaccine_dose_pars(default=True)
         variant_labels       = list(sim['variant_pars'].keys())
         dose_keys           = list(default_dose_pars.keys())
 

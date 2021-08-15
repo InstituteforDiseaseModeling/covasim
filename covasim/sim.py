@@ -70,7 +70,7 @@ class Sim(cvb.BaseSim):
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Make default parameters (using values from parameters.py)
-        default_pars = cvpar.make_pars(version=version) # Start with default pars
+        default_pars = cvpar.GenParsBuilder.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
 
         # Now update everything
@@ -148,7 +148,7 @@ class Sim(cvb.BaseSim):
                 layer_keys = self.people.contacts.keys()
             elif self.popdict is not None:
                 layer_keys = self.popdict['layer_keys']
-        cvpar.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
+        cvpar.GenParsBuilder.reset_layer_pars(self.pars, layer_keys=layer_keys, force=force)
         return
 
 
@@ -160,7 +160,7 @@ class Sim(cvb.BaseSim):
 
         # First, try to figure out what the layer keys should be and perform basic type checking
         layer_keys = self.layer_keys()
-        layer_pars = cvpar.layer_pars # The names of the parameters that are specified by layer
+        layer_pars = cvpar.GenParsBuilder.layer_pars # The names of the parameters that are specified by layer
         for lp in layer_pars:
             val = self[lp]
             if sc.isnumber(val): # It's a scalar instead of a dict, assume it's all contacts

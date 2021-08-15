@@ -53,8 +53,8 @@ class variant(sc.prettyobj):
         # Option 1: variants can be chosen from a list of pre-defined variants
         if isinstance(variant, str):
 
-            choices, mapping = cvpar.get_variant_choices()
-            known_variant_pars = cvpar.get_variant_pars()
+            choices, mapping = cvpar.GenParsBuilder.get_variant_choices()
+            known_variant_pars = cvpar.GenParsBuilder.get_variant_pars()
 
             label = variant.lower()
             for txt in ['.', ' ', 'variant', 'variant', 'voc']:
@@ -70,7 +70,7 @@ class variant(sc.prettyobj):
         # Option 2: variants can be specified as a dict of pars
         elif isinstance(variant, dict):
 
-            default_variant_pars = cvpar.get_variant_pars(default=True)
+            default_variant_pars = cvpar.GenParsBuilder.get_variant_pars(default=True)
             default_keys = list(default_variant_pars.keys())
 
             # Parse label
@@ -302,7 +302,7 @@ def init_immunity(sim, create=False):
         immunity = np.ones((ns, ns), dtype=cvd.default_float)  # Fill with defaults
 
         # Next, overwrite these defaults with any known immunity values about specific variants
-        default_cross_immunity = cvpar.get_cross_immunity()
+        default_cross_immunity = cvpar.GenParsBuilder.get_cross_immunity()
         for i in range(ns):
             label_i = sim['variant_map'][i]
             for j in range(ns):

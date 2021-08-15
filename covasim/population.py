@@ -83,7 +83,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:
-        sim['prognoses'] = cvpar.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
+        sim['prognoses'] = cvpar.GenParsBuilder.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
 
     # Actually create the people
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
