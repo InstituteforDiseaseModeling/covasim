@@ -13,7 +13,19 @@ from . import base as cvb
 from . import plotting as cvplt
 from . import immunity as cvi
 
-
+class SingletonPattern:
+           __instance = None
+           
+           def get_instance():
+                      if SingletonPattern.__instance == None:
+                                 SingletonPattern()
+                      return SingletonPattern.__instance
+           
+           def __init__(self):
+                      if SingletonPattern.__instance != None:
+                                 raise Exception("This class is a singleton class and has been used.")
+                      else:
+                                 SingletonPattern.__instance = self
 __all__ = ['People']
 
 class People(cvb.BasePeople):
