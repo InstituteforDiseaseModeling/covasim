@@ -1276,19 +1276,62 @@ class Calibration(Analyzer):
 
     New in version 3.0.3.
     '''
+    class Ibuilder:
+        #step-by-step declaration of various parts to be built
+        @staticmethod
+        @abstractstaticmethod
+        def set_n_trials(self, value):
 
-    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
+        @staticmethod
+        @abstractstaticmethod
+        def set_n_workers(self, value):
+
+        @staticmethod
+        @abstractstaticmethod
+        def set_name(self, value):
+
+        @staticmethod
+        @abstractstaticmethod
+        def set_db_name(self, value):
+
+        @staticmethod
+        @abstractstaticmethod
+        def set_storage(self, value):
+        
+        @staticmethod
+        @abstractstaticmethod
+        def total_trials(self, value):
+
+    class builder(Ibuilder):
+        #step-by-step declaration of various parts to be built
+        @abstractstaticmethod
+        def set_n_trials(self, value):
+            if self.n_trials  is None: n_trials  = 20
+
+        @abstractstaticmethod
+        def set_n_workers(self, value):
+            import multiprocessing as mp
+            if self.n_workers is None: n_workers = mp.cpu_count()
+
+        @abstractstaticmethod
+        def set_name(self, value):
+            if self.name      is None: name      = 'covasim_calibration'
+
+        @abstractstaticmethod
+        def set_db_name(self, value):
+            if self.db_name   is None: db_name   = f'{name}.db'
+
+        @abstractstaticmethod
+        def set_storage(self, value):
+            if self.storage   is None: storage   = f'sqlite:///{db_name}'
+
+        @abstractstaticmethod
+        def total_trials(self, value):
+            if self.total_trials is not None: n_trials = total_trials/n_workers
+
+    class cal:
+        def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
-        if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
-        import multiprocessing as mp
-
-        # Handle run arguments
-        if n_trials  is None: n_trials  = 20
-        if n_workers is None: n_workers = mp.cpu_count()
-        if name      is None: name      = 'covasim_calibration'
-        if db_name   is None: db_name   = f'{name}.db'
-        if storage   is None: storage   = f'sqlite:///{db_name}'
-        if total_trials is not None: n_trials = total_trials/n_workers
         self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, storage=storage)
 
         # Handle other inputs
@@ -1305,9 +1348,20 @@ class Calibration(Analyzer):
             print('Warning: sim has already been run; re-initializing, but in future, use a sim that has not been run')
             self.sim = self.sim.copy()
             self.sim.initialize()
-
+            
         return
 
+    class calDirector:
+
+        @staticmethod
+        def construct():
+            return builder()\
+                .set_n_trials()\
+                .set_n_workers()\
+                .set_name()\
+                .set_db_name()\
+                .set_storage()\
+                .total_trials()
 
     def run_sim(self, calib_pars, label=None, return_sim=False):
         ''' Create and run a simulation '''
