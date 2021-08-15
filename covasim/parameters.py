@@ -459,55 +459,35 @@ def get_vaccine_variant_pars(default=False):
     '''
     Define the effectiveness of each vaccine against each variant
     '''
+    director = Director()
+    defaultBuilder = DefaultBuilder()
+    pfizerBuilder = PfizerBuilder()
+    modernaBuilder = ModernaBuilder()
+    azBuilder = AzBuilder()
+    jjBuilder = JjBuilder()
+    novavaxBuilder = NovavaxBuilder()
+
+    director.setBuilder(defaultBuilder)
+    director.setBuilder(pfizerBuilder)
+    director.setBuilder(modernaBuilder)
+    director.setBuilder(azBuilder)
+    director.setBuilder(jjBuilder)
+    director.setBuilder(novavaxBuilder)
+
+    default = director.setVaccine()
+    pfizer = director.setVaccine()
+    moderna = director.setVaccine()
+    az = director.setVaccine()
+    jj = director.setVaccine()
+    novavax = director.setVaccine()
+
     pars = dict(
-
-        default = dict(
-            wild   = 1.0,
-            b117   = 1.0,
-            b1351  = 1.0,
-            p1     = 1.0,
-            b16172 = 1.0,
-        ),
-
-        pfizer = dict(
-            wild   = 1.0,
-            b117   = 1/2.0,
-            b1351  = 1/6.7,
-            p1     = 1/6.5,
-            b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
-        ),
-
-        moderna = dict(
-            wild   = 1.0,
-            b117   = 1/1.8,
-            b1351  = 1/4.5,
-            p1     = 1/8.6,
-            b16172 = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
-        ),
-
-        az = dict(
-            wild   = 1.0,
-            b117   = 1/2.3,
-            b1351  = 1/9,
-            p1     = 1/2.9,
-            b16172 = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
-        ),
-
-        jj = dict(
-            wild   = 1.0,
-            b117   = 1.0,
-            b1351  = 1/6.7,
-            p1     = 1/8.6,
-            b16172 = 1/6.2,  # Assumption, no data available yet
-        ),
-
-        novavax = dict( # Data from https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
-            wild   = 1.0,
-            b117   = 1/1.12,
-            b1351  = 1/4.7,
-            p1     = 1/8.6, # Assumption, no data available yet
-            b16172 = 1/6.2, # Assumption, no data available yet
-        ),
+        default = default.get_details,
+        pfizer = pfizer.get_details,
+        moderna = moderna.get_details,
+        az = az.get_details,
+        jj = jj.get_details,
+        novavax = novavax.get_details,
     )
 
     if default:
@@ -587,4 +567,95 @@ def get_vaccine_dose_pars(default=False):
     else:
         return pars
 
+class Director:
 
+    def setBuilder(self, builder):
+        self.builder = builder
+
+    def setVaccine(self):
+        vaccine = Vaccine()
+        return vaccine
+
+class Vaccine:
+
+    def __init__(self):
+        self.wild = 0.0
+        self.b117 = 0.0
+        self.b1351 = 0.0
+        self.p1 = 0.0
+        self.b16172 = 0.0
+    
+    def setter(self, wild, b117, b1351, p1, b16172):
+        self.wild = wild
+        self.b117 = b117
+        self.b1351 = b1351
+        self.p1 = p1
+        self.b16172 = b16172
+    
+    def get_details(self):
+        return dict(
+            wild = self.wild,
+            b117 = self.b117,
+            b1351 = self.b1351,
+            p1 = self.p1,
+            b16172 = self.b16172,
+        )
+
+class Builder:
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        pass
+
+class DefaultBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1.0
+        self.b1351  = 1.0
+        self.p1     = 1.0
+        self.b16172 = 1.0
+
+class PfizerBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1/2.0
+        self.b1351  = 1/6.7
+        self.p1     = 1/6.5
+        self.b16172 = 1/2.9
+
+class ModernaBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1/1.8
+        self.b1351  = 1/4.5
+        self.p1     = 1/8.6
+        self.b16172 = 1/2.9
+
+class AzBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1/2.3
+        self.b1351  = 1/9
+        self.p1     = 1/2.9
+        self.b16172 = 1/6.2
+
+class JjBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1.0
+        self.b1351  = 1/6.7
+        self.p1     = 1/8.6
+        self.b16172 = 1/6.2
+
+class NovavaxBuilder(Builder):
+
+    def getter(self, wild, b117, b1351, p1, b16172):
+        self.wild   = 1.0
+        self.b117   = 1/1.12
+        self.b1351  = 1/4.7
+        self.p1     = 1/8.6
+        self.b16172 = 1/6.2
