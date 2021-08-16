@@ -1,5 +1,5 @@
 '''
-Functions and classes for running multiple Covasim runs.
+Functions and classes for running multiple Covasim runs.Will Use Factory Design Pattern to be called from one Class
 '''
 
 #%% Imports
@@ -31,6 +31,38 @@ def make_metapars():
         verbose   = cvo.verbose,
     )
     return metapars
+
+class PlotFactory():
+
+    '''
+    Factory class to allow all the simulations to go through
+    this class in this file instead of going through each method seperatly
+    '''
+    def run(self, reduce=False, combine=False, **kwargs):
+        '''
+        Run the actual sims
+
+        '''
+        # Handle which sims to use -- same as init_sims()
+        if self.sims is None:
+            sims = self.base_sim
+        else:
+            sims = self.sims
+
+        # Run
+        kwargs = sc.mergedicts(self.run_args, kwargs)
+        self.sims = multi_run(sims, **kwargs)
+
+        # Reduce or combine
+        if reduce:
+            self.reduce()
+        elif combine:
+            self.combine()
+
+        return self
+
+
+
 
 
 class MultiSim(cvb.FlexPretty):
