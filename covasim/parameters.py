@@ -27,103 +27,1029 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     Returns:
         pars (dict): the parameters of the simulation
     '''
-    pars = {}
 
-    # Population parameters
-    pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
-    pars['pop_infected'] = 20       # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
-    pars['location']     = None     # What location to load data from -- default Seattle
+#LocationElements
+public class popPara implements LocationElements{    # Population parameters
+  public String elements(){
+  return "popPara";
+  }
+}
+public class tempPara implements LocationElements{
+  public String elements(){
+  return "tempPara";
+  }
+}
 
-    # Simulation parameters
-    pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['end_day']    = None         # End day of the simulation
-    pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
-    pars['rand_seed']  = 1            # Random seed, if None, don't reset
-    pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (default), 2 (everything)
+public class covidPara implements LocationElements{
+  public String elements(){
+  return "covidPara";
+  }
+}
 
-    # Rescaling parameters
-    pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
-    pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
-    pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
-    pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
-    pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
-    pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
+#PersonalElements
+public class netPara implements PersonalElements{
+  public String elements(){
+  return "netPara";
+  }
+}
 
-    # Network parameters, generally initialized after the population has been constructed
-    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
+public class Age implements PersonalElements{
+  public String elements(){
+  return "Age";
+  }
+}
 
-    # Basic disease transmission parameters
-    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
-    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+public class sexual implements PersonalElements{
+  public String elements(){
+  return "sexual";
+  }
+}
 
-    # Parameters that control settings and defaults for multi-variant runs
-    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['n_variants'] = 1 # The number of variants circulating in the population
+public class basicDisPara implements PersonalElements{
+  public String elements(){
+  return "basicDisPara";
+  }
+}
 
-    # Parameters used to calculate immunity
-    pars['use_waning']      = False # Whether to use dynamically calculated immunity
-    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
-    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
-    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
-    pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+public class calImmuPara implements PersonalElements{ # Parameters used to calculate immunity
+  public String elements(){
+  return "calImmuPara";
+  }
+}
 
-    # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
-    pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
+public class varSpecPara implements PersonalElements{     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
+  public String elements(){
+  return "varSpecPara";
+  }
+}
 
-    # Duration parameters: time for disease progression
-    pars['dur'] = {}
-    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
-    pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
-    pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
-    pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1.5, par2=2.0) # Duration from severe symptoms to requiring ICU; average of 1.9 and 1.0; see Chen et al., https://www.sciencedirect.com/science/article/pii/S0163445320301195, 8.5 days total - 6.6 days sym2sev = 1.9 days; see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, Table 3, 1 day, IQR 0-3 days; std=2.0 is an estimate
+#TechElements
+public class serviPara implements TechElements{    # Severity parameters: probabilities of symptom progression
+  public String elements(){
+  return "serviPara";
+  }
+}
 
-    # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with severe symptoms to recover, 24.7 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 18.1 days = 24.7 onset-to-recovery - 6.6 sym2sev; 6.3 = 0.35 coefficient of variation * 18.1; see also https://doi.org/10.1017/S0950268820001259 (22 days) and https://doi.org/10.3390/ijerph17207560 (3-10 days)
-    pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with critical symptoms to recover; as above (Verity et al.)
-    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=10.7, par2=4.8) # Duration from critical symptoms to death, 18.8 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 10.7 = 18.8 onset-to-death - 6.6 sym2sev - 1.5 sev2crit; 4.8 = 0.45 coefficient of variation * 10.7
+public class effiPara implements TechElements{    # Efficacy of protection measures
+  public String elements(){
+  return "effiPara";
+  }
+}
 
-    # Severity parameters: probabilities of symptom progression
-    pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
-    pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
-    pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
-    pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
-    pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
+public class eventPara implements TechElements{    # Events and interventions
+  public String elements(){
+  return "eventPara";
+  }
+}
 
-    # Efficacy of protection measures
-    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
+public class heathPara implements TechElements{    # Health system parameters
+  public String elements(){
+  return "heathPara";
+  }
+}
 
-    # Events and interventions
-    pars['interventions'] = []   # The interventions present in this simulation; populated by the user
-    pars['analyzers']     = []   # Custom analysis functions; populated by the user
-    pars['timelimit']     = None # Time limit for the simulation (seconds)
-    pars['stopping_func'] = None # A function to call to stop the sim partway through
+public class variPara implements TechElements{    # Handle vaccine and variant parameters
+  public String elements(){
+  return "variPara";
+  }
+}
 
-    # Health system parameters
-    pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
-    pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
-    pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
-    pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
 
-    # Handle vaccine and variant parameters
-    pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
-    pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
-    pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
-    pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
-    pars['variant_pars']  = dict(wild={}) # Populated just below
+#TimeDuration
+
+public class proPara implements TimeDuration{    # Duration parameters: time for disease progression
+  public String elements(){
+  return "proPara";
+  }
+}
+public class recPara implements TimeDuration{    # Duration parameters: time for disease recovery
+  public String elements(){
+  return "recPara";
+  }
+}
+public class multiVarPara implements TimeDuration{     # Parameters that control settings and defaults for multi-variant runs
+  public String elements(){
+  return "multiVarPara";
+  }
+}
+public class simPara implements TimeDuration{         # Simulation parameters
+  public String elements(){
+  return "simPara";
+  }
+}
+
+public class resPara implements TimeDuration{    # Rescaling parameters
+  public String elements(){
+  return "resPara";
+  }
+}
+
+#location Details
+
+public class popPara implements LocationElements{    # Population parameters.
+  @override
+  public String elements(){
+  return "popPara";
+  }
+  @override
+  public abstract float percetangeWeight();
+}
+
+public class popSize extends popPara {
+
+   @Override
+   public int number() {
+      return 20e3;
+   }
+
+   @Override
+   public String name() {
+      return "pop_size";
+   }
+}
+
+public class popiInfected extends popPara {
+
+   @Override
+   public int number() {
+      return 20;
+   }
+
+   @Override
+   public String name() {
+      return "pop_infected";
+   }
+}
+public class popType extends popPara {
+
+   @Override
+   public int number() {
+      return 'random';
+   }
+
+   @Override
+   public String name() {
+      return "pop_type";
+   }
+}
+
+public class location extends popPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "location";
+   }
+}
+
+public class tempPara implements LocationElements{
+  @override
+  public String elements(){
+  return "tempPara";
+  }
+  @override
+  public abstract float percetangeWeight();
+}
+
+public class covidPara implements LocationElements{
+  @override
+  public String elements(){
+  return "covidPara";
+  }
+  @override
+  public abstract float percetangeWeight();
+}
+
+
+#personal Details
+
+public class calImmuPara implements PersonalElements{ # Parameters used to calculate immunity
+  public String elements(){
+  return "calImmuPara";
+  }
+}
+
+public class useWaning extends calImmuPara {
+
+   @Override
+   public int number() {
+      return False;
+   }
+
+   @Override
+   public String name() {
+      return "use_waning";
+   }
+}
+
+public class nabInit extends calImmuPara {
+
+   @Override
+   public int number() {
+      return dict(dist='normal', par1=0, par2=2);
+   }
+
+   @Override
+   public String name() {
+      return "nab_init";
+   }
+}
+
+public class nabDecay extends calImmuPara {
+
+   @Override
+   public int number() {
+      return dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365);
+   }
+
+   @Override
+   public String name() {
+      return "nab_decay";
+   }
+}
+
+public class nabKin extends calImmuPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "nab_kin";
+   }
+}
+
+public class nabBoost extends calImmuPara {
+
+   @Override
+   public int number() {
+      return 1.5;
+   }
+
+   @Override
+   public String name() {
+      return "nab_boost";
+   }
+}
+
+public class nabEff extends calImmuPara {
+
+   @Override
+   public int number() {
+      return dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4);
+   }
+
+   @Override
+   public String name() {
+      return "nab_eff";
+   }
+}
+public class relImmSymp extends calImmuPara {
+
+   @Override
+   public int number() {
+      return dict(asymp=0.85, mild=1, severe=1.5);
+   }
+
+   @Override
+   public String name() {
+      return "rel_imm_symp";
+   }
+}
+public class immunity extends calImmuPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "immunity";
+   }
+}
+
+public class varSpecPara implements PersonalElements{     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
+  public String elements(){
+  return "varSpecPara";
+  }
+}
+
+public class relBeta extends calImmuPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_beta";
+   }
+}
+
+public class relImmVariant extends calImmuPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_imm_variant";
+   }
+}
+
+public class netPara implements PersonalElements{
+  public String elements(){
+  return "netPara";
+  }
+}
+
+public class Age implements PersonalElements{
+  public String elements(){
+  return "Age";
+  }
+}
+
+public class sexual implements PersonalElements{
+  public String elements(){
+  return "sexual";
+  }
+}
+
+public class basicDisPara implements PersonalElements{
+  public String elements(){
+  return "basicDisPara";
+  }
+}
+
+
+#Tech Details
+
+public class serviPara implements TechElements{    # Severity parameters: probabilities of symptom progression
+  public String elements(){
+  return "serviPara";
+  }
+}
+
+public class relSympProb extends serviPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_symp_prob";
+   }
+}
+
+public class relSevereProb extends serviPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_severe_prob";
+   }
+}
+
+
+public class relCritProb extends serviPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_crit_prob";
+   }
+}
+
+public class relDeathProb extends serviPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "rel_death_prob";
+   }
+}
+
+public class progByAge extends serviPara {
+
+   @Override
+   public char prog() {
+      return prog_by_age;
+   }
+
+   @Override
+   public String name() {
+      return "prog_by_age";
+   }
+}
+
+public class prognoses extends serviPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "prognoses";
+   }
+}
+
+
+public class effiPara implements TechElements{    # Efficacy of protection measures
+  public String elements(){
+  return "effiPara";
+  }
+}
+
+public class isoFactor extends effiPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "iso_factor";
+   }
+}
+
+public class quarFactor extends effiPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "quar_factor";
+   }
+}
+
+public class quarperiod extends effiPara {
+
+   @Override
+   public int number() {
+      return 14;
+   }
+
+   @Override
+   public String name() {
+      return "quar_period";
+   }
+}
+
+
+public class eventPara implements TechElements{    # Events and interventions
+  public String elements(){
+  return "eventPara";
+  }
+}
+
+
+public class interventions extends eventPara {
+
+   @Override
+   public int number() {
+      return [];
+   }
+
+   @Override
+   public String name() {
+      return "interventions";
+   }
+}
+
+public class analyzers extends eventPara {
+
+   @Override
+   public int number() {
+      return [];
+   }
+
+   @Override
+   public String name() {
+      return "analyzers";
+   }
+}
+
+public class timelimit extends eventPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "timelimit";
+   }
+}
+
+public class stoppingFunc extends eventPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "stopping_func";
+   }
+}
+
+public class heathPara implements TechElements{    # Health system parameters
+  public String elements(){
+  return "heathPara";
+  }
+}
+
+public class nBedsHosp extends heathPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "n_beds_hosp";
+   }
+}
+
+public class nBedsIcu extends heathPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "n_beds_icu";
+   }
+}
+
+public class noHospFactor extends heathPara {
+
+   @Override
+   public int number() {
+      return 2.0;
+   }
+
+   @Override
+   public String name() {
+      return "n_beds_icu";
+   }
+}
+
+public class noIcuFactor extends heathPara {
+
+   @Override
+   public int number() {
+      return 2.0;
+   }
+
+   @Override
+   public String name() {
+      return "noIcuFactor";
+   }
+}
+
+
+public class variPara implements TechElements{    # Handle vaccine and variant parameters
+  public String elements(){
+  return "variPara";
+  }
+}
+
+public class vaccinePars extends variPara {
+
+   @Override
+   public int number() {
+      return {};
+   }
+
+   @Override
+   public String name() {
+      return "vaccine_pars";
+   }
+}
+
+public class vaccineMap extends variPara {
+
+   @Override
+   public int number() {
+      return {};
+   }
+
+   @Override
+   public String name() {
+      return "vaccine_map";
+   }
+}
+
+public class variants extends variPara {
+
+   @Override
+   public int number() {
+      return [];
+   }
+
+   @Override
+   public String name() {
+      return "variants";
+   }
+}
+
+public class variantMap extends variPara {
+
+   @Override
+   public int number() {
+      return {0:'wild'};
+   }
+
+   @Override
+   public String name() {
+      return "variant_map";
+   }
+}
+
+public class variantPars extends variPara {
+
+   @Override
+   public int number() {
+      return dict(wild={});
+   }
+
+   @Override
+   public String name() {
+      return "variant_pars";
+   }
+}
+
+#Time Details
+
+public class proPara implements TimeDuration{    # Duration parameters: time for disease progression
+  public String elements(){
+  return "proPara";
+  }
+}
+
+public class dur extends proPara {
+
+   @Override
+   public int number() {
+      return {};
+   }
+
+   @Override
+   public String name() {
+      return "dur";
+   }
+}
+
+public class dur_exp2inf extends proPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=4.5, par2=1.5);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['exp2inf']";
+   }
+}
+
+public class dur_inf2sym extends proPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=1.1, par2=0.9);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['inf2sym']";
+   }
+}
+
+public class dur_sym2sev extends proPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=6.6, par2=4.9);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['sym2sev']";
+   }
+}
+
+public class dur_sev2crit extends proPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=1.5, par2=2.0);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['sev2crit']";
+   }
+}
+
+
+public class recPara implements TimeDuration{    # Duration parameters: time for disease recovery
+  public String elements(){
+  return "recPara";
+  }
+}
+
+public class dur_asym2rec extends recPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=8.0,  par2=2.0);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['asym2rec']";
+   }
+}
+
+public class dur_mild2rec extends recPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=8.0,  par2=2.0);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['mild2rec']";
+   }
+}
+
+public class dur_sev2rec extends recPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=18.1,  par2=2.3);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['sev2rec']";
+   }
+}
+
+public class dur_crit2rec extends recPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=18.1,  par2=2.3);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['crit2rec']";
+   }
+}
+
+public class dur_crit2die extends recPara {
+
+   @Override
+   public int number() {
+      return dict(dist='lognormal_int', par1=10.7,  par2=4.8);
+   }
+
+   @Override
+   public String name() {
+      return "['dur']['crit2die']";
+   }
+}
+
+
+public class multiVarPara implements TimeDuration{     # Parameters that control settings and defaults for multi-variant runs
+  public String elements(){
+  return "multiVarPara";
+  }
+}
+
+public class nImports extends multiVarPara {
+
+   @Override
+   public int number() {
+      return 0;
+   }
+
+   @Override
+   public String name() {
+      return 'n_imports';
+   }
+}
+
+public class nVariants extends multiVarPara {
+
+   @Override
+   public int number() {
+      return 1;
+   }
+
+   @Override
+   public String name() {
+      return 'n_variants';
+   }
+}
+
+
+public class simPara implements TimeDuration{         # Simulation parameters
+  public String elements(){
+  return "simPara";
+  }
+}
+
+public class startDay extends simPara {
+
+   @Override
+   public int number() {
+      return '2020-03-01';
+   }
+
+   @Override
+   public String name() {
+      return "start_day";
+   }
+}
+
+public class endDay extends simPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "end_day";
+   }
+}
+
+public class nDays extends simPara {
+
+   @Override
+   public int number() {
+      return 60;
+   }
+
+   @Override
+   public String name() {
+      return "n_days";
+   }
+}
+
+public class randSeed extends simPara {
+
+   @Override
+   public int number() {
+      return 1;
+   }
+
+   @Override
+   public String name() {
+      return "rand_seed";
+   }
+}
+
+public class verbose extends simPara {
+
+   @Override
+   public char verbose() {
+      return cvo.verbose;
+   }
+
+   @Override
+   public String name() {
+      return "verbose";
+   }
+}
+
+
+public class resPara implements TimeDuration{    # Rescaling parameters
+  public String elements(){
+  return "resPara";
+  }
+}
+
+public class popScale extends resPara {
+
+   @Override
+   public int number() {
+      return 1;
+   }
+
+   @Override
+   public String name() {
+      return "pop_scale";
+   }
+}
+
+public class scaledPop extends resPara {
+
+   @Override
+   public int number() {
+      return None;
+   }
+
+   @Override
+   public String name() {
+      return "scaled_pop";
+   }
+}
+
+public class rescale extends resPara {
+
+   @Override
+   public int number() {
+      return Ture;
+   }
+
+   @Override
+   public String name() {
+      return "rescale";
+   }
+}
+
+public class rescaleThreshold extends resPara {
+
+   @Override
+   public int number() {
+      return 0.05;
+   }
+
+   @Override
+   public String name() {
+      return "rescale_threshold";
+   }
+}
+
+public class rescaleFactor extends resPara {
+
+   @Override
+   public int number() {
+      return 1.2;
+   }
+
+   @Override
+   public String name() {
+      return "rescale_factor";
+   }
+}
+
+public class fracSusceptible extends resPara {
+
+   @Override
+   public int number() {
+      return 1.0;
+   }
+
+   @Override
+   public String name() {
+      return "frac_susceptible";
+   }
+}
+
     for sp in cvd.variant_pars:
         if sp in pars.keys():
             pars['variant_pars']['wild'][sp] = pars[sp]
@@ -586,5 +1512,3 @@ def get_vaccine_dose_pars(default=False):
         return pars['default']
     else:
         return pars
-
-
