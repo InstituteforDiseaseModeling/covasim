@@ -427,34 +427,6 @@ class BaseSim(ParsObj):
             errormsg = f'Choice "which" not available; choices are: {sc.strjoin(choices)}'
             raise ValueError(errormsg)
         return keys
-    
-    def time_duration
-    public class proPara implements TimeDuration{    # Duration parameters: time for disease progression
-      public String elements(){
-      return "proPara";
-      }
-    }
-    public class recPara implements TimeDuration{    # Duration parameters: time for disease recovery
-      public String elements(){
-      return "recPara";
-      }
-    }
-    public class multiVarPara implements TimeDuration{     # Parameters that control settings and defaults for multi-variant runs
-      public String elements(){
-      return "multiVarPara";
-      }
-    }
-    public class simPara implements TimeDuration{         # Simulation parameters
-      public String elements(){
-      return "simPara";
-      }
-    }
-
-    public class resPara implements TimeDuration{    # Rescaling parameters
-      public String elements(){
-      return "resPara";
-      }
-    }
 
 
     def copy(self):
