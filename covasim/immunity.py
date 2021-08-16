@@ -393,6 +393,36 @@ def check_immunity(people, variant, sus=True, inds=None):
 
     return
 
+def tech_elements
+    public class serviPara implements TechElements{    # Severity parameters: probabilities of symptom progression
+      public String elements(){
+      return "serviPara";
+      }
+    }
+
+    public class effiPara implements TechElements{    # Efficacy of protection measures
+      public String elements(){
+      return "effiPara";
+      }
+    }
+
+    public class eventPara implements TechElements{    # Events and interventions
+      public String elements(){
+      return "eventPara";
+      }
+    }
+
+    public class heathPara implements TechElements{    # Health system parameters
+      public String elements(){
+      return "heathPara";
+      }
+    }
+
+    public class variPara implements TechElements{    # Handle vaccine and variant parameters
+      public String elements(){
+      return "variPara";
+      }
+    }
 
 
 #%% Methods for computing waning
