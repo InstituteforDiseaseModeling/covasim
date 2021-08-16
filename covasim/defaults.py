@@ -317,6 +317,85 @@ overview_variant_plots = [
     'pop_symp_protection',
 ]
 
+def location
+    public class popPara implements LocationElements{    # Population parameters.
+      @override
+      public String elements(){
+      return "popPara";
+      }
+      @override
+      public abstract float percetangeWeight();
+    }
+
+    public class popSize extends popPara {
+
+       @Override
+       public int number() {
+          return 20e3;
+       }
+
+       @Override
+       public String name() {
+          return "pop_size";
+       }
+    }
+
+    public class popiInfected extends popPara {
+
+       @Override
+       public int number() {
+          return 20;
+       }
+
+       @Override
+       public String name() {
+          return "pop_infected";
+       }
+    }
+    public class popType extends popPara {
+
+       @Override
+       public int number() {
+          return 'random';
+       }
+
+       @Override
+       public String name() {
+          return "pop_type";
+       }
+    }
+
+    public class location extends popPara {
+
+       @Override
+       public int number() {
+          return None;
+       }
+
+       @Override
+       public String name() {
+          return "location";
+       }
+    }
+
+    public class tempPara implements LocationElements{
+      @override
+      public String elements(){
+      return "tempPara";
+      }
+      @override
+      public abstract float percetangeWeight();
+    }
+
+    public class covidPara implements LocationElements{
+      @override
+      public String elements(){
+      return "covidPara";
+      }
+      @override
+      public abstract float percetangeWeight();
+    }
+
 def get_default_plots(which='default', kind='sim', sim=None):
     '''
     Specify which quantities to plot; used in sim.py.
