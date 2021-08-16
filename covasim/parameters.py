@@ -1,130 +1,120 @@
-'''
-Set the parameters for Covasim.
-'''
+public interface PersonalElements {
+    void setPersonalElements(String elements);
+    String getPersonalElements();
 
-import numpy as np
-import sciris as sc
-from .settings import options as cvo # For setting global options
-from . import misc as cvm
-from . import defaults as cvd
+}
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices']
+public interface TechElements {
+    void setTechElements(String elements);
+    String getTechElements();
+}
+
+public interface TimeDuration {
+    void setTimeDuration(String elements);
+    String getTimeDuration();
+}
+
+public interface LocationElements {
+    void setLocationElements(String elements);
+    String getLocationElements();
+}
+
+public class SpanNode implements PersonalElements {
+# Parameters used to calculate immunity
+pars['use_waning']      = False # Whether to use dynamically calculated immunity
+pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
+pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
+pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
+pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
+pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
+pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+
+# Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
+pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
+pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
+}
+
+public class SpanNode implements TechElements {
+# Severity parameters: probabilities of symptom progression
+pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
+pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
+pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
+pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
+pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
+pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
+
+# Efficacy of protection measures
+pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
+pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
+pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
+
+# Events and interventions
+pars['interventions'] = []   # The interventions present in this simulation; populated by the user
+pars['analyzers']     = []   # Custom analysis functions; populated by the user
+pars['timelimit']     = None # Time limit for the simulation (seconds)
+pars['stopping_func'] = None # A function to call to stop the sim partway through
+
+# Health system parameters
+pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
+pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
+pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
+pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
+
+# Handle vaccine and variant parameters
+pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
+pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
+pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
+pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
+pars['variant_pars']  = dict(wild={}) # Populated just below
+
+}
+
+public class SpanNode implements TimeDuration {
+# Duration parameters: time for disease progression
+pars['dur'] = {}
+pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
+pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
+pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
+pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1.5, par2=2.0) # Duration from severe symptoms to requiring ICU; average of 1.9 and 1.0; see Chen et al., https://www.sciencedirect.com/science/article/pii/S0163445320301195, 8.5 days total - 6.6 days sym2sev = 1.9 days; see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, Table 3, 1 day, IQR 0-3 days; std=2.0 is an estimate
+
+# Duration parameters: time for disease recovery
+pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
+pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with severe symptoms to recover, 24.7 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 18.1 days = 24.7 onset-to-recovery - 6.6 sym2sev; 6.3 = 0.35 coefficient of variation * 18.1; see also https://doi.org/10.1017/S0950268820001259 (22 days) and https://doi.org/10.3390/ijerph17207560 (3-10 days)
+pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with critical symptoms to recover; as above (Verity et al.)
+pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=10.7, par2=4.8) # Duration from critical symptoms to death, 18.8 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 10.7 = 18.8 onset-to-death - 6.6 sym2sev - 1.5 sev2crit; 4.8 = 0.45 coefficient of variation * 10.7
+
+# Simulation parameters
+pars['start_day']  = '2020-03-01' # Start day of the simulation
+pars['end_day']    = None         # End day of the simulation
+pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
+pars['rand_seed']  = 1            # Random seed, if None, don't reset
+pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (default), 2 (everything)
+
+# Rescaling parameters
+pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
+pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
+pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
+pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
+pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
+pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
+
+# Parameters that control settings and defaults for multi-variant runs
+pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+pars['n_variants'] = 1 # The number of variants circulating in the population
+}
+
+public class SpanNode implements LocationElements {
+# Population parameters
+pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
+pars['pop_infected'] = 20       # Number of initial infections
+pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
+pars['location']     = None     # What location to load data from -- default Seattle
+}
 
 
-def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
-    '''
-    Create the parameters for the simulation. Typically, this function is used
-    internally rather than called by the user; e.g. typical use would be to do
-    sim = cv.Sim() and then inspect sim.pars, rather than calling this function
-    directly.
-
-    Args:
-        set_prognoses (bool): whether or not to create prognoses (else, added when the population is created)
-        prog_by_age   (bool): whether or not to use age-based severity, mortality etc.
-        kwargs        (dict): any additional kwargs are interpreted as parameter names
-        version       (str):  if supplied, use parameters from this Covasim version
-
-    Returns:
-        pars (dict): the parameters of the simulation
-    '''
-    pars = {}
-
-    # Population parameters
-    pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
-    pars['pop_infected'] = 20       # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
-    pars['location']     = None     # What location to load data from -- default Seattle
-
-    # Simulation parameters
-    pars['start_day']  = '2020-03-01' # Start day of the simulation
-    pars['end_day']    = None         # End day of the simulation
-    pars['n_days']     = 60           # Number of days to run, if end_day isn't specified
-    pars['rand_seed']  = 1            # Random seed, if None, don't reset
-    pars['verbose']    = cvo.verbose  # Whether or not to display information during the run -- options are 0 (silent), 0.1 (some; default), 1 (default), 2 (everything)
-
-    # Rescaling parameters
-    pars['pop_scale']         = 1    # Factor by which to scale the population -- e.g. pop_scale=10 with pop_size=100e3 means a population of 1 million
-    pars['scaled_pop']        = None # The total scaled population, i.e. the number of agents times the scale factor
-    pars['rescale']           = True # Enable dynamic rescaling of the population -- starts with pop_scale=1 and scales up dynamically as the epidemic grows
-    pars['rescale_threshold'] = 0.05 # Fraction susceptible population that will trigger rescaling if rescaling
-    pars['rescale_factor']    = 1.2  # Factor by which the population is rescaled on each step
-    pars['frac_susceptible']  = 1.0  # What proportion of the population is susceptible to infection
-
-    # Network parameters, generally initialized after the population has been constructed
-    pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
-    pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
-
-    # Basic disease transmission parameters
-    pars['beta_dist']       = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
-    pars['viral_dist']      = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
-    pars['beta'] = 0.016  # Beta per symptomatic contact; absolute value, calibrated
-    pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
-
-    # Parameters that control settings and defaults for multi-variant runs
-    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
-    pars['n_variants'] = 1 # The number of variants circulating in the population
-
-    # Parameters used to calculate immunity
-    pars['use_waning']      = False # Whether to use dynamically calculated immunity
-    pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
-    pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
-    pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(alpha_inf=3.5, beta_inf=1.219, alpha_symp_inf=-1.06, beta_symp_inf=0.867, alpha_sev_symp=0.268, beta_sev_symp=3.4) # Parameters to map nabs to efficacy
-    pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
-    pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
-
-    # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
-    pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
-
-    # Duration parameters: time for disease progression
-    pars['dur'] = {}
-    pars['dur']['exp2inf']  = dict(dist='lognormal_int', par1=4.5, par2=1.5) # Duration from exposed to infectious; see Lauer et al., https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7081172/, appendix table S2, subtracting inf2sym duration
-    pars['dur']['inf2sym']  = dict(dist='lognormal_int', par1=1.1, par2=0.9) # Duration from infectious to symptomatic; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 5.6 day incubation period - 4.5 day exp2inf from Lauer et al.
-    pars['dur']['sym2sev']  = dict(dist='lognormal_int', par1=6.6, par2=4.9) # Duration from symptomatic to severe symptoms; see Linton et al., https://doi.org/10.3390/jcm9020538, from Table 2, 6.6 day onset to hospital admission (deceased); see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, 7 days (Table 1)
-    pars['dur']['sev2crit'] = dict(dist='lognormal_int', par1=1.5, par2=2.0) # Duration from severe symptoms to requiring ICU; average of 1.9 and 1.0; see Chen et al., https://www.sciencedirect.com/science/article/pii/S0163445320301195, 8.5 days total - 6.6 days sym2sev = 1.9 days; see also Wang et al., https://jamanetwork.com/journals/jama/fullarticle/2761044, Table 3, 1 day, IQR 0-3 days; std=2.0 is an estimate
-
-    # Duration parameters: time for disease recovery
-    pars['dur']['asym2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for asymptomatic people to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['mild2rec'] = dict(dist='lognormal_int', par1=8.0,  par2=2.0) # Duration for people with mild symptoms to recover; see Wölfel et al., https://www.nature.com/articles/s41586-020-2196-x
-    pars['dur']['sev2rec']  = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with severe symptoms to recover, 24.7 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 18.1 days = 24.7 onset-to-recovery - 6.6 sym2sev; 6.3 = 0.35 coefficient of variation * 18.1; see also https://doi.org/10.1017/S0950268820001259 (22 days) and https://doi.org/10.3390/ijerph17207560 (3-10 days)
-    pars['dur']['crit2rec'] = dict(dist='lognormal_int', par1=18.1, par2=6.3) # Duration for people with critical symptoms to recover; as above (Verity et al.)
-    pars['dur']['crit2die'] = dict(dist='lognormal_int', par1=10.7, par2=4.8) # Duration from critical symptoms to death, 18.8 days total; see Verity et al., https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext; 10.7 = 18.8 onset-to-death - 6.6 sym2sev - 1.5 sev2crit; 4.8 = 0.45 coefficient of variation * 10.7
-
-    # Severity parameters: probabilities of symptom progression
-    pars['rel_symp_prob']   = 1.0  # Scale factor for proportion of symptomatic cases
-    pars['rel_severe_prob'] = 1.0  # Scale factor for proportion of symptomatic cases that become severe
-    pars['rel_crit_prob']   = 1.0  # Scale factor for proportion of severe cases that become critical
-    pars['rel_death_prob']  = 1.0  # Scale factor for proportion of critical cases that result in death
-    pars['prog_by_age']     = prog_by_age # Whether to set disease progression based on the person's age
-    pars['prognoses']       = None # The actual arrays of prognoses by age; this is populated later
-
-    # Efficacy of protection measures
-    pars['iso_factor']   = None # Multiply beta by this factor for diagnosed cases to represent isolation; set by reset_layer_pars() below
-    pars['quar_factor']  = None # Quarantine multiplier on transmissibility and susceptibility; set by reset_layer_pars() below
-    pars['quar_period']  = 14   # Number of days to quarantine for; assumption based on standard policies
-
-    # Events and interventions
-    pars['interventions'] = []   # The interventions present in this simulation; populated by the user
-    pars['analyzers']     = []   # Custom analysis functions; populated by the user
-    pars['timelimit']     = None # Time limit for the simulation (seconds)
-    pars['stopping_func'] = None # A function to call to stop the sim partway through
-
-    # Health system parameters
-    pars['n_beds_hosp']    = None # The number of hospital (adult acute care) beds available for severely ill patients (default is no constraint)
-    pars['n_beds_icu']     = None # The number of ICU beds available for critically ill patients (default is no constraint)
-    pars['no_hosp_factor'] = 2.0  # Multiplier for how much more likely severely ill people are to become critical if no hospital beds are available
-    pars['no_icu_factor']  = 2.0  # Multiplier for how much more likely critically ill people are to die if no ICU beds are available
-
-    # Handle vaccine and variant parameters
-    pars['vaccine_pars'] = {} # Vaccines that are being used; populated during initialization
-    pars['vaccine_map']  = {} #Reverse mapping from number to vaccine key
-    pars['variants']      = [] # Additional variants of the virus; populated by the user, see immunity.py
-    pars['variant_map']   = {0:'wild'} # Reverse mapping from number to variant key
-    pars['variant_pars']  = dict(wild={}) # Populated just below
-    for sp in cvd.variant_pars:
+for sp in cvd.variant_pars:
         if sp in pars.keys():
             pars['variant_pars']['wild'][sp] = pars[sp]
 
@@ -159,7 +149,6 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     directly by the user, although it can sometimes be used to fix layer key mismatches
     (i.e. if the contact layers in the population do not match the parameters). More
     commonly, however, mismatches need to be fixed explicitly.
-
     Args:
         pars (dict): the parameters dictionary
         layer_keys (list): the layer keys of the population, if available
@@ -232,12 +221,9 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
 def get_prognoses(by_age=True, version=None):
     '''
     Return the default parameter values for prognoses
-
     The prognosis probabilities are conditional given the previous disease state.
-
     Args:
         by_age (bool): whether to use age-specific values (default true)
-
     Returns:
         prog_pars (dict): the dictionary of prognosis probabilities
     '''
@@ -301,9 +287,7 @@ def absolute_prognoses(prognoses):
     Convenience function to revert relative (conditional) prognoses into absolute
     ones. Used to convert internally used relative prognoses into more readable
     absolute ones.
-
     **Example**::
-
         sim = cv.Sim()
         abs_progs = cv.parameters.absolute_prognoses(sim['prognoses'])
     '''
@@ -586,5 +570,3 @@ def get_vaccine_dose_pars(default=False):
         return pars['default']
     else:
         return pars
-
-
