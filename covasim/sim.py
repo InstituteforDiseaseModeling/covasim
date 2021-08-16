@@ -1281,7 +1281,7 @@ class Sim(cvb.BaseSim):
 
         New in version 2.1.0: argument passing, date_args, and mpl_args
         '''
-        fig = cvplt.plot_sim(sim=self, *args, **kwargs)
+        fig = cvplt.PlotFactory(sim=self, *args, **kwargs)
         return fig
 
 
@@ -1301,7 +1301,7 @@ class Sim(cvb.BaseSim):
             sim = cv.Sim().run()
             sim.plot_result('r_eff')
         '''
-        fig = cvplt.plot_result(sim=self, key=key, *args, **kwargs)
+        fig = cvplt.PlotFactory(sim=self, key=key, *args, **kwargs)
         return fig
 
 
@@ -1458,7 +1458,7 @@ def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, *
     if not preset:
         sim = Sim(**kwargs)
         sim.run(**run_args)
-        sim.plot(**plot_args)
+        sim.PlotFactory(**plot_args)
         return sim
 
     elif preset == 'full':
@@ -1488,9 +1488,9 @@ def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, *
             sims = [Sim(pars, **{scenpar:val}, label=label) for label,val in scenval.items()]
             msim = cvr.MultiSim(sims)
             msim.run(**run_args)
-            msim.plot(**plot_args)
+            msim.PlotFactory(**plot_args)
             msim.median()
-            msim.plot(**plot_args)
+            msim.PlotFactory(**plot_args)
             return msim
 
     else:
