@@ -26,6 +26,7 @@ class FlexPretty(sc.prettyobj):
     for a one-line description and obj.disp() for a full description.
     '''
 
+    
     def __repr__(self):
         ''' Use brief repr by default '''
         try:
