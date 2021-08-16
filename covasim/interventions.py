@@ -216,8 +216,59 @@ def InterventionDict(which, pars):
     intervention = IntervClass(**pars)
     return intervention
 
-
 class Intervention:
+
+    @abstractstaticmethod
+    def __init__(self, label=None, show_label=False, do_plot=None, line_args=None): 
+    
+    @abstractstaticmethod
+    def __init__(self, pars=None, **kwargs):
+
+    @abstractstaticmethod
+    def __init__(self, days, interventions, **kwargs):
+
+    @abstractstaticmethod
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
+                 ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
+                 start_day=0, end_day=None, swab_delay=None, **kwargs):
+
+    @abstractstaticmethod
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
+                 ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
+                 start_day=0, end_day=None, swab_delay=None, **kwargs):
+
+    @abstractstaticmethod
+    def __init__(self, trace_probs=None, trace_time=None, start_day=0, end_day=None, presumptive=False, quar_period=None, capacity=None, **kwargs):
+
+
+    
+class vaccine():
+    @abstractstaticmethod
+    def __init__(self, daily_tests, symp_test=100.0, quar_test=1.0, quar_policy=None, subtarget=None,
+                 ili_prev=None, sensitivity=1.0, loss_prob=0, test_delay=0,
+                 start_day=0, end_day=None, swab_delay=None, **kwargs):
+    
+    #simple vaccine
+    @abstractstaticmethod
+    def __init__(self, days, prob=1.0, rel_sus=0.0, rel_symp=0.0, subtarget=None, cumulative=False, **kwargs):
+
+    #base vaccination
+    @abstractstaticmethod
+    def __init__(self, vaccine, label=None, **kwargs):
+
+    #vaccinate
+    @abstractstaticmethod
+    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
+
+    #vaccinate_prob
+    @abstractstaticmethod
+    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
+
+    #vaccinate_num
+    @abstractstaticmethod
+    def __init__(self, vaccine, num_doses, sequence=None, **kwargs):
+
+class InterventionBase(Intervention):
     '''
     Base class for interventions. By default, interventions are printed using a
     dict format, which they can be recreated from. To display all the attributes
@@ -694,7 +745,7 @@ def get_quar_inds(quar_policy, sim):
     return quar_test_inds
 
 
-class test_num(Intervention):
+class test_num(abs2):
     '''
     Test the specified number of people per day. Useful for including historical
     testing data. The probability of a given person getting a test is dependent
@@ -1120,7 +1171,7 @@ class contact_tracing(Intervention):
 __all__+= ['simple_vaccine', 'BaseVaccination', 'vaccinate', 'vaccinate_prob', 'vaccinate_num']
 
 
-class simple_vaccine(Intervention):
+class simple_vaccine(vaccine):
     '''
     Apply a simple vaccine to a subset of the population. In addition to changing the
     relative susceptibility and the probability of developing symptoms if still
@@ -1216,7 +1267,7 @@ class simple_vaccine(Intervention):
 
         return
 
-class BaseVaccination(Intervention):
+class BaseVaccination(vaccine):
     '''
     Apply a vaccine to a subset of the population.
 
@@ -1425,7 +1476,7 @@ def vaccinate(*args, **kwargs):
         return vaccinate_prob(*args, **kwargs)
 
 
-class vaccinate_prob(BaseVaccination):
+class vaccinate_prob(vaccine):
     '''
     Probability-based vaccination
 
@@ -1507,7 +1558,7 @@ class vaccinate_prob(BaseVaccination):
 
 
 
-class vaccinate_num(BaseVaccination):
+class vaccinate_num(vaccine):
     def __init__(self, vaccine, num_doses, sequence=None, **kwargs):
         """
         Sequence-based vaccination
