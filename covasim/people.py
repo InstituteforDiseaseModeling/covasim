@@ -163,6 +163,42 @@ class People(cvb.BasePeople):
         self.rel_trans[:]   = progs['trans_ORs'][inds] * cvu.sample(**self.pars['beta_dist'], size=len(inds))  # Default transmissibilities, with viral load drawn from a distribution
 
         return
+    def personal_elements
+    public class netPara implements PersonalElements{
+        public String elements(){
+            return "netPara";
+             }
+        }
+
+    public class Age implements PersonalElements{
+      public String elements(){
+     return "Age";
+     }
+    }
+
+    public class sexual implements PersonalElements{
+     public String elements(){
+     return "sexual";
+     }
+    }
+
+    public class basicDisPara implements PersonalElements{
+      public String elements(){
+     return "basicDisPara";
+     }
+    }
+
+    public class calImmuPara implements PersonalElements{ # Parameters used to calculate immunity
+      public String elements(){
+     return "calImmuPara";
+     }
+    }
+
+    public class varSpecPara implements PersonalElements{     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
+     public String elements(){
+     return "varSpecPara";
+     }
+    }
 
 
     def update_states_pre(self, t):
