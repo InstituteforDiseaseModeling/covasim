@@ -170,7 +170,7 @@ class MultiSim(cvb.FlexPretty):
 
         return
 
-dafttttttt
+""
     def run(self, reduce=False, combine=False, **kwargs):
         '''
         Run the actual sims
