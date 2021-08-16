@@ -353,42 +353,6 @@ class People(cvb.BasePeople):
 
         return n_quarantined
 
-    def personal_elements
-     public class netPara implements PersonalElements{
-         public String elements(){
-         return "netPara";
-      }
-     }
-
-     public class Age implements PersonalElements{
-     public String elements(){
-     return "Age";
-        }
-    }
-
-    public class sexual implements PersonalElements{
-    public String elements(){
-    return "sexual";
-         }
-     }
-
-    public class basicDisPara implements PersonalElements{
-    public String elements(){
-     return "basicDisPara";
-      }
-     }
-
-    public class calImmuPara implements PersonalElements{ # Parameters used to calculate immunity
-     public String elements(){
-     return "calImmuPara";
-      }
-     }
-
-    public class varSpecPara implements PersonalElements{     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
-     public String elements(){
-     return "varSpecPara";
-      }
-     }
 
     #%% Methods to make events occur (infection and diagnosis)
 
