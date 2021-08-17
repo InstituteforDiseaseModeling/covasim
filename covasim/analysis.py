@@ -939,7 +939,7 @@ class Fit(Analyzer):
         self.data = sim.data
 
         # Copy sim results
-        if not sim.results_ready: # pragma: no cover
+        if not sim.results_ready(): # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
             if self.die:
                 raise RuntimeError(errormsg)

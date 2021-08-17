@@ -88,7 +88,7 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
     ''' Handle which quantities to plot '''
 
     # Check that results are ready
-    if check_ready and not sim.results_ready:
+    if check_ready and not sim.results_ready():
         errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
         raise RuntimeError(errormsg)
 

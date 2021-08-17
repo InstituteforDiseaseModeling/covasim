@@ -839,17 +839,11 @@ class MultiSim(cvb.FlexPretty):
 
     def to_json(self, *args, **kwargs):
         ''' Shortcut for base_sim.to_json() '''
-        if not self.base_sim.results_ready: # pragma: no cover
-            errormsg = 'JSON export only available for reduced sim; please run msim.mean() or msim.median() first'
-            raise RuntimeError(errormsg)
         return self.base_sim.to_json(*args, **kwargs)
 
 
     def to_excel(self, *args, **kwargs):
         ''' Shortcut for base_sim.to_excel() '''
-        if not self.base_sim.results_ready: # pragma: no cover
-            errormsg = 'Excel export only available for reduced sim; please run msim.mean() or msim.median() first'
-            raise RuntimeError(errormsg)
         return self.base_sim.to_excel(*args, **kwargs)
 
 

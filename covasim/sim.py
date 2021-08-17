@@ -65,7 +65,7 @@ class Sim(cvb.BaseSim):
         self.summary       = None     # For storing a summary of the results
         self.initialized   = False    # Whether or not initialization is complete
         self.complete      = False    # Whether a simulation has completed running
-        self.results_ready = False    # Whether or not results are ready
+        self.results_state = cvb.ResultsNotReadyState()    # Whether or not results are ready
         self._default_ver  = version  # Default version of parameters used
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
@@ -116,7 +116,7 @@ class Sim(cvb.BaseSim):
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized   = True
         self.complete      = False
-        self.results_ready = False
+        self.results_state = cvb.ResultsNotReadyState()
         return self
 
 
@@ -337,7 +337,7 @@ class Sim(cvb.BaseSim):
         self.rescale_vec   = scale*np.ones(self.npts) # Not included in the results, but used to scale them
         self.results['date'] = self.datevec
         self.results['t']    = self.tvec
-        self.results_ready   = False
+        self.results_state   = cvb.ResultsNotReadyState()
 
         return
 
@@ -750,7 +750,7 @@ class Sim(cvb.BaseSim):
     def finalize(self, verbose=None, restore_pars=True):
         ''' Compute final results '''
 
-        if self.results_ready:
+        if self.results_ready():
             # Because the results are rescaled in-place, finalizing the sim cannot be run more than once or
             # otherwise the scale factor will be applied multiple times
             raise AlreadyRunError('Simulation has already been finalized')
@@ -777,7 +777,7 @@ class Sim(cvb.BaseSim):
         self.finalize_analyzers()
 
         # Final settings
-        self.results_ready = True # Set this first so self.summary() knows to print the results
+        self.results_state = cvb.ResultsReadyState() # Set this first so self.summary() knows to print the results
         self.t -= 1 # During the run, this keeps track of the next step; restore this be the final day of the sim
 
         # Perform calculations on results
@@ -1031,7 +1031,7 @@ class Sim(cvb.BaseSim):
             t = self.day(self.t)
 
         # Compute the summary
-        if require_run and not self.results_ready:
+        if require_run and not self.results_ready():
             errormsg = 'Simulation not yet run'
             raise RuntimeError(errormsg)
 

@@ -186,6 +186,117 @@ def set_metadata(obj):
     obj.git_info = cvm.git_info()
     return
 
+class ResultsState:
+    def to_json():
+        raise NotImplementedError
+
+    def to_excel():
+        raise NotImplementedError
+
+
+class ResultsReadyState(ResultsState):
+    def to_json(self, base_sim, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
+        '''
+        Export results and parameters as JSON.
+
+        Args:
+            filename (str): if None, return string; else, write to file
+            keys (str or list): attributes to write to json (default: results, parameters, and summary)
+            tostring (bool): if not writing to file, whether to write to string (alternative is sanitized dictionary)
+            indent (int): if writing to file, how many indents to use per nested level
+            verbose (bool): detail to print
+            args (list): passed to savejson()
+            kwargs (dict): passed to savejson()
+
+        Returns:
+            A unicode string containing a JSON representation of the results,
+            or writes the JSON file to disk
+
+        **Examples**::
+
+            json = sim.to_json()
+            sim.to_json('results.json')
+            sim.to_json('summary.json', keys='summary')
+        '''
+
+        # Handle keys
+        if keys is None:
+            keys = ['results', 'pars', 'summary']
+        keys = sc.promotetolist(keys)
+
+        # Convert to JSON-compatible format
+        d = {}
+        for key in keys:
+            if key == 'results':
+                resdict = base_sim.export_results(for_json=True)
+                d['results'] = resdict
+            elif key in ['pars', 'parameters']:
+                pardict = base_sim.export_pars()
+                d['parameters'] = pardict
+            elif key == 'summary':
+                d['summary'] = dict(sc.dcp(base_sim.summary))
+            else: # pragma: no cover
+                try:
+                    d[key] = sc.sanitizejson(getattr(base_sim, key))
+                except Exception as E:
+                    errormsg = f'Could not convert "{key}" to JSON: {str(E)}; continuing...'
+                    print(errormsg)
+
+        if filename is None:
+            output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
+        else:
+            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
+
+        return output
+
+
+    def to_excel(self, base_sim, filename=None, skip_pars=None):
+        '''
+        Export parameters and results as Excel format
+
+        Args:
+            filename  (str): if None, return string; else, write to file
+            skip_pars (list): if provided, a custom list parameters to exclude
+
+        Returns:
+            An sc.Spreadsheet with an Excel file, or writes the file to disk
+        '''
+        if skip_pars is None:
+            skip_pars = ['variant_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
+
+        # Export results
+        result_df = base_sim.to_df(date_index=True)
+
+        # Export parameters
+        pars = {k:v for k,v in base_sim.pars.items() if k not in skip_pars}
+        par_df = pd.DataFrame.from_dict(sc.flattendict(pars, sep='_'), orient='index', columns=['Value'])
+        par_df.index.name = 'Parameter'
+
+        # Convert to spreadsheet
+        spreadsheet = sc.Spreadsheet()
+        spreadsheet.freshbytes()
+        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
+            result_df.to_excel(writer, sheet_name='Results')
+            par_df.to_excel(writer, sheet_name='Parameters')
+        spreadsheet.load()
+
+        if filename is None:
+            output = spreadsheet
+        else:
+            output = spreadsheet.save(filename)
+
+        return output
+
+
+class ResultsNotReadyState(ResultsState):
+    def to_json():
+        errormsg = 'JSON export only available for reduced sim; please run msim.mean() or msim.median() first'
+        raise RuntimeError(errormsg)
+
+    def to_excel():
+        errormsg = 'Excel export only available for reduced sim; please run msim.mean() or msim.median() first'
+        raise RuntimeError(errormsg)
+
 
 class BaseSim(ParsObj):
     '''
@@ -207,6 +318,8 @@ class BaseSim(ParsObj):
         '''
         return sc.prepr(self)
 
+    def results_ready(self):
+        return self.results_state.__class__ is ResultsReadyState
 
     def _brief(self):
         '''
@@ -215,7 +328,7 @@ class BaseSim(ParsObj):
         '''
         # Try to get a detailed description of the sim...
         try:
-            if self.results_ready:
+            if self.results_ready():
                 infections = self.summary['cum_infections']
                 deaths = self.summary['cum_deaths']
                 results = f'{infections:n}⚙, {deaths:n}☠'
@@ -453,7 +566,7 @@ class BaseSim(ParsObj):
 
         '''
 
-        if not self.results_ready: # pragma: no cover
+        if not self.results_ready(): # pragma: no cover
             errormsg = 'Please run the sim before exporting the results'
             raise RuntimeError(errormsg)
 
@@ -509,60 +622,7 @@ class BaseSim(ParsObj):
 
 
     def to_json(self, filename=None, keys=None, tostring=False, indent=2, verbose=False, *args, **kwargs):
-        '''
-        Export results and parameters as JSON.
-
-        Args:
-            filename (str): if None, return string; else, write to file
-            keys (str or list): attributes to write to json (default: results, parameters, and summary)
-            tostring (bool): if not writing to file, whether to write to string (alternative is sanitized dictionary)
-            indent (int): if writing to file, how many indents to use per nested level
-            verbose (bool): detail to print
-            args (list): passed to savejson()
-            kwargs (dict): passed to savejson()
-
-        Returns:
-            A unicode string containing a JSON representation of the results,
-            or writes the JSON file to disk
-
-        **Examples**::
-
-            json = sim.to_json()
-            sim.to_json('results.json')
-            sim.to_json('summary.json', keys='summary')
-        '''
-
-        # Handle keys
-        if keys is None:
-            keys = ['results', 'pars', 'summary']
-        keys = sc.promotetolist(keys)
-
-        # Convert to JSON-compatible format
-        d = {}
-        for key in keys:
-            if key == 'results':
-                resdict = self.export_results(for_json=True)
-                d['results'] = resdict
-            elif key in ['pars', 'parameters']:
-                pardict = self.export_pars()
-                d['parameters'] = pardict
-            elif key == 'summary':
-                d['summary'] = dict(sc.dcp(self.summary))
-            else: # pragma: no cover
-                try:
-                    d[key] = sc.sanitizejson(getattr(self, key))
-                except Exception as E:
-                    errormsg = f'Could not convert "{key}" to JSON: {str(E)}; continuing...'
-                    print(errormsg)
-
-        if filename is None:
-            output = sc.jsonify(d, tostring=tostring, indent=indent, verbose=verbose, *args, **kwargs)
-        else:
-            output = sc.savejson(filename=filename, obj=d, indent=indent, *args, **kwargs)
-
-        return output
-
-
+        return self.results_state.to_json(self, filename, keys, tostring, indent, verbose, *args, **kwargs)
     def to_df(self, date_index=False):
         '''
         Export results to a pandas dataframe
@@ -581,42 +641,7 @@ class BaseSim(ParsObj):
 
 
     def to_excel(self, filename=None, skip_pars=None):
-        '''
-        Export parameters and results as Excel format
-
-        Args:
-            filename  (str): if None, return string; else, write to file
-            skip_pars (list): if provided, a custom list parameters to exclude
-
-        Returns:
-            An sc.Spreadsheet with an Excel file, or writes the file to disk
-        '''
-        if skip_pars is None:
-            skip_pars = ['variant_map', 'vaccine_map'] # These include non-string keys so fail at sc.flattendict()
-
-        # Export results
-        result_df = self.to_df(date_index=True)
-
-        # Export parameters
-        pars = {k:v for k,v in self.pars.items() if k not in skip_pars}
-        par_df = pd.DataFrame.from_dict(sc.flattendict(pars, sep='_'), orient='index', columns=['Value'])
-        par_df.index.name = 'Parameter'
-
-        # Convert to spreadsheet
-        spreadsheet = sc.Spreadsheet()
-        spreadsheet.freshbytes()
-        with pd.ExcelWriter(spreadsheet.bytes, engine='xlsxwriter') as writer:
-            result_df.to_excel(writer, sheet_name='Results')
-            par_df.to_excel(writer, sheet_name='Parameters')
-        spreadsheet.load()
-
-        if filename is None:
-            output = spreadsheet
-        else:
-            output = spreadsheet.save(filename)
-
-        return output
-
+        return self.results_state.to_excel(self, filename, skip_pars)
 
     def shrink(self, skip_attrs=None, in_place=True):
         '''
@@ -664,7 +689,7 @@ class BaseSim(ParsObj):
 
         # Set keep_people based on whether or not we're in the middle of a run
         if keep_people is None:
-            if self.initialized and not self.results_ready:
+            if self.initialized and not self.results_ready():
                 keep_people = True
             else:
                 keep_people = False

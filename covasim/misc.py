@@ -595,7 +595,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
 
     # Validate inputs: series
     if series is None or isinstance(series, str):
-        if not sim.results_ready: # pragma: no cover
+        if not sim.results_ready(): # pragma: no cover
             raise Exception("Results not ready, cannot calculate doubling time")
         else:
             if series is None or series not in sim.result_keys():
