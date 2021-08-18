@@ -414,7 +414,7 @@ def get_cross_immunity(default=False):
             b117   = 0.5, # Assumption
             b1351  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
             p1     = 0.5, # Assumption
-            b16172 = 0.5, # Assumption
+            b16172 = 0.374, # Assumption
         ),
 
         b117 = dict(
@@ -422,7 +422,7 @@ def get_cross_immunity(default=False):
             b117   = 1.0, # Default for own-immunity
             b1351  = 0.8, # Assumption
             p1     = 0.8, # Assumption
-            b16172 = 0.8  # Assumption
+            b16172 = 0.689  # Assumption
         ),
 
         b1351 = dict(
@@ -430,7 +430,7 @@ def get_cross_immunity(default=False):
             b117   = 0.5,   # Assumption
             b1351  = 1.0,   # Default for own-immunity
             p1     = 0.5,   # Assumption
-            b16172 = 0.5    # Assumption
+            b16172 = 0.086    # Assumption
         ),
 
         p1 = dict(
@@ -438,7 +438,7 @@ def get_cross_immunity(default=False):
             b117   = 0.4,  # Assumption based on the above
             b1351  = 0.4,  # Assumption based on the above
             p1     = 1.0,  # Default for own-immunity
-            b16172 = 0.8   # Assumption
+            b16172 = 0.088   # Assumption
         ),
 
         b16172=dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8

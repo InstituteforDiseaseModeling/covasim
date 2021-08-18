@@ -1262,9 +1262,13 @@ class BaseVaccination(Intervention):
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
-        - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
+        EITHER
         - ``nab_init``:  the initial antibody level (higher = more protection)
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
+        OR
+        - ``target_eff``: the target efficacy from which to calculate initial antibody and boosting.
+        must be supplied as a list, where length of list is equal to number of doses
+        - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
         - ``doses``:     the number of doses required to be fully vaccinated
         - ``interval``:  the interval between doses
         - entries for efficacy against each of the variants (e.g. ``b117``)
@@ -1358,6 +1362,22 @@ class BaseVaccination(Intervention):
                     val = 1.0
                     if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
                 self.p[key] = val
+
+        if 'target_eff' in self.p.keys():
+            # check to make sure length is equal to number of doses
+            if self.p['doses'] == len(self.p['target_eff']):
+                # determine efficacy of first dose (assume efficacy supplied is against symptomatic disease)
+                nabs = np.arange(-8, 4, 0.1)
+                VE_symp = cvi.calc_VE_symp(nabs, self.p['nab_eff'])
+                peak_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][0])]
+                self.p['nab_init'] = dict(dist='normal', par1=peak_nab, par2=2)
+                if self.p['doses'] == 2:
+                    boosted_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][1])]
+                    boost = (2**boosted_nab)/(2**peak_nab)
+                    self.p['nab_boost'] = boost
+            else:
+                errormsg = f'Provided mismatching efficacies and doses.'
+                raise ValueError(errormsg)
 
         self.vaccinated           = [None]*sim.npts # Keep track of inds of people vaccinated on each day
         self.vaccinations         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person

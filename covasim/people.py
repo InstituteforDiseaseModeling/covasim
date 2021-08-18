@@ -59,7 +59,7 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
-            elif key == 'n_infections':
+            elif key == 'n_infections' or key == 'n_breakthrough_infections':
                 self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
@@ -465,6 +465,9 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
+        # Retrieve those with a breakthrough infection (defined nabs)
+        breakthrough_inds = cvu.true(self.peak_nab[inds])
+
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
         self.naive[inds]          = False
@@ -472,6 +475,7 @@ class People(cvb.BasePeople):
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
         self.n_infections[inds]  += 1
+        self.n_breakthrough_infections[inds[breakthrough_inds]] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)

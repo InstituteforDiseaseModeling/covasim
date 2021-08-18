@@ -5,6 +5,7 @@ Tests for immune waning, variants, and vaccine intervention.
 #%% Imports and settings
 import sciris as sc
 import covasim as cv
+import covasim.parameters as cvpar
 import pandas as pd
 import pylab as pl
 import numpy as np
@@ -216,6 +217,20 @@ def test_two_vaccines(do_plot=False):
         pl.plot(nabs)
 
 
+def test_vaccine_target_eff(do_plot=False):
+    sc.heading('Testing vaccine with pre-specified efficacy...')
+    vacc_pars = sc.mergedicts(cvpar.get_vaccine_dose_pars(default=True), {'doses': 2, 'target_eff': [0.7, 0.95]})
+
+    vaccine = cv.vaccinate_prob(vaccine=vacc_pars, label='target_eff', days=30)
+    sim = cv.Sim(base_pars, use_waning=True, interventions=vaccine)
+    sim.run()
+    nab_init = sim['vaccine_pars']['target_eff']['nab_init']
+    boost = sim['vaccine_pars']['target_eff']['nab_boost']
+    print(nab_init)
+    print(boost)
+    return sim
+
+
 def test_decays(do_plot=False):
     sc.heading('Testing decay parameters...')
 
@@ -289,13 +304,14 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
-    res    = test_decays(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    # sim5   = test_two_vaccines(do_plot=do_plot)
+    sim6   = test_vaccine_target_eff(do_plot=do_plot)
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

@@ -250,6 +250,23 @@ def calc_VE(nab, ax, pars, **kwargs):
     return output
 
 
+def calc_VE_symp(nab, pars):
+    '''
+    Converts NAbs to marginal VE against symptomatic disease
+    '''
+
+    nab = 2**nab
+    lo_inf = pars['alpha_inf'] + pars['beta_inf']*np.log(nab)
+    inv_lo_inf = np.exp(lo_inf)/ (1 + np.exp(lo_inf))
+
+    lo_symp_inf = pars['alpha_symp_inf'] + pars['beta_symp_inf']*np.log(nab)
+    inv_lo_symp_inf = np.exp(lo_symp_inf)/ (1 + np.exp(lo_symp_inf))
+
+    VE_symp = 1 - ((1 - inv_lo_inf)*(1 - inv_lo_symp_inf))
+    return VE_symp
+
+
+
 
 # %% Immunity methods
 
