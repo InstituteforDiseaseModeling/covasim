@@ -611,7 +611,7 @@ class Sim(cvb.BaseSim):
             if len(has_nabs):
                 cvimm.update_nab(people, inds=has_nabs)
                 if len(breakthrough_inf):
-                    prel_trans[has_nabs] *= self['trans_redux']
+                    prel_trans[breakthrough_inf] *= self['trans_redux']
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):

@@ -466,7 +466,7 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.defined(self.peak_nab[inds])
+        breakthrough_inds = cvu.true(self.peak_nab[inds])
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
