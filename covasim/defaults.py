@@ -51,6 +51,7 @@ class PeopleMeta(sc.prettyobj):
             'rel_trans',        # Float
             'rel_sus',          # Float
             'n_infections',     # Int
+            'n_breakthrough_infections', # Int
         ]
 
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
