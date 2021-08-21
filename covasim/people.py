@@ -114,20 +114,21 @@ class People(cvb.BasePeople):
         return
 
 
-    def init_flows(self):
+    def init_flows(self) -> Initialization:
         ''' Initialize flows to be zero '''
         self.flows = {key:0 for key in cvd.new_result_flows}
         self.flows_variant = {}
         for key in cvd.new_result_flows_by_variant:
             self.flows_variant[key] = np.zeros(self.pars['n_variants'], dtype=cvd.default_float)
-        return
+        return self.Intialization
 
-
+    Class Initialization:
     def initialize(self):
         ''' Perform initializations '''
         self.set_prognoses()
         self.validate()
         self.initialized = True
+        self.Initialization = init_flows()
         return
 
 
