@@ -62,11 +62,11 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['asymp_factor']    = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
 
     # Parameters that control settings and defaults for multi-variant runs
-    pars['n_imports'] = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
+    pars['n_imports']  = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)
     pars['n_variants'] = 1 # The number of variants circulating in the population
 
     # Parameters used to calculate immunity
-    pars['use_waning']      = False # Whether to use dynamically calculated immunity
+    pars['use_waning']      = True # Whether to use dynamically calculated immunity
     pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
     pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=21, decay_rate1=0.007, decay_time1=47, decay_rate2=0.002, decay_time2=106)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
@@ -78,7 +78,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant']  = 1.0 # Relative own-immmunity varies by variant
+    pars['rel_imm_variant'] = 1.0 # Relative own-immunity varies by variant
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
