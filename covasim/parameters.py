@@ -345,6 +345,8 @@ def get_vaccine_choices():
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
         'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
+        'sinovac': ['sinovac', 'coronavac'],
+        'sinopharm': ['sinopharm']
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -413,7 +415,7 @@ def get_cross_immunity(default=False):
             wild   = 1.0, # Default for own-immunity
             b117   = 0.5, # Assumption
             b1351  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
-            p1     = 0.5, # Assumption
+            p1     = 0.34, # Assumption
             b16172 = 0.374, # Assumption
         ),
 
@@ -509,6 +511,22 @@ def get_vaccine_variant_pars(default=False):
             p1     = 1/8.6, # Assumption, no data available yet
             b16172 = 1/6.2, # Assumption, no data available yet
         ),
+
+        sinovac = dict(
+            wild=1.0,
+            b117=1 / 1.12,
+            b1351=1 / 4.7,
+            p1=1 / 8.6,  # Assumption, no data available yet
+            b16172=1 / 1.4,  # https://www.globaltimes.cn/page/202108/1230741.shtml
+        ),
+
+        sinopharm = dict(
+            wild=1.0,
+            b117=1 / 1.12,
+            b1351=1 / 4.7,
+            p1=1 / 8.6,  # Assumption, no data available yet
+            b16172=1 / 6.2,  # Assumption, no data available yet
+        )
     )
 
     if default:
@@ -582,6 +600,22 @@ def get_vaccine_dose_pars(default=False):
             doses     = 2,
             interval  = 21,
         ),
+
+        sinovac = dict(
+            nab_eff=sc.dcp(default_nab_eff),
+            nab_init=dict(dist='normal', par1=-2, par2=2),
+            nab_boost=2,
+            doses=2,
+            interval=14,
+        ),
+
+        sinopharm = dict(
+            nab_eff=sc.dcp(default_nab_eff),
+            nab_init=dict(dist='normal', par1=-0.9, par2=2),
+            nab_boost=2,
+            doses=2,
+            interval=21,
+        )
     )
 
     if default:
