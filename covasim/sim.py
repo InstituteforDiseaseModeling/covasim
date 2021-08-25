@@ -602,7 +602,7 @@ class Sim(cvb.BaseSim):
         diag = people.diagnosed
         quar = people.quarantined
         prel_trans = people.rel_trans
-        prel_sus = people.rel_sus
+        prel_sus   = people.rel_sus
 
         # Check nabs.
         if self['use_waning']:
@@ -640,20 +640,7 @@ class Sim(cvb.BaseSim):
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer  = cvd.default_float(self['beta_layer'][lkey])
                 rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
-
-                # Calculate actual transmission
-                # all_sources = np.array([], dtype=cvd.default_int)
-                # all_targets = np.array([], dtype=cvd.default_int)
-                # np1 = np.concatenate([p1, p2])
-                # np2 = np.concatenate([p2, p2])
-                # betas = np.concatenate([betas, betas])
-                # print(len(p1), len(p2), len(np1), len(np2))
-                # for sources, targets in [[p1, p2], [p2, p1]]:
-                # for sources, targets in [[np2, np1]]:
-                # for sources, targets in [[np1,np2],[np2,np1]]:#:#:  # Loop over the contact network from p1->p2 and p2->p1
                 source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus)  # Calculate transmission!
-                    # all_sources = np.concatenate([all_sources, source_inds])
-                    # all_targets = np.concatenate([all_targets, target_inds])
                 people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
