@@ -68,12 +68,13 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']      = True # Whether to use dynamically calculated immunity
     pars['nab_init']        = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=22, decay_rate1=np.log(2)/100, decay_time1=250, decay_rate2=np.log(2)/3650, decay_time2=365)
+    pars['nab_decay']       = dict(form='nab_growth_decay', growth_time=21, decay_rate1=0.007, decay_time1=47, decay_rate2=0.002, decay_time2=106)
     pars['nab_kin']         = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']       = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']         = dict(alpha_inf=2.12, beta_inf=0.61, alpha_symp_inf=-2.0, beta_symp_inf=1.61, alpha_sev_symp=1.03, beta_sev_symp=0.04) # Parameters to map nabs to efficacy for natural infection -- see below for vaccine-derived
+    pars['nab_eff']         = dict(alpha_inf=2.08, beta_inf=0.967, alpha_symp_inf=-0.739, beta_symp_inf=0.038, alpha_sev_symp=-0.014, beta_sev_symp=0.079) # Parameters to map nabs to efficacy for natural infection -- see below for vaccine-derived
     pars['rel_imm_symp']    = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']        = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
+    pars['trans_redux']     = 0.59  # https://www.medrxiv.org/content/10.1101/2021.07.13.21260393v
 
     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
@@ -346,6 +347,8 @@ def get_vaccine_choices():
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
         'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
+        'sinovac': ['sinovac', 'coronavac'],
+        'sinopharm': ['sinopharm']
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -414,8 +417,8 @@ def get_cross_immunity(default=False):
             wild   = 1.0, # Default for own-immunity
             b117   = 0.5, # Assumption
             b1351  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
-            p1     = 0.5, # Assumption
-            b16172 = 0.5, # Assumption
+            p1     = 0.34, # Assumption
+            b16172 = 0.374, # Assumption
         ),
 
         b117 = dict(
@@ -423,7 +426,7 @@ def get_cross_immunity(default=False):
             b117   = 1.0, # Default for own-immunity
             b1351  = 0.8, # Assumption
             p1     = 0.8, # Assumption
-            b16172 = 0.8  # Assumption
+            b16172 = 0.689  # Assumption
         ),
 
         b1351 = dict(
@@ -431,7 +434,7 @@ def get_cross_immunity(default=False):
             b117   = 0.5,   # Assumption
             b1351  = 1.0,   # Default for own-immunity
             p1     = 0.5,   # Assumption
-            b16172 = 0.5    # Assumption
+            b16172 = 0.086    # Assumption
         ),
 
         p1 = dict(
@@ -439,7 +442,7 @@ def get_cross_immunity(default=False):
             b117   = 0.4,  # Assumption based on the above
             b1351  = 0.4,  # Assumption based on the above
             p1     = 1.0,  # Default for own-immunity
-            b16172 = 0.8   # Assumption
+            b16172 = 0.088   # Assumption
         ),
 
         b16172=dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
@@ -510,6 +513,22 @@ def get_vaccine_variant_pars(default=False):
             p1     = 1/8.6, # Assumption, no data available yet
             b16172 = 1/6.2, # Assumption, no data available yet
         ),
+
+        sinovac = dict(
+            wild=1.0,
+            b117=1 / 1.12,
+            b1351=1 / 4.7,
+            p1=1 / 8.6,  # Assumption, no data available yet
+            b16172=1 / 1.4,  # https://www.globaltimes.cn/page/202108/1230741.shtml
+        ),
+
+        sinopharm = dict(
+            wild=1.0,
+            b117=1 / 1.12,
+            b1351=1 / 4.7,
+            p1=1 / 8.6,  # Assumption, no data available yet
+            b16172=1 / 6.2,  # Assumption, no data available yet
+        )
     )
 
     if default:
@@ -525,13 +544,14 @@ def get_vaccine_dose_pars(default=False):
 
     # Default vaccine NAb efficacy is nearly identical to infection -- only alpha_inf differs
     default_nab_eff = dict(
-        alpha_inf      =  1.16,
-        beta_inf       =  0.61,
-        alpha_symp_inf = -2.0,
-        beta_symp_inf  =  1.61,
-        alpha_sev_symp =  1.03,
-        beta_sev_symp  =  0.04,
+        alpha_inf       =   1.08,
+        beta_inf        =   0.967,
+        alpha_symp_inf  =   -0.739,
+        beta_symp_inf   =   0.038,
+        alpha_sev_symp  =   -0.014,
+        beta_sev_symp   =   0.079
     )
+
 
     pars = dict(
 
@@ -545,24 +565,24 @@ def get_vaccine_dose_pars(default=False):
 
         pfizer = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=0, par2=2),
-            nab_boost = 3,
+            nab_init  = dict(dist='normal', par1=-1, par2=2),
+            nab_boost = 8,
             doses     = 2,
             interval  = 21,
         ),
 
         moderna = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=0, par2=2),
-            nab_boost = 3,
+            nab_init  = dict(dist='normal', par1=-1, par2=2),
+            nab_boost = 8,
             doses     = 2,
             interval  = 28,
         ),
 
         az = dict(
             nab_eff   = sc.dcp(default_nab_eff),
-            nab_init  = dict(dist='normal', par1=-1, par2=2),
-            nab_boost = 3,
+            nab_init  = dict(dist='normal', par1=-1.5, par2=2),
+            nab_boost = 2,
             doses     = 2,
             interval  = 21,
         ),
@@ -582,6 +602,22 @@ def get_vaccine_dose_pars(default=False):
             doses     = 2,
             interval  = 21,
         ),
+
+        sinovac = dict(
+            nab_eff=sc.dcp(default_nab_eff),
+            nab_init=dict(dist='normal', par1=-2, par2=2),
+            nab_boost=2,
+            doses=2,
+            interval=14,
+        ),
+
+        sinopharm = dict(
+            nab_eff=sc.dcp(default_nab_eff),
+            nab_init=dict(dist='normal', par1=-0.9, par2=2),
+            nab_boost=2,
+            doses=2,
+            interval=21,
+        )
     )
 
     if default:
