@@ -602,7 +602,7 @@ class Sim(cvb.BaseSim):
         diag = people.diagnosed
         quar = people.quarantined
         prel_trans = people.rel_trans
-        prel_sus = people.rel_sus
+        prel_sus   = people.rel_sus
 
         # Check nabs.
         if self['use_waning']:
