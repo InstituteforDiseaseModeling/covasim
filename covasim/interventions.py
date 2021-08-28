@@ -1551,49 +1551,66 @@ class vaccinate_prob(BaseVaccination):
         return vacc_inds
 
 
+def process_sequence(sequence, sim):
+    ''' Handle different types of prioritization sequence for vaccination '''
+
+    if callable(sequence):
+        sequence = sequence(sim.people)
+    elif sequence == 'age':
+        sequence = np.argsort(-sim.people.age)
+    elif sequence is None:
+        sequence = np.random.permutation(sim.n)
+    elif sc.checktype(sequence, 'arraylike'):
+        sequence = sc.promotetoarray(sequence)
+    else:
+        errormsg = f'Unable to interpret sequence {type(sequence)}: must be None, "age", callable, or an array'
+        raise TypeError(errormsg)
+
+    return sequence
 
 
 class vaccinate_num(BaseVaccination):
+    '''
+    Sequence-based vaccination
+
+    This vaccine intervention allocates vaccines in a pre-computed order of
+    distribution, at a specified rate of doses per day. Second doses are prioritized
+    each day.
+
+    Args:
+        vaccine (dict/str): which vaccine to use; see below for dict parameters
+        label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        sequence: Specify the order in which people should get vaccinated. This can be
+
+            - An array of person indices in order of vaccination priority
+            - A callable that takes in `cv.People` and returns an ordered sequence. For example, to
+              vaccinate people in descending age order, ``def age_sequence(people): return np.argsort(-people.age)``
+              would be suitable.
+            - The shortcut 'age', which does prioritization by age (see below for implementation)
+              If not specified, people will be randomly ordered.
+        num_doses: Specify the number of doses per day. This can take three forms
+
+            - A scalar number of doses per day
+            - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
+              Any dates are convered to simulation days in `initialize()` which will also copy the
+              dictionary passed in.
+            - A callable that takes in a ``cv.Sim`` and returns a scalar number of doses. For example,
+              ``def doses(sim): return 100 if sim.t > 10 else 0`` would be suitable
+        **kwargs: Additional arguments passed to ``cv.BaseVaccination``
+
+    **Example**::
+
+        def age_sequence(people): return np.argsort(-people.age)
+        pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=100)
+        cv.Sim(interventions=pfizer, use_waning=True).run().plot()
+    '''
     def __init__(self, vaccine, num_doses, sequence=None, **kwargs):
-        """
-        Sequence-based vaccination
-
-        This vaccine intervention allocates vaccines in a pre-computed order of
-        distribution, at a specified rate of doses per day. Second doses are prioritized
-        each day.
-
-        Args:
-            vaccine (dict/str): which vaccine to use; see below for dict parameters
-            label        (str): if vaccine is supplied as a dict, the name of the vaccine
-            sequence: Specify the order in which people should get vaccinated. This can be
-
-                - An array of person indices in order of vaccination priority
-                - A callable that takes in `cv.People` and returns an ordered sequence. For example, to
-                  vaccinate people in descending age order, ``def age_sequence(people): return np.argsort(-people.age)``
-                  would be suitable.
-                  If not specified, people will be randomly ordered.
-            num_doses: Specify the number of doses per day. This can take three forms
-
-                - A scalar number of doses per day
-                - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
-                  Any dates are convered to simulation days in `initialize()` which will also copy the
-                  dictionary passed in.
-                - A callable that takes in a ``cv.Sim`` and returns a scalar number of doses. For example,
-                  ``def doses(sim): return 100 if sim.t > 10 else 0`` would be suitable
-            **kwargs: Additional arguments passed to ``cv.BaseVaccination``
-
-        **Example**::
-
-            def age_sequence(people): return np.argsort(-people.age)
-            pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=100)
-            cv.Sim(interventions=pfizer, use_waning=True).run().plot()
-
-        """
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
         self.sequence = sequence
         self.num_doses = num_doses
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
         return
+
 
     def initialize(self, sim):
         super().initialize(sim)
@@ -1602,17 +1619,14 @@ class vaccinate_num(BaseVaccination):
         if isinstance(self.num_doses, dict):
             self.num_doses = {sim.day(k):v for k, v in self.num_doses.items()}
 
-        if callable(self.sequence):
-            self.sequence = self.sequence(sim.people)
-        elif self.sequence is None:
-            self.sequence = np.random.permutation(sim.n)
-        else:
-            self.sequence = sc.promotetoarray(self.sequence)
+        self.sequence = process_sequence(self.sequence, sim)
+
 
         if self.p['doses'] > 2:
             raise NotImplementedError('Scheduling three or more doses not yet supported')
 
         return
+
 
     def select_people(self, sim):
 
@@ -1673,6 +1687,8 @@ class vaccinate_num(BaseVaccination):
             self._scheduled_doses[sim.t+self.p['interval']].update(first_dose_inds)
 
         return np.concatenate([scheduled, first_dose_inds])
+
+
 
 #%% Prior/historical immunity interventions
 
