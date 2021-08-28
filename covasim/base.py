@@ -148,11 +148,12 @@ class Result(object):
         else:
             self.values = np.zeros(npts, dtype=cvd.result_float)
 
-        self.low    = None
-        self.high   = None
+        self.low  = None
+        self.high = None
         return
 
-    def __repr__(self, *args, **kwargs):
+
+    def __repr__(self):
         ''' Use pretty repr, like sc.prettyobj, but displaying full values '''
         output  = sc.prepr(self, skip=['values', 'low', 'high'], use_repr=False)
         output += 'values:\n' + repr(self.values)
@@ -162,17 +163,29 @@ class Result(object):
             output += '\nhigh:\n' + repr(self.high)
         return output
 
-    def __getitem__(self, *args, **kwargs):
-        ''' To allow e.g. result[5] instead of result.values[5] '''
-        return self.values.__getitem__(*args, **kwargs)
 
-    def __setitem__(self, *args, **kwargs):
+    def __getitem__(self, key):
+        ''' To allow e.g. result['high'] instead of result.high, and result[5] instead of result.values[5] '''
+        if isinstance(key, str):
+            output = getattr(self, key)
+        else:
+            output = self.values.__getitem__(key)
+        return output
+
+
+    def __setitem__(self, key, value):
         ''' To allow e.g. result[:] = 1 instead of result.values[:] = 1 '''
-        return self.values.__setitem__(*args, **kwargs)
+        if isinstance(key, str):
+            setattr(self, key, value)
+        else:
+            self.values.__setitem__(key, value)
+        return
+
 
     def __len__(self):
         ''' To allow len(result) instead of len(result.values) '''
         return len(self.values)
+
 
     @property
     def npts(self):
