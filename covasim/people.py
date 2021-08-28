@@ -1,5 +1,6 @@
 '''
-Defines the Person class and functions associated with making people.
+Defines the People class and functions associated with making people and handling
+the transitions between states (e.g., from susceptible to infected).
 '''
 
 #%% Imports
