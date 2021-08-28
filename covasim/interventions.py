@@ -1360,7 +1360,7 @@ class BaseVaccination(Intervention):
                     val = default_variant_pars[key]
                 else:
                     val = 1.0
-                    if sim['verbose']: print('Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
+                    if sim['verbose']: print(f'Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
                 self.p[key] = val
 
         if 'target_eff' in self.p.keys():
