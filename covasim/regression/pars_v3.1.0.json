@@ -46,21 +46,21 @@
   },
   "nab_decay": {
     "form": "nab_growth_decay",
-    "growth_time": 22,
-    "decay_rate1": 0.006931471805599453,
-    "decay_time1": 250,
-    "decay_rate2": 0.00018990333713971103,
-    "decay_time2": 365
+    "growth_time": 21,
+    "decay_rate1": 0.007,
+    "decay_time1": 47,
+    "decay_rate2": 0.002,
+    "decay_time2": 106
   },
   "nab_kin": null,
   "nab_boost": 1.5,
   "nab_eff": {
-    "alpha_inf": 2.12,
-    "beta_inf": 0.61,
-    "alpha_symp_inf": -2.0,
-    "beta_symp_inf": 1.61,
-    "alpha_sev_symp": 1.03,
-    "beta_sev_symp": 0.04
+    "alpha_inf": 2.08,
+    "beta_inf": 0.967,
+    "alpha_symp_inf": -0.739,
+    "beta_symp_inf": 0.038,
+    "alpha_sev_symp": -0.014,
+    "beta_sev_symp": 0.079
   },
   "rel_imm_symp": {
     "asymp": 0.85,
@@ -68,6 +68,7 @@
     "severe": 1.5
   },
   "immunity": null,
+  "trans_redux": 0.59,
   "rel_beta": 1.0,
   "rel_imm_variant": 1.0,
   "dur": {

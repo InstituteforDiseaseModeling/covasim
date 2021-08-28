@@ -607,7 +607,7 @@ class Sim(cvb.BaseSim):
         # Check nabs.
         if self['use_waning']:
             has_nabs = cvu.true(people.peak_nab)
-            breakthrough_inf = cvu.true(people.n_breakthrough_infections)
+            breakthrough_inf = cvu.true(people.n_breakthroughs)
             if len(has_nabs):
                 cvimm.update_nab(people, inds=has_nabs)
                 if len(breakthrough_inf):
