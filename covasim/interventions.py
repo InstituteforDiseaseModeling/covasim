@@ -258,7 +258,7 @@ class Intervention:
                 parstr = ', '.join([f'{k}={v}' for k,v in pars.items()])
                 output = f"cv.{which}({parstr})"
             except Exception as E:
-                output = type(self) + f' (error: {str(E)})' # If that fails, print why
+                output = f'{type(self)} (error: {str(E)})' # If that fails, print why
             return output
         else:
             return f'{self.__module__}.{self.__class__.__name__}()'

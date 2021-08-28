@@ -357,7 +357,6 @@ def migrate(obj, update=True, verbose=True, die=False):
             print(errormsg)
             return
 
-
     # If requested, update the stored version to the current version
     if update:
         obj.version = cvv.__version__

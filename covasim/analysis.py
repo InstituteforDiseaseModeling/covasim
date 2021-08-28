@@ -45,12 +45,14 @@ class Analyzer(sc.prettyobj):
         self.finalized = False
         return
 
+
     def __call__(self, *args, **kwargs):
         # Makes Analyzer(sim) equivalent to Analyzer.apply(sim)
         if not self.initialized:
             errormsg = f'Analyzer (label={self.label}, {type(self)}) has not been initialized'
             raise RuntimeError(errormsg)
         return self.apply(*args, **kwargs)
+
 
     def initialize(self, sim=None):
         '''
