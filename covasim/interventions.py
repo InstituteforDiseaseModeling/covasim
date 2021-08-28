@@ -1604,7 +1604,7 @@ class vaccinate_num(BaseVaccination):
 
         if callable(self.sequence):
             self.sequence = self.sequence(sim.people)
-        elif sequence is None:
+        elif self.sequence is None:
             self.sequence = np.random.permutation(sim.n)
         else:
             self.sequence = sc.promotetoarray(self.sequence)
