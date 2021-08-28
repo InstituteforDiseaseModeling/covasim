@@ -104,7 +104,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
     return people
 
 
-def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False):
+def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False, **kwargs):
     '''
     Make a random population, with contacts.
 
@@ -122,6 +122,7 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
         use_household_data (bool): whether to use location-specific household size data
         sex_ratio (float): proportion of the population that is male (not currently used)
         microstructure (bool): whether or not to use the microstructuring algorithm to group contacts
+        kwargs (dict): passed to contact creation method (e.g., make_hybrid_contacts)
 
     Returns:
         popdict (dict): a dictionary representing the population, with the following keys for a population of N agents with M contacts between them:
@@ -170,9 +171,9 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     popdict['sex'] = sexes
 
     # Actually create the contacts
-    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'], **kwargs)
+    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'], **kwargs)
+    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'], **kwargs)
     else: # pragma: no cover
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)
