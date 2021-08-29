@@ -532,7 +532,7 @@ def get_vaccine_variant_pars(default=False):
         return pars
 
 
-def get_vaccine_dose_pars(default=False):
+def get_nab_eff_pars(natural=False, default=False):
     '''
     Define the parameters for each vaccine
     '''
@@ -546,7 +546,6 @@ def get_vaccine_dose_pars(default=False):
         alpha_sev_symp = -0.014,
         beta_sev_symp  =  0.079,
     )
-
 
     pars = dict(
 
@@ -615,6 +614,8 @@ def get_vaccine_dose_pars(default=False):
         )
     )
 
+    if natural:
+        return natural_pars
     if default:
         return pars['default']
     else:
