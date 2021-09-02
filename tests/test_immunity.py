@@ -89,7 +89,9 @@ def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
     msims = dict()
 
-    for rescale in [0, 1]:
+    for rescale in [
+        # 0,
+                    1]:
         print(f'Checking with rescale = {rescale}...')
 
         # Define parameters specific to this test
@@ -130,14 +132,18 @@ def test_waning(do_plot=False):
 
 def test_variants(do_plot=False):
     sc.heading('Testing variants...')
-
+    nabs = []
     b117 = cv.variant('b117',         days=10, n_imports=20)
     p1   = cv.variant('sa variant',   days=20, n_imports=20)
     cust = cv.variant(label='Custom', days=40, n_imports=20, variant={'rel_beta': 2, 'rel_symp_prob': 1.6})
-    sim  = cv.Sim(base_pars, use_waning=True, variants=[b117, p1, cust])
+    sim  = cv.Sim(base_pars, use_waning=True, variants=[b117, p1, cust], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     if do_plot:
+        nabs = np.array(nabs).sum(axis=2)
+        pl.figure()
+        pl.plot(nabs)
+        pl.show()
         sim.plot('overview-variant')
 
     return sim
@@ -146,12 +152,17 @@ def test_variants(do_plot=False):
 def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
+    nabs = []
     p1 = cv.variant('sa variant',   days=20, n_imports=20)
     pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30)
-    sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer)
+    sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     if do_plot:
+        nabs = np.array(nabs).sum(axis=2)
+        pl.figure()
+        pl.plot(nabs)
+        pl.show()
         sim.plot('overview-variant')
 
     return sim
@@ -199,7 +210,7 @@ def test_vaccines_sequential(do_plot=False):
 
 
 def test_two_vaccines(do_plot=False):
-    sc.heading('Testing nab decay in simulation...')
+    sc.heading('Testing two vaccines...')
 
     p1 = cv.variant('sa variant',   days=20, n_imports=0)
 
@@ -211,10 +222,10 @@ def test_two_vaccines(do_plot=False):
     sim.run()
 
     if do_plot:
-        nabs = np.array(nabs).sum(axis=1)
-        print(sim.people.peak_nab.sum(axis=0))
+        nabs = np.array(nabs).sum(axis=2)
         pl.figure()
         pl.plot(nabs)
+        pl.show()
 
 
 def test_vaccine_target_eff(do_plot=False):
@@ -279,7 +290,7 @@ def test_decays(do_plot=False):
         ),
     )
 
-    # Calculate all the delays
+    # Calculate all the decays
     res = sc.objdict()
     for key,par in pars.items():
         func = par.pop('func')
@@ -305,13 +316,13 @@ if __name__ == '__main__':
     T = sc.tic()
 
     # sim1   = test_states()
-    # msims1 = test_waning(do_plot=do_plot)
+    msims1 = test_waning(do_plot=do_plot)
     sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
-    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    sim4   = test_vaccines_sequential(do_plot=do_plot)
     sim5   = test_two_vaccines(do_plot=do_plot)
     sim6   = test_vaccine_target_eff(do_plot=do_plot)
-    # res    = test_decays(do_plot=do_plot)
+    res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

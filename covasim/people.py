@@ -382,7 +382,7 @@ class People(cvb.BasePeople):
 
         # Reset immunity and antibody states
         non_vx_inds = inds if reset_vx else inds[~self['vaccinated'][inds]]
-        for key in self.meta.imm_states:
+        for key in self.meta.imm_states + self.meta.nab_by_source_states:
             self[key][:, non_vx_inds] = 0
         for key in self.meta.nab_states + self.meta.vacc_states:
             self[key][non_vx_inds] = 0
