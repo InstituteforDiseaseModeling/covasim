@@ -61,7 +61,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
             elif key in ['n_infections', 'n_breakthroughs']:
-                self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
+                self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
@@ -81,6 +81,8 @@ class People(cvb.BasePeople):
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
+        for key in self.meta.nab_by_source_states:  # Everyone starts out with no antibodies
+            self[key] = np.zeros(((self.pars['n_variants'] + len(self.pars['vaccine_pars'])), self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.vacc_states:
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
@@ -453,7 +455,7 @@ class People(cvb.BasePeople):
             source = source[keep]
 
         if self.pars['use_waning']:
-            cvi.check_immunity(self, variant, sus=False, inds=inds)
+            cvi.check_immunity(self, variant)
 
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
@@ -467,7 +469,7 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.true(self.peak_nab[inds])
+        breakthrough_inds = cvu.true(self.peak_nab[variant,inds])
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
@@ -561,7 +563,7 @@ class People(cvb.BasePeople):
             self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
             self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
             self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, nab_source=variant, natural=True)
 
         return n_infections # For incrementing counters
 

@@ -1432,7 +1432,7 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = sim.t
-            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
+            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, nab_source=self.index, natural=False)
 
         return vacc_inds
 

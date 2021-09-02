@@ -187,6 +187,9 @@ class Sim(cvb.BaseSim):
                     errormsg = f'Please update your parameter keys {layer_keys} to match population keys {pop_keys}. You may find sim.reset_layer_pars() helpful.'
                     raise sc.KeyNotFoundError(errormsg)
 
+            # Handle nab sources, as we need to init the people and interventions first
+            for key in self.people.meta.nab_by_source_states:  # Everyone starts out with no antibodies
+                self.people[key] = np.zeros(((self.pars['n_variants'] + len(self.pars['vaccine_pars'])), self.pars['pop_size']), dtype=cvd.default_float)
         return
 
 
@@ -606,7 +609,7 @@ class Sim(cvb.BaseSim):
 
         # Check nabs.
         if self['use_waning']:
-            has_nabs = cvu.true(people.peak_nab)
+            has_nabs = cvu.true(people.peak_nab.sum(axis=0))
             breakthrough_inf = cvu.true(people.n_breakthroughs)
             if len(has_nabs):
                 cvimm.update_nab(people, inds=has_nabs)
@@ -618,7 +621,7 @@ class Sim(cvb.BaseSim):
 
             # Check immunity
             if self['use_waning']:
-                cvimm.check_immunity(people, variant, sus=True)
+                cvimm.check_immunity(people, variant)
 
             # Deal with variant parameters
             rel_beta = self['rel_beta']
@@ -662,7 +665,7 @@ class Sim(cvb.BaseSim):
 
         # Update nab and immunity for this time step
         inds_alive = cvu.false(people.dead)
-        self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.true(people.nab[inds_alive])]])/len(inds_alive)
+        self.results['pop_nabs'][t]            = np.sum(people.nab[:,inds_alive[cvu.true(people.nab[:,inds_alive].sum(axis=0))]].sum(axis=0))/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
         self.results['pop_symp_protection'][t] = np.nanmean(people.symp_imm)
 

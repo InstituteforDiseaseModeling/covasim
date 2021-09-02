@@ -137,14 +137,15 @@ def get_vaccine_pars(pars):
     '''
     try:
         vaccine = pars['vaccine_map'][0] # For now, just use the first vaccine, if available
-        vaccine_pars = pars['vaccine_pars'][vaccine]
+        # vaccine_pars = pars['vaccine_pars'][vaccine]
+        vaccine_pars = pars['vaccine_pars']
     except:
         vaccine_pars = pars # Otherwise, just use defaults for natural immunity
 
     return vaccine_pars
 
 
-def update_peak_nab(people, inds, nab_pars, natural=True):
+def update_peak_nab(people, inds, nab_pars, nab_source, natural=True):
     '''
     Update peak NAb level
 
@@ -165,15 +166,18 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
         inds: Array of people indices
         nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
                     sim pars (for natural immunity) or vaccine pars
+        nab_source: number of either variant or vaccine where nabs are coming from
         natural: If True, immunity is being changed due to infection rather than vaccination
 
     Returns: None
     '''
 
-
-    has_nabs = people.nab[inds] > 0
+    if not natural:
+        nab_source += people.pars['n_variants']
+    has_nabs = people.nab[nab_source, inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
+    people.time_of_boost[nab_source, inds] = people.t
 
     # NAb from infection
     if natural:
@@ -182,22 +186,22 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
             init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
             prior_symp = people.prior_symptoms[no_prior_nab_inds]
             no_prior_nab = (2**init_nab) * prior_symp
-            people.peak_nab[no_prior_nab_inds] = no_prior_nab
+            people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
 
         # 2) Prior NAb: multiply existing NAb by boost factor
         if len(prior_nab_inds):
-            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
+            people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
 
     # NAb from a vaccine
     else:
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
-            people.peak_nab[no_prior_nab_inds] = 2**init_nab
+            people.peak_nab[nab_source, no_prior_nab_inds] = 2**init_nab
 
         # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
         if len(prior_nab_inds):
-            people.peak_nab[prior_nab_inds] *= nab_pars['nab_boost']
+            people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
 
     return
 
@@ -206,10 +210,10 @@ def update_nab(people, inds):
     '''
     Step NAb levels forward in time
     '''
-    t_since_boost = people.t-np.fmax(people.date_exposed[inds],people.date_vaccinated[inds]).astype(cvd.default_int)
-    people.nab[inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[inds]
-    people.nab[inds[people.nab[inds] < 0]] = 0 # Make sure nabs don't drop below 0
-    people.nab[inds[people.nab[inds] > people.peak_nab[inds]]] = people.peak_nab[inds[people.nab[inds] > people.peak_nab[inds]]] # Make sure nabs don't exceed peak_nab
+    t_since_boost = people.t-people.time_of_boost[:,inds].astype(cvd.default_int)
+    people.nab[:,inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[:,inds]
+    people.nab[:,inds] = np.where(people.nab[:,inds]<0, 0, people.nab[:,inds]) # Make sure nabs don't drop below 0
+    people.nab[:,inds] = np.where([people.nab[:,inds] > people.peak_nab[:,inds]], people.peak_nab[:,inds], people.nab[:,inds]) # Make sure nabs don't exceed peak_nab
     return
 
 
@@ -304,9 +308,10 @@ def init_immunity(sim, create=False):
     return
 
 
-def check_immunity(people, variant, sus=True, inds=None):
+def check_immunity(people, variant):
     '''
-    Calculate people's immunity on this timestep from prior infections + vaccination
+    Calculate people's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
+    weighting individuals NAbs by source and then calculating efficacy.
 
     There are two fundamental sources of immunity:
 
@@ -320,62 +325,24 @@ def check_immunity(people, variant, sus=True, inds=None):
     # Handle parameters and indices
     pars = people.pars
     vaccine_pars = get_vaccine_pars(pars)
-    was_inf  = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
-    is_vacc  = cvu.true(people.vaccinated)  # Vaccinated
-    date_rec = people.date_recovered  # Date recovered
-    immunity = pars['immunity'] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
+    immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff  = pars['nab_eff']
+    current_nabs = people.nab
 
     # If vaccines are present, extract relevant information about them
-    vacc_present = len(is_vacc)
+    vacc_present = len(pars['vaccine_pars'])
     if vacc_present:
-        vx_nab_eff_pars = vaccine_pars['nab_eff']
-        vacc_mapping = np.array([vaccine_pars.get(label, 1.0) for label in pars['variant_map'].values()]) # TODO: make more robust
-
-    # PART 1: Immunity to infection for susceptible individuals
-    if sus:
-        is_sus = cvu.true(people.susceptible)  # Currently susceptible
-        was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
-        was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
-        is_sus_vacc = np.intersect1d(is_sus, is_vacc)  # Susceptible and vaccinated
-        is_sus_vacc = np.setdiff1d(is_sus_vacc, was_inf)  # Susceptible, vaccinated without prior infection
-        is_sus_was_inf_same = np.intersect1d(is_sus, was_inf_same)  # Susceptible and being challenged by the same variant
-        is_sus_was_inf_diff = np.intersect1d(is_sus, was_inf_diff)  # Susceptible and being challenged by a different variant
-
-        if len(is_sus_vacc):
-            vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc]) # TODO: use vaccine source
+        # vx_nab_eff_pars = vaccine_pars['nab_eff']
+        for vax in vaccine_pars.keys():
+            vacc_mapping = np.array([vaccine_pars[vax].get(label, 1.0) for label in pars['variant_map'].values()]) # TODO: make more robust
             vaccine_scale = vacc_mapping[variant]
-            current_nabs = people.nab[is_sus_vacc]
-            people.sus_imm[variant, is_sus_vacc] = calc_VE(current_nabs * vaccine_scale, 'sus', vx_nab_eff_pars)
+            immunity = np.append(immunity, vaccine_scale)
 
-        if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this variant
-            current_nabs = people.nab[is_sus_was_inf_same]
-            people.sus_imm[variant, is_sus_was_inf_same] = calc_VE(current_nabs * immunity[variant, variant], 'sus', nab_eff)
-
-        if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different variant
-            prior_variants = people.recovered_variant[is_sus_was_inf_diff]
-            prior_variants_unique = cvd.default_int(np.unique(prior_variants))
-            for unique_variant in prior_variants_unique:
-                unique_inds = is_sus_was_inf_diff[cvu.true(prior_variants == unique_variant)]
-                current_nabs = people.nab[unique_inds]
-                people.sus_imm[variant, unique_inds] = calc_VE(current_nabs * immunity[variant, unique_variant], 'sus', nab_eff)
-
-    # PART 2: Immunity to disease for currently-infected people
-    else:
-        is_inf_vacc = np.intersect1d(inds, is_vacc)
-        was_inf = np.intersect1d(inds, was_inf)
-
-        if len(is_inf_vacc):  # Immunity for infected people who've been vaccinated
-            vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])  # TODO: use vaccine source
-            vaccine_scale = vacc_mapping[variant]
-            current_nabs = people.nab[is_inf_vacc]
-            people.symp_imm[variant, is_inf_vacc] = calc_VE(current_nabs * vaccine_scale, 'symp', nab_eff)
-            people.sev_imm[variant, is_inf_vacc] = calc_VE(current_nabs * vaccine_scale, 'sev', nab_eff)
-
-        if len(was_inf):  # Immunity for reinfected people
-            current_nabs = people.nab[was_inf]
-            people.symp_imm[variant, was_inf] = calc_VE(current_nabs, 'symp', nab_eff)
-            people.sev_imm[variant, was_inf] = calc_VE(current_nabs, 'sev', nab_eff)
+    current_nabs *= immunity[:, None]
+    current_nabs = current_nabs.sum(axis=0)
+    people.sus_imm[variant,:] = calc_VE(current_nabs, 'sus', nab_eff)
+    people.symp_imm[variant,:] = calc_VE(current_nabs, 'symp', nab_eff)
+    people.sev_imm[variant,:] = calc_VE(current_nabs, 'sev', nab_eff)
 
     return
 
