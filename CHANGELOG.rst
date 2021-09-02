@@ -36,7 +36,9 @@ Highlights
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- We now capture the full immune history for all agents in the model (source, time, NAb level)
+- Whereas previously each agent had a single NAb/peak_NAb value which may have comprised multiple sources, we now differentiate each NAb source
+- NAbs are boosted by homologous but not heterologous sources (delta will boost delta but not wild-type NAbs)
 
 Other parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^
