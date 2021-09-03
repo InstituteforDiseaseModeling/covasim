@@ -236,8 +236,6 @@ def calc_VE(nab, ax, pars, **kwargs):
         errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
         raise ValueError(errormsg)
 
-    zero_nab    = nab == 0 # To avoid taking logarithm of 0
-    nonzero_nab = nab > 0
     if ax == 'sus':
         alpha = pars['alpha_inf']
         beta = pars['beta_inf']
@@ -247,9 +245,8 @@ def calc_VE(nab, ax, pars, **kwargs):
     else:
         alpha = pars['alpha_sev_symp']
         beta = pars['beta_sev_symp']
-    lo = alpha + beta*np.log(nab, where=nonzero_nab)
-    exp_lo = np.exp(lo, where=nonzero_nab)
-    exp_lo[zero_nab] = 0 # Re-insert zeros
+
+    exp_lo = np.exp(alpha) * nab**beta
     output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
@@ -259,12 +256,11 @@ def calc_VE_symp(nab, pars):
     Converts NAbs to marginal VE against symptomatic disease
     '''
 
-    nab = 2**nab
-    lo_inf = pars['alpha_inf'] + pars['beta_inf']*np.log(nab)
-    inv_lo_inf = np.exp(lo_inf)/ (1 + np.exp(lo_inf))
+    exp_lo_inf = np.exp(pars['alpha_inf'] + pars['beta_inf']*nab*np.log(2))
+    inv_lo_inf = exp_lo_inf / (1 + exp_lo_inf)
 
-    lo_symp_inf = pars['alpha_symp_inf'] + pars['beta_symp_inf']*np.log(nab)
-    inv_lo_symp_inf = np.exp(lo_symp_inf)/ (1 + np.exp(lo_symp_inf))
+    exp_lo_symp_inf = np.exp(pars['alpha_symp_inf'] + pars['beta_symp_inf']*nab*np.log(2))
+    inv_lo_symp_inf = exp_lo_symp_inf / (1 + exp_lo_symp_inf)
 
     VE_symp = 1 - ((1 - inv_lo_inf)*(1 - inv_lo_symp_inf))
     return VE_symp
