@@ -129,23 +129,8 @@ class variant(sc.prettyobj):
 
 #%% Neutralizing antibody methods
 
-def get_vaccine_pars(pars):
-    '''
-    Temporary helper function to get vaccine parameters; to be refactored
 
-    TODO: use people.vaccine_source to get the per-person specific NAb decay
-    '''
-    try:
-        vaccine = pars['vaccine_map'][0] # For now, just use the first vaccine, if available
-        # vaccine_pars = pars['vaccine_pars'][vaccine]
-        vaccine_pars = pars['vaccine_pars']
-    except:
-        vaccine_pars = pars # Otherwise, just use defaults for natural immunity
-
-    return vaccine_pars
-
-
-def update_peak_nab(people, inds, nab_pars, nab_source, natural=True):
+def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     '''
     Update peak NAb level
 
@@ -166,42 +151,38 @@ def update_peak_nab(people, inds, nab_pars, nab_source, natural=True):
         inds: Array of people indices
         nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
                     sim pars (for natural immunity) or vaccine pars
-        nab_source: number of either variant or vaccine where nabs are coming from
+        nab_source: index of either variant or vaccine where nabs are coming from
         natural: If True, immunity is being changed due to infection rather than vaccination
 
     Returns: None
     '''
 
-    if not natural:
+    if symp is None:
         nab_source += people.pars['n_variants']
+        prior_symp = 1
+
     has_nabs = people.nab[nab_source, inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
-    people.time_of_boost[nab_source, inds] = people.t
+    people.t_nab_event[nab_source, inds] = people.t
 
-    # NAb from infection
-    if natural:
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
-            prior_symp = people.prior_symptoms[no_prior_nab_inds]
-            no_prior_nab = (2**init_nab) * prior_symp
-            people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
+    if symp is not None:
+        prior_symp = np.full(people.pars['pop_size'], np.nan)
+        prior_symp[symp['asymp']] = people.pars['rel_imm_symp']['asymp']
+        prior_symp[symp['mild']] = people.pars['rel_imm_symp']['mild']
+        prior_symp[symp['sev']] = people.pars['rel_imm_symp']['severe']
+        prior_symp[prior_nab_inds] = np.nan
+        prior_symp = prior_symp[~np.isnan(prior_symp)]
 
-        # 2) Prior NAb: multiply existing NAb by boost factor
-        if len(prior_nab_inds):
-            people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
+    # 1) No prior NAb: draw NAb from a distribution and compute
+    if len(no_prior_nab_inds):
+        init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
+        no_prior_nab = (2 ** init_nab) * prior_symp
+        people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
 
-    # NAb from a vaccine
-    else:
-        # 1) No prior NAb: draw NAb from a distribution and compute
-        if len(no_prior_nab_inds):
-            init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
-            people.peak_nab[nab_source, no_prior_nab_inds] = 2**init_nab
-
-        # 2) Prior nab (from natural or vaccine dose 1): multiply existing nab by boost factor
-        if len(prior_nab_inds):
-            people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
+    # 2) Prior NAb: multiply existing NAb by boost factor
+    if len(prior_nab_inds):
+        people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
 
     return
 
@@ -210,7 +191,7 @@ def update_nab(people, inds):
     '''
     Step NAb levels forward in time
     '''
-    t_since_boost = people.t-people.time_of_boost[:,inds].astype(cvd.default_int)
+    t_since_boost = people.t-people.t_nab_event[:,inds].astype(cvd.default_int)
     people.nab[:,inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[:,inds]
     people.nab[:,inds] = np.where(people.nab[:,inds]<0, 0, people.nab[:,inds]) # Make sure nabs don't drop below 0
     people.nab[:,inds] = np.where([people.nab[:,inds] > people.peak_nab[:,inds]], people.peak_nab[:,inds], people.nab[:,inds]) # Make sure nabs don't exceed peak_nab
@@ -324,13 +305,13 @@ def check_immunity(people, variant):
 
     # Handle parameters and indices
     pars = people.pars
-    vaccine_pars = get_vaccine_pars(pars)
+    vaccine_pars = pars['vaccine_pars']
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
-    nab_eff  = pars['nab_eff']
+    nab_eff = pars['nab_eff']
     current_nabs = people.nab
 
     # If vaccines are present, extract relevant information about them
-    vacc_present = len(pars['vaccine_pars'])
+    vacc_present = len(pars['vaccine_pars'])>0
     if vacc_present:
         # vx_nab_eff_pars = vaccine_pars['nab_eff']
         for vax in vaccine_pars.keys():

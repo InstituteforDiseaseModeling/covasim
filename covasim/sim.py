@@ -607,7 +607,7 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
-        # Check nabs.
+        # Check nabs
         if self['use_waning']:
             has_nabs = cvu.true(people.peak_nab.sum(axis=0))
             breakthrough_inf = cvu.true(people.n_breakthroughs)

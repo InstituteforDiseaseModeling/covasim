@@ -79,8 +79,6 @@ class People(cvb.BasePeople):
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
-        for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
         for key in self.meta.nab_by_source_states:  # Everyone starts out with no antibodies
             self[key] = np.zeros(((self.pars['n_variants'] + len(self.pars['vaccine_pars'])), self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.vacc_states:
@@ -384,7 +382,7 @@ class People(cvb.BasePeople):
         non_vx_inds = inds if reset_vx else inds[~self['vaccinated'][inds]]
         for key in self.meta.imm_states + self.meta.nab_by_source_states:
             self[key][:, non_vx_inds] = 0
-        for key in self.meta.nab_states + self.meta.vacc_states:
+        for key in self.meta.vacc_states:
             self[key][non_vx_inds] = 0
 
         # Reset dates
@@ -469,7 +467,7 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.true(self.peak_nab[variant,inds])
+        breakthrough_inds = cvu.true(self.peak_nab[:,inds].sum(axis=0))
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
@@ -560,10 +558,12 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, nab_source=variant, natural=True)
+            symp = {
+                'asymp': asymp_inds,
+                'mild': mild_inds,
+                'sev': sev_inds
+            }
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, nab_source=variant, symp=symp)
 
         return n_infections # For incrementing counters
 

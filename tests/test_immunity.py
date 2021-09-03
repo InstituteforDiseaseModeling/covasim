@@ -89,9 +89,7 @@ def test_waning(do_plot=False):
     sc.heading('Testing with and without waning')
     msims = dict()
 
-    for rescale in [
-        # 0,
-                    1]:
+    for rescale in [0,1]:
         print(f'Checking with rescale = {rescale}...')
 
         # Define parameters specific to this test
@@ -134,7 +132,7 @@ def test_variants(do_plot=False):
     sc.heading('Testing variants...')
     nabs = []
     b117 = cv.variant('b117',         days=10, n_imports=20)
-    p1   = cv.variant('sa variant',   days=20, n_imports=20)
+    p1   = cv.variant('beta',   days=20, n_imports=20)
     cust = cv.variant(label='Custom', days=40, n_imports=20, variant={'rel_beta': 2, 'rel_symp_prob': 1.6})
     sim  = cv.Sim(base_pars, use_waning=True, variants=[b117, p1, cust], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
@@ -153,7 +151,7 @@ def test_vaccines(do_plot=False):
     sc.heading('Testing vaccines...')
 
     nabs = []
-    p1 = cv.variant('sa variant',   days=20, n_imports=20)
+    p1 = cv.variant('beta',   days=20, n_imports=20)
     pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30)
     sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
@@ -171,7 +169,7 @@ def test_vaccines(do_plot=False):
 def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
-    p1 = cv.variant('sa variant',   days=20, n_imports=20)
+    p1 = cv.variant('beta',   days=20, n_imports=20)
     def age_sequence(people): return np.argsort(-people.age)
 
     n_doses = []
@@ -212,7 +210,7 @@ def test_vaccines_sequential(do_plot=False):
 def test_two_vaccines(do_plot=False):
     sc.heading('Testing two vaccines...')
 
-    p1 = cv.variant('sa variant',   days=20, n_imports=0)
+    p1 = cv.variant('beta',   days=20, n_imports=0)
 
     nabs = []
     vac1 = cv.vaccinate_num(vaccine='pfizer', sequence=[0], num_doses=1)
