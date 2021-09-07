@@ -157,14 +157,20 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     Returns: None
     '''
 
-    if symp is None:
+    pars = people.pars
+    if symp is None: # update vaccine nab
         nab_source += people.pars['n_variants']
         prior_symp = 1
+
+    cross_immunity = pars['immunity'][nab_source,:]
+    boost_factor = nab_pars['nab_boost'] * cross_immunity[:, None]
+    boost_factor[boost_factor < 1] = 1
+
+    people.peak_nab[:, inds] *= boost_factor
 
     has_nabs = people.nab[nab_source, inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
-    people.t_nab_event[nab_source, inds] = people.t
 
     if symp is not None:
         prior_symp = np.full(people.pars['pop_size'], np.nan)
@@ -180,9 +186,8 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
         no_prior_nab = (2 ** init_nab) * prior_symp
         people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
 
-    # 2) Prior NAb: multiply existing NAb by boost factor
-    if len(prior_nab_inds):
-        people.peak_nab[nab_source, prior_nab_inds] *= nab_pars['nab_boost']
+    # Update time of nab event
+    people.t_nab_event[:, inds] = people.t
 
     return
 
@@ -263,20 +268,20 @@ def init_immunity(sim, create=False):
         return
 
     # Pull out all of the circulating variants for cross-immunity
-    ns = sim['n_variants']
+    nv = sim['n_variants']
 
     # If immunity values have been provided, process them
     if sim['immunity'] is None or create:
 
         # Firstly, initialize immunity matrix with defaults. These are then overwitten with variant-specific values below
         # Susceptibility matrix is of size sim['n_variants']*sim['n_variants']
-        immunity = np.ones((ns, ns), dtype=cvd.default_float)  # Fill with defaults
+        immunity = np.ones((nv, nv), dtype=cvd.default_float)  # Fill with defaults
 
         # Next, overwrite these defaults with any known immunity values about specific variants
         default_cross_immunity = cvpar.get_cross_immunity()
-        for i in range(ns):
+        for i in range(nv):
             label_i = sim['variant_map'][i]
-            for j in range(ns):
+            for j in range(nv):
                 label_j = sim['variant_map'][j]
                 if label_i in default_cross_immunity and label_j in default_cross_immunity:
                     immunity[j][i] = default_cross_immunity[label_j][label_i]
@@ -305,19 +310,9 @@ def check_immunity(people, variant):
 
     # Handle parameters and indices
     pars = people.pars
-    vaccine_pars = pars['vaccine_pars']
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff = pars['nab_eff']
     current_nabs = people.nab
-
-    # If vaccines are present, extract relevant information about them
-    vacc_present = len(pars['vaccine_pars'])>0
-    if vacc_present:
-        # vx_nab_eff_pars = vaccine_pars['nab_eff']
-        for vax in vaccine_pars.keys():
-            vacc_mapping = np.array([vaccine_pars[vax].get(label, 1.0) for label in pars['variant_map'].values()]) # TODO: make more robust
-            vaccine_scale = vacc_mapping[variant]
-            immunity = np.append(immunity, vaccine_scale)
 
     current_nabs *= immunity[:, None]
     current_nabs = current_nabs.sum(axis=0)

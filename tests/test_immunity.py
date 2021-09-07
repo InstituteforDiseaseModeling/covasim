@@ -314,8 +314,8 @@ if __name__ == '__main__':
     T = sc.tic()
 
     # sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
     sim4   = test_vaccines_sequential(do_plot=do_plot)
     sim5   = test_two_vaccines(do_plot=do_plot)
