@@ -1398,6 +1398,8 @@ class BaseVaccination(Intervention):
         immunity = np.hstack((immunity, vacc_mapping[0:len(sim['variant_map']),]))
         immunity = np.vstack((immunity, np.transpose(vacc_mapping)))
         sim['immunity'] = immunity
+        nab_boost = list(sim['nab_boost']) + [self.p['nab_boost']]
+        sim['nab_boost'] = np.array(nab_boost)
         sim.people.set_pars(sim.pars)
         return
 

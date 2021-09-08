@@ -163,10 +163,10 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
         prior_symp = 1
 
     cross_immunity = pars['immunity'][nab_source,:]
-    boost_factor = nab_pars['nab_boost'] * cross_immunity[:, None]
+    boost_factor = nab_pars['nab_boost'] * cross_immunity
     boost_factor[boost_factor < 1] = 1
 
-    people.peak_nab[:, inds] *= boost_factor
+    people.peak_nab[:, inds] *= boost_factor[:,None]
 
     has_nabs = people.nab[nab_source, inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
@@ -286,6 +286,8 @@ def init_immunity(sim, create=False):
 
     # Next, precompute the NAb kinetics and store these for access during the sim
     sim['nab_kin'] = precompute_waning(length=sim.npts, pars=sim['nab_decay'])
+    nab_boost = sim['nab_boost']
+    sim['nab_boost'] = np.full(nv, nab_boost)
 
     return
 
