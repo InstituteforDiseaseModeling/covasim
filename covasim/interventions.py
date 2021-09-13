@@ -1395,7 +1395,7 @@ class BaseVaccination(Intervention):
         for _ in range(n_vax):
             vacc_mapping.append(1)
         vacc_mapping = np.reshape(vacc_mapping, (n_nab_sources, 1))
-        immunity = np.hstack((immunity, vacc_mapping[0:len(sim['variant_map']),]))
+        immunity = np.hstack((immunity, vacc_mapping[0:len(immunity),]))
         immunity = np.vstack((immunity, np.transpose(vacc_mapping)))
         sim['immunity'] = immunity
         nab_boost = list(sim['nab_boost']) + [self.p['nab_boost']]
