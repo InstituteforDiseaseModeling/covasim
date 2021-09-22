@@ -159,7 +159,7 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
 
     pars = people.pars
     if symp is None: # update vaccine nab
-        nab_source += people.pars['n_variants']
+        nab_source += pars['n_variants']
         prior_symp = 1
 
     cross_immunity = pars['immunity'][nab_source,:]
@@ -173,10 +173,10 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     prior_nab_inds = inds[has_nabs]
 
     if symp is not None:
-        prior_symp = np.full(people.pars['pop_size'], np.nan)
-        prior_symp[symp['asymp']] = people.pars['rel_imm_symp']['asymp']
-        prior_symp[symp['mild']] = people.pars['rel_imm_symp']['mild']
-        prior_symp[symp['sev']] = people.pars['rel_imm_symp']['severe']
+        prior_symp = np.full(pars['pop_size'], np.nan)
+        prior_symp[symp['asymp']] = pars['rel_imm_symp']['asymp']
+        prior_symp[symp['mild']] = pars['rel_imm_symp']['mild']
+        prior_symp[symp['sev']] = pars['rel_imm_symp']['severe']
         prior_symp[prior_nab_inds] = np.nan
         prior_symp = prior_symp[~np.isnan(prior_symp)]
 

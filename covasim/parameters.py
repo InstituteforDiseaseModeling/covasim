@@ -516,7 +516,7 @@ def get_vaccine_variant_pars(default=False):
             b117   = 1/1.12,
             b1351  = 1/4.7,
             p1     = 1/8.6, # Assumption, no data available yet
-            b16172 = 1/1.4, # https://www.globaltimes.cn/page/202108/1230741.shtml
+            b16172 = 1/6.2, # Assumption, no data available yet
         ),
 
         sinopharm = dict(
@@ -562,7 +562,7 @@ def get_vaccine_dose_pars(default=False):
         pfizer = dict(
             nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-1, par2=2),
-            nab_boost = 8,
+            nab_boost = 4,
             doses     = 2,
             interval  = 21,
         ),
