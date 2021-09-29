@@ -1344,9 +1344,9 @@ class BaseVaccination(Intervention):
 
         # Populate any missing keys -- must be here, after variants are initialized
         default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
-        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        default_dose_pars    = cvpar.get_vaccine_dose_pars(default=True)
         variant_labels       = list(sim['variant_pars'].keys())
-        dose_keys           = list(default_dose_pars.keys())
+        dose_keys            = list(default_dose_pars.keys())
 
         # Handle dose keys
         for key in dose_keys:
@@ -1606,7 +1606,7 @@ class vaccinate_num(BaseVaccination):
 
             - A scalar number of doses per day
             - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
-              Any dates are convered to simulation days in `initialize()` which will also copy the
+              Any dates are converted to simulation days in `initialize()` which will also copy the
               dictionary passed in.
             - A callable that takes in a ``cv.Sim`` and returns a scalar number of doses. For example,
               ``def doses(sim): return 100 if sim.t > 10 else 0`` would be suitable
