@@ -91,8 +91,34 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
-@nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
-def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
+import torch, time
+
+
+# @nb.njit(             (nbfloat,  nbint[:], nbint[:],  nbfloat[:],  nbfloat[:], nbfloat[:]), cache=cache, parallel=rand_parallel)
+# def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  rel_sus): # pragma: no cover
+#     '''
+#     Compute who infects whom
+
+#     The heaviest step of the model, taking about 50% of the total time -- figure
+#     out who gets infected on this timestep. Cannot be easily parallelized since
+#     random numbers are used.
+#     '''
+#     source_trans     = rel_trans[sources] # Pull out the transmissibility of the sources (0 for non-infectious people)
+#     inf_inds         = source_trans.nonzero()[0] # Infectious indices -- remove noninfectious people
+#     betas            = beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]] # Calculate the raw transmission probabilities
+#     nonzero_inds     = betas.nonzero()[0] # Find nonzero entries
+#     nonzero_inf_inds = inf_inds[nonzero_inds] # Map onto original indices
+#     nonzero_betas    = betas[nonzero_inds] # Remove zero entries from beta
+#     nonzero_sources  = sources[nonzero_inf_inds] # Remove zero entries from the sources
+#     nonzero_targets  = targets[nonzero_inf_inds] # Remove zero entries from the targets
+#     transmissions    = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
+        
+#     source_inds      = nonzero_sources[transmissions]
+#     target_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
+#     return source_inds, target_inds
+
+
+def compute_infections(beta, sources, targets, layer_betas, rel_trans, rel_sus): # pragma: no cover
     '''
     Compute who infects whom
 
@@ -100,18 +126,25 @@ def compute_infections(beta,     sources,  targets,   layer_betas, rel_trans,  r
     out who gets infected on this timestep. Cannot be easily parallelized since
     random numbers are used.
     '''
-    source_trans     = rel_trans[sources] # Pull out the transmissibility of the sources (0 for non-infectious people)
-    inf_inds         = source_trans.nonzero()[0] # Infectious indices -- remove noninfectious people
-    betas            = beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]] # Calculate the raw transmission probabilities
-    nonzero_inds     = betas.nonzero()[0] # Find nonzero entries
-    nonzero_inf_inds = inf_inds[nonzero_inds] # Map onto original indices
-    nonzero_betas    = betas[nonzero_inds] # Remove zero entries from beta
-    nonzero_sources  = sources[nonzero_inf_inds] # Remove zero entries from the sources
-    nonzero_targets  = targets[nonzero_inf_inds] # Remove zero entries from the targets
-    transmissions    = (np.random.random(len(nonzero_betas)) < nonzero_betas).nonzero()[0] # Compute the actual infections!
-    source_inds      = nonzero_sources[transmissions]
-    target_inds      = nonzero_targets[transmissions] # Filter the targets on the actual infections
-    return source_inds, target_inds
+
+    rel_trans = torch.from_numpy(rel_trans).cuda()
+    rel_sus = torch.from_numpy(rel_sus).cuda()
+
+    source_trans     = rel_trans[sources.long()] # Pull out the transmissibility of the sources (0 for non-infectious people)
+    inf_inds         = torch.flatten(source_trans.nonzero().long()) # Infectious indices -- remove noninfectious people
+    betas            = torch.flatten(beta * layer_betas[inf_inds] * source_trans[inf_inds] * rel_sus[targets[inf_inds]]) # Calculate the raw transmission probabilities
+    nonzero_inds     = torch.flatten(betas.nonzero()) # Find nonzero entries
+    nonzero_inf_inds = torch.flatten(inf_inds[nonzero_inds]) # Map onto original indices
+    nonzero_betas    = torch.flatten(betas[nonzero_inds]) # Remove zero entries from beta
+    nonzero_sources  = torch.flatten(sources[nonzero_inf_inds]) # Remove zero entries from the sources
+    nonzero_targets  = torch.flatten(targets[nonzero_inf_inds]) # Remove zero entries from the targets
+    transmissions    = torch.flatten((torch.rand(len(nonzero_betas)).cuda() < nonzero_betas).nonzero()) # Compute the actual infections!
+
+    source_inds      = torch.flatten(nonzero_sources[transmissions])
+    target_inds      = torch.flatten(nonzero_targets[transmissions]) # Filter the targets on the actual infections
+
+    return source_inds.cpu().numpy(), target_inds.cpu().numpy()
+
 
 
 @nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=cache)

@@ -4,6 +4,7 @@ Defines the Sim class, Covasim's core class.
 
 #%% Imports
 import numpy as np
+import torch
 import pandas as pd
 import sciris as sc
 from . import utils as cvu
@@ -16,6 +17,7 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import immunity as cvimm
 from . import analysis as cva
+
 
 # Almost everything in this file is contained in the Sim class
 __all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
@@ -626,10 +628,9 @@ class Sim(cvb.BaseSim):
             beta = cvd.default_float(self['beta'] * rel_beta)
 
             for lkey, layer in contacts.items():
-                p1 = layer['p1']
-                p2 = layer['p2']
+                p1 = layer['p1'].long()
+                p2 = layer['p2'].long()
                 betas = layer['beta']
-
                 # Compute relative transmission and susceptibility
                 inf_variant = people.infectious * (people.infectious_variant == variant) # TODO: move out of loop?
                 sus_imm = people.sus_imm[variant,:]

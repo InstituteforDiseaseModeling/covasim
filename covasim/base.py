@@ -5,6 +5,7 @@ can be focused on the disease-specific functionality.
 '''
 
 import numpy as np
+import torch
 import pandas as pd
 import sciris as sc
 import datetime as dt
@@ -1264,7 +1265,7 @@ class BasePeople(FlexPretty):
                 if beta is None:
                     beta = 1.0
                 beta = cvd.default_float(beta)
-                new_layer['beta'] = np.ones(n, dtype=cvd.default_float)*beta
+                new_layer['beta'] = torch.ones(n, dtype=torch.float32, device="cuda")*beta
 
             # Create the layer if it doesn't yet exist
             if lkey not in self.contacts:
@@ -1272,7 +1273,7 @@ class BasePeople(FlexPretty):
 
             # Actually include them, and update properties if supplied
             for col in self.contacts[lkey].keys(): # Loop over the supplied columns
-                self.contacts[lkey][col] = np.concatenate([self.contacts[lkey][col], new_layer[col]])
+                self.contacts[lkey][col] = torch.cat((self.contacts[lkey][col], new_layer[col]))
             self.contacts[lkey].validate()
 
         return
@@ -1307,7 +1308,7 @@ class BasePeople(FlexPretty):
         for lkey in lkeys:
             new_layer = Layer(label=lkey)
             for ckey,value in new_contacts[lkey].items():
-                new_layer[ckey] = np.array(value, dtype=new_layer.meta[ckey])
+                new_layer[ckey] = torch.tensor(value, device='cuda')
             new_contacts[lkey] = new_layer
 
         return new_contacts
@@ -1501,7 +1502,7 @@ class Layer(FlexDict):
 
         # Initialize the keys of the layers
         for key,dtype in self.meta.items():
-            self[key] = np.empty((0,), dtype=dtype)
+            self[key] = torch.empty((0,), dtype=torch.float32, device='cuda')
 
         # Set data, if provided
         for key,value in kwargs.items():
@@ -1558,7 +1559,7 @@ class Layer(FlexDict):
         for key,dtype in self.meta.items():
             if dtype:
                 actual = self[key].dtype
-                expected = dtype
+                expected = torch.float32
                 if actual != expected:
                     errormsg = f'Expecting dtype "{expected}" for layer key "{key}"; got "{actual}"'
                     raise TypeError(errormsg)

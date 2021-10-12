@@ -435,10 +435,10 @@ class People(cvb.BasePeople):
         if len(inds) == 0:
             return 0
 
-        # Remove duplicates
-        inds, unique = np.unique(inds, return_index=True)
-        if source is not None:
-            source = source[unique]
+        # # Remove duplicates
+        # inds, unique = np.unique(inds, return_index=True)
+        # if source is not None:
+        #     source = source[unique]
 
         # Keep only susceptibles
         keep = self.susceptible[inds] # Unique indices in inds and source that are also susceptible
