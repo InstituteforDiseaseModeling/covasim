@@ -38,7 +38,8 @@ Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - We now capture the full immune history for all agents in the model (source, time, NAb level)
 - Whereas previously each agent had a single NAb/peak_NAb value which may have comprised multiple sources, we now differentiate each NAb source
-- NAbs are boosted by homologous but not heterologous sources (delta will boost delta but not wild-type NAbs)
+- NAbs are boosted by homologous and heterologous sources. For heterologous sources, we boost based on the degree of cross-immunity assumed in the model
+- When NAbs are initialized, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can sum the effective NAbs and then calculate immune protection.
 
 Other parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^
