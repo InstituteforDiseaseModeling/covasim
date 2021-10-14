@@ -160,7 +160,6 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     pars = people.pars
     if symp is None: # update vaccine nab
         nab_source += pars['n_variants']
-        prior_symp = 1
 
     cross_immunity = pars['immunity'][nab_source,:]
     boost_factor = nab_pars['nab_boost'] * cross_immunity
@@ -172,7 +171,7 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
 
-    if symp is not None:
+    if symp is not None: # natural infection
         prior_symp = np.full(pars['pop_size'], np.nan)
         prior_symp[symp['asymp']] = pars['rel_imm_symp']['asymp']
         prior_symp[symp['mild']] = pars['rel_imm_symp']['mild']
@@ -183,7 +182,10 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     # 1) No prior NAb: draw NAb from a distribution and compute
     if len(no_prior_nab_inds):
         init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
-        no_prior_nab = (2 ** init_nab) * prior_symp
+        if symp is None:
+            no_prior_nab = (2 ** init_nab)
+        else:
+            no_prior_nab = (2 ** init_nab) * prior_symp + nab_pars['nab_eff']['alpha_inf_diff']*((2 ** init_nab) * prior_symp)
         people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
 
     # Update time of nab event

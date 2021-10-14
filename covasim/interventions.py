@@ -679,6 +679,37 @@ class clip_edges(Intervention):
 __all__+= ['test_num', 'test_prob', 'contact_tracing']
 
 
+def get_quar_inds(quar_policy, sim):
+    '''
+    Helper function to return the appropriate indices for people in quarantine
+    based on the current quarantine testing "policy". Used by test_num and test_prob.
+    Not for use by the user.
+
+    If quar_policy is a number or a list of numbers, then it is interpreted as
+    the number of days after the start of quarantine when a test is performed.
+    It can also be a function that returns the list of indices.
+
+    Args:
+        quar_policy (str, int, list, func): 'start', people entering quarantine; 'end', people leaving; 'both', entering and leaving; 'daily', every day in quarantine
+        sim (Sim): the simulation object
+    '''
+    t = sim.t
+    if   quar_policy is None:    quar_test_inds = np.array([])
+    elif quar_policy == 'start': quar_test_inds = cvu.true(sim.people.date_quarantined==t-1) # Actually do the day after since testing usually happens before contact tracing
+    elif quar_policy == 'end':   quar_test_inds = cvu.true(sim.people.date_end_quarantine==t+1) # +1 since they are released on date_end_quarantine, so do the day before
+    elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
+    elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
+    elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
+        quar_policy = sc.promotetoarray(quar_policy)
+        quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
+    elif callable(quar_policy):
+        quar_test_inds = quar_policy(sim)
+    else: # pragma: no cover
+        errormsg = f'Quarantine policy "{quar_policy}" not recognized: must be a string (start, end, both, daily), int, list, array, set, tuple, or function'
+        raise ValueError(errormsg)
+    return quar_test_inds
+
+
 class test_num(Intervention):
     '''
     Test the specified number of people per day. Useful for including historical
@@ -1337,7 +1368,7 @@ class BaseVaccination(Intervention):
             if self.p['doses'] == len(self.p['target_eff']):
                 # determine efficacy of first dose (assume efficacy supplied is against symptomatic disease)
                 nabs = np.arange(-8, 4, 0.1)
-                VE_symp = cvi.calc_VE_symp(nabs, self.p['nab_eff'])
+                VE_symp = cvi.calc_VE_symp(nabs, sim.pars['nab_eff'])
                 peak_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][0])]
                 self.p['nab_init'] = dict(dist='normal', par1=peak_nab, par2=2)
                 if self.p['doses'] == 2:

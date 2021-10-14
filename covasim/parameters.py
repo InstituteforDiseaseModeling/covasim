@@ -68,10 +68,10 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Parameters used to calculate immunity
     pars['use_waning']   = True # Whether to use dynamically calculated immunity
     pars['nab_init']     = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
-    pars['nab_decay']    = dict(form='nab_growth_decay', growth_time=21, decay_rate1=0.007, decay_time1=47, decay_rate2=0.002, decay_time2=106)
+    pars['nab_decay']    = dict(form='nab_growth_decay', growth_time=21, decay_rate1=np.log(2) / 50, decay_time1=150, decay_rate2=np.log(2) / 250, decay_time2=365)
     pars['nab_kin']      = None # Constructed during sim initialization using the nab_decay parameters
     pars['nab_boost']    = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
-    pars['nab_eff']      = dict(alpha_inf=2.08, beta_inf=0.967, alpha_symp_inf=-0.739, beta_symp_inf=0.038, alpha_sev_symp=-0.014, beta_sev_symp=0.079) # Parameters to map nabs to efficacy for natural infection -- see below for vaccine-derived
+    pars['nab_eff']      = dict(alpha_inf=1.08, alpha_inf_diff=1.812, beta_inf=0.967, alpha_symp_inf=-0.739, beta_symp_inf=0.038, alpha_sev_symp=-0.014, beta_sev_symp=0.079) # Parameters to map nabs to efficacy
     pars['rel_imm_symp'] = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']     = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
     pars['trans_redux']  = 0.59  # Reduction in transmission for breakthrough infections, https://www.medrxiv.org/content/10.1101/2021.07.13.21260393v
@@ -539,20 +539,9 @@ def get_vaccine_dose_pars(default=False):
     Define the parameters for each vaccine
     '''
 
-    # Default vaccine NAb efficacy is nearly identical to nab_eff for infection -- only alpha_inf differs. Values derived from fit to data
-    vaccine_nab_eff = dict(
-        alpha_inf      =  1.08,
-        beta_inf       =  0.967,
-        alpha_symp_inf = -0.739,
-        beta_symp_inf  =  0.038,
-        alpha_sev_symp = -0.014,
-        beta_sev_symp  =  0.079,
-    )
-
     pars = dict(
 
         default = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff), # Efficacy of NAbs of this vaccine
             nab_init  = dict(dist='normal', par1=0, par2=2), # Initial distribution of NAbs
             nab_boost = 2, # Factor by which a dose increases existing NABs
             doses     = 1, # Number of doses for this vaccine
@@ -560,7 +549,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         pfizer = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-1, par2=2),
             nab_boost = 4,
             doses     = 2,
@@ -568,7 +556,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         moderna = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-1, par2=2),
             nab_boost = 8,
             doses     = 2,
@@ -576,7 +563,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         az = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-1.5, par2=2),
             nab_boost = 2,
             doses     = 2,
@@ -584,7 +570,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         jj = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=1, par2=2),
             nab_boost = 3,
             doses     = 1,
@@ -592,7 +577,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         novavax = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-0.9, par2=2),
             nab_boost = 3,
             doses     = 2,
@@ -600,7 +584,6 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         sinovac = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
             nab_init  = dict(dist='normal', par1=-2, par2=2),
             nab_boost = 2,
             doses     = 2,
@@ -608,8 +591,7 @@ def get_vaccine_dose_pars(default=False):
         ),
 
         sinopharm = dict(
-            nab_eff   = sc.dcp(vaccine_nab_eff),
-            nab_init  = dict(dist='normal', par1=-0.9, par2=2),
+            nab_init  = dict(dist='normal', par1=-1, par2=2),
             nab_boost = 2,
             doses     = 2,
             interval  = 21,
