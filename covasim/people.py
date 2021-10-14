@@ -79,8 +79,8 @@ class People(cvb.BasePeople):
         # Set immunity and antibody states
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
-        for key in self.meta.nab_by_source_states:  # Everyone starts out with no antibodies
-            self[key] = np.zeros(((self.pars['n_variants'] + len(self.pars['vaccine_pars'])), self.pars['pop_size']), dtype=cvd.default_float)
+        for key in self.meta.nab_states:  # Everyone starts out with no antibodies
+            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
         for key in self.meta.vacc_states:
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
@@ -380,9 +380,9 @@ class People(cvb.BasePeople):
 
         # Reset immunity and antibody states
         non_vx_inds = inds if reset_vx else inds[~self['vaccinated'][inds]]
-        for key in self.meta.imm_states + self.meta.nab_by_source_states:
+        for key in self.meta.imm_states:
             self[key][:, non_vx_inds] = 0
-        for key in self.meta.vacc_states:
+        for key in self.meta.nab_stats + self.meta.vacc_states:
             self[key][non_vx_inds] = 0
 
         # Reset dates
@@ -467,7 +467,7 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.true(self.peak_nab[:,inds].sum(axis=0))
+        breakthrough_inds = cvu.true(self.peak_nab[inds])
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False

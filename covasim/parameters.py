@@ -135,7 +135,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
 
-    pars['n_nab_sources'] = pars['n_variants'] + len(pars['vaccine_pars'])
 
     # If version is specified, load old parameters
     if version is not None:

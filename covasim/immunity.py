@@ -161,13 +161,11 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
     if symp is None: # update vaccine nab
         nab_source += pars['n_variants']
 
-    cross_immunity = pars['immunity'][nab_source,:]
-    boost_factor = nab_pars['nab_boost'] * cross_immunity
-    boost_factor[boost_factor < 1] = 1
+    boost_factor = nab_pars['nab_boost']
 
-    people.peak_nab[:, inds] *= boost_factor[:,None]
+    people.peak_nab[inds] *= boost_factor
 
-    has_nabs = people.nab[nab_source, inds] > 0
+    has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
 
@@ -186,10 +184,10 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
             no_prior_nab = (2 ** init_nab)
         else:
             no_prior_nab = (2 ** init_nab) * prior_symp + nab_pars['nab_eff']['alpha_inf_diff']*((2 ** init_nab) * prior_symp)
-        people.peak_nab[nab_source, no_prior_nab_inds] = no_prior_nab
+        people.peak_nab[no_prior_nab_inds] = no_prior_nab
 
     # Update time of nab event
-    people.t_nab_event[:, inds] = people.t
+    people.t_nab_event[inds] = people.t
 
     return
 
@@ -198,10 +196,10 @@ def update_nab(people, inds):
     '''
     Step NAb levels forward in time
     '''
-    t_since_boost = people.t-people.t_nab_event[:,inds].astype(cvd.default_int)
-    people.nab[:,inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[:,inds]
-    people.nab[:,inds] = np.where(people.nab[:,inds]<0, 0, people.nab[:,inds]) # Make sure nabs don't drop below 0
-    people.nab[:,inds] = np.where([people.nab[:,inds] > people.peak_nab[:,inds]], people.peak_nab[:,inds], people.nab[:,inds]) # Make sure nabs don't exceed peak_nab
+    t_since_boost = people.t-people.t_nab_event[inds].astype(cvd.default_int)
+    people.nab[inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[inds]
+    people.nab[inds] = np.where(people.nab[inds]<0, 0, people.nab[inds]) # Make sure nabs don't drop below 0
+    people.nab[inds] = np.where([people.nab[inds] > people.peak_nab[inds]], people.peak_nab[inds], people.nab[inds]) # Make sure nabs don't exceed peak_nab
     return
 
 
@@ -288,8 +286,6 @@ def init_immunity(sim, create=False):
 
     # Next, precompute the NAb kinetics and store these for access during the sim
     sim['nab_kin'] = precompute_waning(length=sim.npts, pars=sim['nab_decay'])
-    nab_boost = sim['nab_boost']
-    sim['nab_boost'] = np.full(nv, nab_boost)
 
     return
 
@@ -313,9 +309,20 @@ def check_immunity(people, variant):
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff = pars['nab_eff']
     current_nabs = people.nab
+    imm = np.ones(len(people)) #TODO: create an immunity scalar for each person based on their history of exposure
+    date_rec = people.date_recovered  # Date recovered
+    is_vacc = cvu.true(people.vaccinated)  # Vaccinated
+    vacc_source = people.vaccine_source[is_vacc]
+    was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
+    was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
+    was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
+    variant_was_inf_diff = people.recovered_variant[was_inf_diff]
 
-    current_nabs *= immunity[:, None]
-    current_nabs = current_nabs.sum(axis=0)
+    imm[was_inf_same] = immunity[variant]
+    imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
+    imm[is_vacc] = [people.pars['vaccine_pars'][i][people.pars['variant_map'][variant]] for i in vacc_source]
+
+    current_nabs *= imm
     people.sus_imm[variant,:] = calc_VE(current_nabs, 'sus', nab_eff)
     people.symp_imm[variant,:] = calc_VE(current_nabs, 'symp', nab_eff)
     people.sev_imm[variant,:] = calc_VE(current_nabs, 'sev', nab_eff)

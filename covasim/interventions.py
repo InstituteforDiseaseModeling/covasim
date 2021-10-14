@@ -1387,20 +1387,6 @@ class BaseVaccination(Intervention):
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
 
-        # update sim['immunity']
-        n_vax = self.index+1
-        n_nab_sources = n_vax + len(sim['variant_map'])
-        immunity = sim['immunity']
-        vacc_mapping = [self.p.get(label, 1.0) for label in sim['variant_map'].values()]
-        for _ in range(n_vax):
-            vacc_mapping.append(1)
-        vacc_mapping = np.reshape(vacc_mapping, (n_nab_sources, 1))
-        immunity = np.hstack((immunity, vacc_mapping[0:len(immunity),]))
-        immunity = np.vstack((immunity, np.transpose(vacc_mapping)))
-        sim['immunity'] = immunity
-        nab_boost = list(sim['nab_boost']) + [self.p['nab_boost']]
-        sim['nab_boost'] = np.array(nab_boost)
-        sim.people.set_pars(sim.pars)
         return
 
     def select_people(self, sim):
@@ -1446,7 +1432,7 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = sim.t
-            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, nab_source=self.index)
+            cvi.update_peak_nab(sim.people, vacc_inds)
 
         return vacc_inds
 
