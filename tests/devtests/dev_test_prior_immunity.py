@@ -223,40 +223,40 @@ def examplep1():
 
 if __name__ == "__main__":
 
-    # ## PRIOR IMMUNITY EXAMPLE
-    # # use prior_immunity to add historical vaccination
-    # examplep0()
-    #
-    # # use prior_immunity to add historical_wave
-    # examplep1()
+    ## PRIOR IMMUNITY EXAMPLE
+    # use prior_immunity to add historical vaccination
+    examplep0()
 
-    # ## VACCINATION EXAMPLES
-    #
+    # use prior_immunity to add historical_wave
+    examplep1()
+
+    ## VACCINATION EXAMPLES
+
     # basic example
-    # examplev0()
-    # # single vaccine campaign example
-    # examplev1()
-    #
-    # # compare vaccinate and historical vaccinate
-    # examplev2()
+    examplev0()
+    # single vaccine campaign example
+    examplev1()
+
     # compare vaccinate and historical vaccinate
-    # examplev3()
-    #
-    # # example using NAb histogram
-    # examplev4()
-    # # examples using estimate_prob
-    # example_estimate_prob()
+    examplev2()
+    # compare vaccinate and historical vaccinate
+    examplev3()
 
-
-    # ## PREVIOUS WAVE EXAMPLES
-    # # basic example
-    # examplew0()
-    #
-    # # 2 wave example
-    # examplew1()
-    #
-    # # multi-wave comparison
-    examplew2()
-    #
     # example using NAb histogram
-    # examplew3()
+    examplev4()
+    # examples using estimate_prob
+    example_estimate_prob()
+
+
+    ## PREVIOUS WAVE EXAMPLES
+    # basic example
+    examplew0()
+
+    # 2 wave example
+    examplew1()
+
+    # multi-wave comparison
+    examplew2()
+
+    # example using NAb histogram
+    examplew3()
