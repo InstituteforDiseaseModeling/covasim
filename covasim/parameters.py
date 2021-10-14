@@ -70,7 +70,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['nab_init']     = dict(dist='normal', par1=0, par2=2)  # Parameters for the distribution of the initial level of log2(nab) following natural infection, taken from fig1b of https://doi.org/10.1101/2021.03.09.21252641
     pars['nab_decay']    = dict(form='nab_growth_decay', growth_time=21, decay_rate1=np.log(2) / 50, decay_time1=150, decay_rate2=np.log(2) / 250, decay_time2=365)
     pars['nab_kin']      = None # Constructed during sim initialization using the nab_decay parameters
-    pars['nab_boost']    = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. # TODO: add source
+    pars['nab_boost']    = 1.5 # Multiplicative factor applied to a person's nab levels if they get reinfected. No data on this, assumption.
     pars['nab_eff']      = dict(alpha_inf=1.08, alpha_inf_diff=1.812, beta_inf=0.967, alpha_symp_inf=-0.739, beta_symp_inf=0.038, alpha_sev_symp=-0.014, beta_sev_symp=0.079) # Parameters to map nabs to efficacy
     pars['rel_imm_symp'] = dict(asymp=0.85, mild=1, severe=1.5) # Relative immunity from natural infection varies by symptoms
     pars['immunity']     = None  # Matrix of immunity and cross-immunity factors, set by init_immunity() in immunity.py
