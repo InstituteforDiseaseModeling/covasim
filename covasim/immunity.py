@@ -306,7 +306,7 @@ def check_immunity(people, variant):
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff = pars['nab_eff']
     current_nabs = sc.dcp(people.nab)
-    imm = np.ones(len(people)) #TODO: create an immunity scalar for each person based on their history of exposure
+    imm = np.ones(len(people))
     date_rec = people.date_recovered  # Date recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
     vacc_source = people.vaccine_source[is_vacc]
@@ -318,7 +318,7 @@ def check_immunity(people, variant):
 
     imm[was_inf_same] = immunity[variant]
     imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
-    if len(is_vacc) and len(pars['vaccine_pars']):
+    if len(is_vacc) and len(pars['vaccine_pars']): # if using simple_vaccine, do not apply
         imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
 
     current_nabs *= imm
