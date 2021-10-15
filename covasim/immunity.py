@@ -160,11 +160,11 @@ def update_peak_nab(people, inds, nab_pars, symp=None):
 
     boost_factor = nab_pars['nab_boost']
 
-    people.peak_nab[inds] *= boost_factor
-
     has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
+
+    people.peak_nab[prior_nab_inds] *= boost_factor
 
     if symp is not None: # natural infection
         prior_symp = np.full(pars['pop_size'], np.nan)
@@ -305,7 +305,7 @@ def check_immunity(people, variant):
     pars = people.pars
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff = pars['nab_eff']
-    current_nabs = people.nab
+    current_nabs = sc.dcp(people.nab)
     imm = np.ones(len(people)) #TODO: create an immunity scalar for each person based on their history of exposure
     date_rec = people.date_recovered  # Date recovered
     is_vacc = cvu.true(people.vaccinated)  # Vaccinated
@@ -318,7 +318,8 @@ def check_immunity(people, variant):
 
     imm[was_inf_same] = immunity[variant]
     imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
-    imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
+    if len(is_vacc) and len(pars['vaccine_pars']):
+        imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
 
     current_nabs *= imm
     people.sus_imm[variant,:] = calc_VE(current_nabs, 'sus', nab_eff)

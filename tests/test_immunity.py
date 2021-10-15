@@ -138,7 +138,7 @@ def test_variants(do_plot=False):
     sim.run()
 
     if do_plot:
-        nabs = np.array(nabs).sum()
+        nabs = np.array(nabs).sum(axis=1)
         pl.figure()
         pl.plot(nabs)
         pl.show()
@@ -226,7 +226,7 @@ def test_two_vaccines(do_plot=False):
         pl.show()
 
 
-def test_vaccine_target_eff(do_plot=False):
+def test_vaccine_target_eff():
     sc.heading('Testing vaccine with pre-specified efficacy...')
     vacc_pars = sc.mergedicts(cvpar.get_vaccine_dose_pars(default=True), {'doses': 2, 'target_eff': [0.7, 0.95]})
 
@@ -313,13 +313,13 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
     sim3   = test_vaccines(do_plot=do_plot)
     sim4   = test_vaccines_sequential(do_plot=do_plot)
     sim5   = test_two_vaccines(do_plot=do_plot)
-    sim6   = test_vaccine_target_eff(do_plot=do_plot)
+    sim6   = test_vaccine_target_eff()
     res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
