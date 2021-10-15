@@ -130,7 +130,7 @@ class variant(sc.prettyobj):
 #%% Neutralizing antibody methods
 
 
-def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
+def update_peak_nab(people, inds, nab_pars, symp=None):
     '''
     Update peak NAb level
 
@@ -151,15 +151,12 @@ def update_peak_nab(people, inds, nab_pars, nab_source, symp=None):
         inds: Array of people indices
         nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
                     sim pars (for natural immunity) or vaccine pars
-        nab_source: index of either variant or vaccine where nabs are coming from
         natural: If True, immunity is being changed due to infection rather than vaccination
 
     Returns: None
     '''
 
     pars = people.pars
-    if symp is None: # update vaccine nab
-        nab_source += pars['n_variants']
 
     boost_factor = nab_pars['nab_boost']
 
@@ -317,10 +314,11 @@ def check_immunity(people, variant):
     was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
     was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
     variant_was_inf_diff = people.recovered_variant[was_inf_diff]
+    variant_was_inf_diff = variant_was_inf_diff.astype(cvd.default_int)
 
     imm[was_inf_same] = immunity[variant]
     imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
-    imm[is_vacc] = [people.pars['vaccine_pars'][i][people.pars['variant_map'][variant]] for i in vacc_source]
+    imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
 
     current_nabs *= imm
     people.sus_imm[variant,:] = calc_VE(current_nabs, 'sus', nab_eff)

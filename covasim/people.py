@@ -563,7 +563,7 @@ class People(cvb.BasePeople):
                 'mild': mild_inds,
                 'sev': sev_inds
             }
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, nab_source=variant, symp=symp)
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
         return n_infections # For incrementing counters
 

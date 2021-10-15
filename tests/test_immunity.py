@@ -138,7 +138,7 @@ def test_variants(do_plot=False):
     sim.run()
 
     if do_plot:
-        nabs = np.array(nabs).sum(axis=2)
+        nabs = np.array(nabs).sum()
         pl.figure()
         pl.plot(nabs)
         pl.show()
@@ -157,7 +157,7 @@ def test_vaccines(do_plot=False):
     sim.run()
 
     if do_plot:
-        nabs = np.array(nabs).sum(axis=2)
+        nabs = np.array(nabs).sum(axis=1)
         pl.figure()
         pl.plot(nabs)
         pl.show()
@@ -220,7 +220,7 @@ def test_two_vaccines(do_plot=False):
     sim.run()
 
     if do_plot:
-        nabs = np.array(nabs).sum(axis=2)
+        nabs = np.array(nabs).sum(axis=1)
         pl.figure()
         pl.plot(nabs)
         pl.show()
