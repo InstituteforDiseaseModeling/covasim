@@ -14,11 +14,28 @@ if __name__ == '__main__':
         'n_days': 180,
     }
 
+    # Define booster
+    default_nab_eff = dict(
+        alpha_inf      =  1.11,
+        beta_inf       =  1.219,
+        alpha_symp_inf = -1.06,
+        beta_symp_inf  =  0.867,
+        alpha_sev_symp =  0.268,
+        beta_sev_symp  =  3.4
+    )
+    booster = dict(
+        nab_eff=sc.dcp(default_nab_eff),
+        nab_init=None,
+        nab_boost=3,
+        doses=1,
+        interval=None,
+    )
+
     # Define sequence based vaccination
     def prioritize_by_age(people):
         return np.argsort(-people.age)
 
-    # Start vaccinating 100 people/day on day 30; scale up by 100 doses/day til 65% have had a first dose
+    # Start vaccinating 100 people/day on day 30 then scale up by 100 doses/day til 65% have had a first dose
     def num_doses(sim):
         if sim.t < 30:
             return 0
@@ -42,7 +59,7 @@ if __name__ == '__main__':
     booster_target = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0}
 
     pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=prioritize_by_age, num_doses=num_doses)
-    booster = cv.vaccinate_num(vaccine='booster', sequence=prioritize_by_age, subtarget=booster_target, num_doses=num_boosters, booster=True)
+    booster = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, num_doses=num_boosters, booster=True)
 
     sim = cv.Sim(
         use_waning=True,

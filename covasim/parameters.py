@@ -589,15 +589,6 @@ def get_vaccine_dose_pars(default=False):
             nab_boost = 3,
             doses     = 2,
             interval  = 21,
-        ),
-
-        # Add a generic booster
-        booster=dict(
-            nab_eff=sc.dcp(default_nab_eff),
-            nab_init=None,
-            nab_boost=3,
-            doses=1,
-            interval=None,
         )
 
     )
