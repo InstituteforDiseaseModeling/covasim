@@ -344,6 +344,7 @@ def get_vaccine_choices():
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
         'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
+        'booster': ['booster'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -508,6 +509,15 @@ def get_vaccine_variant_pars(default=False):
             p1     = 1/8.6, # Assumption, no data available yet
             b16172 = 1/6.2, # Assumption, no data available yet
         ),
+
+        booster=dict(
+            # No data
+            wild=1.0,
+            b117=1 / 1.12, # Assumption, no data available yet
+            b1351=1 / 4.7, # Assumption, no data available yet
+            p1=1 / 8.6,   # Assumption, no data available yet
+            b16172=1 / 6.2,  # Assumption, no data available yet
+        ),
     )
 
     if default:
@@ -580,9 +590,17 @@ def get_vaccine_dose_pars(default=False):
             doses     = 2,
             interval  = 21,
         ),
-    ),
 
-    # Ad
+        # Add a generic booster
+        booster=dict(
+            nab_eff=sc.dcp(default_nab_eff),
+            nab_init=None,
+            nab_boost=3,
+            doses=1,
+            interval=None,
+        )
+
+    )
 
     if default:
         return pars['default']

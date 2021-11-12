@@ -1242,6 +1242,7 @@ class BaseVaccination(Intervention):
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        booster      (boolean): whether the vaccine is a booster, i.e. whether vaccinated people are eligible
         kwargs     (dict): passed to Intervention()
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
@@ -1262,6 +1263,7 @@ class BaseVaccination(Intervention):
         self.index     = None # Index of the vaccine in the sim; set later
         self.label     = None # Vaccine label (used as a dict key)
         self.p         = None # Vaccine parameters
+        self.booster   = None # Whether the vaccine is a booster
         self.vaccinated  = None  # Store a list of indices of people vaccinated each day
         self.vaccinations = None # Record the number of doses given per person
         self.vaccination_dates = None # Store the dates that each person was last vaccinated
@@ -1508,7 +1510,7 @@ class vaccinate_prob(BaseVaccination):
 
 
 class vaccinate_num(BaseVaccination):
-    def __init__(self, vaccine, num_doses, sequence=None, **kwargs):
+    def __init__(self, vaccine, num_doses, subtarget=None, sequence=None, booster=False, **kwargs):
         """
         Sequence-based vaccination
 
@@ -1519,6 +1521,8 @@ class vaccinate_num(BaseVaccination):
         Args:
             vaccine (dict/str): which vaccine to use; see below for dict parameters
             label        (str): if vaccine is supplied as a dict, the name of the vaccine
+            subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
+            booster  (boolean): whether the vaccine is a booster or not (i.e., whether it's delivered to vaccinated or unvaccinated people)
             sequence: Specify the order in which people should get vaccinated. This can be
 
                 - An array of person indices in order of vaccination priority
@@ -1544,9 +1548,11 @@ class vaccinate_num(BaseVaccination):
 
         """
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
-        self.sequence = sequence
-        self.num_doses = num_doses
-        self._scheduled_doses = defaultdict(set)  # Track scheduled second doses
+        self.sequence   = sequence
+        self.num_doses  = num_doses
+        self.subtarget  = subtarget
+        self.booster    = booster
+        self._scheduled_doses = defaultdict(set)  # Track scheduled second doses, where applicable
         return
 
     def initialize(self, sim):
@@ -1583,10 +1589,10 @@ class vaccinate_num(BaseVaccination):
 
         num_agents = int(np.round(num_people / sim["pop_scale"]))
 
-        # First, see how many scheduled doses we are going to deliver
+        # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
             scheduled = np.fromiter(self._scheduled_doses[sim.t], dtype=cvd.default_int) # Everyone scheduled today
-            scheduled = scheduled[(sim.people.vaccinations[scheduled]<self.p['doses']) & ~sim.people.dead[scheduled]] # Remove fully vaccinated or dead
+            scheduled = scheduled[(sim.people.vaccinations[scheduled] < self.p['doses']) & ~sim.people.dead[scheduled]]  # Remove fully vaccinated or dead
 
             # If there are more people due for a second dose than there are doses, vaccinate as many second doses
             # as possible, and add the remainder to tomorrow's vaccinations. At the moment, they don't get priority
@@ -1600,10 +1606,22 @@ class vaccinate_num(BaseVaccination):
         else:
             scheduled = np.array([], dtype=cvd.default_int)
 
-        # Next, work out who is eligible for a first dose
-        # Anyone who has received at least one dose of a vaccine would have had subsequent doses scheduled
-        # and therefore should not be selected here
-        first_dose_eligible = self.sequence[~sim.people.vaccinated[self.sequence] & ~sim.people.dead[self.sequence]]
+        # Next, work out who is eligible for / targeted by vaccination
+        vacc_probs = np.ones(sim.n) # Begin by assigning equal weight (converted to a probability) to everyone
+        vacc_probs[cvu.true(sim.people.dead)] = 0.0  # Dead people are not eligible
+
+        # Apply any subtargeting for this vaccination
+        if self.subtarget is not None:
+            subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
+            vacc_probs[subtarget_inds] = vacc_probs[subtarget_inds]*subtarget_vals
+
+        # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
+        if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
+        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0
+
+        # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
+        # vaccine would have had subsequent doses scheduled and therefore should not be selected here
+        first_dose_eligible = self.sequence[cvu.binomial_arr(vacc_probs[self.sequence])]
 
         if len(first_dose_eligible) == 0:
             return scheduled  # Just return anyone that is scheduled
