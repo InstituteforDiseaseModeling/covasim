@@ -189,6 +189,9 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     # NAb from a vaccine
     else:
         # Firstly, ensure that boosters are not administered to unvaccinated people
+        if nab_pars['nab_init'] is None and len(no_prior_nab_inds)>0:
+            errormsg = f'Attempt to administer a vaccine without an initial NAb distribution to {len(no_prior_nab_inds)} unvaccinated people failed.'
+            raise ValueError(errormsg)
 
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):

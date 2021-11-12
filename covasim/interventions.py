@@ -1143,7 +1143,7 @@ class simple_vaccine(Intervention):
         kwargs     (dict): passed to Intervention()
 
     Note: this intervention is still under development and should be used with caution.
-    It is intended for use with use_waning=False
+    It is intended for use with use_waning=False.
 
     **Examples**::
 
@@ -1490,7 +1490,7 @@ class vaccinate_prob(BaseVaccination):
 
                 # Eligibility depends on whether it's a booster or not
                 # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
-                if self.booster:    eligible_inds = sc.findinds(~sim.people.vaccinated)
+                if self.booster:    eligible_inds = sc.findinds(sim.people.vaccinated)
                 else:               eligible_inds = sc.findinds(~sim.people.vaccinated)
                 if self.subtarget is not None:
                     subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
@@ -1600,7 +1600,7 @@ class vaccinate_num(BaseVaccination):
         # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
             scheduled = np.fromiter(self._scheduled_doses[sim.t], dtype=cvd.default_int) # Everyone scheduled today
-            scheduled = scheduled[(sim.people.vaccinations[scheduled] < self.p['doses']) & ~sim.people.dead[scheduled]]  # Remove fully vaccinated or dead
+            scheduled = scheduled[(self.vaccinations[scheduled] < self.p['doses']) & ~sim.people.dead[scheduled]]  # Remove anyone who's already had all doses of this vaccine, also dead people
 
             # If there are more people due for a second dose than there are doses, vaccinate as many second doses
             # as possible, and add the remainder to tomorrow's vaccinations. At the moment, they don't get priority
