@@ -1393,11 +1393,15 @@ class BaseVaccination(Intervention):
         # Note, this does not preclude someone from getting additional doses of another vaccine (e.g. a booster)
         vacc_inds = vacc_inds[self.vaccinations[vacc_inds] < self.p['doses']]
 
+        # Extract indices of already-vaccinated people and get indices of newly-vaccinated
+        prior_vacc = cvu.true(sim.people.vaccinated)
+        new_vacc   = np.setdiff1d(vacc_inds, prior_vacc)
+
         if len(vacc_inds):
             self.vaccinations[vacc_inds] += 1
             self.vaccination_dates[vacc_inds] = sim.t
             sim.people.flows['new_vaccinations'] += len(vacc_inds)
-            sim.people.flows['new_vaccinated'] += len(vacc_inds)
+            sim.people.flows['new_vaccinated'] += len(new_vacc)
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
