@@ -1490,7 +1490,6 @@ class vaccinate_prob(BaseVaccination):
 
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
-                    sim.people.flows['new_vaccinations'] += len(vacc_inds)
                     sim.people.flows['new_vaccinated'] += len(vacc_inds)
                     if self.p.interval is not None:
                         next_dose_day = sim.t + self.p.interval
@@ -1558,7 +1557,7 @@ class vaccinate_num(BaseVaccination):
 
         if callable(self.sequence):
             self.sequence = self.sequence(sim.people)
-        elif sequence is None:
+        elif self.sequence is None:
             self.sequence = np.random.permutation(sim.n)
         else:
             self.sequence = sc.promotetoarray(self.sequence)
@@ -1596,6 +1595,7 @@ class vaccinate_num(BaseVaccination):
             if len(scheduled) > num_agents:
                 np.random.shuffle(scheduled) # Randomly pick who to defer
                 self._scheduled_doses[sim.t+1].update(scheduled[num_agents:]) # Defer any extras
+                sim.people.flows['new_vaccinated'] += len(scheduled[:num_agents])
                 return scheduled[:num_agents]
         else:
             scheduled = np.array([], dtype=cvd.default_int)
@@ -1606,6 +1606,7 @@ class vaccinate_num(BaseVaccination):
         first_dose_eligible = self.sequence[~sim.people.vaccinated[self.sequence] & ~sim.people.dead[self.sequence]]
 
         if len(first_dose_eligible) == 0:
+            sim.people.flows['new_vaccinated'] += len(scheduled)
             return scheduled  # Just return anyone that is scheduled
         elif len(first_dose_eligible) > num_agents:
             # Truncate it to the number of agents for performance when checking whether anyone scheduled overlaps with first doses to allocate
@@ -1626,5 +1627,8 @@ class vaccinate_num(BaseVaccination):
         if self.p['doses'] > 1:
             self._scheduled_doses[sim.t+self.p['interval']].update(first_dose_inds)
 
-        return np.concatenate([scheduled, first_dose_inds])
+        vx_ids = np.concatenate([scheduled, first_dose_inds])
+        sim.people.flows['new_vaccinated'] += len(vx_ids)
+
+        return vx_ids
 
