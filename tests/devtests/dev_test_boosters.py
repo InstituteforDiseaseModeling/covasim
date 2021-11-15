@@ -7,11 +7,10 @@ import pylab as pl
 if __name__ == '__main__':
 
     # Set up a sim
-    n_doses = []
-    pars = {
+    base_pars = {
         'n_agents': 50_000,
         'beta': 0.015,
-        'n_days': 180,
+        'n_days': 365,
     }
 
     # Define booster
@@ -48,33 +47,60 @@ if __name__ == '__main__':
         else:
             return 0
 
-    # Now give 100 boosters a day starting from day 120
+    # Now give 100 boosters a day starting from day 240
     def num_boosters(sim):
-        if sim.t < 120:
+        if sim.t < 240:
             return 0
         else:
             return 100
 
-    # Only give boosters to people who have had 2 doses
-    booster_target = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0}
-
-    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=prioritize_by_age, num_doses=num_doses)
+    # Define the vaccine and the booster
+    az = cv.vaccinate_num(vaccine='az', sequence=prioritize_by_age, num_doses=num_doses)
+    booster_target = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
     booster = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, num_doses=num_boosters, booster=True)
 
-    sim = cv.Sim(
-        use_waning=True,
-        pars=pars,
-        interventions=[pfizer, booster],
-        analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy())
-    )
-    sim.run()
+    # Track doses
+    n_doses_baseline = []
+    n_doses_boosters = []
 
-    pl.figure()
-    n_doses = np.array(n_doses)
-    fully_vaccinated = (n_doses == 2).sum(axis=1)
-    first_dose = (n_doses == 1).sum(axis=1)
-    boosted = (n_doses > 2).sum(axis=1)
-    pl.stackplot(sim.tvec, first_dose, fully_vaccinated, boosted)
-    pl.legend(['First dose', 'Fully vaccinated', 'Boosted']);
-    pl.show()
+    # Introduce delta on day 240 to induce a new wave
+    delta = cv.variant('delta', days=240, n_imports=20)
+
+    # Create sims with and without boosters
+    sim_baseline = cv.Sim(use_waning=True, pars=base_pars,
+                          interventions=[az],
+                          variants=delta,
+                          label='No boosters',
+                          analyzers=lambda sim: n_doses_baseline.append(sim.people.vaccinations.copy())
+                          )
+    sim_boosters = cv.Sim(use_waning=True, pars=base_pars,
+                          interventions=[az, booster],
+                          variants=delta,
+                          label='Boosters',
+                          analyzers=lambda sim: n_doses_boosters.append(sim.people.vaccinations.copy())
+                          )
+
+    # Create a multisim, run, and plot results
+    msim = cv.MultiSim([sim_baseline, sim_boosters])
+    msim.run()
+    msim.plot(to_plot=['cum_infections', 'cum_severe', 'cum_deaths','pop_nabs'])
+
+
+    # pl.figure()
+    # n_doses = np.array(n_doses_boosters)
+    # fully_vaccinated = (n_doses == 2).sum(axis=1)
+    # first_dose = (n_doses == 1).sum(axis=1)
+    # boosted = (n_doses > 2).sum(axis=1)
+    # pl.stackplot(sim_baseline.tvec, first_dose, fully_vaccinated, boosted)
+    # pl.legend(['First dose', 'Fully vaccinated', 'Boosted']);
+    # pl.show()
+    #
+    # pl.figure()
+    # n_doses = np.array(n_doses_baseline)
+    # fully_vaccinated = (n_doses == 2).sum(axis=1)
+    # first_dose = (n_doses == 1).sum(axis=1)
+    # boosted = (n_doses > 2).sum(axis=1)
+    # pl.stackplot(sim_boosters.tvec, first_dose, fully_vaccinated, boosted)
+    # pl.legend(['First dose', 'Fully vaccinated', 'Boosted']);
+    # pl.show()
 
