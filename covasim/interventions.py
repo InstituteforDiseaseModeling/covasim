@@ -1251,7 +1251,7 @@ class BaseVaccination(Intervention):
         - ``nab_init``:  the initial antibody level (higher = more protection)
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
         - ``doses``:     the number of doses required to be fully vaccinated
-        - ``interval``:  the interval between doses
+        - ``interval``:  the interval between doses (can be an integer or a distribution)
         - entries for efficacy against each of the variants (e.g. ``b117``)
 
     See ``parameters.py`` for additional examples of these parameters.
@@ -1457,7 +1457,7 @@ class vaccinate_prob(BaseVaccination):
         - ``nab_init``:  the initial antibody level (higher = more protection)
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
         - ``doses``:     the number of doses required to be fully vaccinated
-        - ``interval``:  the interval between doses
+        - ``interval``:  the interval between doses (integer or distribution)
         - entries for efficacy against each of the strains (e.g. ``b117``)
 
     See ``parameters.py`` for additional examples of these parameters.
@@ -1507,9 +1507,20 @@ class vaccinate_prob(BaseVaccination):
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
                     if self.p.interval is not None:
-                        next_dose_day = sim.t + self.p.interval
-                        if next_dose_day < sim['n_days']:
-                            self.second_dose_days[next_dose_day] = vacc_inds
+
+                        # Check if it's a dictionary specifying a distribution or a number
+                        if isinstance(self.p.interval, dict):
+                            try: intervals = cvu.sample(**self.p.interval, size=len(vacc_inds))
+                            except Exception as E:
+                                errormsg = f'Tried to parase the dosing interval given by "{self.p.interval}", but that failed: {str(E)}.\nDosing interval should be a dictionary that can be understood by cvu.sample.'
+                                raise ValueError(errormsg) from E
+                        elif sc.isnumber(self.p.interval):
+                            intervals = self.p.interval
+
+                        # Schedule the doses
+                        next_dose_days = sim.t + intervals
+                        if next_dose_days < sim['n_days']:
+                            self.second_dose_days[next_dose_days] = vacc_inds
 
             # Also, if appropriate, vaccinate people with their second dose
             vacc_inds_dose2 = self.second_dose_days[sim.t]
@@ -1522,7 +1533,7 @@ class vaccinate_prob(BaseVaccination):
 
 
 class vaccinate_num(BaseVaccination):
-    def __init__(self, vaccine, num_doses, subtarget=None, sequence=None, booster=False, **kwargs):
+    def __init__(self, vaccine, num_doses, subtarget=None, sequence=None, booster=False, label=None, **kwargs):
         """
         Sequence-based vaccination
 
@@ -1564,10 +1575,12 @@ class vaccinate_num(BaseVaccination):
         self.num_doses  = num_doses
         self.subtarget  = subtarget
         self.booster    = booster
+        self.label      = label
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses, where applicable
         return
 
     def initialize(self, sim):
+
         super().initialize(sim)
 
         # Convert any dates to simulation days
@@ -1576,7 +1589,7 @@ class vaccinate_num(BaseVaccination):
 
         if callable(self.sequence):
             self.sequence = self.sequence(sim.people)
-        elif sequence is None:
+        elif self.sequence is None:
             self.sequence = np.random.permutation(sim.n)
         else:
             self.sequence = sc.promotetoarray(self.sequence)
@@ -1599,6 +1612,7 @@ class vaccinate_num(BaseVaccination):
             # If nobody gets vaccinated today, just return an empty list
             return np.array([])
 
+        if num_people == 0: return np.array([])
         num_agents = int(np.round(num_people / sim["pop_scale"]))
 
         # First, see how many scheduled second doses we are going to deliver
@@ -1654,7 +1668,18 @@ class vaccinate_num(BaseVaccination):
         # Schedule subsequent doses
         # For vaccines with >2 doses, scheduled doses will also need to be checked
         if self.p['doses'] > 1:
-            self._scheduled_doses[sim.t+self.p['interval']].update(first_dose_inds)
+
+            # Check if it's a dictionary specifying a distribution or a number
+            if isinstance(self.p.interval, dict):
+                try:
+                    intervals = cvu.sample(**self.p.interval, size=len(first_dose_inds))
+                except Exception as E:
+                    errormsg = f'Tried to parase the dosing interval given by "{self.p.interval}", but that failed: {str(E)}.\nDosing interval should be a dictionary that can be understood by cvu.sample.'
+                    raise ValueError(errormsg) from E
+            elif sc.isnumber(self.p.interval):
+                intervals = self.p.interval
+
+            self._scheduled_doses[sim.t+intervals].update(first_dose_inds)
 
         return np.concatenate([scheduled, first_dose_inds])
 
