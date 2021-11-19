@@ -1251,7 +1251,7 @@ class BaseVaccination(Intervention):
         - ``nab_init``:  the initial antibody level (higher = more protection)
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
         - ``doses``:     the number of doses required to be fully vaccinated
-        - ``interval``:  the interval between doses (can be an integer or a distribution)
+        - ``interval``:  the interval between doses (integer)
         - entries for efficacy against each of the variants (e.g. ``b117``)
 
     See ``parameters.py`` for additional examples of these parameters.
@@ -1457,7 +1457,7 @@ class vaccinate_prob(BaseVaccination):
         - ``nab_init``:  the initial antibody level (higher = more protection)
         - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
         - ``doses``:     the number of doses required to be fully vaccinated
-        - ``interval``:  the interval between doses (integer or distribution)
+        - ``interval``:  the interval between doses (integer)
         - entries for efficacy against each of the strains (e.g. ``b117``)
 
     See ``parameters.py`` for additional examples of these parameters.
@@ -1509,13 +1509,11 @@ class vaccinate_prob(BaseVaccination):
                     if self.p.interval is not None:
 
                         # Check if it's a dictionary specifying a distribution or a number
-                        if isinstance(self.p.interval, dict):
-                            try: intervals = cvu.sample(**self.p.interval, size=len(vacc_inds))
-                            except Exception as E:
-                                errormsg = f'Tried to parase the dosing interval given by "{self.p.interval}", but that failed: {str(E)}.\nDosing interval should be a dictionary that can be understood by cvu.sample.'
-                                raise ValueError(errormsg) from E
-                        elif sc.isnumber(self.p.interval):
+                        if sc.isnumber(self.p.interval):
                             intervals = self.p.interval
+                        else:
+                            errormsg = f'Can"t understand the dosing interval given by "{self.p.interval}.\nDosing interval should be an integer.'
+                            raise ValueError(errormsg)
 
                         # Schedule the doses
                         next_dose_days = sim.t + intervals
