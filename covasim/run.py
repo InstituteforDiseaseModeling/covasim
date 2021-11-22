@@ -978,7 +978,8 @@ class Scenarios(cvb.ParsObj):
             # Create and run the simulations
             print_heading(f'Multirun for {scenkey}')
             scen_sim = sc.dcp(self.base_sim)
-            scen_sim.label = scenkey
+            scen_sim.scenkey = scenkey
+            scen_sim.label = scenname
 
             scen_sim.update_pars(scenpars)  # Update the parameters, if provided
             scen_sim.validate_pars()
