@@ -982,6 +982,8 @@ class Scenarios(cvb.ParsObj):
 
             scen_sim.update_pars(scenpars)  # Update the parameters, if provided
             scen_sim.validate_pars()
+            if 'interventions' in scenpars:
+                scen_sim.init_interventions()
             if 'variants' in scenpars: # Process variants
                 scen_sim.init_variants()
                 scen_sim.init_immunity(create=True)
