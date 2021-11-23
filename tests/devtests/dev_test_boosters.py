@@ -56,7 +56,6 @@ def num_boosters(sim):
 
 # Define the vaccine and the booster
 az = cv.vaccinate_num(vaccine='az', sequence=prioritize_by_age, num_doses=num_doses)
-az.p.interval = dict(dist='lognormal_int', par1=30, par2=10) # Use a distribution for the dosage intervals
 booster_target = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
 booster = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, num_doses=num_boosters, booster=True)
 
