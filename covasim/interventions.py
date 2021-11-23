@@ -1253,7 +1253,7 @@ class BaseVaccination(Intervention):
 
         - ``vaccinated``:        whether or not a person is vaccinated
         - ``vaccinations``:      the number of vaccine doses per person
-        - ``vaccination_dates``: list of vaccination dates per person
+        - ``vaccination_dates``: integer; date of last dose
 
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
@@ -1269,7 +1269,7 @@ class BaseVaccination(Intervention):
         - ``target_eff``: the target efficacy from which to calculate initial antibody and boosting.
         must be supplied as a list, where length of list is equal to number of doses
         - ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
-        - ``doses``:     the number of doses required to be fully vaccinated
+        - ``doses``:     the number of doses required to be fully vaccinated with this vaccine
         - ``interval``:  the interval between doses (integer)
         - entries for efficacy against each of the variants (e.g. ``b117``)
 
@@ -1493,6 +1493,7 @@ class vaccinate_prob(BaseVaccination):
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
+        booster    (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         kwargs     (dict): passed to Intervention()
 
@@ -1512,10 +1513,11 @@ class vaccinate_prob(BaseVaccination):
         pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=1.0, booster=False, subtarget=None, **kwargs):
         super().__init__(vaccine,label=label,**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
         self.prob      = prob
+        self.booster   = booster
         self.subtarget = subtarget
         self.second_dose_days = None  # Track scheduled second doses
         return
@@ -1535,13 +1537,20 @@ class vaccinate_prob(BaseVaccination):
             # Vaccinate people with their first dose
             for _ in find_day(self.days, sim.t, interv=self, sim=sim):
                 vacc_probs = np.zeros(sim['pop_size'])
-                unvacc_inds = sc.findinds(~sim.people.vaccinated)
+
+                # Find eligible people
+                vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
+                # Eligibility depends on whether it's a booster or not
+                # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
+                if self.booster:    eligible_inds = sc.findinds(sim.people.vaccinated)
+                else:               eligible_inds = sc.findinds(~sim.people.vaccinated)
+                vacc_probs[eligible_inds] = self.prob  # Assign equal vaccination probability to everyone
+
+                # Apply any subtargeting
                 if self.subtarget is not None:
                     subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
                     vacc_probs[subtarget_inds] = subtarget_vals  # People being explicitly subtargeted
-                else:
-                    vacc_probs[unvacc_inds] = self.prob  # Assign equal vaccination probability to everyone
-                vacc_probs[cvu.true(sim.people.dead)] *= 0.0  # Do not vaccinate dead people
+
                 vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
                 if len(vacc_inds):
@@ -1597,6 +1606,7 @@ class vaccinate_num(BaseVaccination):
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        booster    (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
         subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
         sequence: Specify the order in which people should get vaccinated. This can be
 
@@ -1622,10 +1632,11 @@ class vaccinate_num(BaseVaccination):
         pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=100)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self, vaccine, num_doses, subtarget=None, sequence=None, **kwargs):
+    def __init__(self, vaccine, num_doses, booster=False, subtarget=None, sequence=None, **kwargs):
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
         self.sequence   = sequence
         self.num_doses  = num_doses
+        self.booster    = booster
         self.subtarget  = subtarget
         self._scheduled_doses = defaultdict(set)  # Track scheduled second doses, where applicable
         return
@@ -1688,6 +1699,10 @@ class vaccinate_num(BaseVaccination):
         if self.subtarget is not None:
             subtarget_inds, subtarget_vals = get_subtargets(self.subtarget, sim)
             vacc_probs[subtarget_inds] = vacc_probs[subtarget_inds]*subtarget_vals
+
+        # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
+        if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
+        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0
 
         # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
         # vaccine would have had subsequent doses scheduled and therefore should not be selected here

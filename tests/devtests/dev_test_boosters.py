@@ -7,7 +7,7 @@ import pylab as pl
 # Set up a sim
 base_pars = {
     'n_agents': 50_000,
-    'beta': 0.015,
+    'beta': 0.012,
     'n_days': 365,
 }
 
@@ -27,10 +27,6 @@ booster = dict(
     doses=1,
     interval=None,
 )
-
-# Define sequence based vaccination
-def prioritize_by_age(people):
-    return np.argsort(-people.age)
 
 # Start vaccinating 100 people/day on day 30 then scale up by 100 doses/day til 65% have had a first dose
 def num_doses(sim):
@@ -52,10 +48,19 @@ def num_boosters(sim):
     else:
         return 100
 
+# Age-based vaccination sequence
+def prioritize_by_age(people):
+    return np.argsort(-people.age)
+
+# Date-based booster sequence
+def prioritize_by_dose_date(people):
+    return np.argsort(people.date_vaccinated)
+
 # Define the vaccine and the booster
 az = cv.vaccinate_num(vaccine='az', sequence=prioritize_by_age, num_doses=num_doses)
-booster_target = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
-booster = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, num_doses=num_boosters)
+booster_target  = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
+booster_age = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, booster=True, num_doses=num_boosters)
+booster_date = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_dose_date, subtarget=booster_target, booster=True, num_doses=num_boosters)
 
 # Introduce delta on day 240 to induce a new wave
 delta = cv.variant('delta', days=240, n_imports=20)
@@ -71,11 +76,17 @@ sim_baseline = cv.Sim(use_waning=True, pars=base_pars,
                       label='No boosters',
                       analyzers=lambda sim: n_doses_baseline.append(sim.people.vaccinations.copy())
                       )
-sim_boosters = cv.Sim(use_waning=True, pars=base_pars,
-                      interventions=[az, booster],
+sim_booster_age = cv.Sim(use_waning=True, pars=base_pars,
+                      interventions=[az, booster_age],
                       variants=delta,
-                      label='Boosters',
+                      label='Boosters by age',
                       analyzers=lambda sim: n_doses_boosters.append(sim.people.vaccinations.copy())
+                      )
+
+sim_booster_date = cv.Sim(use_waning=True, pars=base_pars,
+                      interventions=[az, booster_date],
+                      variants=delta,
+                      label='Boosters by date',
                       )
 
 
@@ -83,10 +94,11 @@ sim_boosters = cv.Sim(use_waning=True, pars=base_pars,
 def run_sims():
 
     sim_baseline.run()
-    sim_boosters.run()
+    sim_booster_age.run()
+    sim_booster_date.run()
 
     # Create a multisim, run, and plot results
-    msim = cv.MultiSim([sim_baseline, sim_boosters])
+    msim = cv.MultiSim([sim_baseline, sim_booster_age, sim_booster_date])
     msim.plot(to_plot=['cum_infections', 'cum_severe', 'cum_deaths','pop_nabs'])
 
     # Plot doses
@@ -104,7 +116,7 @@ def run_sims():
     fully_vaccinated = (n_doses == 2).sum(axis=1)
     first_dose = (n_doses == 1).sum(axis=1)
     boosted = (n_doses > 2).sum(axis=1)
-    pl.stackplot(sim_boosters.tvec, first_dose, fully_vaccinated, boosted)
+    pl.stackplot(sim_baseline.tvec, first_dose, fully_vaccinated, boosted)
     pl.legend(['First dose', 'Fully vaccinated', 'Boosted']);
     pl.show()
 
@@ -115,7 +127,7 @@ def run_sims():
 if __name__ == '__main__':
     sc.tic()
 
-    # Run more complex single-sim tests
+    # Run msim
     msim = run_sims()
 
     sc.toc()
