@@ -46,6 +46,19 @@ How can you introduce new infections into a simulation?
 These are referred to as *importations*. You can set the ``n_imports`` parameter for a fixed number of importations each day (or make it time-varying with ``cv.dynamic_pars()``, as described above). Alternatively, you can infect people directly using ``sim.people.infect()``. Since version 3.0, you can also import specific strains on a given day: e.g., ``cv.Sim(strains=cv.strain('b117', days=50, n_imports=10)``.
 
 
+How can I find out what happened to a particular individual during the simulation?
+---------------------------------------------------------------------------------
+
+This can be done using the ``story`` method after the simulation has been run:
+
+.. code-block:: python
+
+    import covasim as cv
+    sim = cv.Sim()
+    sim.people.story(12)
+
+
+
 How do you set custom prognoses parameters (mortality rate, susceptibility etc.)?
 ---------------------------------------------------------------------------------
 
