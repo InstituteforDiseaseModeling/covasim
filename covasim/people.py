@@ -723,6 +723,7 @@ class People(cvb.BasePeople):
                 'date_severe'         : 'developed severe symptoms and needed hospitalization',
                 'date_symptomatic'    : 'became symptomatic',
                 'date_tested'         : 'was tested for COVID',
+                'date_vaccinated'     : 'was vaccinated against COVID',
             }
 
             for attribute, message in dates.items():
