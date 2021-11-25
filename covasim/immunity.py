@@ -132,7 +132,6 @@ class variant(sc.prettyobj):
 def get_vaccine_pars(pars):
     '''
     Temporary helper function to get vaccine parameters; to be refactored
-
     TODO: use people.vaccine_source to get the per-person specific NAb decay
     '''
     try:
@@ -155,6 +154,7 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
         depending upon symptoms. If individual has existing NAbs, multiply booster impact
         2) initial vaccination. If individual has no existing NAb, draw from distribution
         depending upon vaccine source. If individual has existing NAbs, multiply booster impact
+
     Additionally, for people with no prior immunity and with natural infection, the peak NAb
     is scaled by whether or not the person develops symptoms.
 
@@ -167,7 +167,6 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
 
     Returns: None
     '''
-
 
     has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]

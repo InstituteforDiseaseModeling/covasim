@@ -90,7 +90,6 @@ sim_booster_date = cv.Sim(use_waning=True, pars=base_pars,
                       )
 
 
-
 def run_sims():
 
     sim_baseline.run()

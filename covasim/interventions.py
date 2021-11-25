@@ -1258,6 +1258,7 @@ class BaseVaccination(Intervention):
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
+        booster      (boolean): whether the vaccine is a booster, i.e. whether vaccinated people are eligible
         kwargs     (dict): passed to Intervention()
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
@@ -1379,9 +1380,9 @@ class BaseVaccination(Intervention):
                 errormsg = f'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
-        self.vaccinated           = [None]*sim.npts # Keep track of inds of people vaccinated on each day with this vaccine
-        self.vaccinations         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses of this vaccine given per person
-        self.vaccination_dates    = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated with this vaccine
+        self.vaccinated = [None] * sim.npts  # Keep track of inds of people vaccinated on each day with this vaccine
+        self.vaccinations = np.zeros(sim['pop_size'], dtype=cvd.default_int)  # Number of doses of this vaccine given per person
+        self.vaccination_dates = np.full(sim['pop_size'], np.nan)  # Store the dates when people are vaccinated with this vaccine
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
@@ -1389,17 +1390,14 @@ class BaseVaccination(Intervention):
 
         return
 
+
     def select_people(self, sim):
         """
         Return an array of indices of people to vaccinate
-
         Derived classes must implement this function to determine who to vaccinate at each timestep
-
         Args:
             sim: A cv.Sim instance
-
         Returns: Array of person indices
-
         """
         raise NotImplementedError
 
@@ -1409,8 +1407,8 @@ class BaseVaccination(Intervention):
         Vaccinate people
 
         This method applies the vaccine to the requested people indices. The indices of people vaccinated
-        is returned. These may be different to the requested indices, because anyone that is dead or who is
-        already fully vaccinated (according to the dose schedule for this vaccine) will be skipped. This could
+        is returned. These may be different to the requested indices, because anyone that is dead will be
+        skipped, as well as anyone already fully vaccinated (if booster=False). This could
         occur if a derived class does not filter out such people in its `select_people` method.
 
         Args:
@@ -1429,7 +1427,7 @@ class BaseVaccination(Intervention):
 
         # Extract indices of already-vaccinated people and get indices of newly-vaccinated
         prior_vacc = cvu.true(sim.people.vaccinated)
-        new_vacc = np.setdiff1d(vacc_inds, prior_vacc)
+        new_vacc   = np.setdiff1d(vacc_inds, prior_vacc)
 
         if len(vacc_inds):
             self.vaccinations[vacc_inds] += 1
@@ -1513,12 +1511,13 @@ class vaccinate_prob(BaseVaccination):
         pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self, vaccine, days, label=None, prob=1.0, booster=False, subtarget=None, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, booster=False, **kwargs):
         super().__init__(vaccine,label=label,**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
         self.prob      = prob
         self.booster   = booster
         self.subtarget = subtarget
+        self.booster   = booster
         self.second_dose_days = None  # Track scheduled second doses
         return
 
@@ -1579,7 +1578,6 @@ class vaccinate_prob(BaseVaccination):
 
 def process_sequence(sequence, sim):
     ''' Handle different types of prioritization sequence for vaccination '''
-
     if callable(sequence):
         sequence = sequence(sim.people)
     elif sequence == 'age':
@@ -1592,13 +1590,22 @@ def process_sequence(sequence, sim):
         errormsg = f'Unable to interpret sequence {type(sequence)}: must be None, "age", callable, or an array'
         raise TypeError(errormsg)
 
-    return sequence
+
+def process_doses(num_doses, sim):
+    ''' Handle different types of dose data'''
+    if sc.isnumber(num_doses):
+        num_people = num_doses
+    elif callable(num_doses):
+        num_people = num_doses(sim)
+    elif sim.t in num_doses:
+        num_people = num_doses[sim.t]
+    else:
+        num_people = 0
+    return num_people
 
 
 class vaccinate_num(BaseVaccination):
     '''
-    Sequence-based vaccination
-
     This vaccine intervention allocates vaccines in a pre-computed order of
     distribution, at a specified rate of doses per day. Second doses are prioritized
     each day.
@@ -1643,6 +1650,7 @@ class vaccinate_num(BaseVaccination):
 
 
     def initialize(self, sim):
+
         super().initialize(sim)
 
         # Convert any dates to simulation days
@@ -1650,7 +1658,6 @@ class vaccinate_num(BaseVaccination):
             self.num_doses = {sim.day(k):v for k, v in self.num_doses.items()}
 
         self.sequence = process_sequence(self.sequence, sim)
-
 
         if self.p['doses'] > 2:
             raise NotImplementedError('Scheduling three or more doses not yet supported')
@@ -1661,16 +1668,7 @@ class vaccinate_num(BaseVaccination):
     def select_people(self, sim):
 
         # Work out how many people to vaccinate today
-        if sc.isnumber(self.num_doses):
-            num_people = self.num_doses
-        elif callable(self.num_doses):
-            num_people = self.num_doses(sim)
-        elif sim.t in self.num_doses:
-            num_people = self.num_doses[sim.t]
-        else:
-            # If nobody gets vaccinated today, just return an empty list
-            return np.array([])
-
+        num_people = process_doses(self.num_doses, sim)
         if num_people == 0: return np.array([])
         num_agents = int(np.round(num_people / sim["pop_scale"]))
 
