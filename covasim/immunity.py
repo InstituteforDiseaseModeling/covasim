@@ -120,7 +120,7 @@ class variant(sc.prettyobj):
             susceptible_inds = cvu.true(sim.people.susceptible)
             rescale_factor = sim.rescale_vec[sim.t] if self.rescale else 1.0
             n_imports = sc.randround(self.n_imports/rescale_factor) # Round stochastically to the nearest number of imports
-            importation_inds = np.random.choice(susceptible_inds, n_imports)
+            importation_inds = np.random.choice(susceptible_inds, n_imports, replace=False) # Can't use cvu.choice() since sampling from indices
             sim.people.infect(inds=importation_inds, layer='importation', variant=self.index)
         return
 

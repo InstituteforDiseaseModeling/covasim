@@ -135,7 +135,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     if set_prognoses: # If not set here, gets set when the population is initialized
         pars['prognoses'] = get_prognoses(pars['prog_by_age'], version=version) # Default to age-specific prognoses
 
-
     # If version is specified, load old parameters
     if version is not None:
         version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
