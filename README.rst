@@ -62,11 +62,11 @@ If you have written a paper or report using Covasim, we'd love to know about it!
 Requirements
 ============
 
-Python 3.7 or 3.8 (64-bit). (Note: Python 2.7 and Python 3.9 are not supported.)
+Python 3.7-3.9 (64-bit). (Note: Python 2.7 and Python 3.10 are not supported, the latter being due to `Numba <https://numba.pydata.org/>`_ not supporting Python 3.10 at the time of writing.)
 
 We also recommend, but do not require, installing Covasim in a virtual environment. For more information, see documentation for e.g. Anaconda_.
 
-.. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.htmlCovasim
 
 
 Quick start guide

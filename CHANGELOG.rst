@@ -26,7 +26,7 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.1.0 (2021-08-31)
+Version 3.1.0 (2021-11-30)
 --------------------------
 This version: TBC
 
@@ -56,7 +56,9 @@ Renamed functions and methods
 
 Bugfixes
 ^^^^^^^^
-- TBC
+- The scenario label now matches the scenario name rather than key.
+- Interventions and analyzers are now initialized when provided as part of a scenario.
+- Importations are now sampled without replacement.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
