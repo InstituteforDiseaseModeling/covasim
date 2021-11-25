@@ -58,6 +58,7 @@ Bugfixes
 ^^^^^^^^
 - The scenario label now matches the scenario name rather than key.
 - Interventions and analyzers are now initialized when provided as part of a scenario.
+- Importations are now sampled without replacement.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
