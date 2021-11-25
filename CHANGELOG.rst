@@ -56,7 +56,7 @@ Renamed functions and methods
 
 Bugfixes
 ^^^^^^^^
-- TBC
+- The scenario label now matches the scenario name rather than key.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
