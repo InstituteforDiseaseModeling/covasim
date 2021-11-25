@@ -1,5 +1,6 @@
 '''
-Defines the Person class and functions associated with making people.
+Defines the People class and functions associated with making people and handling
+the transitions between states (e.g., from susceptible to infected).
 '''
 
 #%% Imports
@@ -59,7 +60,7 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
-            elif key == 'n_infections':
+            elif key in ['n_infections', 'n_breakthroughs']:
                 self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
@@ -356,15 +357,20 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
-    def make_naive(self, inds):
+    def make_naive(self, inds, reset_vx=False):
         '''
         Make a set of people naive. This is used during dynamic resampling.
+
+        Args:
+            inds (array): list of people to make naive
+            reset_vx (bool): whether to reset vaccine-derived immunity
         '''
         for key in self.meta.states:
             if key in ['susceptible', 'naive']:
                 self[key][inds] = True
             else:
-                self[key][inds] = False
+                if (key != 'vaccinated') or reset_vx: # Don't necessarily reset vaccination
+                    self[key][inds] = False
 
         # Reset variant states
         for key in self.meta.variant_states:
@@ -373,16 +379,16 @@ class People(cvb.BasePeople):
             self[key][:, inds] = False
 
         # Reset immunity and antibody states
+        non_vx_inds = inds if reset_vx else inds[~self['vaccinated'][inds]]
         for key in self.meta.imm_states:
-            self[key][:, inds] = 0
-        for key in self.meta.nab_states:
-            self[key][inds] = 0
-        for key in self.meta.vacc_states:
-            self[key][inds] = 0
+            self[key][:, non_vx_inds] = 0
+        for key in self.meta.nab_states + self.meta.vacc_states:
+            self[key][non_vx_inds] = 0
 
         # Reset dates
         for key in self.meta.dates + self.meta.durs:
-            self[key][inds] = np.nan
+            if (key != 'date_vaccinated') or reset_vx: # Don't necessarily reset vaccination
+                self[key][inds] = np.nan
 
         return
 
@@ -460,6 +466,9 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
+        # Retrieve those with a breakthrough infection (defined nabs)
+        breakthrough_inds = cvu.true(self.peak_nab[inds])
+
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
         self.naive[inds]          = False
@@ -467,6 +476,7 @@ class People(cvb.BasePeople):
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
         self.n_infections[inds]  += 1
+        self.n_breakthroughs[inds[breakthrough_inds]] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)

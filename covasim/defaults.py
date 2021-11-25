@@ -51,6 +51,7 @@ class PeopleMeta(sc.prettyobj):
             'rel_trans',        # Float
             'rel_sus',          # Float
             'n_infections',     # Int
+            'n_breakthroughs',  # Int
         ]
 
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -247,7 +248,7 @@ def get_default_colors():
     c = sc.objdict()
     c.susceptible           = '#4d771e'
     c.exposed               = '#c78f65'
-    c.exposed_by_variant    = '#c75649',
+    c.exposed_by_variant    = '#c75649'
     c.infectious            = '#e45226'
     c.infectious_by_variant = c.infectious
     c.infections            = '#b62413'
