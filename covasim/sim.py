@@ -602,13 +602,16 @@ class Sim(cvb.BaseSim):
         diag = people.diagnosed
         quar = people.quarantined
         prel_trans = people.rel_trans
-        prel_sus = people.rel_sus
+        prel_sus   = people.rel_sus
 
         # Check nabs.
         if self['use_waning']:
             has_nabs = cvu.true(people.peak_nab)
+            breakthrough_inf = cvu.true(people.n_breakthroughs)
             if len(has_nabs):
                 cvimm.update_nab(people, inds=has_nabs)
+                if len(breakthrough_inf):
+                    prel_trans[breakthrough_inf] *= self['trans_redux']
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):

@@ -213,72 +213,58 @@ def update_nab(people, inds):
     return
 
 
-def calc_VE(alpha_inf, beta_inf, nab, **kwargs):
-    ''' Calculate vaccine efficacy based on the vaccine parameters and NAbs '''
+def calc_VE(nab, ax, pars, **kwargs):
+    '''
+        Convert NAb levels to immunity protection factors, using the functional form
+        given in this paper: https://doi.org/10.1101/2021.03.09.21252641
+
+        Args:
+            nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
+            ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+            pars (dict): dictionary of parameters for the vaccine efficacy
+
+        Returns:
+            an array the same size as NAb, containing the immunity protection factors for the specified axis
+         '''
+
+    choices = ['sus', 'symp', 'sev']
+    if ax not in choices:
+        errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
+        raise ValueError(errormsg)
+
     zero_nab    = nab == 0 # To avoid taking logarithm of 0
     nonzero_nab = nab > 0
-    lo = alpha_inf + beta_inf*np.log(nab, where=nonzero_nab)
+    if ax == 'sus':
+        alpha = pars['alpha_inf']
+        beta = pars['beta_inf']
+    elif ax == 'symp':
+        alpha = pars['alpha_symp_inf']
+        beta = pars['beta_symp_inf']
+    else:
+        alpha = pars['alpha_sev_symp']
+        beta = pars['beta_sev_symp']
+    lo = alpha + beta*np.log(nab, where=nonzero_nab)
     exp_lo = np.exp(lo, where=nonzero_nab)
     exp_lo[zero_nab] = 0 # Re-insert zeros
     output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
 
-def calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
-    ''' As above, for symptoms given infection '''
-    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
-    output  = 1 - (1-inf_VE) * (1-symp_VE)
-    return output
-
-
-def calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
-    ''' As above, for severe disease '''
-    inf_VE  = calc_VE(alpha_inf,      beta_inf,      nab)
-    symp_VE = calc_VE(alpha_symp_inf, beta_symp_inf, nab)
-    sev_VE  = calc_VE(alpha_sev_symp, beta_sev_symp, nab)
-    output  = 1 - (1-inf_VE) * (1-symp_VE) * (1-sev_VE)
-    return output
-
-
-def calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab, **kwargs):
-    ''' As above, for symptoms and infection '''
-    VE_inf  = calc_VE(alpha_inf, beta_inf, nab)
-    VE_symp = calc_VE_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    output = 1 - ((1-VE_symp)/(1-VE_inf))
-    return output
-
-
-def calc_VE_sev_symp(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab, **kwargs):
-    ''' As above, for severe disease '''
-    VE_inf      = calc_VE(alpha_inf, beta_inf, nab)
-    VE_symp_inf = calc_VE_symp_inf(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, nab)
-    VE_sev      = calc_VE_sev(alpha_inf, beta_inf, alpha_symp_inf, beta_symp_inf, alpha_sev_symp, beta_sev_symp, nab)
-    output      = 1 - ((1-VE_sev)/((1-VE_inf)*(1-VE_symp_inf)))
-    return output
-
-
-def nab_to_efficacy(nab, ax, pars):
+def calc_VE_symp(nab, pars):
     '''
-    Convert NAb levels to immunity protection factors, using the functional form
-    given in this paper: https://doi.org/10.1101/2021.03.09.21252641
+    Converts NAbs to marginal VE against symptomatic disease
+    '''
 
-    Args:
-        nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
-        ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
-        pars (dict): dictionary of parameters for the vaccine efficacy
+    nab = 2**nab
+    lo_inf = pars['alpha_inf'] + pars['beta_inf']*np.log(nab)
+    inv_lo_inf = np.exp(lo_inf)/ (1 + np.exp(lo_inf))
 
-    Returns:
-        an array the same size as NAb, containing the immunity protection factors for the specified axis
-     '''
-    choices = ['sus', 'symp', 'sev']
-    if ax not in choices:
-        errormsg = f'Choice {ax} not in list of choices: {sc.strjoin(choices)}'
-        raise ValueError(errormsg)
-    if   ax == 'sus':  efficacy = calc_VE(nab=nab, **pars)
-    elif ax == 'symp': efficacy = calc_VE_symp_inf(nab=nab, **pars)
-    elif ax == 'sev':  efficacy = calc_VE_sev_symp(nab=nab, **pars)
-    return efficacy
+    lo_symp_inf = pars['alpha_symp_inf'] + pars['beta_symp_inf']*np.log(nab)
+    inv_lo_symp_inf = np.exp(lo_symp_inf)/ (1 + np.exp(lo_symp_inf))
+
+    VE_symp = 1 - ((1 - inv_lo_inf)*(1 - inv_lo_symp_inf))
+    return VE_symp
+
 
 
 
@@ -360,11 +346,11 @@ def check_immunity(people, variant, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_sus_vacc]) # TODO: use vaccine source
             vaccine_scale = vacc_mapping[variant]
             current_nabs = people.nab[is_sus_vacc]
-            people.sus_imm[variant, is_sus_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'sus', vx_nab_eff_pars)
+            people.sus_imm[variant, is_sus_vacc] = calc_VE(current_nabs * vaccine_scale, 'sus', vx_nab_eff_pars)
 
         if len(is_sus_was_inf_same):  # Immunity for susceptibles with prior exposure to this variant
             current_nabs = people.nab[is_sus_was_inf_same]
-            people.sus_imm[variant, is_sus_was_inf_same] = nab_to_efficacy(current_nabs * immunity[variant, variant], 'sus', nab_eff)
+            people.sus_imm[variant, is_sus_was_inf_same] = calc_VE(current_nabs * immunity[variant, variant], 'sus', nab_eff)
 
         if len(is_sus_was_inf_diff):  # Cross-immunity for susceptibles with prior exposure to a different variant
             prior_variants = people.recovered_variant[is_sus_was_inf_diff]
@@ -372,7 +358,7 @@ def check_immunity(people, variant, sus=True, inds=None):
             for unique_variant in prior_variants_unique:
                 unique_inds = is_sus_was_inf_diff[cvu.true(prior_variants == unique_variant)]
                 current_nabs = people.nab[unique_inds]
-                people.sus_imm[variant, unique_inds] = nab_to_efficacy(current_nabs * immunity[variant, unique_variant], 'sus', nab_eff)
+                people.sus_imm[variant, unique_inds] = calc_VE(current_nabs * immunity[variant, unique_variant], 'sus', nab_eff)
 
     # PART 2: Immunity to disease for currently-infected people
     else:
@@ -383,13 +369,13 @@ def check_immunity(people, variant, sus=True, inds=None):
             vaccine_source = cvd.default_int(people.vaccine_source[is_inf_vacc])  # TODO: use vaccine source
             vaccine_scale = vacc_mapping[variant]
             current_nabs = people.nab[is_inf_vacc]
-            people.symp_imm[variant, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'symp', nab_eff)
-            people.sev_imm[variant, is_inf_vacc] = nab_to_efficacy(current_nabs * vaccine_scale, 'sev', nab_eff)
+            people.symp_imm[variant, is_inf_vacc] = calc_VE(current_nabs * vaccine_scale, 'symp', nab_eff)
+            people.sev_imm[variant, is_inf_vacc] = calc_VE(current_nabs * vaccine_scale, 'sev', nab_eff)
 
         if len(was_inf):  # Immunity for reinfected people
             current_nabs = people.nab[was_inf]
-            people.symp_imm[variant, was_inf] = nab_to_efficacy(current_nabs, 'symp', nab_eff)
-            people.sev_imm[variant, was_inf] = nab_to_efficacy(current_nabs, 'sev', nab_eff)
+            people.symp_imm[variant, was_inf] = calc_VE(current_nabs, 'symp', nab_eff)
+            people.sev_imm[variant, was_inf] = calc_VE(current_nabs, 'sev', nab_eff)
 
     return
 
@@ -457,9 +443,9 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         length (int): number of points
         growth_time (int): length of time NAbs grow (used to determine slope)
         decay_rate1 (float): initial rate of exponential decay
-        decay_time1 (float): time on the first exponential decay
+        decay_time1 (float): time of the first exponential decay
         decay_rate2 (float): the rate of exponential decay in late period
-        decay_time2 (float): how long it takes to transition to late decay period
+        decay_time2 (float): total time until late decay period (must be greater than decay_time1)
     '''
 
 
@@ -476,6 +462,10 @@ def nab_growth_decay(length, growth_time, decay_rate1, decay_time1, decay_rate2,
         for i in range(1, len(t)):
             titre[i] = titre[i-1]+decayRate[i]
         return np.exp(-titre)
+
+    if decay_time2 < decay_time1:
+        errormsg = f'Decay time 2 must be larger than decay time 1, but you supplied {decay_time2} which is smaller than {decay_time1}.'
+        raise ValueError(errormsg)
 
     length = length + 1
     t1 = np.arange(growth_time, dtype=cvd.default_int)

@@ -104,7 +104,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
     return people
 
 
-def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure=False):
+def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure='random', **kwargs):
     '''
     Make a random population, with contacts.
 
@@ -117,23 +117,24 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
         - layer_keys: a list of strings representing the different contact layers in the population; see make_random_contacts() for details
 
     Args:
-        sim (Sim): the simulation object
+        pars (dict): the parameter dictionary or simulation object
         use_age_data (bool): whether to use location-specific age data
         use_household_data (bool): whether to use location-specific household size data
         sex_ratio (float): proportion of the population that is male (not currently used)
         microstructure (bool): whether or not to use the microstructuring algorithm to group contacts
+        kwargs (dict): passed to contact creation method (e.g., make_hybrid_contacts)
 
     Returns:
         popdict (dict): a dictionary representing the population, with the following keys for a population of N agents with M contacts between them:
     '''
 
-    pop_size = int(sim['pop_size']) # Number of people
+    pop_size = int(pars['pop_size']) # Number of people
 
     # Load age data and household demographics based on 2018 Seattle demographics by default, or country if available
     age_data = cvd.default_age_data
-    location = sim['location']
+    location = pars['location']
     if location is not None:
-        if sim['verbose']:
+        if pars['verbose']:
             print(f'Loading location-specific data for "{location}"')
         if use_age_data:
             try:
@@ -143,13 +144,13 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
         if use_household_data:
             try:
                 household_size = cvdata.get_household_size(location)
-                if 'h' in sim['contacts']:
-                    sim['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
+                if 'h' in pars['contacts']:
+                    pars['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
                 else:
-                    keystr = ', '.join(list(sim['contacts'].keys()))
+                    keystr = ', '.join(list(pars['contacts'].keys()))
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
             except ValueError as E:
-                if sim['verbose']>=2: # These don't exist for many locations, so skip the warning by default
+                if pars['verbose']>=2: # These don't exist for many locations, so skip the warning by default
                     print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
 
     # Handle sexes and ages
@@ -170,9 +171,9 @@ def make_randpop(sim, use_age_data=True, use_household_data=True, sex_ratio=0.5,
     popdict['sex'] = sexes
 
     # Actually create the contacts
-    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, sim['contacts'])
-    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, sim['contacts'])
+    if   microstructure == 'random':    contacts, layer_keys    = make_random_contacts(pop_size, pars['contacts'], **kwargs)
+    elif microstructure == 'clustered': contacts, layer_keys, _ = make_microstructured_contacts(pop_size, pars['contacts'], **kwargs)
+    elif microstructure == 'hybrid':    contacts, layer_keys, _ = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
     else: # pragma: no cover
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random, clustered, or hybrid'
         raise NotImplementedError(errormsg)

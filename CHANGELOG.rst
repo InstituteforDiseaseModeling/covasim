@@ -9,20 +9,65 @@ All notable changes to the codebase are documented in this file. Changes that ma
    :depth: 1
 
 
+
 ~~~~~~~~~~~
 Coming soon
 ~~~~~~~~~~~
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Continued updates to vaccine and variant parameters and workflows (planned for v3.1)
 - Multi-region and geographical support (planned for v3.2)
 - Economics and costing analysis (planned for v3.3)
 
 
+
 ~~~~~~~~~~~~~~~~~~~~~~~
-Latest versions (3.0.x)
+Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 3.1.0 (2021-08-31)
+--------------------------
+This version: TBC
+
+Highlights
+^^^^^^^^^^
+- **Model structure**: TBC
+
+Immunity-related parameter changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+
+Other parameter changes
+^^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+
+Changes to states and results
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+
+New functions, methods and classes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+
+Renamed functions and methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+
+Bugfixes
+^^^^^^^^
+- The scenario label now matches the scenario name rather than key.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- TBC
+- *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Versions 3.0.x (3.0.0 – 3.0.7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 3.0.7 (2021-06-29)
@@ -194,9 +239,9 @@ Regression information
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Versions 2.x (2.0.0 – 2.1.2)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Version 2.1.2 (2021-03-31)
