@@ -1491,9 +1491,9 @@ def check_doses(doses, interval):
 
     # Now check that they're compatible
     if doses == 1 and interval is not None:
-        raise ValueError(f"Can't use dosing intervals for vaccines with only one dose.")
+        raise ValueError("Can't use dosing intervals for vaccines with only one dose.")
     elif doses == 2 and interval is None:
-        raise ValueError(f'Must specify a dosing interval if using a vaccine with more than one dose.')
+        raise ValueError('Must specify a dosing interval if using a vaccine with more than one dose.')
     elif doses > 2:
         raise NotImplementedError('Scheduling three or more doses not yet supported')
 
