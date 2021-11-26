@@ -668,8 +668,7 @@ class clip_edges(Intervention):
     def finalize(self, sim):
         ''' Ensure the edges get deleted at the end '''
         super().finalize()
-        if sim.t == sim.tvec[-1]:
-            self.contacts = None # Reset to save memory
+        self.contacts = None # Reset to save memory
         return
 
 
@@ -1377,7 +1376,7 @@ class BaseVaccination(Intervention):
                     boost = (2**boosted_nab)/(2**peak_nab)
                     self.p['nab_boost'] = boost
             else:
-                errormsg = f'Provided mismatching efficacies and doses.'
+                errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
         self.vaccinated = [None] * sim.npts  # Keep track of inds of people vaccinated on each day with this vaccine
@@ -1388,6 +1387,13 @@ class BaseVaccination(Intervention):
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
 
+        return
+
+
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
         return
 
 
