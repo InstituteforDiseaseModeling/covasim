@@ -66,7 +66,7 @@ Other changes
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- This version of Covasim requires Sciris version 1.2.2 or later.
 - *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
 
 
