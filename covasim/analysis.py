@@ -1351,6 +1351,7 @@ class Calibration(Analyzer):
         total_trials (int)  : if n_trials is not supplied, calculate by dividing this number by n_workers)
         name         (str)  : the name of the database (default: 'covasim_calibration')
         db_name      (str)  : the name of the database file (default: 'covasim_calibration.db')
+        keep_db      (bool) : whether to keep the database after calibration (default: false)
         storage      (str)  : the location of the database (default: sqlite)
         label        (str)  : a label for this calibration object
         verbose      (bool) : whether to print details of the calibration
@@ -1370,7 +1371,7 @@ class Calibration(Analyzer):
     New in version 3.0.3.
     '''
 
-    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
+    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, keep_db=None, storage=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
         import multiprocessing as mp
@@ -1380,9 +1381,10 @@ class Calibration(Analyzer):
         if n_workers is None: n_workers = mp.cpu_count()
         if name      is None: name      = 'covasim_calibration'
         if db_name   is None: db_name   = f'{name}.db'
+        if keep_db   is None: keep_db   = False
         if storage   is None: storage   = f'sqlite:///{db_name}'
         if total_trials is not None: n_trials = total_trials/n_workers
-        self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, storage=storage)
+        self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, keep_db=keep_db, storage=storage)
 
         # Handle other inputs
         self.sim          = sim
@@ -1457,11 +1459,19 @@ class Calibration(Analyzer):
         return output
 
 
+    def remove_db(self):
+        ''' Remove the database file if keep_db is false and the path exists '''
+        if not self.run_args.keep_db:
+            if os.path.exists(self.run_args.db_name):
+                os.remove(self.run_args.db_name)
+                if self.verbose:
+                    print(f'Removed existing calibration {self.run_args.db_name}')
+        return
+
+
     def make_study(self):
         ''' Make a study, deleting one if it already exists '''
-        if os.path.exists(self.run_args.db_name):
-            os.remove(self.run_args.db_name)
-            print(f'Removed existing calibration {self.run_args.db_name}')
+        self.remove_db()
         output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
@@ -1499,6 +1509,7 @@ class Calibration(Analyzer):
 
         # Tidy up
         self.calibrated = True
+        self.remove_db()
         if verbose:
             self.summarize()
 

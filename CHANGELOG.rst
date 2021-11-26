@@ -60,6 +60,10 @@ Bugfixes
 - Interventions and analyzers are now initialized when provided as part of a scenario.
 - Importations are now sampled without replacement.
 
+Other changes
+^^^^^^^^^^^^^
+- By default, calibration now removes the database of individual trials. Set ``keep_db=True`` to keep it.
+
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
 - TBC
