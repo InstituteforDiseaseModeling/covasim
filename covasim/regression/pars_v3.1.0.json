@@ -47,15 +47,16 @@
   "nab_decay": {
     "form": "nab_growth_decay",
     "growth_time": 21,
-    "decay_rate1": 0.007,
-    "decay_time1": 47,
-    "decay_rate2": 0.002,
-    "decay_time2": 106
+    "decay_rate1": 0.013862943611198907,
+    "decay_time1": 150,
+    "decay_rate2": 0.0027725887222397813,
+    "decay_time2": 365
   },
   "nab_kin": null,
   "nab_boost": 1.5,
   "nab_eff": {
-    "alpha_inf": 2.08,
+    "alpha_inf": 1.08,
+    "alpha_inf_diff": 1.812,
     "beta_inf": 0.967,
     "alpha_symp_inf": -0.739,
     "beta_symp_inf": 0.038,
