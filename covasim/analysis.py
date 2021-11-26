@@ -1461,17 +1461,17 @@ class Calibration(Analyzer):
 
     def remove_db(self):
         ''' Remove the database file if keep_db is false and the path exists '''
-        if not self.run_args.keep_db:
-            if os.path.exists(self.run_args.db_name):
-                os.remove(self.run_args.db_name)
-                if self.verbose:
-                    print(f'Removed existing calibration {self.run_args.db_name}')
+        if os.path.exists(self.run_args.db_name):
+            os.remove(self.run_args.db_name)
+            if self.verbose:
+                print(f'Removed existing calibration {self.run_args.db_name}')
         return
 
 
     def make_study(self):
         ''' Make a study, deleting one if it already exists '''
-        self.remove_db()
+        if not self.run_args.keep_db:
+            self.remove_db()
         output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
@@ -1509,7 +1509,8 @@ class Calibration(Analyzer):
 
         # Tidy up
         self.calibrated = True
-        self.remove_db()
+        if not self.run_args.keep_db:
+            self.remove_db()
         if verbose:
             self.summarize()
 
