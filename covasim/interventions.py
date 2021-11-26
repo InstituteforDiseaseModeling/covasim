@@ -776,6 +776,13 @@ class test_num(Intervention):
         return
 
 
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
+        return
+
+
     def apply(self, sim):
 
         t = sim.t
@@ -899,6 +906,13 @@ class test_prob(Intervention):
         self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
         self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
+        return
+
+
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
         return
 
 
