@@ -1485,8 +1485,8 @@ def check_doses(doses, interval):
     # First check that they're both numbers
     if not sc.checktype(doses, int):
         raise ValueError(f'Doses must be an integer, not {doses}.')
-    if not sc.isnumber(interval):
-        errormsg = f'Can"t understand the dosing interval given by "{interval}.\nDosing interval should be a number.'
+    if interval is not None and not sc.isnumber(interval):
+        errormsg = f"Can't understand the dosing interval given by '{interval}'. Dosing interval should be a number."
         raise ValueError(errormsg)
 
     # Now check that they're compatible
@@ -1603,6 +1603,7 @@ def process_sequence(sequence, sim):
     else:
         errormsg = f'Unable to interpret sequence {type(sequence)}: must be None, "age", callable, or an array'
         raise TypeError(errormsg)
+    return sequence
 
 
 def process_doses(num_doses, sim):
