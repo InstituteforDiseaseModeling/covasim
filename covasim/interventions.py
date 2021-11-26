@@ -1685,6 +1685,7 @@ class vaccinate_num(BaseVaccination):
             if len(scheduled) > num_agents:
                 np.random.shuffle(scheduled) # Randomly pick who to defer
                 self._scheduled_doses[sim.t+1].update(scheduled[num_agents:]) # Defer any extras
+                sim.people.flows['new_vaccinated'] += len(scheduled[:num_agents])
                 return scheduled[:num_agents]
         else:
             scheduled = np.array([], dtype=cvd.default_int)
@@ -1707,6 +1708,7 @@ class vaccinate_num(BaseVaccination):
         first_dose_eligible = self.sequence[cvu.binomial_arr(vacc_probs[self.sequence])]
 
         if len(first_dose_eligible) == 0:
+            sim.people.flows['new_vaccinated'] += len(scheduled)
             return scheduled  # Just return anyone that is scheduled
         elif len(first_dose_eligible) > num_agents:
             # Truncate it to the number of agents for performance when checking whether anyone scheduled overlaps with first doses to allocate
@@ -1735,7 +1737,9 @@ class vaccinate_num(BaseVaccination):
 
             self._scheduled_doses[sim.t+intervals].update(first_dose_inds)
 
-        return np.concatenate([scheduled, first_dose_inds])
+        vacc_inds = np.concatenate([scheduled, first_dose_inds])
+
+        return vacc_inds
 
 
 
