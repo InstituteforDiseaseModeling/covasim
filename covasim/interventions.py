@@ -1479,6 +1479,27 @@ def vaccinate(*args, **kwargs):
         return vaccinate_prob(*args, **kwargs)
 
 
+def check_doses(doses, interval):
+    '''Check doses and intervals'''
+
+    # First check that they're both numbers
+    if not sc.checktype(doses, int):
+        raise ValueError(f'Doses must be an integer, not {doses}.')
+    if not sc.isnumber(interval):
+        errormsg = f'Can"t understand the dosing interval given by "{interval}.\nDosing interval should be a number.'
+        raise ValueError(errormsg)
+
+    # Now check that they're compatible
+    if doses == 1 and interval is not None:
+        raise ValueError(f"Can't use dosing intervals for vaccines with only one dose.")
+    elif doses == 2 and interval is None:
+        raise ValueError(f'Must specify a dosing interval if using a vaccine with more than one dose.')
+    elif doses > 2:
+        raise NotImplementedError('Scheduling three or more doses not yet supported')
+
+    return
+
+
 class vaccinate_prob(BaseVaccination):
     '''
     Probability-based vaccination
@@ -1525,6 +1546,7 @@ class vaccinate_prob(BaseVaccination):
         super().initialize(sim)
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days     = [None]*sim.npts # People who get second dose (if relevant)
+        check_doses(self.p['doses'], self.p['interval'])
         return
 
     def select_people(self, sim):
@@ -1555,16 +1577,8 @@ class vaccinate_prob(BaseVaccination):
                 if len(vacc_inds):
                     self.vaccinated[sim.t] = vacc_inds
                     if self.p.interval is not None:
-
-                        # Check format of interval
-                        if sc.isnumber(self.p.interval):
-                            intervals = self.p.interval
-                        else:
-                            errormsg = f'Can"t understand the dosing interval given by "{self.p.interval}.\nDosing interval should be an integer.'
-                            raise ValueError(errormsg)
-
                         # Schedule the doses
-                        next_dose_days = sim.t + intervals
+                        next_dose_days = sim.t + self.p.interval
                         if next_dose_days < sim['n_days']:
                             self.second_dose_days[next_dose_days] = vacc_inds
 
@@ -1634,11 +1648,10 @@ class vaccinate_num(BaseVaccination):
         **kwargs: Additional arguments passed to ``cv.BaseVaccination``
 
     **Example**::
-
-        def age_sequence(people): return np.argsort(-people.age)
-        pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=100)
+        pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=100)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
+
     def __init__(self, vaccine, num_doses, booster=False, subtarget=None, sequence=None, **kwargs):
         super().__init__(vaccine,**kwargs) # Initialize the Intervention object
         self.sequence   = sequence
@@ -1653,14 +1666,11 @@ class vaccinate_num(BaseVaccination):
 
         super().initialize(sim)
 
-        # Convert any dates to simulation days
-        if isinstance(self.num_doses, dict):
+        # Perform checks and process inputs
+        if isinstance(self.num_doses, dict): # Convert any dates to simulation days
             self.num_doses = {sim.day(k):v for k, v in self.num_doses.items()}
-
         self.sequence = process_sequence(self.sequence, sim)
-
-        if self.p['doses'] > 2:
-            raise NotImplementedError('Scheduling three or more doses not yet supported')
+        check_doses(self.p['doses'], self.p['interval'])
 
         return
 
@@ -1685,12 +1695,11 @@ class vaccinate_num(BaseVaccination):
             if len(scheduled) > num_agents:
                 np.random.shuffle(scheduled) # Randomly pick who to defer
                 self._scheduled_doses[sim.t+1].update(scheduled[num_agents:]) # Defer any extras
-                sim.people.flows['new_vaccinated'] += len(scheduled[:num_agents])
                 return scheduled[:num_agents]
         else:
             scheduled = np.array([], dtype=cvd.default_int)
 
-        # Next, work out who is eligible for / targeted by vaccination
+        # Next, work out who is eligible for their first dose
         vacc_probs = np.ones(sim.n)  # Begin by assigning equal weight (converted to a probability) to everyone
         vacc_probs[cvu.true(sim.people.dead)] = 0.0  # Dead people are not eligible
 
@@ -1701,15 +1710,15 @@ class vaccinate_num(BaseVaccination):
 
         # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
         if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
-        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0
+        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
 
         # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
         # vaccine would have had subsequent doses scheduled and therefore should not be selected here
         first_dose_eligible = self.sequence[cvu.binomial_arr(vacc_probs[self.sequence])]
 
         if len(first_dose_eligible) == 0:
-            sim.people.flows['new_vaccinated'] += len(scheduled)
             return scheduled  # Just return anyone that is scheduled
+
         elif len(first_dose_eligible) > num_agents:
             # Truncate it to the number of agents for performance when checking whether anyone scheduled overlaps with first doses to allocate
             first_dose_eligible = first_dose_eligible[:num_agents] # This is the maximum number of people we could vaccinate this timestep, if there are no second doses allocated
@@ -1727,15 +1736,7 @@ class vaccinate_num(BaseVaccination):
         # Schedule subsequent doses
         # For vaccines with >2 doses, scheduled doses will also need to be checked
         if self.p['doses'] > 1:
-
-            # Check format of interval
-            if sc.isnumber(self.p.interval):
-                intervals = self.p.interval
-            else:
-                errormsg = f'Can"t understand the dosing interval given by "{self.p.interval}.\nDosing interval should be an integer.'
-                raise ValueError(errormsg)
-
-            self._scheduled_doses[sim.t+intervals].update(first_dose_inds)
+            self._scheduled_doses[sim.t+self.p.interval].update(first_dose_inds)
 
         vacc_inds = np.concatenate([scheduled, first_dose_inds])
 
