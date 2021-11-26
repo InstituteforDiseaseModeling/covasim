@@ -137,11 +137,10 @@ def update_peak_nab(people, inds, nab_pars, symp=None):
     This function updates the peak NAb level for individuals when a NAb event occurs.
     NAbs can come from a natural infection or vaccination and the peak level depends on if there
     is prior immunity:
-
-    1) a natural infection. If individual has no existing NAb, draw from distribution
-    depending upon symptoms. If individual has existing NAb, multiply booster impact
-    2) Vaccination. If individual has no existing NAb, draw from distribution
-    depending upon vaccine source. If individual has existing NAb, multiply booster impact
+        1) a natural infection. If individual has no existing NAbs, draw from distribution
+        depending upon symptoms. If individual has existing NAbs, multiply booster impact
+        2) initial vaccination. If individual has no existing NAb, draw from distribution
+        depending upon vaccine source. If individual has existing NAbs, multiply booster impact
 
     Additionally, for people with no prior immunity and with natural infection, the peak NAb
     is scaled by whether or not the person develops symptoms.
