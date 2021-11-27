@@ -1079,7 +1079,7 @@ class Sim(cvb.BaseSim):
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
             if full or key.startswith('cum_'):
-                string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
+                string += f'   {summary[key]:10n} {self.results[key].name.lower()}\n'
 
         # Print or return string
         if not output:
