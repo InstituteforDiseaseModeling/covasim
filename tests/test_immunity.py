@@ -174,7 +174,7 @@ def test_vaccines_sequential(do_plot=False):
 
     n_doses = []
     pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=lambda sim: sim.t)
-    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
+    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
     sim.run()
 
     n_doses = np.array(n_doses)

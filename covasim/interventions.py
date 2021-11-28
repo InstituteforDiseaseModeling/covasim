@@ -668,8 +668,7 @@ class clip_edges(Intervention):
     def finalize(self, sim):
         ''' Ensure the edges get deleted at the end '''
         super().finalize()
-        if sim.t == sim.tvec[-1]:
-            self.contacts = None # Reset to save memory
+        self.contacts = None # Reset to save memory
         return
 
 
@@ -774,6 +773,13 @@ class test_num(Intervention):
         self.daily_tests = process_daily_data(self.daily_tests, sim, self.start_day)
         self.ili_prev    = process_daily_data(self.ili_prev,    sim, self.start_day)
 
+        return
+
+
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
         return
 
 
@@ -900,6 +906,13 @@ class test_prob(Intervention):
         self.end_day   = preprocess_day(self.end_day,   sim)
         self.days      = [self.start_day, self.end_day]
         self.ili_prev  = process_daily_data(self.ili_prev, sim, self.start_day)
+        return
+
+
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
         return
 
 
@@ -1142,7 +1155,7 @@ class simple_vaccine(Intervention):
     relative susceptibility and the probability of developing symptoms if still
     infected, this intervention stores several types of data:
 
-        - ``vaccinations``:      the number of vaccine doses per person
+        - ``doses``:      the number of vaccine doses per person
         - ``vaccination_dates``: list of dates per person
         - ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
         - ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
@@ -1182,10 +1195,10 @@ class simple_vaccine(Intervention):
 
 
     def initialize(self, sim):
-        ''' Fix the dates and store the vaccinations '''
+        ''' Fix the dates and store the doses '''
         super().initialize()
         self.days = process_days(sim, self.days)
-        self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person of this vaccine
+        self.doses             = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person of this vaccine
         self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated with this vaccine
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
@@ -1209,7 +1222,7 @@ class simple_vaccine(Intervention):
             vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs)) # Calculate who actually gets vaccinated
 
             # Calculate the effect per person
-            vacc_doses = self.vaccinations[vacc_inds] # Calculate current doses
+            vacc_doses = self.doses[vacc_inds] # Calculate current doses
             eff_doses = np.minimum(vacc_doses, len(self.cumulative)-1) # Convert to a valid index
             vacc_eff = self.cumulative[eff_doses] # Pull out corresponding effect sizes
             rel_sus_eff  = (1.0 - vacc_eff) + vacc_eff*self.rel_sus
@@ -1222,13 +1235,13 @@ class simple_vaccine(Intervention):
             # Update counters
             self.mod_rel_sus[vacc_inds]   *= rel_sus_eff
             self.mod_symp_prob[vacc_inds] *= rel_symp_eff
-            self.vaccinations[vacc_inds] += 1
+            self.doses[vacc_inds] += 1
             for v_ind in vacc_inds:
                 self.vaccination_dates[v_ind].append(sim.t)
 
             # Update vaccine attributes in sim
             sim.people.vaccinated[vacc_inds] = True
-            sim.people.vaccinations[vacc_inds] += 1
+            sim.people.doses[vacc_inds] += 1
 
         return
 
@@ -1252,7 +1265,7 @@ class BaseVaccination(Intervention):
     These are:
 
         - ``vaccinated``:        whether or not a person is vaccinated
-        - ``vaccinations``:      the number of vaccine doses per person
+        - ``doses``:             the number of vaccine doses per person
         - ``vaccination_dates``: integer; date of last dose
 
     Args:
@@ -1284,7 +1297,7 @@ class BaseVaccination(Intervention):
         self.label     = None # Vaccine label (used as a dict key)
         self.p         = None # Vaccine parameters
         self.vaccinated  = None  # Store a list of indices of people vaccinated with this vaccine each day
-        self.vaccinations = None # Record the number of doses of this vaccine given per person
+        self.doses = None # Record the number of doses of this vaccine given per person
         self.vaccination_dates = None # Store the dates that each person was last vaccinated with this vaccine
 
         self._parse_vaccine_pars(vaccine=vaccine, label=label) # Populate
@@ -1377,17 +1390,24 @@ class BaseVaccination(Intervention):
                     boost = (2**boosted_nab)/(2**peak_nab)
                     self.p['nab_boost'] = boost
             else:
-                errormsg = f'Provided mismatching efficacies and doses.'
+                errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
         self.vaccinated = [None] * sim.npts  # Keep track of inds of people vaccinated on each day with this vaccine
-        self.vaccinations = np.zeros(sim['pop_size'], dtype=cvd.default_int)  # Number of doses of this vaccine given per person
+        self.doses = np.zeros(sim['pop_size'], dtype=cvd.default_int)  # Number of doses of this vaccine given per person
         self.vaccination_dates = np.full(sim['pop_size'], np.nan)  # Store the dates when people are vaccinated with this vaccine
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
 
+        return
+
+
+    def finalize(self, sim):
+        ''' Ensure variables with large memory footprints get erased '''
+        super().finalize()
+        self.subtarget = None # Reset to save memory
         return
 
 
@@ -1423,20 +1443,20 @@ class BaseVaccination(Intervention):
         # Skip anyone that has already had all the doses of *this* vaccine (not counting boosters).
         # Otherwise, they will receive the 2nd dose boost cumulatively for every subsequent dose.
         # Note, this does not preclude someone from getting additional doses of another vaccine (e.g. a booster)
-        vacc_inds = vacc_inds[self.vaccinations[vacc_inds] < self.p['doses']]
+        vacc_inds = vacc_inds[self.doses[vacc_inds] < self.p['doses']]
 
         # Extract indices of already-vaccinated people and get indices of newly-vaccinated
         prior_vacc = cvu.true(sim.people.vaccinated)
         new_vacc   = np.setdiff1d(vacc_inds, prior_vacc)
 
         if len(vacc_inds):
-            self.vaccinations[vacc_inds] += 1
+            self.doses[vacc_inds] += 1
             self.vaccination_dates[vacc_inds] = sim.t
-            sim.people.flows['new_vaccinations'] += len(vacc_inds) # Count number of doses given
+            sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
             sim.people.flows['new_vaccinated'] += len(new_vacc)
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
-            sim.people.vaccinations[vacc_inds] += 1
+            sim.people.doses[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = sim.t
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
@@ -1456,7 +1476,7 @@ class BaseVaccination(Intervention):
         ''' Shrink vaccination intervention '''
         obj = super().shrink(in_place=in_place)
         obj.vaccinated = None
-        obj.vaccinations = None
+        obj.doses = None
         obj.vaccination_dates = None
         if hasattr(obj, 'second_dose_days'):
             obj.second_dose_days = None
@@ -1686,10 +1706,10 @@ class vaccinate_num(BaseVaccination):
         # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
             scheduled = np.fromiter(self._scheduled_doses[sim.t], dtype=cvd.default_int) # Everyone scheduled today
-            scheduled = scheduled[(self.vaccinations[scheduled] < self.p['doses']) & ~sim.people.dead[scheduled]] # Remove anyone who's already had all doses of this vaccine, also dead people
+            scheduled = scheduled[(self.doses[scheduled] < self.p['doses']) & ~sim.people.dead[scheduled]] # Remove anyone who's already had all doses of this vaccine, also dead people
 
             # If there are more people due for a second dose than there are doses, vaccinate as many second doses
-            # as possible, and add the remainder to tomorrow's vaccinations. At the moment, they don't get priority
+            # as possible, and add the remainder to tomorrow's doses. At the moment, they don't get priority
             # because the order of the scheduling doesn't matter (so there is a chance someone could go for several days
             # before being allocated their second dose) but then there is some flexibility in the dosing schedules anyway
             # e.g. Pfizer being 3-6 weeks in some jurisdictions
@@ -1853,7 +1873,7 @@ class historical_vaccinate_prob(BaseVaccination):
 
             # Update counts for this time step: flows
             for key,count in sim.people.flows.items():
-                if key in ['new_vaccinations', 'new_vaccinated']:
+                if key in ['new_doses', 'new_vaccinated']:
                     sim.results[key][0] += count
 
             # Update vaccination dates (otherwise used sim.t=0)

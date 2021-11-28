@@ -48,6 +48,6 @@ if __name__ == '__main__':
     msim = cv.MultiSim(sims)
     msim.run()
     to_plot = cv.get_default_plots('default', 'scen')
-    to_plot['Vaccinations'] = ['cum_vaccinations']
+    to_plot['Doses'] = ['cum_doses']
     to_plot['Infections'] = ['cum_infections']
     msim.plot(to_plot=to_plot)

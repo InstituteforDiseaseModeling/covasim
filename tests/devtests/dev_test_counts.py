@@ -7,6 +7,7 @@ import covasim as cv
 
 states = [
         'susceptible',
+        'naive',
         'exposed',
         'infectious',
         'symptomatic',
@@ -30,4 +31,4 @@ for state in states:
 
 print(sim.summary)
 print(d)
-assert d.susceptible + d.exposed + d.recovered + d.dead == sim['pop_size']
+assert d.naive + d.exposed + d.recovered + d.dead == sim['pop_size']
