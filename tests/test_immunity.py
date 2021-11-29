@@ -226,18 +226,88 @@ def test_two_vaccines(do_plot=False):
 
 
 def test_vaccine_target_eff():
+
     sc.heading('Testing vaccine with pre-specified efficacy...')
     default_pars = cvpar.get_vaccine_dose_pars(default=True)
     test_pars = dict(doses=2, interval=21, target_eff=[0.7, 0.95])
     vacc_pars = sc.mergedicts(default_pars, test_pars)
 
-    vaccine = cv.vaccinate_prob(vaccine=vacc_pars, label='target_eff', days=30)
-    sim = cv.Sim(base_pars, use_waning=True, interventions=vaccine)
+    # construct analyzer to select placebo arm
+    class placebo_arm(cv.Analyzer):
+        def __init__(self, day, trial_size, **kwargs):
+            super().__init__(**kwargs)
+            self.day = day
+            self.trial_size = trial_size
+            return
+
+        def initialize(self, sim=None):
+            self.placebo_inds = []
+            self.initialized = True
+            return
+
+        def apply(self, sim):
+            if sim.t == self.day:
+                eligible = cv.true(~np.isfinite(sim.people.date_exposed) & ~sim.people.vaccinated)
+                self.placebo_inds = eligible[cv.choose(len(eligible), min(self.trial_size, len(eligible)))]
+            return
+
+    pars = {
+        'pop_size': 20000,
+        'beta': 0.015,
+        'n_days': 120,
+        'verbose': -1,
+    }
+
+    # Define vaccine arm
+    trial_size = 4000
+    start_trial = 20
+
+    def subtarget(sim):
+        ''' Select people who are susceptible '''
+        if sim.t == start_trial:
+            eligible = cv.true(~np.isfinite(sim.people.date_exposed))
+            inds = eligible[cv.choose(len(eligible), min(trial_size // 2, len(eligible)))]
+        else:
+            inds = []
+        return {'vals': [1.0 for ind in inds], 'inds': inds}
+
+    # Initialize
+    vx = cv.vaccinate_prob(vaccine=vacc_pars, days=[start_trial], label='target_eff', prob=0.0, subtarget=subtarget)
+    sim = cv.Sim(
+        use_waning=True,
+        pars=pars,
+        interventions=vx,
+        analyzers=placebo_arm(day=start_trial, trial_size=trial_size // 2)
+    )
+
+    # Run
     sim.run()
+
+    print('Vaccine efficiency:')
+    results = sc.objdict()
+    vacc_inds = cv.true(sim.people.vaccinated)  # Find trial arm indices, those who were vaccinated
+    placebo_inds = sim['analyzers'][0].placebo_inds
+    assert (len(set(vacc_inds).intersection(set(placebo_inds))) == 0)  # Check that there is no overlap
+    # Calculate vaccine efficacy against infection
+    VE_inf = 1 - (np.isfinite(sim.people.date_exposed[vacc_inds]).sum() /
+                  np.isfinite(sim.people.date_exposed[placebo_inds]).sum())
+    # Calculate vaccine efficacy against symptoms
+    VE_symp = 1 - (np.isfinite(sim.people.date_symptomatic[vacc_inds]).sum() /
+                   np.isfinite(sim.people.date_symptomatic[placebo_inds]).sum())
+    # Calculate vaccine efficacy against severe disease
+    VE_sev = 1 - (np.isfinite(sim.people.date_severe[vacc_inds]).sum() /
+                  np.isfinite(sim.people.date_severe[placebo_inds]).sum())
+    results['inf'] = VE_inf
+    results['symp'] = VE_symp
+    results['sev'] = VE_sev
+    print(
+        f'Against: infection: {VE_inf * 100:0.2f}%, symptoms: {VE_symp * 100:0.2f}%, severity: {VE_sev * 100:0.2f}%')
+
     nab_init = sim['vaccine_pars']['target_eff']['nab_init']
     boost = sim['vaccine_pars']['target_eff']['nab_boost']
     print(f'Initial NAbs: {nab_init}')
     print(f'Boost: {boost}')
+
     return sim
 
 
