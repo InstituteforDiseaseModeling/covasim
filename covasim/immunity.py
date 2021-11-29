@@ -248,10 +248,10 @@ def calc_VE_symp(nab, pars):
     Converts NAbs to marginal VE against symptomatic disease
     '''
 
-    exp_lo_inf = np.exp(pars['alpha_inf'] + pars['beta_inf']*nab*np.log(2))
+    exp_lo_inf = np.exp(pars['alpha_inf']) * nab**pars['beta_inf']
     inv_lo_inf = exp_lo_inf / (1 + exp_lo_inf)
 
-    exp_lo_symp_inf = np.exp(pars['alpha_symp_inf'] + pars['beta_symp_inf']*nab*np.log(2))
+    exp_lo_symp_inf = np.exp(pars['alpha_symp_inf']) * nab**pars['beta_symp_inf']
     inv_lo_symp_inf = exp_lo_symp_inf / (1 + exp_lo_symp_inf)
 
     VE_symp = 1 - ((1 - inv_lo_inf)*(1 - inv_lo_symp_inf))

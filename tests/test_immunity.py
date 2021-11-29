@@ -256,8 +256,8 @@ def test_vaccine_target_eff():
 
     pars = {
         'pop_size': 20000,
-        'beta': 0.015,
-        'n_days': 120,
+        'beta': 0.01,
+        'n_days': 90,
         'verbose': -1,
     }
 
@@ -306,8 +306,8 @@ def test_vaccine_target_eff():
     print(
         f'Against: infection: {VE_inf * 100:0.2f}%, symptoms: {VE_symp * 100:0.2f}%, severity: {VE_sev * 100:0.2f}%')
 
-    # Check that actual efficacy is within 2 %age points of target
-    assert abs(VE_symp-target_eff_2)<0.02, f'Expected VE to be about {target_eff_2}, but it is {VE_symp}.'
+    # Check that actual efficacy is within 6 %age points of target
+    assert round(abs(VE_symp-target_eff_2),2)<=0.06, f'Expected VE to be about {target_eff_2}, but it is {VE_symp}.'
 
     nab_init = sim['vaccine_pars']['target_eff']['nab_init']
     boost = sim['vaccine_pars']['target_eff']['nab_boost']
