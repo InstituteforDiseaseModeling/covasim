@@ -1266,7 +1266,7 @@ class BaseVaccination(Intervention):
 
         - ``vaccinated``:        whether or not a person is vaccinated
         - ``doses``:             the number of vaccine doses per person
-        - ``vaccination_dates``: integer; date of last dose
+        - ``vaccination_dates``: integer; dates of all doses for this vaccine
 
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
@@ -1395,7 +1395,7 @@ class BaseVaccination(Intervention):
                 raise ValueError(errormsg)
 
         self.doses         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates    = [[]] * sim.n # Store the dates when people are vaccinated
+        self.vaccination_dates    = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
