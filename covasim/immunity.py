@@ -150,7 +150,7 @@ def update_peak_nab(people, inds, nab_pars, symp=None):
         inds: Array of people indices
         nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
                     sim pars (for natural immunity) or vaccine pars
-        natural: If True, immunity is being changed due to infection rather than vaccination
+        symp: If True, immunity is being changed due to infection rather than vaccination
 
     Returns: None
     '''

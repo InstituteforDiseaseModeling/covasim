@@ -28,7 +28,7 @@ Latest versions (3.1.x)
 
 Version 3.1.0 (2021-11-30)
 --------------------------
-This version: TBC
+This version contains important updates to the parameters around immunity, especially with regard to the delta variant. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity.
 
 Highlights
 ^^^^^^^^^^
@@ -36,8 +36,7 @@ Highlights
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- When NAbs are primed, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can calculate immune protection using a single curve and account for multiple sources of immunity (vaccine and natural).
-- Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
+- TBC
 
 Other parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^
