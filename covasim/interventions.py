@@ -1294,17 +1294,17 @@ class BaseVaccination(Intervention):
     def __init__(self, vaccine, label=None, **kwargs):
         super().__init__(**kwargs) # Initialize the Intervention object
         self.index     = None # Index of the vaccine in the sim; set later
-        self.label     = None # Vaccine label (used as a dict key)
+        self.label     = label # Vaccine label (used as a dict key)
         self.p         = None # Vaccine parameters
         self.vaccinated  = None  # Store a list of indices of people vaccinated with this vaccine each day
         self.doses = None # Record the number of doses of this vaccine given per person
         self.vaccination_dates = None # Store the dates that each person was last vaccinated with this vaccine
 
-        self._parse_vaccine_pars(vaccine=vaccine, label=label) # Populate
+        self._parse_vaccine_pars(vaccine=vaccine) # Populate
         return
 
 
-    def _parse_vaccine_pars(self, vaccine=None, label=None):
+    def _parse_vaccine_pars(self, vaccine=None):
         ''' Unpack vaccine information, which may be given as a string or dict '''
 
         # Option 1: vaccines can be chosen from a list of pre-defined vaccines
@@ -1333,16 +1333,18 @@ class BaseVaccination(Intervention):
 
             # Parse label
             vaccine_pars = vaccine
-            label = vaccine_pars.pop('label', label) # Allow including the label in the parameters
-            if label is None:
-                label = 'custom'
+            label = vaccine_pars.pop('label', None) # Allow including the label in the parameters
+            if self.label is None:
+                if label is None:
+                    self.label = 'custom'
+                else:
+                    self.label = label
 
         else: # pragma: no cover
             errormsg = f'Could not understand {type(vaccine)}, please specify as a string indexing a predefined vaccine or a dict.'
             raise ValueError(errormsg)
 
         # Set label and parameters
-        self.label = label
         self.p = sc.objdict(vaccine_pars)
 
         return

@@ -58,7 +58,7 @@ def prioritize_by_dose_date(people):
 
 # Define the vaccine and the booster
 az = cv.vaccinate_num(vaccine='az', sequence=prioritize_by_age, num_doses=num_doses)
-booster_target  = {'inds': lambda sim: cv.true(sim.people.vaccinations != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
+booster_target  = {'inds': lambda sim: cv.true(sim.people.doses != 2), 'vals': 0} # Only give boosters to people who have had 2 doses
 booster_age = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_age, subtarget=booster_target, booster=True, num_doses=num_boosters)
 booster_date = cv.vaccinate_num(vaccine=booster, sequence=prioritize_by_dose_date, subtarget=booster_target, booster=True, num_doses=num_boosters)
 
@@ -74,13 +74,13 @@ sim_baseline = cv.Sim(use_waning=True, pars=base_pars,
                       interventions=[az],
                       variants=delta,
                       label='No boosters',
-                      analyzers=lambda sim: n_doses_baseline.append(sim.people.vaccinations.copy())
+                      analyzers=lambda sim: n_doses_baseline.append(sim.people.doses.copy())
                       )
 sim_booster_age = cv.Sim(use_waning=True, pars=base_pars,
                       interventions=[az, booster_age],
                       variants=delta,
                       label='Boosters by age',
-                      analyzers=lambda sim: n_doses_boosters.append(sim.people.vaccinations.copy())
+                      analyzers=lambda sim: n_doses_boosters.append(sim.people.doses.copy())
                       )
 
 sim_booster_date = cv.Sim(use_waning=True, pars=base_pars,
