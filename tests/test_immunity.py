@@ -228,8 +228,11 @@ def test_two_vaccines(do_plot=False):
 def test_vaccine_target_eff():
 
     sc.heading('Testing vaccine with pre-specified efficacy...')
+    target_eff_1 = 0.7
+    target_eff_2 = 0.95
+
     default_pars = cvpar.get_vaccine_dose_pars(default=True)
-    test_pars = dict(doses=2, interval=21, target_eff=[0.7, 0.95])
+    test_pars = dict(doses=2, interval=21, target_eff=[target_eff_1, target_eff_2])
     vacc_pars = sc.mergedicts(default_pars, test_pars)
 
     # construct analyzer to select placebo arm
@@ -302,6 +305,9 @@ def test_vaccine_target_eff():
     results['sev'] = VE_sev
     print(
         f'Against: infection: {VE_inf * 100:0.2f}%, symptoms: {VE_symp * 100:0.2f}%, severity: {VE_sev * 100:0.2f}%')
+
+    # Check that actual efficacy is within 2 %age points of target
+    assert abs(VE_symp-target_eff_2)<0.02, f'Expected VE to be about {target_eff_2}, but it is {VE_symp}.'
 
     nab_init = sim['vaccine_pars']['target_eff']['nab_init']
     boost = sim['vaccine_pars']['target_eff']['nab_boost']
