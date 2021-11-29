@@ -36,7 +36,8 @@ Highlights
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- When NAbs are primed, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can calculate immune protection using a single curve and account for multiple sources of immunity (vaccine and natural).
+- Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
 
 Other parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^
