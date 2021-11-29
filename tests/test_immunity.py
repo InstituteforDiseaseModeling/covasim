@@ -170,10 +170,9 @@ def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
     p1 = cv.variant('beta',   days=20, n_imports=20)
-    def age_sequence(people): return np.argsort(-people.age)
 
     n_doses = []
-    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=lambda sim: sim.t)
+    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=lambda sim: sim.t)
     sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
     sim.run()
 
@@ -315,14 +314,14 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    # sim5   = test_two_vaccines(do_plot=do_plot)
     sim6   = test_vaccine_target_eff()
-    res    = test_decays(do_plot=do_plot)
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')
