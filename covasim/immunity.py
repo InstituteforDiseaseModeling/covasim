@@ -28,11 +28,11 @@ class variant(sc.prettyobj):
 
     **Example**::
 
-        b117    = cv.variant('b117', days=10) # Make variant B117 active from day 10
+        alpha    = cv.variant('alpha', days=10) # Make the alpha variant B117 active from day 10
         p1      = cv.variant('p1', days=15) # Make variant P1 active from day 15
         my_var  = cv.variant(variant={'rel_beta': 2.5}, label='My variant', days=20)
-        sim     = cv.Sim(variants=[b117, p1, my_var]).run() # Add them all to the sim
-        sim2    = cv.Sim(variants=cv.variant('b117', days=0, n_imports=20), pop_infected=0).run() # Replace default variant with b117
+        sim     = cv.Sim(variants=[alpha, p1, my_var]).run() # Add them all to the sim
+        sim2    = cv.Sim(variants=cv.variant('alpha', days=0, n_imports=20), pop_infected=0).run() # Replace default variant with alpha
     '''
 
     def __init__(self, variant, days, label=None, n_imports=1, rescale=True):
@@ -135,51 +135,61 @@ def update_peak_nab(people, inds, nab_pars, symp=None):
     Update peak NAb level
 
     This function updates the peak NAb level for individuals when a NAb event occurs.
-    NAbs can come from a natural infection or vaccination and the peak level depends on if there
-    is prior immunity:
-        1) a natural infection. If individual has no existing NAbs, draw from distribution
-        depending upon symptoms. If individual has existing NAbs, multiply booster impact
-        2) initial vaccination. If individual has no existing NAb, draw from distribution
-        depending upon vaccine source. If individual has existing NAbs, multiply booster impact
-
-    Additionally, for people with no prior immunity and with natural infection, the peak NAb
-    is scaled by whether or not the person develops symptoms.
+        - individuals that already have NAbs from a previous vaccination/infection have their NAb level boosted;
+        - individuals without prior NAbs are assigned an initial level drawn from a distribution. This level
+            depends on whether the NAbs are from a natural infection (and if so, on the infection's severity)
+            or from a vaccination (and if so, on the type of vaccine).
 
     Args:
         people: A people object
         inds: Array of people indices
         nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
                     sim pars (for natural immunity) or vaccine pars
-        symp: If True, immunity is being changed due to infection rather than vaccination
+        symp: either None (if NAbs are vaccine-derived), or a dictionary keyed by 'asymp', 'mild', and 'sev' giving the indices of people with each of those symptoms
 
     Returns: None
     '''
 
+    # Extract parameters and indices
     pars = people.pars
-
-    boost_factor = nab_pars['nab_boost']
-
     has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
     prior_nab_inds = inds[has_nabs]
 
-    people.peak_nab[prior_nab_inds] *= boost_factor
+    # 1) Individuals that already have NAbs from a previous vaccination/infection have their NAb level boosted
+    if len(prior_nab_inds):
+        boost_factor = nab_pars['nab_boost']
+        people.peak_nab[prior_nab_inds] *= boost_factor
 
-    if symp is not None: # natural infection
-        prior_symp = np.full(pars['pop_size'], np.nan)
-        prior_symp[symp['asymp']] = pars['rel_imm_symp']['asymp']
-        prior_symp[symp['mild']] = pars['rel_imm_symp']['mild']
-        prior_symp[symp['sev']] = pars['rel_imm_symp']['severe']
-        prior_symp[prior_nab_inds] = np.nan
-        prior_symp = prior_symp[~np.isnan(prior_symp)]
 
-    # 1) No prior NAb: draw NAb from a distribution and compute
+    # 2) Individuals without prior NAbs are assigned an initial level drawn from a distribution.
     if len(no_prior_nab_inds):
+
+        # Firstly, ensure that we don't try to apply a booster effect to people without NAbs
+        if nab_pars['nab_init'] is None:
+            errormsg = f'Attempt to administer a vaccine without an initial NAb distribution to {len(no_prior_nab_inds)} unvaccinated people failed.'
+            raise ValueError(errormsg)
+
+        # Now draw the initial NAb levels
         init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))
-        if symp is None:
-            no_prior_nab = (2 ** init_nab)
-        else:
-            no_prior_nab = (2 ** init_nab) * prior_symp + nab_pars['nab_eff']['alpha_inf_diff']*((2 ** init_nab) * prior_symp)
+        no_prior_nab = (2 ** init_nab)
+
+        # Next, these initial NAb levels are normalized to be equivalent to "vaccine NAbs".
+        # This is done so that when we check immunity, we can calculate immune protection
+        # using a single curve and account for multiple sources of immunity (vaccine and natural).
+        if symp is not None:
+            # Setting up for symptom scaling
+            prior_symp = np.full(pars['pop_size'], np.nan)
+            prior_symp[symp['asymp']] = pars['rel_imm_symp']['asymp']
+            prior_symp[symp['mild']] = pars['rel_imm_symp']['mild']
+            prior_symp[symp['sev']] = pars['rel_imm_symp']['severe']
+            prior_symp[prior_nab_inds] = np.nan
+            prior_symp = prior_symp[~np.isnan(prior_symp)]
+            # Applying symptom scaling and a normalization factor to the NAbs
+            norm_factor = 1 + nab_pars['nab_eff']['alpha_inf_diff']
+            no_prior_nab = no_prior_nab * prior_symp * norm_factor
+
+        # Update people's peak NAbs
         people.peak_nab[no_prior_nab_inds] = no_prior_nab
 
     # Update time of nab event
