@@ -1186,7 +1186,7 @@ class simple_vaccine(Intervention):
         super().initialize()
         self.days = process_days(sim, self.days)
         self.vaccinations      = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated
+        self.vaccination_dates = [[]] * sim.n # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
@@ -1282,9 +1282,8 @@ class BaseVaccination(Intervention):
         self.index     = None # Index of the vaccine in the sim; set later
         self.label     = label # Vaccine label (used as a dict key)
         self.p         = None # Vaccine parameters
-        self.vaccinated  = None  # Store a list of indices of people vaccinated each day
-        self.vaccinations = None # Record the number of doses given per person
-        self.vaccination_dates = None # Store the dates that each person was last vaccinated
+        self.vaccinations = None # Record the number of doses given per person *by this intervention*
+        self.vaccination_dates = None # Store the dates that each person was last vaccinated *by this intervention*
 
         self._parse_vaccine_pars(vaccine=vaccine) # Populate
         return
@@ -1381,9 +1380,8 @@ class BaseVaccination(Intervention):
                 errormsg = f'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
-        self.vaccinated           = [[]]*sim.npts # Keep track of inds of people vaccinated on each day
         self.vaccinations         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates    = np.full(sim['pop_size'], np.nan) # Store the dates when people are vaccinated
+        self.vaccination_dates    = [[]] * sim.n # Store the dates when people are vaccinated
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
@@ -1426,25 +1424,27 @@ class BaseVaccination(Intervention):
         if t is None:
             t = sim.t
         else:
-            assert t < 0 # Cannot use this function to vaccinate in the future
+            assert t <= sim.t, 'Overriding the vaccination day should only be used for historical vaccination' # High potential for errors to creep in if future vaccines could be scheduled here
 
         vacc_inds = vacc_inds[~sim.people.dead[vacc_inds]] # Skip anyone that is dead
         vacc_inds = vacc_inds[self.vaccinations[vacc_inds] < self.p['doses']] # Skip anyone that is already fully vaccinated. Otherwise, they will receive the 2nd dose boost cumulatively for every subsequent dose
 
         if len(vacc_inds):
             self.vaccinations[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = t
+            for v_ind in vacc_inds:
+                self.vaccination_dates[v_ind].append(sim.t)
+
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.vaccinations[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = t
+
             cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
 
             if t >= 0:
                 # Only record these quantities by default if it's not a historical dose
                 sim.people.flows['new_vaccinations'] += len(vacc_inds) # Count number of doses given
-                sim.people.flows['new_vaccinated']   += np.sum(sim.people.vaccinations[vacc_inds] == 0) # Count number of people not already vaccinated given doses
-                self.vaccinated[t] = vacc_inds
+                sim.people.flows['new_vaccinated']   += np.count_nonzero(sim.people.vaccinations[vacc_inds] == 1) # Count number of people not already vaccinated given doses
 
 
         return vacc_inds
