@@ -1859,7 +1859,8 @@ class historical_vaccinate_prob(BaseVaccination):
         new_nab_length = sim.npts + self.extra_days
         if new_nab_length > len(sim.pars['nab_kin']):
             sim.pars['nab_kin'] = cvi.precompute_waning(length=new_nab_length, pars=sim['nab_decay'])
-            sim.people.pars['nab_kin'] = sim['nab_kin']
+            if sim.people:
+                sim.people.pars['nab_kin'] = sim['nab_kin']
 
         # cannot use process days
         self.days = self.process_days(sim, self.days) # days that group becomes eligible
@@ -1867,15 +1868,17 @@ class historical_vaccinate_prob(BaseVaccination):
         self.vaccinated           = [None]*(sim.npts+self.extra_days) # Keep track of inds of people vaccinated on each day
 
         # find the seed infections (set during sim.init_people()) and blank them out
-        seed_inds = cvu.true(sim.people.date_exposed == 0)
-        sim.people.make_naive(seed_inds)
+        if sim.people:
+            seed_inds = cvu.true(sim.people.date_exposed == 0)
+            sim.people.make_naive(seed_inds)
 
         # administer vaccines before t=0
         times = np.arange(np.min(self.days), 0)
         for t in times:
             # step through time, init flows
             # issue: this would be zeroing out the seed infections.
-            sim.people.init_flows()
+            if sim.people:
+                sim.people.init_flows()
 
             # run daily vaccination
             inds = self.select_people(sim, t)
