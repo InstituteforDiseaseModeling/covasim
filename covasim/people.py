@@ -422,6 +422,7 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
+            * If the simulation is being run with waning, this method also sets/updates agents' neutralizing antibody levels
 
         Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.

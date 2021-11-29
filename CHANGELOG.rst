@@ -32,16 +32,12 @@ This version contains important updates to the parameters around immunity, espec
 
 Highlights
 ^^^^^^^^^^
-- **Model structure**: TBC
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - When NAbs are primed, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can calculate immune protection using a single curve and account for multiple sources of immunity (vaccine and natural).
 - Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
-
-Other parameter changes
-^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- A parameter ``trans_redux`` has been added to capture the reduction in transmission for breakthrough infections.
 
 Changes to states and results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -52,12 +48,6 @@ New functions, methods and classes
 - Added three new interventions designed to initiate a population with some prior immunity. The class ``cv.prior_immunity()`` is a wrapper for two options, ``cv.historical_vaccinate_prob()`` and  ``cv.historical_wave()``.
 - ``cv.historical_vaccinate_prob()`` allocates vaccines parametrized by the daily probability of being vaccinated.  Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into the simulation).
 - ``cv.historical_wave()`` imprints a historical (pre t=0) wave of infections in the population NAbs.
-
-
-Renamed functions and methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
-
 
 Bugfixes
 ^^^^^^^^
