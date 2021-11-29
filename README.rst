@@ -9,7 +9,7 @@ Covasim is a stochastic agent-based simulator for performing COVID-19 analyses. 
 
 The original scientific paper describing Covasim is available at http://paper.covasim.org. The recommended citation is:
 
-    **Covasim: an agent-based model of COVID-19 dynamics and interventions**. Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Rosenfeld R, Hart G, Núñez RC, Cohen JA, Selvaraj P, Hagedorn B, George L, Jastrzębski M, Izzo A, Fowler G, Palmer A, Delport D, Scott N, Kelly S, Bennette C, Wagner B, Chang S, Oron AP, Wenger E, Panovska-Griffiths J, Famulare M, Klein DJ (2021). *PLOS Computational Biology* (in press); doi: https://doi.org/10.1101/2020.05.10.20097469.
+    **Covasim: an agent-based model of COVID-19 dynamics and interventions**. Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Rosenfeld R, Hart G, Núñez RC, Cohen JA, Selvaraj P, Hagedorn B, George L, Jastrzębski M, Izzo A, Fowler G, Palmer A, Delport D, Scott N, Kelly S, Bennette C, Wagner B, Chang S, Oron AP, Wenger E, Panovska-Griffiths J, Famulare M, Klein DJ (2021). *PLOS Computational Biology* **17**(7): e1009149. doi: https://doi.org/10.1371/journal.pcbi.1009149.
 
 Covasim's immunity module (including vaccines and variants) is described here:
 
@@ -62,11 +62,11 @@ If you have written a paper or report using Covasim, we'd love to know about it!
 Requirements
 ============
 
-Python 3.7 or 3.8 (64-bit). (Note: Python 2.7 and Python 3.9 are not supported.)
+Python 3.7-3.9 (64-bit). (Note: Python 2.7 and Python 3.10 are not supported, the latter being due to `Numba <https://numba.pydata.org/>`_ not supporting Python 3.10 at the time of writing.)
 
 We also recommend, but do not require, installing Covasim in a virtual environment. For more information, see documentation for e.g. Anaconda_.
 
-.. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Anaconda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.htmlCovasim
 
 
 Quick start guide

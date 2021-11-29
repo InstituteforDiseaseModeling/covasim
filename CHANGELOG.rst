@@ -26,7 +26,7 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.1.0 (2021-08-31)
+Version 3.1.0 (2021-11-30)
 --------------------------
 This version: TBC
 
@@ -44,23 +44,33 @@ Other parameter changes
 
 Changes to states and results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- ``sim.people.vaccinations`` has been renamed to ``sim.people.doses``, and keeps track of how many doses of any vaccine each agent has had.
 
 New functions, methods and classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- Added three new interventions designed to initiate a population with some prior immunity. The class ``cv.prior_immunity()`` is a wrapper for two options, ``cv.historical_vaccinate_prob()`` and  ``cv.historical_wave()``.
+- ``cv.historical_vaccinate_prob()`` allocates vaccines parametrized by the daily probability of being vaccinated.  Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into the simulation).
+- ``cv.historical_wave()`` imprints a historical (pre t=0) wave of infections in the population NAbs.
+
 
 Renamed functions and methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - TBC
 
+
 Bugfixes
 ^^^^^^^^
-- TBC
+- The scenario label now matches the scenario name rather than key.
+- Interventions and analyzers are now initialized when provided as part of a scenario.
+- Importations are now sampled without replacement.
+
+Other changes
+^^^^^^^^^^^^^
+- By default, calibration now removes the database of individual trials. Set ``keep_db=True`` to keep it.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
-- TBC
+- This version of Covasim requires Sciris version 1.2.2 or later.
 - *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
 
 

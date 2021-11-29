@@ -102,8 +102,8 @@ class PeopleMeta(sc.prettyobj):
 
         # Additional vaccination states
         self.vacc_states = [
-            'vaccinations',     # Number of doses given per person
-            'vaccine_source',   # index of vaccine that individual received
+            'doses',          # Number of doses given per person
+            'vaccine_source', # index of vaccine that individual received
         ]
 
         # Set the dates various events took place: these are floats per person -- used in people.py
@@ -173,7 +173,7 @@ result_flows = {
     'diagnoses':    'diagnoses',
     'known_deaths': 'known deaths',
     'quarantined':  'quarantined people',
-    'vaccinations': 'vaccinations',
+    'doses':        'vaccine doses',
     'vaccinated':   'vaccinated people'
 }
 
@@ -258,7 +258,7 @@ def get_default_colors():
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
     c.quarantined           = '#5c399c'
-    c.vaccinations          = c.quarantined # TODO: new color
+    c.doses                 = c.quarantined # TODO: new color
     c.vaccinated            = c.quarantined
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
@@ -299,10 +299,10 @@ overview_plots = [
     'n_symptomatic',
     'new_quarantined',
     'n_quarantined',
-    'new_vaccinations',
+    'new_doses',
     'new_vaccinated',
     'cum_vaccinated',
-    'cum_vaccinations',
+    'cum_doses',
     'test_yield',
     'r_eff',
 ]

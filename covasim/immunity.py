@@ -120,7 +120,7 @@ class variant(sc.prettyobj):
             susceptible_inds = cvu.true(sim.people.susceptible)
             rescale_factor = sim.rescale_vec[sim.t] if self.rescale else 1.0
             n_imports = sc.randround(self.n_imports/rescale_factor) # Round stochastically to the nearest number of imports
-            importation_inds = np.random.choice(susceptible_inds, n_imports)
+            importation_inds = np.random.choice(susceptible_inds, n_imports, replace=False) # Can't use cvu.choice() since sampling from indices
             sim.people.infect(inds=importation_inds, layer='importation', variant=self.index)
         return
 
@@ -132,7 +132,6 @@ class variant(sc.prettyobj):
 def get_vaccine_pars(pars):
     '''
     Temporary helper function to get vaccine parameters; to be refactored
-
     TODO: use people.vaccine_source to get the per-person specific NAb decay
     '''
     try:
@@ -151,11 +150,10 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
     This function updates the peak NAb level for individuals when a NAb boosting event occurs.
     NAbs can come from a natural infection or vaccination and the peak level depends on if there
     is prior immunity:
-
-    1) a natural infection. If individual has no existing NAb, draw from distribution
-    depending upon symptoms. If individual has existing NAb, multiply booster impact
-    2) Vaccination. If individual has no existing NAb, draw from distribution
-    depending upon vaccine source. If individual has existing NAb, multiply booster impact
+        1) a natural infection. If individual has no existing NAbs, draw from distribution
+        depending upon symptoms. If individual has existing NAbs, multiply booster impact
+        2) initial vaccination. If individual has no existing NAb, draw from distribution
+        depending upon vaccine source. If individual has existing NAbs, multiply booster impact
 
     Additionally, for people with no prior immunity and with natural infection, the peak NAb
     is scaled by whether or not the person develops symptoms.
@@ -169,7 +167,6 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
 
     Returns: None
     '''
-
 
     has_nabs = people.nab[inds] > 0
     no_prior_nab_inds = inds[~has_nabs]
@@ -190,6 +187,11 @@ def update_peak_nab(people, inds, nab_pars, natural=True):
 
     # NAb from a vaccine
     else:
+        # Firstly, ensure that boosters are not administered to unvaccinated people
+        if nab_pars['nab_init'] is None and len(no_prior_nab_inds)>0:
+            errormsg = f'Attempt to administer a vaccine without an initial NAb distribution to {len(no_prior_nab_inds)} unvaccinated people failed.'
+            raise ValueError(errormsg)
+
         # 1) No prior NAb: draw NAb from a distribution and compute
         if len(no_prior_nab_inds):
             init_nab = cvu.sample(**nab_pars['nab_init'], size=len(no_prior_nab_inds))

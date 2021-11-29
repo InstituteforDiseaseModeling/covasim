@@ -165,7 +165,7 @@ def test_vaccines_sequential(do_plot=False):
 
     n_doses = []
     pfizer = cv.vaccinate_num(vaccine='pfizer', sequence=age_sequence, num_doses=lambda sim: sim.t)
-    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.vaccinations.copy()))
+    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
     sim.run()
 
     n_doses = np.array(n_doses)
@@ -219,15 +219,17 @@ def test_two_vaccines(do_plot=False):
 
 def test_vaccine_target_eff(do_plot=False):
     sc.heading('Testing vaccine with pre-specified efficacy...')
-    vacc_pars = sc.mergedicts(cvpar.get_vaccine_dose_pars(default=True), {'doses': 2, 'target_eff': [0.7, 0.95]})
+    default_pars = cvpar.get_vaccine_dose_pars(default=True)
+    test_pars = dict(doses=2, interval=21, target_eff=[0.7, 0.95])
+    vacc_pars = sc.mergedicts(default_pars, test_pars)
 
     vaccine = cv.vaccinate_prob(vaccine=vacc_pars, label='target_eff', days=30)
     sim = cv.Sim(base_pars, use_waning=True, interventions=vaccine)
     sim.run()
     nab_init = sim['vaccine_pars']['target_eff']['nab_init']
     boost = sim['vaccine_pars']['target_eff']['nab_boost']
-    print(nab_init)
-    print(boost)
+    print(f'Initial NAbs: {nab_init}')
+    print(f'Boost: {boost}')
     return sim
 
 
@@ -304,14 +306,14 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    # sim1   = test_states()
-    # msims1 = test_waning(do_plot=do_plot)
-    # sim2   = test_variants(do_plot=do_plot)
-    # sim3   = test_vaccines(do_plot=do_plot)
-    # sim4   = test_vaccines_sequential(do_plot=do_plot)
-    # sim5   = test_two_vaccines(do_plot=do_plot)
+    sim1   = test_states()
+    msims1 = test_waning(do_plot=do_plot)
+    sim2   = test_variants(do_plot=do_plot)
+    sim3   = test_vaccines(do_plot=do_plot)
+    sim4   = test_vaccines_sequential(do_plot=do_plot)
+    sim5   = test_two_vaccines(do_plot=do_plot)
     sim6   = test_vaccine_target_eff(do_plot=do_plot)
-    # res    = test_decays(do_plot=do_plot)
+    res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

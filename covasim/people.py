@@ -594,7 +594,7 @@ class People(cvb.BasePeople):
         self.date_diagnosed[final_inds] = self.t + test_delay
         self.date_pos_test[final_inds] = self.t
 
-        return
+        return final_inds
 
 
     def schedule_quarantine(self, inds, start_date=None, period=None):
@@ -723,6 +723,7 @@ class People(cvb.BasePeople):
                 'date_severe'         : 'developed severe symptoms and needed hospitalization',
                 'date_symptomatic'    : 'became symptomatic',
                 'date_tested'         : 'was tested for COVID',
+                'date_vaccinated'     : 'was vaccinated against COVID',
             }
 
             for attribute, message in dates.items():

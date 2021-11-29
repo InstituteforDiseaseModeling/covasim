@@ -46,7 +46,7 @@ def examplev1():
 
     to_plot = cv.get_default_plots(kind='sim')
     to_plot['Total counts'] += ['cum_vaccinated']
-    to_plot['Daily counts'] += ['new_vaccinations']
+    to_plot['Daily counts'] += ['new_doses']
     sim.plot(to_plot=to_plot)
 
 
