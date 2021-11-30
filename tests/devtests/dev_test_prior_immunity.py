@@ -126,7 +126,7 @@ def examplev3():
     scens.run()
     to_plot = cv.get_default_plots(kind='scenarios')
     to_plot.pop(2)
-    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_vaccinations']})
+    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_doses']})
     scens.plot(to_plot=to_plot)
 
 
