@@ -5,6 +5,7 @@ defined by the user by inheriting from these classes.
 
 import numpy as np
 import pandas as pd
+import scipy as sp
 import pylab as pl
 import sciris as sc
 import inspect
@@ -1245,6 +1246,7 @@ class simple_vaccine(Intervention):
 
         return
 
+
 class BaseVaccination(Intervention):
     '''
     Apply a vaccine to a subset of the population.
@@ -1961,6 +1963,7 @@ class historical_vaccinate_prob(BaseVaccination):
         else:
             return days
 
+
     @staticmethod
     def estimate_prob(duration, coverage):
         '''
@@ -1985,14 +1988,13 @@ class historical_vaccinate_prob(BaseVaccination):
         def invlogit(y):
             return np.exp(y)/(np.exp(y)+1)
         # this method can be finicky
-        import scipy as sp
         p = sp.optimize.newton(lambda y: historical_vaccinate_prob.NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
         # p is the probability of *not* being vaccinated per day so we return 1-p
         return 1 - invlogit(p)
 
+
     @staticmethod
     def NB_cdf(k, p, r=1):
-        import scipy as sp
         '''note that the NB distribution shows the fraction '''
         return 1 - sp.special.betainc(k + 1, r, p)
         # return 1 - sp.special.betainc(k + 1, r, p) * sp.special.beta(k + 1, r)
