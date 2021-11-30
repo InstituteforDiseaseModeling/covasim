@@ -209,7 +209,7 @@ def update_nab(people, inds):
     return
 
 
-def calc_VE(nab, ax, pars, **kwargs):
+def calc_VE(nab, ax, pars):
     '''
         Convert NAb levels to immunity protection factors, using the functional form
         given in this paper: https://doi.org/10.1101/2021.03.09.21252641
@@ -240,10 +240,15 @@ def calc_VE(nab, ax, pars, **kwargs):
 
     zero_nab    = nab == 0 # To avoid taking logarithm of 0
     nonzero_nab = nab > 0
-    f1 = np.exp(alpha)
-    f2 = np.power(nab, beta, where=nonzero_nab)
-    f2[zero_nab] = 0
-    exp_lo = f1 * f2
+    # print(sum(nonzero_nab))
+    # f1 = np.exp(alpha)
+    # f2 = np.power(nab, beta, where=nonzero_nab)
+    # f2[zero_nab] = 0
+    # exp_lo = f1 * f2
+    # output = exp_lo/(1+exp_lo) # Inverse logit function
+    lo = alpha + beta*np.log(nab, where=nonzero_nab)
+    exp_lo = np.exp(lo, where=nonzero_nab)
+    exp_lo[zero_nab] = 0 # Re-insert zeros
     output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
