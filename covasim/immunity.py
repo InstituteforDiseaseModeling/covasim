@@ -238,17 +238,7 @@ def calc_VE(nab, ax, pars):
         alpha = pars['alpha_sev_symp']
         beta = pars['beta_sev_symp']
 
-    zero_nab    = nab == 0 # To avoid taking logarithm of 0
-    nonzero_nab = nab > 0
-    # print(sum(nonzero_nab))
-    # f1 = np.exp(alpha)
-    # f2 = np.power(nab, beta, where=nonzero_nab)
-    # f2[zero_nab] = 0
-    # exp_lo = f1 * f2
-    # output = exp_lo/(1+exp_lo) # Inverse logit function
-    lo = alpha + beta*np.log(nab, where=nonzero_nab)
-    exp_lo = np.exp(lo, where=nonzero_nab)
-    exp_lo[zero_nab] = 0 # Re-insert zeros
+    exp_lo = np.exp(alpha) * nab**beta
     output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
