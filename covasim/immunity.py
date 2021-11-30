@@ -238,7 +238,11 @@ def calc_VE(nab, ax, pars, **kwargs):
         alpha = pars['alpha_sev_symp']
         beta = pars['beta_sev_symp']
 
-    exp_lo = np.exp(alpha) * nab**beta
+    zero_nab    = nab == 0 # To avoid taking logarithm of 0
+    nonzero_nab = nab > 0
+    lo = alpha + beta*np.log(nab, where=nonzero_nab)
+    exp_lo = np.exp(lo, where=nonzero_nab)
+    exp_lo[zero_nab] = 0 # Re-insert zeros
     output = exp_lo/(1+exp_lo) # Inverse logit function
     return output
 
