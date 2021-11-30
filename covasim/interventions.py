@@ -2024,15 +2024,20 @@ class historical_wave(Intervention):
         self.subtarget = subtarget
         self.variants = 'wild' if variant is None else variant
 
-    def initialize(self, sim):
+    def apply(self, sim):
+        if sim.t != 0:
+            return
 
         # Check that the simulation parameters are correct
         if not sim['use_waning']:
             errormsg = 'The cv.historical_wave() intervention requires use_waning=True. Please enable waning.'
             raise RuntimeError(errormsg)
+        if sim['rescale']:
+            errormsg = 'The cv.historical_wave() intervention requires rescale=False. Please disable dynamic rescaling.'
+            raise RuntimeError(errormsg)
 
         # deal with values for multiple waves
-        if isinstance(self.days_prior, (float, int)):
+        if isinstance(self.days_prior, (float, int, str)):
             self.days_prior = sc.promotetolist(self.days_prior)
         n_waves = len(self.days_prior)
         if not isinstance(self.subtarget, list):
@@ -2043,9 +2048,6 @@ class historical_wave(Intervention):
             self.dist = n_waves*[self.dist]
         if isinstance(self.variants, str):
             self.variants = n_waves*[self.variants]
-
-        # initialize intervention
-        super().initialize()
 
         # we use the people object often
         people = sim.people
@@ -2065,7 +2067,7 @@ class historical_wave(Intervention):
                 variant_name = mapping[variant]
                 variants += [choice_mapping[variant_name]]
             else:
-                raise ValueError('historical_wave intervention cannot hand non default variant:{}'.format(variant))
+                raise ValueError('historical_wave intervention cannot handle non default variant:{}'.format(variant))
 
         # pick individuls for each wave
         inf_offset_days = []
@@ -2081,14 +2083,29 @@ class historical_wave(Intervention):
             # select members of the population to be infected
             this_wave_inds = cvu.true(cvu.binomial_arr(wave_probs)) # Finally, calculate who actually was infected
 
+            days_prior = self.days_prior[wave]
+            if isinstance(days_prior, str):
+                # Interpret as sim day
+                days_prior = sc.daydiff(days_prior, sim['start_day'])
+
             # select day for those to be infected / exposed
-            this_inf_offset_days = cvu.sample(**self.dist[wave], size=len(this_wave_inds)) - self.days_prior[wave]
+            this_inf_offset_days = cvu.sample(**self.dist[wave], size=len(this_wave_inds)) - days_prior
 
             # require that all offsets are before the start of the sim
             filtered_wave_inds = cvu.true(this_inf_offset_days <= 0)
+            if len(filtered_wave_inds) == 0:
+                errormsg = f'WARNING: Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
+                print(errormsg)
+                continue
+
             wave_inds = wave_inds + this_wave_inds[filtered_wave_inds].tolist()
             inf_offset_days = inf_offset_days + np.round(this_inf_offset_days[filtered_wave_inds]).astype(cvd.default_int).tolist()
             wave_id += len(filtered_wave_inds)*[wave]
+
+        if len(wave_id) == 0:
+            errormsg = 'WARNING: No waves resulted in any infections prior to the start of the simulation'
+            print(errormsg)
+            return
 
         wave_id = np.array(wave_id)
         wave_inds = np.array(wave_inds)
@@ -2104,14 +2121,25 @@ class historical_wave(Intervention):
             people.pars['nab_kin'] = sim['nab_kin']
 
         # update nab, states, and count flows
+        flow_keys_to_save = ['new_infections', 'new_reinfections']
+        flow_variant_keys_to_save = ['new_infections_by_variant', 'new_symptomatic_by_variant', 'new_severe_by_variant']
+        nv = sim['n_variants']
         for t in np.arange(np.min(inf_offset_days), 0):
 
+            flows = {fkey:0 for fkey in flow_keys_to_save}
+            flows_variant = {fkey:[0 for v in range(nv)] for fkey in flow_variant_keys_to_save}
             for wave in range(n_waves):
                 inds = cvu.true(np.logical_and(inf_offset_days == t, wave_id == wave))
 
                 # set infection
                 people.t = t
                 people.infect(wave_inds[inds], layer='historical', variant=variants[wave])
+
+            for fkey in flow_keys_to_save:
+                flows[fkey] += people.flows[fkey]
+            for v in range(nv):
+                for fkey in flow_variant_keys_to_save:
+                    flows_variant[fkey][v] += people.flows_variant[fkey][v]
 
             # this is potentially an issue with multiple waves close together as someone who is technically still
             # exposed from the first wave would be re-exposed during the second (assuming they are recovered by t=0)
@@ -2121,9 +2149,18 @@ class historical_wave(Intervention):
             # Does this count the seed infections twice?
             for key,count in people.flows.items():
                 sim.results[key][0] += count
+
             for key,count in people.flows_variant.items():
-                for variant in range(sim['n_variants']):
+                for variant in range(nv):
                     sim.results['variant'][key][variant][0] += count[variant]
+            
+            for key,count in flows.items():
+                sim.results[key][0] += count
+
+            for key,count in flows_variant.items():
+                for v in range(nv):
+                    sim.results['variant'][key][v][0] += count[v]
+
 
             # we need to update the NAbs as it is a cumulative effect
             # this will mess up those who are the seed infections if not reset to naive (see above)
@@ -2137,8 +2174,3 @@ class historical_wave(Intervention):
 
         # reset the seed infections
         sim.people.infect(seed_inds, layer='seed_infection')
-
-    def apply(self, sim):
-        # nothing to do!
-        return
-
