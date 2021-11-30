@@ -302,6 +302,7 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
+        self.results['n_imports']           = init_res('Number of imported infections', scale=True)
         self.results['n_alive']             = init_res('Number alive', scale=True)
         self.results['n_naive']             = init_res('Number never infected', scale=True)
         self.results['n_preinfectious']     = init_res('Number preinfectious', scale=True, color=dcols.exposed)
@@ -438,6 +439,7 @@ class Sim(cvb.BaseSim):
         if self['pop_infected']:
             inds = cvu.choose(self['pop_size'], self['pop_infected'])
             self.people.infect(inds=inds, layer='seed_infection')
+            self.results['n_imports'][0] += self['pop_infected']
 
         return
 
@@ -574,6 +576,7 @@ class Sim(cvb.BaseSim):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+                self.results['n_imports'][t] += n_imports
 
         # Add variants
         for variant in self['variants']:
