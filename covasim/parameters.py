@@ -320,11 +320,11 @@ def get_variant_choices():
     '''
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
-        'wild':   ['wild', 'default', 'pre-existing', 'original'],
-        'b117':   ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
-        'b1351':  ['beta', 'b1351', 'sa', 'south africa'],
-        'p1':     ['gamma', 'p1', 'b11248', 'brazil'],
-        'b16172': ['delta', 'b16172', 'india'],
+        'wild':  ['wild', 'default', 'pre-existing', 'original'],
+        'alpha': ['alpha', 'b117', 'uk', 'united kingdom', 'kent'],
+        'beta':  ['beta', 'b1351', 'sa', 'south africa'],
+        'gamma': ['gamma', 'p1', 'b11248', 'brazil'],
+        'delta': ['delta', 'b16172', 'india'],
     }
     mapping = {name:key for key,synonyms in choices.items() for name in synonyms} # Flip from key:value to value:key
     return choices, mapping
@@ -337,8 +337,8 @@ def get_vaccine_choices():
     # List of choices currently available: new ones can be added to the list along with their aliases
     choices = {
         'default': ['default', None],
-        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech', 'pf', 'pfz', 'pz'],
-        'moderna': ['moderna', 'md'],
+        'pfizer':  ['pfizer', 'biontech', 'pfizer-biontech', 'pf', 'pfz', 'pz', 'bnt162b2', 'comirnaty'],
+        'moderna': ['moderna', 'md', 'spikevax'],
         'novavax': ['novavax', 'nova', 'covovax', 'nvx', 'nv'],
         'az':      ['astrazeneca', 'az', 'covishield', 'oxford', 'vaxzevria'],
         'jj':      ['jnj', 'johnson & johnson', 'janssen', 'jj'],
