@@ -316,8 +316,6 @@ def check_immunity(people, variant):
            (1) prior exposure: degree of protection depends on variant, prior symptoms, and time since recovery
            (2) vaccination: degree of protection depends on variant, vaccine, and time since vaccination
 
-    Gets called from sim before computing trans_sus, sus=True, inds=None
-    Gets called from people.infect() to calculate prog/trans, sus=False, inds= inds of people being infected
     '''
 
     # Handle parameters and indices

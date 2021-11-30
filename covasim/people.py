@@ -453,9 +453,6 @@ class People(cvb.BasePeople):
         if source is not None:
             source = source[keep]
 
-        if self.pars['use_waning']:
-            cvi.check_immunity(self, variant)
-
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = {k:self.pars[k] for k in variant_keys}
