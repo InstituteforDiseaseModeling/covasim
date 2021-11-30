@@ -46,7 +46,7 @@ def examplev1():
 
     to_plot = cv.get_default_plots(kind='sim')
     to_plot['Total counts'] += ['cum_vaccinated']
-    to_plot['Daily counts'] += ['new_vaccinations']
+    to_plot['Daily counts'] += ['new_doses']
     sim.plot(to_plot=to_plot)
 
 
@@ -126,7 +126,7 @@ def examplev3():
     scens.run()
     to_plot = cv.get_default_plots(kind='scenarios')
     to_plot.pop(2)
-    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_vaccinations']})
+    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_doses']})
     scens.plot(to_plot=to_plot)
 
 
@@ -223,40 +223,40 @@ def examplep1():
 
 if __name__ == "__main__":
 
-    # ## PRIOR IMMUNITY EXAMPLE
-    # # use prior_immunity to add historical vaccination
-    # examplep0()
-    #
-    # # use prior_immunity to add historical_wave
-    # examplep1()
+    ## PRIOR IMMUNITY EXAMPLE
+    # use prior_immunity to add historical vaccination
+    examplep0()
 
-    # ## VACCINATION EXAMPLES
-    #
+    # use prior_immunity to add historical_wave
+    examplep1()
+
+    ## VACCINATION EXAMPLES
+
     # basic example
-    # examplev0()
-    # # single vaccine campaign example
-    # examplev1()
-    #
-    # # compare vaccinate and historical vaccinate
-    # examplev2()
+    examplev0()
+    # single vaccine campaign example
+    examplev1()
+
     # compare vaccinate and historical vaccinate
-    # examplev3()
-    #
-    # # example using NAb histogram
-    # examplev4()
-    # # examples using estimate_prob
-    # example_estimate_prob()
+    examplev2()
+    # compare vaccinate and historical vaccinate
+    examplev3()
 
-
-    # ## PREVIOUS WAVE EXAMPLES
-    # # basic example
-    # examplew0()
-    #
-    # # 2 wave example
-    # examplew1()
-    #
-    # # multi-wave comparison
-    examplew2()
-    #
     # example using NAb histogram
-    # examplew3()
+    examplev4()
+    # examples using estimate_prob
+    example_estimate_prob()
+
+
+    ## PREVIOUS WAVE EXAMPLES
+    # basic example
+    examplew0()
+
+    # 2 wave example
+    examplew1()
+
+    # multi-wave comparison
+    examplew2()
+
+    # example using NAb histogram
+    examplew3()

@@ -5,6 +5,7 @@ defined by the user by inheriting from these classes.
 
 import numpy as np
 import pandas as pd
+import scipy as sp
 import pylab as pl
 import sciris as sc
 import inspect
@@ -1199,7 +1200,7 @@ class simple_vaccine(Intervention):
         super().initialize()
         self.days = process_days(sim, self.days)
         self.doses             = np.zeros(sim.n, dtype=cvd.default_int) # Number of doses given per person of this vaccine
-        self.vaccination_dates = [[] for p in range(sim.n)] # Store the dates when people are vaccinated with this vaccine
+        self.vaccination_dates = [[]] * sim.n # Store the dates when people are vaccinated
         self.orig_rel_sus      = sc.dcp(sim.people.rel_sus) # Keep a copy of pre-vaccination susceptibility
         self.orig_symp_prob    = sc.dcp(sim.people.symp_prob) # ...and symptom probability
         self.mod_rel_sus       = np.ones(sim.n, dtype=cvd.default_float) # Store the final modifiers
@@ -1245,6 +1246,7 @@ class simple_vaccine(Intervention):
 
         return
 
+
 class BaseVaccination(Intervention):
     '''
     Apply a vaccine to a subset of the population.
@@ -1266,7 +1268,7 @@ class BaseVaccination(Intervention):
 
         - ``vaccinated``:        whether or not a person is vaccinated
         - ``doses``:             the number of vaccine doses per person
-        - ``vaccination_dates``: integer; date of last dose
+        - ``vaccination_dates``: integer; dates of all doses for this vaccine
 
     Args:
         vaccine (dict/str): which vaccine to use; see below for dict parameters
@@ -1296,9 +1298,8 @@ class BaseVaccination(Intervention):
         self.index     = None # Index of the vaccine in the sim; set later
         self.label     = label # Vaccine label (used as a dict key)
         self.p         = None # Vaccine parameters
-        self.vaccinated  = None  # Store a list of indices of people vaccinated with this vaccine each day
-        self.doses = None # Record the number of doses of this vaccine given per person
-        self.vaccination_dates = None # Store the dates that each person was last vaccinated with this vaccine
+        self.doses = None # Record the number of doses given per person *by this intervention*
+        self.vaccination_dates = None # Store the dates that each person was last vaccinated *by this intervention*
 
         self._parse_vaccine_pars(vaccine=vaccine) # Populate
         return
@@ -1395,9 +1396,8 @@ class BaseVaccination(Intervention):
                 errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
-        self.vaccinated = [None] * sim.npts  # Keep track of inds of people vaccinated on each day with this vaccine
-        self.doses = np.zeros(sim['pop_size'], dtype=cvd.default_int)  # Number of doses of this vaccine given per person
-        self.vaccination_dates = np.full(sim['pop_size'], np.nan)  # Store the dates when people are vaccinated with this vaccine
+        self.doses         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates    = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
@@ -1424,7 +1424,7 @@ class BaseVaccination(Intervention):
         raise NotImplementedError
 
 
-    def vaccinate(self, sim, vacc_inds):
+    def vaccinate(self, sim, vacc_inds, t=None):
         '''
         Vaccinate people
 
@@ -1436,9 +1436,15 @@ class BaseVaccination(Intervention):
         Args:
             sim: A cv.Sim instance
             vacc_inds: An array of person indices to vaccinate
+            t: Optionally override the day on which vaccinations are recorded for historical vaccination
 
         Returns: An array of person indices of people vaccinated
         '''
+
+        if t is None:
+            t = sim.t
+        else:
+            assert t <= sim.t, 'Overriding the vaccination day should only be used for historical vaccination' # High potential for errors to creep in if future vaccines could be scheduled here
 
         # Perform checks
         vacc_inds = vacc_inds[~sim.people.dead[vacc_inds]] # Skip anyone that is dead
@@ -1453,14 +1459,20 @@ class BaseVaccination(Intervention):
 
         if len(vacc_inds):
             self.doses[vacc_inds] += 1
-            self.vaccination_dates[vacc_inds] = sim.t
-            sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
-            sim.people.flows['new_vaccinated'] += len(new_vacc)
+            for v_ind in vacc_inds:
+                self.vaccination_dates[v_ind].append(sim.t)
+
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.doses[vacc_inds] += 1
-            sim.people.date_vaccinated[vacc_inds] = sim.t
+            sim.people.date_vaccinated[vacc_inds] = t
+
             cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
+
+            if t >= 0:
+                # Only record these quantities by default if it's not a historical dose
+                sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
+                sim.people.flows['new_vaccinated']   += len(new_vacc) # Count number of people not already vaccinated given doses
 
         return vacc_inds
 
@@ -1597,7 +1609,6 @@ class vaccinate_prob(BaseVaccination):
                 vacc_inds = cvu.true(cvu.binomial_arr(vacc_probs))  # Calculate who actually gets vaccinated
 
                 if len(vacc_inds):
-                    self.vaccinated[sim.t] = vacc_inds
                     if self.p.interval is not None:
                         # Schedule the doses
                         next_dose_days = sim.t + self.p.interval
@@ -1850,7 +1861,8 @@ class historical_vaccinate_prob(BaseVaccination):
         new_nab_length = sim.npts + self.extra_days
         if new_nab_length > len(sim.pars['nab_kin']):
             sim.pars['nab_kin'] = cvi.precompute_waning(length=new_nab_length, pars=sim['nab_decay'])
-            sim.people.pars['nab_kin'] = sim['nab_kin']
+            if sim.people:
+                sim.people.pars['nab_kin'] = sim['nab_kin']
 
         # cannot use process days
         self.days = self.process_days(sim, self.days) # days that group becomes eligible
@@ -1858,36 +1870,31 @@ class historical_vaccinate_prob(BaseVaccination):
         self.vaccinated           = [None]*(sim.npts+self.extra_days) # Keep track of inds of people vaccinated on each day
 
         # find the seed infections (set during sim.init_people()) and blank them out
-        seed_inds = cvu.true(sim.people.date_exposed == 0)
-        sim.people.make_naive(seed_inds)
+        if sim.people:
+            seed_inds = cvu.true(sim.people.date_exposed == 0)
+            sim.people.make_naive(seed_inds)
 
         # administer vaccines before t=0
         times = np.arange(np.min(self.days), 0)
         for t in times:
             # step through time, init flows
             # issue: this would be zeroing out the seed infections.
-            sim.people.init_flows()
+            if sim.people:
+                sim.people.init_flows()
 
             # run daily vaccination
             inds = self.select_people(sim, t)
             if len(inds):
-                inds = self.vaccinate(sim, inds)
-
-            # Update counts for this time step: flows
-            for key,count in sim.people.flows.items():
-                if key in ['new_doses', 'new_vaccinated']:
-                    sim.results[key][0] += count
-
-            # Update vaccination dates (otherwise used sim.t=0)
-            sim.people.date_vaccinated[inds] = t
-            self.vaccination_dates[inds] = t
+                inds = self.vaccinate(sim, inds, t=t)
+                sim.results['new_doses'][0] += len(inds)
+                sim.results['new_vaccinated'][0] += np.count_nonzero(sim.people.doses[inds] == 1)
 
             # we need to update the NAbs as it is a cumulative effect
             # this will mess up those who are the seed infections if not reset to naive (see above)
             sim.people.t = t
-            has_nabs = cvu.true(sim.people.peak_nab)
-            if len(has_nabs):
-                cvi.update_nab(sim.people, inds=has_nabs)
+            to_update = cvu.true(self.doses > 0)  # Update nabs for anyone vaccinated using this intervention
+            if len(to_update):
+                cvi.update_nab(sim.people, inds=to_update)
 
         # reset the seed infections
         sim.people.infect(seed_inds, layer='seed_infection')
@@ -1921,7 +1928,6 @@ class historical_vaccinate_prob(BaseVaccination):
                 vacc_inds = cvu.binomial_filter(self.compliance[0], vacc_inds)
 
                 if len(vacc_inds):
-                    self.vaccinated[rel_t] = vacc_inds
                     if self.p.interval is not None:
                         next_dose_day = rel_t + self.p.interval
                         if next_dose_day < (sim['n_days'] + self.extra_days):
@@ -1957,6 +1963,7 @@ class historical_vaccinate_prob(BaseVaccination):
         else:
             return days
 
+
     @staticmethod
     def estimate_prob(duration, coverage):
         '''
@@ -1981,14 +1988,13 @@ class historical_vaccinate_prob(BaseVaccination):
         def invlogit(y):
             return np.exp(y)/(np.exp(y)+1)
         # this method can be finicky
-        import scipy as sp
         p = sp.optimize.newton(lambda y: historical_vaccinate_prob.NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
         # p is the probability of *not* being vaccinated per day so we return 1-p
         return 1 - invlogit(p)
 
+
     @staticmethod
     def NB_cdf(k, p, r=1):
-        import scipy as sp
         '''note that the NB distribution shows the fraction '''
         return 1 - sp.special.betainc(k + 1, r, p)
         # return 1 - sp.special.betainc(k + 1, r, p) * sp.special.beta(k + 1, r)
