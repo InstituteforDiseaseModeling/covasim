@@ -12,6 +12,7 @@
     "cum_diagnoses": 3691.0,
     "cum_known_deaths": 24.0,
     "cum_quarantined": 4598.0,
+    "cum_doses": 0.0,
     "cum_vaccinated": 0.0,
     "new_infections": 27.0,
     "new_reinfections": 3.0,
