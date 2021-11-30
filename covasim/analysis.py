@@ -998,6 +998,7 @@ class Fit(Analyzer):
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
         die (bool): whether to raise an exception if no data are supplied
+        label (str): the label for the analyzer
         kwargs (dict): passed to cv.compute_gof() -- see this function for more detail on goodness-of-fit calculation options
 
     **Example**::
@@ -1008,8 +1009,8 @@ class Fit(Analyzer):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, **kwargs):
-        super().__init__(**kwargs) # Initialize the Analyzer object
+    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, label=None, **kwargs):
+        super().__init__(label=label) # Initialize the Analyzer object
 
         # Handle inputs
         self.weights    = weights

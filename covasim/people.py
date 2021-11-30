@@ -597,7 +597,7 @@ class People(cvb.BasePeople):
         self.date_diagnosed[final_inds] = self.t + test_delay
         self.date_pos_test[final_inds] = self.t
 
-        return
+        return final_inds
 
 
     def schedule_quarantine(self, inds, start_date=None, period=None):
