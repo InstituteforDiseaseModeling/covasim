@@ -2007,12 +2007,12 @@ class historical_wave(Intervention):
         Imprint a historical (pre t=0) wave of infections in the population NAbs
 
         Args:
-            days_prior  (int/list)   : offset relative to t=0 for the wave (median/par1 value)
-            prob       (float/list)  : probability of infection during the wave
-            dist       (dict/list)   : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
-            subtarget  (dict/list)   : subtarget intervention to people with particular indices  (see test_num() for details)
-            variants    (str/list)   : name of variant associated with the wave
-            kwargs     (dict)        : passed to Intervention()
+            days_prior  (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
+            prob       (float/list)    : probability of infection during the wave
+            dist       (dict/list)     : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
+            subtarget  (dict/list)     : subtarget intervention to people with particular indices  (see test_num() for details)
+            variants    (str/list)     : name of variant associated with the wave
+            kwargs     (dict)          : passed to Intervention()
 
         **Example**::
             cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
