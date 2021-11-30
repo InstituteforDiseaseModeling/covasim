@@ -363,7 +363,7 @@ def get_variant_pars(default=False):
             rel_death_prob  = 1.0, # Default values
         ),
 
-        b117 = dict(
+        alpha = dict(
             rel_beta        = 1.67, # Midpoint of the range reported in https://science.sciencemag.org/content/372/6538/eabg3055
             rel_symp_prob   = 1.0,  # Inconclusive evidence on the likelihood of symptom development. See https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00055-4/fulltext
             rel_severe_prob = 1.64, # From https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3792894, and consistent with https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348 and https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/961042/S1095_NERVTAG_update_note_on_B.1.1.7_severity_20210211.pdf
@@ -371,7 +371,7 @@ def get_variant_pars(default=False):
             rel_death_prob  = 1.0,  # See comment above
         ),
 
-        b1351 = dict(
+        beta = dict(
             rel_beta        = 1.0, # No increase in transmissibility; B1351's fitness advantage comes from the reduction in neutralisation
             rel_symp_prob   = 1.0,
             rel_severe_prob = 3.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
@@ -379,7 +379,7 @@ def get_variant_pars(default=False):
             rel_death_prob  = 1.0,
         ),
 
-        p1 = dict(
+        gamma = dict(
             rel_beta        = 2.05, # Estimated to be 1.7–2.4-fold more transmissible than wild-type: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
             rel_symp_prob   = 1.0,
             rel_severe_prob = 2.6, # From https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.16.2100348
@@ -387,7 +387,7 @@ def get_variant_pars(default=False):
             rel_death_prob  = 1.0,
         ),
 
-        b16172 = dict(
+        delta = dict(
             rel_beta        = 2.2, # Estimated to be 1.25-1.6-fold more transmissible than B117: https://www.researchsquare.com/article/rs-637724/v1
             rel_symp_prob   = 1.0,
             rel_severe_prob = 3.2, # 2x more transmissible than alpha from https://mobile.twitter.com/dgurdasani1/status/1403293582279294983
@@ -409,43 +409,43 @@ def get_cross_immunity(default=False):
     pars = dict(
 
         wild = dict(
-            wild   = 1.0, # Default for own-immunity
-            b117   = 0.5, # Assumption
-            b1351  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
-            p1     = 0.34, # Assumption
-            b16172 = 0.374, # Assumption
+            wild  = 1.0, # Default for own-immunity
+            alpha = 0.5, # Assumption
+            beta  = 0.5, # https://www.nature.com/articles/s41586-021-03471-w
+            gamma = 0.34, # Assumption
+            delta = 0.374, # Assumption
         ),
 
-        b117 = dict(
-            wild   = 0.5, # Assumption
-            b117   = 1.0, # Default for own-immunity
-            b1351  = 0.8, # Assumption
-            p1     = 0.8, # Assumption
-            b16172 = 0.689  # Assumption
+        alpha = dict(
+            wild  = 0.5, # Assumption
+            alpha = 1.0, # Default for own-immunity
+            beta  = 0.8, # Assumption
+            gamma = 0.8, # Assumption
+            delta = 0.689  # Assumption
         ),
 
-        b1351 = dict(
-            wild   = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
-            b117   = 0.5,   # Assumption
-            b1351  = 1.0,   # Default for own-immunity
-            p1     = 0.5,   # Assumption
-            b16172 = 0.086    # Assumption
+        beta = dict(
+            wild  = 0.066, # https://www.nature.com/articles/s41586-021-03471-w
+            alpha = 0.5,   # Assumption
+            beta  = 1.0,   # Default for own-immunity
+            gamma = 0.5,   # Assumption
+            delta = 0.086    # Assumption
         ),
 
-        p1 = dict(
-            wild   = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
-            b117   = 0.4,  # Assumption based on the above
-            b1351  = 0.4,  # Assumption based on the above
-            p1     = 1.0,  # Default for own-immunity
-            b16172 = 0.088   # Assumption
+        gamma = dict(
+            wild  = 0.34, # Previous (non-P.1) infection provides 54–79% of the protection against infection with P.1 that it provides against non-P.1 lineages: https://science.sciencemag.org/content/early/2021/04/13/science.abh2644
+            alpha = 0.4,  # Assumption based on the above
+            beta  = 0.4,  # Assumption based on the above
+            gamma = 1.0,  # Default for own-immunity
+            delta = 0.088   # Assumption
         ),
 
-        b16172=dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
-            wild   = 0.374,
-            b117   = 0.689,
-            b1351  = 0.086,
-            p1     = 0.088,
-            b16172 = 1.0 # Default for own-immunity
+        delta = dict( # Parameters from https://www.cell.com/cell/fulltext/S0092-8674(21)00755-8
+            wild  = 0.374,
+            alpha = 0.689,
+            beta  = 0.086,
+            gamma = 0.088,
+            delta = 1.0 # Default for own-immunity
         ),
     )
 
@@ -462,67 +462,67 @@ def get_vaccine_variant_pars(default=False):
     pars = dict(
 
         default = dict(
-            wild   = 1.0,
-            b117   = 1.0,
-            b1351  = 1.0,
-            p1     = 1.0,
-            b16172 = 1.0,
+            wild  = 1.0,
+            alpha = 1.0,
+            beta  = 1.0,
+            gamma = 1.0,
+            delta = 1.0,
         ),
 
         pfizer = dict(
-            wild   = 1.0,
-            b117   = 1/2.0, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
-            b1351  = 1/10.3, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
-            p1     = 1/6.7, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
-            b16172 = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
+            wild  = 1.0,
+            alpha = 1/2.0, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            beta  = 1/10.3, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            gamma = 1/6.7, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            delta = 1/2.9, # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         moderna = dict(
-            wild   = 1.0,
-            b117   = 1/1.8,
-            b1351  = 1/4.5,
-            p1     = 1/8.6, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
-            b16172 = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
+            wild  = 1.0,
+            alpha = 1/1.8,
+            beta  = 1/4.5,
+            gamma = 1/8.6, # https://www.nejm.org/doi/full/10.1056/nejmc2100362
+            delta = 1/2.9,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         az = dict(
-            wild   = 1.0,
-            b117   = 1/2.3,
-            b1351  = 1/9,
-            p1     = 1/2.9,
-            b16172 = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
+            wild  = 1.0,
+            alpha = 1/2.3,
+            beta  = 1/9,
+            gamma = 1/2.9,
+            delta = 1/6.2,  # https://www.researchsquare.com/article/rs-637724/v1
         ),
 
         jj = dict(
-            wild   = 1.0,
-            b117   = 1.0,
-            b1351  = 1/3.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
-            p1     = 1/3.4,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
-            b16172 = 1/1.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
+            wild  = 1.0,
+            alpha = 1.0,
+            beta  = 1/3.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
+            gamma = 1/3.4,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
+            delta = 1/1.6,  # https://www.biorxiv.org/content/10.1101/2021.07.01.450707v1.full.pdf
         ),
 
         novavax = dict( # Data from https://ir.novavax.com/news-releases/news-release-details/novavax-covid-19-vaccine-demonstrates-893-efficacy-uk-phase-3
-            wild   = 1.0,
-            b117   = 1/1.12,
-            b1351  = 1/4.7,
-            p1     = 1/8.6, # Assumption, no data available yet
-            b16172 = 1/6.2, # Assumption, no data available yet
+            wild  = 1.0,
+            alpha = 1/1.12,
+            beta  = 1/4.7,
+            gamma = 1/8.6, # Assumption, no data available yet
+            delta = 1/6.2, # Assumption, no data available yet
         ),
 
         sinovac = dict(
-            wild   = 1.0,
-            b117   = 1/1.12,
-            b1351  = 1/4.7,
-            p1     = 1/8.6, # Assumption, no data available yet
-            b16172 = 1/1.4, # https://www.globaltimes.cn/page/202108/1230741.shtml
+            wild  = 1.0,
+            alpha = 1/1.12,
+            beta  = 1/4.7,
+            gamma = 1/8.6, # Assumption, no data available yet
+            delta = 1/1.4, # https://www.globaltimes.cn/page/202108/1230741.shtml
         ),
 
         sinopharm = dict(
-            wild   = 1.0,
-            b117   = 1/1.12,
-            b1351  = 1/4.7,
-            p1     = 1/8.6, # Assumption, no data available yet
-            b16172 = 1/6.2, # Assumption, no data available yet
+            wild  = 1.0,
+            alpha = 1/1.12,
+            beta  = 1/4.7,
+            gamma = 1/8.6, # Assumption, no data available yet
+            delta = 1/6.2, # Assumption, no data available yet
         )
     )
 
