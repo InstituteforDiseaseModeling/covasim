@@ -126,13 +126,12 @@ def examplev3():
     scens.run()
     to_plot = cv.get_default_plots(kind='scenarios')
     to_plot.pop(2)
-    to_plot.update({'Cumulative vaccinations': ['cum_vaccinated', 'cum_doses']})
+    to_plot.update({'Cumulative doses': ['cum_vaccinated', 'cum_doses']})
     scens.plot(to_plot=to_plot)
 
 
 def examplev4():
     pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-360], prob=0.5)
-    # pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=[-60], prob=0.5)
     sim = cv.Sim(pars={'n_days':1}, interventions=pfizer, use_waning=True,
                  analyzers=cv.nab_histogram(days=[0], edges=np.linspace(-4,2,12+1)))
     sim.run()
@@ -152,7 +151,6 @@ def examplew1():
     # run single sim
     pars = {'use_waning': True, 'rand_seed':1}
     variants = [cv.variant('delta', days=15, n_imports=10)]
-    # variants = [cv.variant('b117', days=30, n_imports=10)]
 
     sim = cv.Sim(pars=pars, variants=variants)
     sim['interventions'] += [cv.historical_wave(variant='wild', prob=[0.05, 0.05], days_prior=[150, 50])]
@@ -163,8 +161,6 @@ def examplew1():
 
 def examplew2():
     pars = {'use_waning': True, 'n_days':180}
-    # variants = [cv.variant('b117', days=30, n_imports=10)]
-    # sim = cv.Sim(pars=pars, variants=variants)
     sim = cv.Sim(pars=pars)
     scenarios = {
         'base':{
@@ -196,15 +192,11 @@ def examplew2():
 def examplew3():
     pars = {'use_waning': True, 'n_days':1}
     sim = cv.Sim(pars=pars)
-    # sim['interventions'] += [cv.historical_wave(prob=0.05, days_prior=50)]
-    # sim['interventions'] += [cv.historical_wave(prob=0.05, days_prior=150)]
-    # sim['interventions'] += [cv.historical_wave(prob=[0.05, 0.05], days_prior=[360, 50])]
     sim['interventions'] += [cv.historical_wave(prob=[0.05, 0.05], days_prior=[100, 50])]
 
     sim['analyzers'] += [cv.nab_histogram(days=[0])]
     sim.run()
-    # sim.plot();
-    # sim.plot('variants')
+    sim.plot('variants')
     sim['analyzers'][0].plot()
 
 ###################################################

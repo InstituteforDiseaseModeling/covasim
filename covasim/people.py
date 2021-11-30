@@ -61,7 +61,7 @@ class People(cvb.BasePeople):
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
             elif key in ['n_infections', 'n_breakthroughs']:
-                self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
+                self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
@@ -422,6 +422,7 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
+            * If the simulation is being run with waning, this method also sets/updates agents' neutralizing antibody levels
 
         Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.
@@ -451,9 +452,6 @@ class People(cvb.BasePeople):
         inds = inds[keep]
         if source is not None:
             source = source[keep]
-
-        if self.pars['use_waning']:
-            cvi.check_immunity(self, variant, sus=False, inds=inds)
 
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
@@ -558,10 +556,12 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
+            symp = {
+                'asymp': asymp_inds,
+                'mild': mild_inds,
+                'sev': sev_inds
+            }
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
         return n_infections # For incrementing counters
 

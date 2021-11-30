@@ -1361,9 +1361,9 @@ class BaseVaccination(Intervention):
 
         # Populate any missing keys -- must be here, after variants are initialized
         default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
-        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        default_dose_pars    = cvpar.get_vaccine_dose_pars(default=True)
         variant_labels       = list(sim['variant_pars'].keys())
-        dose_keys           = list(default_dose_pars.keys())
+        dose_keys            = list(default_dose_pars.keys())
 
         # Handle dose keys
         for key in dose_keys:
@@ -1385,7 +1385,7 @@ class BaseVaccination(Intervention):
             if self.p['doses'] == len(self.p['target_eff']):
                 # determine efficacy of first dose (assume efficacy supplied is against symptomatic disease)
                 nabs = np.arange(-8, 4, 0.1)
-                VE_symp = cvi.calc_VE_symp(nabs, self.p['nab_eff'])
+                VE_symp = cvi.calc_VE_symp(2**nabs, sim.pars['nab_eff'])
                 peak_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][0])]
                 self.p['nab_init'] = dict(dist='normal', par1=peak_nab, par2=2)
                 if self.p['doses'] == 2:
@@ -1466,8 +1466,7 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.doses[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = t
-
-            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
+            cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
             if t >= 0:
                 # Only record these quantities by default if it's not a historical dose
@@ -1675,7 +1674,7 @@ class vaccinate_num(BaseVaccination):
 
             - A scalar number of doses per day
             - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
-              Any dates are convered to simulation days in `initialize()` which will also copy the
+              Any dates are converted to simulation days in `initialize()` which will also copy the
               dictionary passed in.
             - A callable that takes in a ``cv.Sim`` and returns a scalar number of doses. For example,
               ``def doses(sim): return 100 if sim.t > 10 else 0`` would be suitable

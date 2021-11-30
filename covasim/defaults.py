@@ -93,11 +93,11 @@ class PeopleMeta(sc.prettyobj):
             'sev_imm',          # Float, by variant
         ]
 
-        # Neutralizing antibody states, not by variant
+        # Neutralizing antibody states
         self.nab_states = [
-            'prior_symptoms',   # Float
-            'peak_nab',         # Float, peak neutralization titre relative to convalescent plasma
-            'nab',              # Float, current neutralization titre relative to convalescent plasma
+            'peak_nab',  # Float, peak neutralization titre relative to convalescent plasma
+            'nab',  # Float, current neutralization titre relative to convalescent plasma
+            't_nab_event',  # Float, time since nab-conferring event
         ]
 
         # Additional vaccination states
@@ -123,7 +123,8 @@ class PeopleMeta(sc.prettyobj):
         self.all_states = self.person + self.states + self.variant_states + self.by_variant_states + self.imm_states + self.nab_states + self.vacc_states + self.dates + self.durs
 
         # Validate
-        self.state_types = ['person', 'states', 'variant_states', 'by_variant_states', 'imm_states', 'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
+        self.state_types = ['person', 'states', 'variant_states', 'by_variant_states', 'imm_states',
+                            'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
         for state_type in self.state_types:
             states = getattr(self, state_type)
             n_states        = len(states)

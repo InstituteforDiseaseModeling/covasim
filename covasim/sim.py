@@ -606,7 +606,7 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
-        # Check nabs.
+        # Check nabs
         if self['use_waning']:
             has_nabs = cvu.true(people.peak_nab)
             breakthrough_inf = cvu.true(people.n_breakthroughs)
@@ -620,7 +620,7 @@ class Sim(cvb.BaseSim):
 
             # Check immunity
             if self['use_waning']:
-                cvimm.check_immunity(people, variant, sus=True)
+                cvimm.check_immunity(people, variant)
 
             # Deal with variant parameters
             rel_beta = self['rel_beta']
