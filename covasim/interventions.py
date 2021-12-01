@@ -2065,6 +2065,9 @@ class historical_wave(Intervention):
         for variant in self.variants:
             if variant in mapping:
                 # get variant index
+                if variant not in choice_mapping:
+                    raise ValueError('historical_wave intervention cannot add a new variant, must be added to sim via cv.variant:{}'.format(variant))
+
                 variant_name = mapping[variant]
                 variants += [choice_mapping[variant_name]]
             else:
