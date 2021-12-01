@@ -1716,7 +1716,7 @@ class vaccinate_num(BaseVaccination):
         # Work out how many people to vaccinate today
         num_people = process_doses(self.num_doses, sim)
         if num_people == 0: return np.array([])
-        num_agents = int(np.round(num_people / sim["pop_scale"]))
+        num_agents = sc.randround(num_people / sim['pop_scale'])
 
         # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
@@ -1745,8 +1745,8 @@ class vaccinate_num(BaseVaccination):
             vacc_probs[subtarget_inds] = vacc_probs[subtarget_inds]*subtarget_vals
 
         # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
-        if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
-        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
+        if self.booster: vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
+        else:            vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
 
         # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
         # vaccine would have had subsequent doses scheduled and therefore should not be selected here
