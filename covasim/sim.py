@@ -606,14 +606,9 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
-        # Check nabs
-        if self['use_waning']:
-            has_nabs = cvu.true(people.peak_nab)
-            breakthrough_inf = cvu.true(people.n_breakthroughs)
-            if len(has_nabs):
-                cvimm.update_nab(people, inds=has_nabs)
-                if len(breakthrough_inf):
-                    prel_trans[breakthrough_inf] *= self['trans_redux']
+        breakthrough_inf = cvu.true(people.n_breakthroughs)
+        if len(breakthrough_inf):
+            prel_trans[breakthrough_inf] *= self['trans_redux']
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
@@ -663,6 +658,11 @@ class Sim(cvb.BaseSim):
                 self.results['variant'][key][variant][t] += count[variant]
 
         # Update nab and immunity for this time step
+        if self['use_waning']:
+            has_nabs = cvu.true(people.peak_nab)
+            if len(has_nabs):
+                cvimm.update_nab(people, inds=has_nabs)
+
         inds_alive = cvu.false(people.dead)
         self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.true(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
