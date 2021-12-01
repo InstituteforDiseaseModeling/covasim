@@ -975,7 +975,7 @@ class test_prob(Intervention):
 
         # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
-        sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
+        sim.results['new_tests'][t] += len(test_inds)*sim['pop_scale']/sim.rescale_vec[t] # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds
 
@@ -1469,8 +1469,9 @@ class BaseVaccination(Intervention):
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
             if t >= 0: # Only record these quantities by default if it's not a historical dose
-                sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
-                sim.people.flows['new_vaccinated']   += len(new_vacc) # Count number of people not already vaccinated given doses
+                factor = sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
+                sim.people.flows['new_doses']      += len(vacc_inds)*factor # Count number of doses given
+                sim.people.flows['new_vaccinated'] += len(new_vacc)*factor # Count number of people not already vaccinated given doses
 
         return vacc_inds
 
@@ -1716,7 +1717,7 @@ class vaccinate_num(BaseVaccination):
         # Work out how many people to vaccinate today
         num_people = process_doses(self.num_doses, sim)
         if num_people == 0: return np.array([])
-        num_agents = int(np.round(num_people / sim["pop_scale"]))
+        num_agents = sc.randround(num_people / sim['pop_scale'])
 
         # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
@@ -1745,8 +1746,8 @@ class vaccinate_num(BaseVaccination):
             vacc_probs[subtarget_inds] = vacc_probs[subtarget_inds]*subtarget_vals
 
         # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
-        if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
-        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
+        if self.booster: vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
+        else:            vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
 
         # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
         # vaccine would have had subsequent doses scheduled and therefore should not be selected here
@@ -1775,8 +1776,6 @@ class vaccinate_num(BaseVaccination):
             self._scheduled_doses[sim.t+self.p.interval].update(first_dose_inds)
 
         vacc_inds = np.concatenate([scheduled, first_dose_inds])
-
-        print('debug1: ', sim.label, len(vacc_inds), num_people, num_agents, sim.rescale_vec[sim.t])
 
         return vacc_inds
 
