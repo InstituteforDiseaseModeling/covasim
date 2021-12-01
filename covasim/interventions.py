@@ -975,7 +975,7 @@ class test_prob(Intervention):
 
         # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
-        sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
+        sim.results['new_tests'][t] += sc.randround(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds
 
@@ -1469,8 +1469,9 @@ class BaseVaccination(Intervention):
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
             if t >= 0: # Only record these quantities by default if it's not a historical dose
-                sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
-                sim.people.flows['new_vaccinated']   += len(new_vacc) # Count number of people not already vaccinated given doses
+                factor = sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
+                sim.people.flows['new_doses']      += sc.randround(len(vacc_inds)*factor) # Count number of doses given
+                sim.people.flows['new_vaccinated'] += sc.randround(len(new_vacc)*factor) # Count number of people not already vaccinated given doses
 
         return vacc_inds
 
@@ -1775,8 +1776,6 @@ class vaccinate_num(BaseVaccination):
             self._scheduled_doses[sim.t+self.p.interval].update(first_dose_inds)
 
         vacc_inds = np.concatenate([scheduled, first_dose_inds])
-
-        print('debug1: ', sim.label, len(vacc_inds), num_people, num_agents, sim.rescale_vec[sim.t])
 
         return vacc_inds
 
