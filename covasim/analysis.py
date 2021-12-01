@@ -921,6 +921,7 @@ class nab_histogram(Analyzer):
         self.edges = edges  # Edges of age bins in log10
         self.hists = sc.odict()  # Store the actual snapshots
 
+
     def initialize(self, sim):
 
         # Check that the simulation parameters are correct
@@ -945,9 +946,10 @@ class nab_histogram(Analyzer):
 
         return
 
+
     def apply(self, sim):
-        log_nabs = np.log10(sim.people.nab)
-        log_nabs = log_nabs[np.isfinite(log_nabs)]
+        nonzero = sim.people.nab > 0
+        log_nabs = np.log10(sim.people.nab[nonzero])
         for ind in cvi.find_day(self.days, sim.t):
             date = self.dates[ind]  # Find the date for this index
             self.hists[date] = sc.objdict()  # Initialize the dictionary
@@ -956,6 +958,7 @@ class nab_histogram(Analyzer):
             self.hists[date]['n'] = np.histogram(log_nabs, bins=self.edges)[0] * scale  # Actually count the people
             self.hists[date]['s'] = np.std(log_nabs)    # keep the std
             self.hists[date]['m'] = np.mean(log_nabs)   # keep the mean
+
 
     def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
         '''
