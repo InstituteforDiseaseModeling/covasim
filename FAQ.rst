@@ -47,7 +47,7 @@ These are referred to as *importations*. You can set the ``n_imports`` parameter
 
 
 How can I find out what happened to a particular individual during the simulation?
----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
 This can be done using the ``story`` method after the simulation has been run:
 
