@@ -254,15 +254,15 @@ def test_vaccine_target_eff():
                 self.placebo_inds = eligible[cv.choose(len(eligible), min(self.trial_size, len(eligible)))]
             return
 
-    pars = {
-        'pop_size': 20000,
-        'beta': 0.01,
-        'n_days': 90,
-        'verbose': -1,
-    }
+    pars = dict(
+        pop_size = 40_000,
+        beta     = 0.01,
+        n_days   = 90,
+        verbose  = -1,
+    )
 
     # Define vaccine arm
-    trial_size = 4000
+    trial_size = 8_000
     start_trial = 20
 
     def subtarget(sim):
@@ -390,14 +390,14 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
+    # sim4   = test_vaccines_sequential(do_plot=do_plot)
+    # sim5   = test_two_vaccines(do_plot=do_plot)
     sim6   = test_vaccine_target_eff()
-    res    = test_decays(do_plot=do_plot)
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')
