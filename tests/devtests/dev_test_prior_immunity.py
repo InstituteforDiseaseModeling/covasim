@@ -1,5 +1,6 @@
 import covasim as cv
 import numpy as np
+import pytest
 
 ###################################################
 ## Vaccination examples
@@ -201,7 +202,8 @@ def examplew3():
 
 
 def examplew4():
-    cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05, variant='delta')]).run().plot()
+    with pytest.raises(ValueError):
+        cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05, variant='delta')]).run().plot()
 
 ###################################################
 # Example prior immunity
