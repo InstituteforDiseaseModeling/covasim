@@ -255,14 +255,14 @@ def test_vaccine_target_eff():
             return
 
     pars = dict(
-        pop_size = 40_000,
+        pop_size = 20_000,
         beta     = 0.01,
         n_days   = 90,
         verbose  = -1,
     )
 
     # Define vaccine arm
-    trial_size = 8_000
+    trial_size = 4_000
     start_trial = 20
 
     def subtarget(sim):
@@ -272,7 +272,7 @@ def test_vaccine_target_eff():
             inds = eligible[cv.choose(len(eligible), min(trial_size // 2, len(eligible)))]
         else:
             inds = []
-        return {'vals': [1.0 for ind in inds], 'inds': inds}
+        return {'vals': np.ones(len(inds)), 'inds': inds}
 
     # Initialize
     vx = cv.vaccinate_prob(vaccine=vacc_pars, days=[start_trial], label='target_eff', prob=0.0, subtarget=subtarget)
