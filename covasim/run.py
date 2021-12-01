@@ -981,6 +981,9 @@ class Scenarios(cvb.ParsObj):
             scen_sim.scenkey = scenkey
             scen_sim.label = scenname
 
+            if 'meta' in scen:
+                scen_sim.meta = scen['meta']
+
             # Update the parameters, if provided, and re-initialize aspects of the simulation
             scen_sim.update_pars(scenpars)
             scen_sim.initialized = False # Ensure it gets re-initialized
