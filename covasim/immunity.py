@@ -148,8 +148,7 @@ def update_peak_nab(people, inds, nab_pars, symp=None):
     Args:
         people: A people object
         inds: Array of people indices
-        nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either
-                    sim pars (for natural immunity) or vaccine pars
+        nab_pars: Parameters from which to draw values for quantities like ['nab_init'] - either sim pars (for natural immunity) or vaccine pars
         symp: either None (if NAbs are vaccine-derived), or a dictionary keyed by 'asymp', 'mild', and 'sev' giving the indices of people with each of those symptoms
 
     Returns: None

@@ -1085,7 +1085,7 @@ class Sim(cvb.BaseSim):
         for key in self.result_keys():
             if full or key.startswith('cum_'):
                 val = np.round(summary[key])
-                string += f'   {val:10n} {self.results[key].name.lower()}\n'
+                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'
 
         # Print or return string
         if not output:

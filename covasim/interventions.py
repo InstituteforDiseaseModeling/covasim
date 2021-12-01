@@ -1396,11 +1396,11 @@ class BaseVaccination(Intervention):
                 errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
-        self.doses         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates    = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
+        self.doses = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
 
-        sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
+        sim['vaccine_pars'][self.label] = self.p # Store the parameters
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
 
         return
@@ -1545,9 +1545,9 @@ class vaccinate_prob(BaseVaccination):
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
-        booster    (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
-        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        kwargs     (dict): passed to Intervention()
+        booster     (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
+        subtarget   (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        kwargs      (dict): passed to Intervention()
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
@@ -1565,9 +1565,11 @@ class vaccinate_prob(BaseVaccination):
         pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, booster=False, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=None, subtarget=None, booster=False, **kwargs):
         super().__init__(vaccine,label=label,**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
+        if prob is None: # Populate default value of probability: 1 if no subtargeting, 0 if subtargeting
+            prob = 1.0 if subtarget is None else 0.0
         self.prob      = prob
         self.booster   = booster
         self.subtarget = subtarget
@@ -1575,12 +1577,14 @@ class vaccinate_prob(BaseVaccination):
         self.second_dose_days = None  # Track scheduled second doses
         return
 
+
     def initialize(self, sim):
         super().initialize(sim)
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days     = [None]*sim.npts # People who get second dose (if relevant)
         check_doses(self.p['doses'], self.p['interval'])
         return
+
 
     def select_people(self, sim):
 
