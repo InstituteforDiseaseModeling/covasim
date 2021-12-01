@@ -272,11 +272,12 @@ def test_vaccine_target_eff():
             inds = eligible[cv.choose(len(eligible), min(trial_size // 2, len(eligible)))]
         else:
             inds = []
-        return {'vals': np.ones(len(inds)), 'inds': inds}
+        return {'vals': [1.0 for ind in inds], 'inds': inds}
 
     # Initialize
     vx = cv.vaccinate_prob(vaccine=vacc_pars, days=[start_trial], label='target_eff', prob=0.0, subtarget=subtarget)
     sim = cv.Sim(
+        rand_seed=230948,
         use_waning=True,
         pars=pars,
         interventions=vx,

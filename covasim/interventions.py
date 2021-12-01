@@ -1469,11 +1469,9 @@ class BaseVaccination(Intervention):
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
             if t >= 0: # Only record these quantities by default if it's not a historical dose
-                factor = 1#sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
-                sim.people.flows['new_doses']      += len(vacc_inds)#sc.randround(len(vacc_inds)*factor) # Count number of doses given
-                sim.people.flows['new_vaccinated'] += len(new_vacc)#sc.randround(len(new_vacc)*factor) # Count number of people not already vaccinated given doses
-                assert len(vacc_inds) == sc.randround(len(vacc_inds)*factor)
-                assert len(new_vacc) == sc.randround(len(new_vacc)*factor)
+                sim.people.flows['new_doses']      += len(vacc_inds)
+                sim.people.flows['new_vaccinated'] += len(new_vacc)
+                sc.randround(0)
 
         return vacc_inds
 
