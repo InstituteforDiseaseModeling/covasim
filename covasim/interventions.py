@@ -1399,8 +1399,8 @@ class BaseVaccination(Intervention):
         self.doses = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
         self.vaccination_dates = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
 
-        self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
+        self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
         sim['vaccine_map'][self.index]  = self.label # Use that to populate the reverse mapping
 
         return
@@ -1468,8 +1468,7 @@ class BaseVaccination(Intervention):
             sim.people.date_vaccinated[vacc_inds] = t
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
-            if t >= 0:
-                # Only record these quantities by default if it's not a historical dose
+            if t >= 0: # Only record these quantities by default if it's not a historical dose
                 sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
                 sim.people.flows['new_vaccinated']   += len(new_vacc) # Count number of people not already vaccinated given doses
 
@@ -1776,6 +1775,8 @@ class vaccinate_num(BaseVaccination):
             self._scheduled_doses[sim.t+self.p.interval].update(first_dose_inds)
 
         vacc_inds = np.concatenate([scheduled, first_dose_inds])
+
+        print('debug1: ', sim.label, len(vacc_inds), num_people, num_agents, sim.rescale_vec[sim.t])
 
         return vacc_inds
 
