@@ -2059,19 +2059,13 @@ class historical_wave(Intervention):
 
         # pick variant mapping index (integer value)
         variants = []
-        choices, mapping = cvpar.get_variant_choices()
-        choices = sim['variant_map']
-        choice_mapping = {name: key for key, synonyms in choices.items() for name in [synonyms]}
+        mapping = {v: k for k, v in sim['variant_map'].items()}  # Swap
         for variant in self.variants:
             if variant in mapping:
-                # get variant index
-                if variant not in choice_mapping:
-                    raise ValueError('historical_wave intervention cannot add a new variant, must be added to sim via cv.variant:{}'.format(variant))
-
-                variant_name = mapping[variant]
-                variants += [choice_mapping[variant_name]]
+                variants += [mapping[variant]]
             else:
-                raise ValueError('historical_wave intervention cannot hand non default variant:{}'.format(variant))
+                errormsg = f'historical_wave() cannot add a new variant, must be added to sim via cv.variant: {variant}'
+                raise ValueError(errormsg)
 
         # pick individuls for each wave
         inf_offset_days = []
