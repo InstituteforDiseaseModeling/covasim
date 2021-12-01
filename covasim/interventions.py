@@ -2066,12 +2066,14 @@ class historical_wave(Intervention):
             if variant in mapping:
                 # get variant index
                 if variant not in choice_mapping:
-                    raise ValueError('historical_wave intervention cannot add a new variant, must be added to sim via cv.variant:{}'.format(variant))
+                    errormsg = f'historical_wave() cannot add a new variant, must be added to sim via cv.variant: {variant}'
+                    raise ValueError(errormsg)
 
                 variant_name = mapping[variant]
                 variants += [choice_mapping[variant_name]]
             else:
-                raise ValueError('historical_wave intervention cannot hand non default variant:{}'.format(variant))
+                errormsg = f'historical_wave intervention cannot handle non default variant: {variant}'
+                raise ValueError(errormsg)
 
         # pick individuls for each wave
         inf_offset_days = []
@@ -2101,7 +2103,7 @@ class historical_wave(Intervention):
         inf_offset_days = np.array(inf_offset_days)
 
         if len(wave_id) != len(inf_offset_days):
-            raise  RuntimeError('arrays mismatch: {} != {}'.format(len(wave_id), len(inf_offset_days)))
+            raise  RuntimeError(f'arrays mismatch: {len(wave_id)} != {len(inf_offset_days)}')
 
         # we will need to extend the nab profiles
         new_nab_length = sim.npts - np.floor(np.min(inf_offset_days)).astype(cvd.default_int)
