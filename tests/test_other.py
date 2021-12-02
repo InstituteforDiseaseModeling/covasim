@@ -253,7 +253,7 @@ def test_plotting():
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
-    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], do_save=True, fig_path=fig_path)
     print('↑ May print a warning about zero values')
 
 
