@@ -1460,7 +1460,7 @@ class BaseVaccination(Intervention):
         if len(vacc_inds):
             self.doses[vacc_inds] += 1
             for v_ind in vacc_inds:
-                self.vaccination_dates[v_ind].append(sim.t)
+                self.vaccination_dates[v_ind].append(t)
 
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
