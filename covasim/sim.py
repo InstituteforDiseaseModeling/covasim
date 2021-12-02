@@ -915,7 +915,11 @@ class Sim(cvb.BaseSim):
             date_outcome = np.concatenate((date_recov, date_dead))
             inds         = np.concatenate((recov_inds, dead_inds))
             date_inf     = self.people.date_infectious[inds]
-            mean_inf     = date_outcome.mean() - date_inf.mean()
+            if len(date_outcome):
+                mean_inf     = date_outcome.mean() - date_inf.mean()
+            else:
+                if self['verbose']: print('Warning: there were no infections during the simulation')
+                mean_inf = 0 # Doesn't matter since r_eff is 0
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
             new_infections = self.results['new_infections'].values - self.results['n_imports'].values
