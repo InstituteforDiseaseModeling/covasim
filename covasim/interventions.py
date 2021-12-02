@@ -385,7 +385,8 @@ class Intervention:
                             label_shown = True
                         else:
                             label = None
-                        ax.axvline(day, label=label, **line_args)
+                        date = sc.date(sim.date(day))
+                        ax.axvline(date, label=label, **line_args)
         return
 
 
