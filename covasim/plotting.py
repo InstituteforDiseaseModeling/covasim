@@ -209,7 +209,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
 
     # Set the title and gridlines
     ax.set_title(title)
-    ax.grid(grid)
+    ax.grid(grid, color='lightgray', linestyle='-', linewidth=0.5)
 
     # Set the y axis style
     if setylim:
@@ -281,7 +281,7 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None,
-         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
+         show_args=None, mpl_args=None, n_cols=None, grid=True, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
          fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
@@ -318,7 +318,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
             if args.show['data']:
                 plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
             if args.show['ticks']:
-                reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                reset_ticks(ax) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         ax.label_outer()
 
         if args.show['interventions']:
