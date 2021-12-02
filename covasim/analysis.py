@@ -569,7 +569,7 @@ class daily_age_stats(Analyzer):
                     ax.legend()
                     ax.set_xlabel('Day')
                     ax.set_ylabel('Count')
-                    cvpl.date_formatter(ax=ax)
+                    cvpl.reset_ticks(ax=ax)
 
             # Plot total histograms
             else:
@@ -1222,7 +1222,7 @@ class Fit(Analyzer):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, do_show=None, fig=None):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -1234,7 +1234,6 @@ class Fit(Analyzer):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
-            date_args (dict):  passed to cv.plotting.reset_ticks() (handle date format, rotation, etc.)
             do_show   (bool):  whether to show the plot
             fig       (fig):   if supplied, use this figure to plot in
 
@@ -1245,7 +1244,6 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        date_args = sc.mergedicts(sc.objdict(as_dates=True, interval=None, rotation=None, start_day=None, end_day=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -1296,7 +1294,7 @@ class Fit(Analyzer):
                         ax.set_xlabel('Date')
                         ax.set_ylabel(ylabel)
                         ax.set_title(title)
-                        cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
+                        cvpl.reset_ticks(ax=ax)
                         ax.legend()
 
             ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
@@ -1324,7 +1322,7 @@ class Fit(Analyzer):
 
             if daylabel == 'Date':
                 for ax in [ts_ax, diff_ax, loss_ax]:
-                    cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
+                    cvpl.reset_ticks(ax=ax)
 
         cvset.handle_show(do_show) # Whether or not to call pl.show()
 
@@ -1858,7 +1856,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            cvpl.date_formatter(ax=ax)
+            cvpl.reset_ticks(ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(
