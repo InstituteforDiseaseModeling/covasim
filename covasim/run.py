@@ -980,9 +980,7 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.scenkey = scenkey
             scen_sim.label = scenname
-
-            if 'meta' in scen:
-                scen_sim.meta = scen['meta']
+            scen_sim.scen = scen
 
             # Update the parameters, if provided, and re-initialize aspects of the simulation
             scen_sim.update_pars(scenpars)
