@@ -11,7 +11,7 @@ import pylab as pl
 import sciris as sc
 import datetime as dt
 import matplotlib.ticker as ticker
-from matplotlib.dates import utoDateLocator, ConciseDateFormatter
+from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
 from . import misc as cvm
 from . import defaults as cvd
 from . import settings as cvset
