@@ -80,7 +80,8 @@ class People(cvb.BasePeople):
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
+            dtype = cvd.default_int if key == 't_nab_event' else cvd.default_float
+            self[key] = np.zeros(self.pars['pop_size'], dtype=dtype)
         for key in self.meta.vacc_states:
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 

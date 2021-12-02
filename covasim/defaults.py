@@ -88,16 +88,16 @@ class PeopleMeta(sc.prettyobj):
 
         # Immune states, by variant
         self.imm_states = [
-            'sus_imm',          # Float, by variant
-            'symp_imm',         # Float, by variant
-            'sev_imm',          # Float, by variant
+            'sus_imm',  # Float, by variant
+            'symp_imm', # Float, by variant
+            'sev_imm',  # Float, by variant
         ]
 
         # Neutralizing antibody states
         self.nab_states = [
-            'peak_nab',  # Float, peak neutralization titre relative to convalescent plasma
-            'nab',  # Float, current neutralization titre relative to convalescent plasma
-            't_nab_event',  # Float, time since nab-conferring event
+            'peak_nab',    # Float, peak neutralization titre relative to convalescent plasma
+            'nab',         # Float, current neutralization titre relative to convalescent plasma
+            't_nab_event', # Int, time since nab-conferring event
         ]
 
         # Additional vaccination states

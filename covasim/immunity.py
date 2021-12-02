@@ -206,7 +206,7 @@ def update_nab(people, inds):
     '''
     Step NAb levels forward in time
     '''
-    t_since_boost = people.t-people.t_nab_event[inds].astype(cvd.default_int)
+    t_since_boost = people.t - people.t_nab_event[inds]
     people.nab[inds] += people.pars['nab_kin'][t_since_boost]*people.peak_nab[inds]
     people.nab[inds] = np.where(people.nab[inds]<0, 0, people.nab[inds]) # Make sure nabs don't drop below 0
     people.nab[inds] = np.where([people.nab[inds] > people.peak_nab[inds]], people.peak_nab[inds], people.nab[inds]) # Make sure nabs don't exceed peak_nab
