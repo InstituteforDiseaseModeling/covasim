@@ -121,7 +121,7 @@ class variant(sc.prettyobj):
             rescale_factor = sim.rescale_vec[sim.t] if self.rescale else 1.0
             scaled_imports = self.n_imports/rescale_factor
             n_imports = sc.randround(scaled_imports) # Round stochastically to the nearest number of imports
-            if n_imports == 0 and sim['verbose']:
+            if self.n_imports > 0 and n_imports == 0 and sim['verbose']:
                 msg = f'Warning: {self.n_imports:n} imported infections of {self.label} were specified on day {sim.t}, but given the rescale factor of {rescale_factor:n}, no agents were infected. Increase the number of imports or use more agents.'
                 print(msg)
             importation_inds = np.random.choice(susceptible_inds, n_imports, replace=False) # Can't use cvu.choice() since sampling from indices
