@@ -374,7 +374,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
          show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         fig=None, ax=None, **kwargs):
+         variant_label=True, fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
@@ -395,7 +395,10 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 variant_colors = sc.gridcolors(ns)
                 for variant in range(ns):
                     color = variant_colors[variant]  # Choose the color
-                    label = 'wild type' if variant == 0 else sim['variants'][variant-1].label
+                    if variant_label:
+                        label = 'wild type' if variant == 0 else sim['variants'][variant-1].label
+                    else:
+                        label = None
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low[variant,:], res.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(res_t, res.values[variant,:], label=label, **args.plot, c=color)  # Actually plot the sim!

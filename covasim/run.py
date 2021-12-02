@@ -515,6 +515,7 @@ class MultiSim(cvb.FlexPretty):
             for s,ind in enumerate(inds):
                 sim = self.sims[ind]
 
+                first_plot = (s == 0) # Check if this is the first plot
                 final_plot = (s == n_sims-1) # Check if this is the final plot
 
                 # Handle the legend and labels
@@ -528,6 +529,8 @@ class MultiSim(cvb.FlexPretty):
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
                     kwargs['setylim'] = False # Don't set the y limits until we have all the data
                     cvo.set(close=False) # Do not close figures if we're in the middle of plotting
+
+                kwargs['variant_label'] = first_plot
 
                 # Optionally set the label for the first max_sims sims
                 if color_by_sim is True and s<max_sims:
