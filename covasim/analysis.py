@@ -523,7 +523,7 @@ class daily_age_stats(Analyzer):
         return df
 
 
-    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None, dateformat='%b-%d', width=0.8, color='#F8A493', data_args=None):
+    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None, width=0.8, color='#F8A493', data_args=None):
         '''
         Plot the results.
 
@@ -533,7 +533,6 @@ class daily_age_stats(Analyzer):
             fig_args  (dict):  passed to pl.figure()
             axis_args (dict):  passed to pl.subplots_adjust()
             plot_args (dict):  passed to pl.plot()
-            dateformat (str):  the format to use for the x-axes (only used for time series)
             width    (float): width of bars (only used for histograms)
             color  (hex/rgb): the color of the bars (only used for histograms)
         '''
@@ -570,7 +569,7 @@ class daily_age_stats(Analyzer):
                     ax.legend()
                     ax.set_xlabel('Day')
                     ax.set_ylabel('Count')
-                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+                    cvpl.date_formatter(ax=ax)
 
             # Plot total histograms
             else:
@@ -1246,7 +1245,7 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None), date_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, interval=None, rotation=None, start_day=None, end_day=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -1859,7 +1858,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
+            cvpl.date_formatter(ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(
