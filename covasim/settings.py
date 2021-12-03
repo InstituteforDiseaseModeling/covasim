@@ -29,6 +29,9 @@ def set_default_options():
     optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
+    optdesc.sep = 'Set thousands separtor'
+    options.sep = str(os.getenv('COVASIM_SEP', ','))
+
     optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
     options.show = int(os.getenv('COVASIM_SHOW', True))
 

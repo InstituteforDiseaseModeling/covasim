@@ -561,11 +561,7 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            symp = {
-                'asymp': asymp_inds,
-                'mild': mild_inds,
-                'sev': sev_inds
-            }
+            symp = dict(asymp=asymp_inds, mild=mild_inds, sev=sev_inds)
             cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
         return n_infections # For incrementing counters

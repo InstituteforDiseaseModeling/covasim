@@ -16,6 +16,7 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import immunity as cvimm
 from . import analysis as cva
+from .settings import options as cvo
 
 # Almost everything in this file is contained in the Sim class
 __all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
@@ -1058,16 +1059,17 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def summarize(self, full=False, t=None, output=False):
+    def summarize(self, full=False, t=None, sep=None, output=False):
         '''
         Print a medium-length summary of the simulation, drawing from the last time
         point in the simulation by default. Called by default at the end of a sim run.
         See also sim.disp() (detailed output) and sim.brief() (short output).
 
         Args:
-            full (bool): whether or not to print all results (by default, only cumulative)
-            t (int/str): day or date to compute summary for (by default, the last point)
-            output (bool): whether to return the summary instead of printing it
+            full   (bool):    whether or not to print all results (by default, only cumulative)
+            t      (int/str): day or date to compute summary for (by default, the last point)
+            sep    (str):     thousands separator (default ',')
+            output (bool):    whether to return the summary instead of printing it
 
         **Examples**::
 
@@ -1080,12 +1082,13 @@ class Sim(cvb.BaseSim):
         summary = self.compute_summary(full=full, t=t, update=False, output=True)
 
         # Construct the output string
+        if sep is None: sep = cvo.sep # Default separator
         labelstr = f' "{self.label}"' if self.label else ''
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
             if full or key.startswith('cum_'):
                 val = np.round(summary[key])
-                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'
+                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'.replace(',', sep) # Use replace since it's more flexible
 
         # Print or return string
         if not output:
