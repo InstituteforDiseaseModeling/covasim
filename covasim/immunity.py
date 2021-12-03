@@ -219,9 +219,9 @@ def calc_VE(nab, ax, pars):
         given in this paper: https://doi.org/10.1101/2021.03.09.21252641
 
         Args:
-            nab (arr): an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
-            ax (str): can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
-            pars (dict): dictionary of parameters for the vaccine efficacy
+            nab  (arr)  : an array of effective NAb levels (i.e. actual NAb levels, scaled by cross-immunity)
+            ax   (str)  : axis of protection; can be 'sus', 'symp' or 'sev', corresponding to the efficacy of protection against infection, symptoms, and severe disease respectively
+            pars (dict) : dictionary of parameters for the vaccine efficacy
 
         Returns:
             an array the same size as NAb, containing the immunity protection factors for the specified axis
@@ -333,9 +333,9 @@ def check_immunity(people, variant):
         imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
 
     current_nabs *= imm
-    people.sus_imm[variant,:] = calc_VE(current_nabs, 'sus', nab_eff)
+    people.sus_imm[variant,:]  = calc_VE(current_nabs, 'sus',  nab_eff)
     people.symp_imm[variant,:] = calc_VE(current_nabs, 'symp', nab_eff)
-    people.sev_imm[variant,:] = calc_VE(current_nabs, 'sev', nab_eff)
+    people.sev_imm[variant,:]  = calc_VE(current_nabs, 'sev',  nab_eff)
 
     return
 
