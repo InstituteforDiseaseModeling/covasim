@@ -38,12 +38,14 @@ Immunity-related parameter changes
 - When NAbs are primed, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can calculate immune protection using a single curve and account for multiple sources of immunity (vaccine and natural).
 - Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. Source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
 - A parameter ``trans_redux`` has been added to capture the reduction in transmission for breakthrough infections.
-- Default variant names now follow WHO convention, e.g. ``'alpha'`` rather than ``'b117'``. (The other names can still be used, however.)
+- Default variant names now follow WHO conventions, e.g. ``'alpha'`` rather than ``'b117'``. (The other names can still be used, however.)
+- Vaccine interventions now support booster doses.
+- Age-targeting of vaccines can now be specified as e.g. ``sequence='age'``.
 
 Changes to states and results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- ``people.vaccinations`` has been renamed to ``people.doses``, and keeps track of how many doses of any vaccine each agent has had. Likewise, ``new_vaccinations`` and ``cum_vaccinations`` have been renamed ``new_doses`` and ``cum_doses``.
 - People have a new state, ``n_breakthroughs``, which tracks how many breakthrough infections they've had.
-- ``people.vaccinations`` has been renamed to ``people.doses``, and keeps track of how many doses of any vaccine each agent has had.
 - NAb states have been updated: ``prior_symptoms`` has been removed and ``t_nab_event`` (the time when they were infected or vaccinated) has been added.
 
 New functions, methods and classes
@@ -55,10 +57,12 @@ New functions, methods and classes
 
 Bugfixes
 ^^^^^^^^
-- Importated infections are now sampled without replacement.
-- The scenario label now matches the scenario name rather than key.
-- Keyword arguments to ``cv.Fit()`` are now correctly passed to ``cv.compute_gof()``.
+- Keyword arguments to ``cv.Fit()`` are now correctly passed to ``cv.compute_gof()``. (Thanks to Zishu Liu for finding this bug.)
 - The transmission tree can now be exported using the latest version of NetworkX. (Thanks to Alexander Zarebski for finding this bug.)
+- Previously, ``cv.clip_edges()`` and ``cv.vaccinate_prob()`` used a lot of memory; these "memory leaks" have been fixed with new ``finalize()`` methods.
+- Some results (e.g. number of tests) were being incorrectly rounded to integers prior to rescaling; this has been fixed.
+- Imported infections are now sampled without replacement.
+- The scenario label now matches the scenario name rather than key.
 
 Other changes
 ^^^^^^^^^^^^^
