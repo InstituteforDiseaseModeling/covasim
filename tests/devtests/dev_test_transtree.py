@@ -151,18 +151,19 @@ if validate:
             dfkeys = list(df_entry.keys())
             ttkeys = list(tt_entry.keys())
             assert dfkeys == ttkeys
-            assert all([dk in dfkeys for dk in dkeys]) # The dataframe can have extra keys, but not the dict
+            # assert all([dk in dfkeys for dk in dkeys]) # The dataframe can have extra keys, but not the dict
             for k in dkeys:
-                v_d = d_entry[k]
-                v_df = df_entry[k]
-                v_tt = tt_entry[k]
-                try:
-                    assert np.isclose(v_d, v_df, v_tt, equal_nan=True) # If it's numeric, check they're close
-                except TypeError:
-                    if v_d is None:
-                        assert all(np.isnan([v_df, v_tt])) # If in the dict it's None, it should be nan in the dataframe
-                    else:
-                        assert v_d == v_df == v_tt # In all other cases, it should be an exact match
+                if k in dfkeys: # Skip variant key
+                    v_d = d_entry[k]
+                    v_df = df_entry[k]
+                    v_tt = tt_entry[k]
+                    try:
+                        assert np.isclose(v_d, v_df, v_tt, equal_nan=True) # If it's numeric, check they're close
+                    except TypeError:
+                        if v_d is None:
+                            assert all(np.isnan([v_df, v_tt])) # If in the dict it's None, it should be nan in the dataframe
+                        else:
+                            assert v_d == v_df == v_tt # In all other cases, it should be an exact match
     sc.toc()
     print('\nValidation passed.')
 

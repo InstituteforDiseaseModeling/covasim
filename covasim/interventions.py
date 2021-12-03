@@ -975,7 +975,7 @@ class test_prob(Intervention):
 
         # Actually test people
         sim.people.test(test_inds, test_sensitivity=self.sensitivity, loss_prob=self.loss_prob, test_delay=self.test_delay) # Actually test people
-        sim.results['new_tests'][t] += int(len(test_inds)*sim['pop_scale']/sim.rescale_vec[t]) # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
+        sim.results['new_tests'][t] += len(test_inds)*sim['pop_scale']/sim.rescale_vec[t] # If we're using dynamic scaling, we have to scale by pop_scale, not rescale_vec
 
         return test_inds
 
@@ -1361,9 +1361,9 @@ class BaseVaccination(Intervention):
 
         # Populate any missing keys -- must be here, after variants are initialized
         default_variant_pars = cvpar.get_vaccine_variant_pars(default=True)
-        default_dose_pars   = cvpar.get_vaccine_dose_pars(default=True)
+        default_dose_pars    = cvpar.get_vaccine_dose_pars(default=True)
         variant_labels       = list(sim['variant_pars'].keys())
-        dose_keys           = list(default_dose_pars.keys())
+        dose_keys            = list(default_dose_pars.keys())
 
         # Handle dose keys
         for key in dose_keys:
@@ -1385,7 +1385,7 @@ class BaseVaccination(Intervention):
             if self.p['doses'] == len(self.p['target_eff']):
                 # determine efficacy of first dose (assume efficacy supplied is against symptomatic disease)
                 nabs = np.arange(-8, 4, 0.1)
-                VE_symp = cvi.calc_VE_symp(nabs, self.p['nab_eff'])
+                VE_symp = cvi.calc_VE_symp(2**nabs, sim.pars['nab_eff'])
                 peak_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][0])]
                 self.p['nab_init'] = dict(dist='normal', par1=peak_nab, par2=2)
                 if self.p['doses'] == 2:
@@ -1396,8 +1396,8 @@ class BaseVaccination(Intervention):
                 errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
-        self.doses         = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
-        self.vaccination_dates    = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
+        self.doses = np.zeros(sim['pop_size'], dtype=cvd.default_int) # Number of doses given per person
+        self.vaccination_dates = [[] for _ in range(sim.n)] # Store the dates when people are vaccinated
 
         sim['vaccine_pars'][self.label] = self.p # Store the parameters
         self.index = list(sim['vaccine_pars'].keys()).index(self.label) # Find where we are in the list
@@ -1460,19 +1460,18 @@ class BaseVaccination(Intervention):
         if len(vacc_inds):
             self.doses[vacc_inds] += 1
             for v_ind in vacc_inds:
-                self.vaccination_dates[v_ind].append(sim.t)
+                self.vaccination_dates[v_ind].append(t)
 
             sim.people.vaccinated[vacc_inds] = True
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.doses[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = t
+            cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
-            cvi.update_peak_nab(sim.people, vacc_inds, nab_pars=self.p, natural=False)
-
-            if t >= 0:
-                # Only record these quantities by default if it's not a historical dose
-                sim.people.flows['new_doses'] += len(vacc_inds) # Count number of doses given
-                sim.people.flows['new_vaccinated']   += len(new_vacc) # Count number of people not already vaccinated given doses
+            if t >= 0: # Only record these quantities by default if it's not a historical dose
+                factor = sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
+                sim.people.flows['new_doses']      += len(vacc_inds)*factor # Count number of doses given
+                sim.people.flows['new_vaccinated'] += len(new_vacc)*factor # Count number of people not already vaccinated given doses
 
         return vacc_inds
 
@@ -1546,9 +1545,9 @@ class vaccinate_prob(BaseVaccination):
         label        (str): if vaccine is supplied as a dict, the name of the vaccine
         days     (int/arr): the day or array of days to apply the interventions
         prob       (float): probability of being vaccinated (i.e., fraction of the population)
-        booster    (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
-        subtarget  (dict): subtarget intervention to people with particular indices (see test_num() for details)
-        kwargs     (dict): passed to Intervention()
+        booster     (bool): whether it's a booster (i.e. targeted to vaccinated people) or not
+        subtarget   (dict): subtarget intervention to people with particular indices (see test_num() for details)
+        kwargs      (dict): passed to Intervention()
 
     If ``vaccine`` is supplied as a dictionary, it must have the following parameters:
 
@@ -1566,9 +1565,11 @@ class vaccinate_prob(BaseVaccination):
         pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
         cv.Sim(interventions=pfizer, use_waning=True).run().plot()
     '''
-    def __init__(self, vaccine, days, label=None, prob=1.0, subtarget=None, booster=False, **kwargs):
+    def __init__(self, vaccine, days, label=None, prob=None, subtarget=None, booster=False, **kwargs):
         super().__init__(vaccine,label=label,**kwargs) # Initialize the Intervention object
         self.days      = sc.dcp(days)
+        if prob is None: # Populate default value of probability: 1 if no subtargeting, 0 if subtargeting
+            prob = 1.0 if subtarget is None else 0.0
         self.prob      = prob
         self.booster   = booster
         self.subtarget = subtarget
@@ -1576,12 +1577,14 @@ class vaccinate_prob(BaseVaccination):
         self.second_dose_days = None  # Track scheduled second doses
         return
 
+
     def initialize(self, sim):
         super().initialize(sim)
         self.days = process_days(sim, self.days) # days that group becomes eligible
         self.second_dose_days     = [None]*sim.npts # People who get second dose (if relevant)
         check_doses(self.p['doses'], self.p['interval'])
         return
+
 
     def select_people(self, sim):
 
@@ -1675,7 +1678,7 @@ class vaccinate_num(BaseVaccination):
 
             - A scalar number of doses per day
             - A dict keyed by day/date with the number of doses e.g. ``{2:10000, '2021-05-01':20000}``.
-              Any dates are convered to simulation days in `initialize()` which will also copy the
+              Any dates are converted to simulation days in `initialize()` which will also copy the
               dictionary passed in.
             - A callable that takes in a ``cv.Sim`` and returns a scalar number of doses. For example,
               ``def doses(sim): return 100 if sim.t > 10 else 0`` would be suitable
@@ -1714,7 +1717,7 @@ class vaccinate_num(BaseVaccination):
         # Work out how many people to vaccinate today
         num_people = process_doses(self.num_doses, sim)
         if num_people == 0: return np.array([])
-        num_agents = int(np.round(num_people / sim["pop_scale"]))
+        num_agents = sc.randround(num_people / sim['pop_scale'])
 
         # First, see how many scheduled second doses we are going to deliver
         if self._scheduled_doses[sim.t]:
@@ -1743,8 +1746,8 @@ class vaccinate_num(BaseVaccination):
             vacc_probs[subtarget_inds] = vacc_probs[subtarget_inds]*subtarget_vals
 
         # If this is a booster, exclude unvaccinated people; otherwise, exclude vaccinated people
-        if self.booster:    vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
-        else:               vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
+        if self.booster: vacc_probs[cvu.false(sim.people.vaccinated)] = 0.0
+        else:            vacc_probs[cvu.true(sim.people.vaccinated)]  = 0.0 # Anyone who's received at least one dose is counted as vaccinated
 
         # All remaining people can be vaccinated, although anyone who has received half of a multi-dose
         # vaccine would have had subsequent doses scheduled and therefore should not be selected here
@@ -2058,16 +2061,13 @@ class historical_wave(Intervention):
 
         # pick variant mapping index (integer value)
         variants = []
-        choices, mapping = cvpar.get_variant_choices()
-        choices = sim['variant_map']
-        choice_mapping = {name: key for key, synonyms in choices.items() for name in [synonyms]}
+        mapping = {v: k for k, v in sim['variant_map'].items()}  # Swap
         for variant in self.variants:
             if variant in mapping:
-                # get variant index
-                variant_name = mapping[variant]
-                variants += [choice_mapping[variant_name]]
+                variants += [mapping[variant]]
             else:
-                raise ValueError('historical_wave intervention cannot handle non default variant:{}'.format(variant))
+                errormsg = f'historical_wave() cannot add a new variant, must be added to sim via cv.variant: {variant}'
+                raise ValueError(errormsg)
 
         # pick individuls for each wave
         inf_offset_days = []
@@ -2112,7 +2112,7 @@ class historical_wave(Intervention):
         inf_offset_days = np.array(inf_offset_days)
 
         if len(wave_id) != len(inf_offset_days):
-            raise  RuntimeError('arrays mismatch: {} != {}'.format(len(wave_id), len(inf_offset_days)))
+            raise  RuntimeError(f'arrays mismatch: {len(wave_id)} != {len(inf_offset_days)}')
 
         # we will need to extend the nab profiles
         new_nab_length = sim.npts - np.floor(np.min(inf_offset_days)).astype(cvd.default_int)
@@ -2174,3 +2174,8 @@ class historical_wave(Intervention):
 
         # reset the seed infections
         sim.people.infect(seed_inds, layer='seed_infection')
+
+    def apply(self, sim):
+        # nothing to do!
+        return
+
