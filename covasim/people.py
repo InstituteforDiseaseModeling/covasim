@@ -1,5 +1,6 @@
 '''
-Defines the Person class and functions associated with making people.
+Defines the People class and functions associated with making people and handling
+the transitions between states (e.g., from susceptible to infected).
 '''
 
 #%% Imports
@@ -59,8 +60,8 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
-            elif key == 'n_infections':
-                self[key] = np.full(self.pars['pop_size'], 0, dtype=cvd.default_int)
+            elif key in ['n_infections', 'n_breakthroughs']:
+                self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
             else:
                 self[key] = np.full(self.pars['pop_size'], np.nan, dtype=cvd.default_float)
 
@@ -79,7 +80,8 @@ class People(cvb.BasePeople):
         for key in self.meta.imm_states:  # Everyone starts out with no immunity
             self[key] = np.zeros((self.pars['n_variants'], self.pars['pop_size']), dtype=cvd.default_float)
         for key in self.meta.nab_states:  # Everyone starts out with no antibodies
-            self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_float)
+            dtype = cvd.default_int if key == 't_nab_event' else cvd.default_float
+            self[key] = np.zeros(self.pars['pop_size'], dtype=dtype)
         for key in self.meta.vacc_states:
             self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
 
@@ -356,15 +358,20 @@ class People(cvb.BasePeople):
 
     #%% Methods to make events occur (infection and diagnosis)
 
-    def make_naive(self, inds):
+    def make_naive(self, inds, reset_vx=False):
         '''
         Make a set of people naive. This is used during dynamic resampling.
+
+        Args:
+            inds (array): list of people to make naive
+            reset_vx (bool): whether to reset vaccine-derived immunity
         '''
         for key in self.meta.states:
             if key in ['susceptible', 'naive']:
                 self[key][inds] = True
             else:
-                self[key][inds] = False
+                if (key != 'vaccinated') or reset_vx: # Don't necessarily reset vaccination
+                    self[key][inds] = False
 
         # Reset variant states
         for key in self.meta.variant_states:
@@ -373,16 +380,16 @@ class People(cvb.BasePeople):
             self[key][:, inds] = False
 
         # Reset immunity and antibody states
+        non_vx_inds = inds if reset_vx else inds[~self['vaccinated'][inds]]
         for key in self.meta.imm_states:
-            self[key][:, inds] = 0
-        for key in self.meta.nab_states:
-            self[key][inds] = 0
-        for key in self.meta.vacc_states:
-            self[key][inds] = 0
+            self[key][:, non_vx_inds] = 0
+        for key in self.meta.nab_states + self.meta.vacc_states:
+            self[key][non_vx_inds] = 0
 
         # Reset dates
         for key in self.meta.dates + self.meta.durs:
-            self[key][inds] = np.nan
+            if (key != 'date_vaccinated') or reset_vx: # Don't necessarily reset vaccination
+                self[key][inds] = np.nan
 
         return
 
@@ -416,6 +423,7 @@ class People(cvb.BasePeople):
             * Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
             * Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
             * Critical cases either recover or die
+            * If the simulation is being run with waning, this method also sets/updates agents' neutralizing antibody levels
 
         Method also deduplicates input arrays in case one agent is infected many times
         and stores who infected whom in infection_log list.
@@ -446,9 +454,6 @@ class People(cvb.BasePeople):
         if source is not None:
             source = source[keep]
 
-        if self.pars['use_waning']:
-            cvi.check_immunity(self, variant, sus=False, inds=inds)
-
         # Deal with variant parameters
         variant_keys = ['rel_symp_prob', 'rel_severe_prob', 'rel_crit_prob', 'rel_death_prob']
         infect_pars = {k:self.pars[k] for k in variant_keys}
@@ -460,6 +465,13 @@ class People(cvb.BasePeople):
         n_infections = len(inds)
         durpars      = self.pars['dur']
 
+        # Retrieve those with a breakthrough infection (defined nabs)
+        breakthrough_inds = inds[cvu.true(self.peak_nab[inds])]
+        if len(breakthrough_inds):
+            no_prior_breakthrough = (self.n_breakthroughs[breakthrough_inds] == 0) # We only adjust transmissibility for the first breakthrough
+            new_breakthrough_inds = breakthrough_inds[no_prior_breakthrough]
+            self.rel_trans[new_breakthrough_inds] *= self.pars['trans_redux']
+
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
         self.naive[inds]          = False
@@ -467,6 +479,7 @@ class People(cvb.BasePeople):
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
         self.n_infections[inds]  += 1
+        self.n_breakthroughs[breakthrough_inds] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)
@@ -548,10 +561,8 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            self.prior_symptoms[asymp_inds] = self.pars['rel_imm_symp']['asymp']
-            self.prior_symptoms[mild_inds] = self.pars['rel_imm_symp']['mild']
-            self.prior_symptoms[sev_inds] = self.pars['rel_imm_symp']['severe']
-            cvi.update_peak_nab(self, inds, nab_pars=self.pars, natural=True)
+            symp = dict(asymp=asymp_inds, mild=mild_inds, sev=sev_inds)
+            cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
         return n_infections # For incrementing counters
 
@@ -584,7 +595,7 @@ class People(cvb.BasePeople):
         self.date_diagnosed[final_inds] = self.t + test_delay
         self.date_pos_test[final_inds] = self.t
 
-        return
+        return final_inds
 
 
     def schedule_quarantine(self, inds, start_date=None, period=None):
@@ -713,6 +724,7 @@ class People(cvb.BasePeople):
                 'date_severe'         : 'developed severe symptoms and needed hospitalization',
                 'date_symptomatic'    : 'became symptomatic',
                 'date_tested'         : 'was tested for COVID',
+                'date_vaccinated'     : 'was vaccinated against COVID',
             }
 
             for attribute, message in dates.items():

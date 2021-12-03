@@ -43,8 +43,8 @@ def test_regression():
     sim1 = cv.load(filename)
     sim2 = make_sim()
 
-    # Check that they match
-    cv.diff_sims(sim1, sim2, skip_key_diffs=True, die=True)
+    # Check that they match, skipping r_eff which changed
+    cv.diff_sims(sim1, sim2, skip_key_diffs=True, skip='r_eff', die=True)
 
     # Confirm that non-matching sims don't match
     sim3 = make_sim(beta=0.02123)

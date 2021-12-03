@@ -51,6 +51,7 @@ class PeopleMeta(sc.prettyobj):
             'rel_trans',        # Float
             'rel_sus',          # Float
             'n_infections',     # Int
+            'n_breakthroughs',  # Int
         ]
 
         # Set the states that a person can be in: these are all booleans per person -- used in people.py
@@ -87,22 +88,22 @@ class PeopleMeta(sc.prettyobj):
 
         # Immune states, by variant
         self.imm_states = [
-            'sus_imm',          # Float, by variant
-            'symp_imm',         # Float, by variant
-            'sev_imm',          # Float, by variant
+            'sus_imm',  # Float, by variant
+            'symp_imm', # Float, by variant
+            'sev_imm',  # Float, by variant
         ]
 
-        # Neutralizing antibody states, not by variant
+        # Neutralizing antibody states
         self.nab_states = [
-            'prior_symptoms',   # Float
-            'peak_nab',         # Float, peak neutralization titre relative to convalescent plasma
-            'nab',              # Float, current neutralization titre relative to convalescent plasma
+            'peak_nab',    # Float, peak neutralization titre relative to convalescent plasma
+            'nab',         # Float, current neutralization titre relative to convalescent plasma
+            't_nab_event', # Int, time since nab-conferring event
         ]
 
         # Additional vaccination states
         self.vacc_states = [
-            'vaccinations',     # Number of doses given per person
-            'vaccine_source',   # index of vaccine that individual received
+            'doses',          # Number of doses given per person
+            'vaccine_source', # index of vaccine that individual received
         ]
 
         # Set the dates various events took place: these are floats per person -- used in people.py
@@ -122,7 +123,8 @@ class PeopleMeta(sc.prettyobj):
         self.all_states = self.person + self.states + self.variant_states + self.by_variant_states + self.imm_states + self.nab_states + self.vacc_states + self.dates + self.durs
 
         # Validate
-        self.state_types = ['person', 'states', 'variant_states', 'by_variant_states', 'imm_states', 'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
+        self.state_types = ['person', 'states', 'variant_states', 'by_variant_states', 'imm_states',
+                            'nab_states', 'vacc_states', 'dates', 'durs', 'all_states']
         for state_type in self.state_types:
             states = getattr(self, state_type)
             n_states        = len(states)
@@ -172,7 +174,7 @@ result_flows = {
     'diagnoses':    'diagnoses',
     'known_deaths': 'known deaths',
     'quarantined':  'quarantined people',
-    'vaccinations': 'vaccinations',
+    'doses':        'vaccine doses',
     'vaccinated':   'vaccinated people'
 }
 
@@ -247,7 +249,7 @@ def get_default_colors():
     c = sc.objdict()
     c.susceptible           = '#4d771e'
     c.exposed               = '#c78f65'
-    c.exposed_by_variant    = '#c75649',
+    c.exposed_by_variant    = '#c75649'
     c.infectious            = '#e45226'
     c.infectious_by_variant = c.infectious
     c.infections            = '#b62413'
@@ -257,7 +259,7 @@ def get_default_colors():
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
     c.quarantined           = '#5c399c'
-    c.vaccinations          = c.quarantined # TODO: new color
+    c.doses                 = c.quarantined # TODO: new color
     c.vaccinated            = c.quarantined
     c.recoveries            = '#9e1149'
     c.recovered             = c.recoveries
@@ -298,10 +300,10 @@ overview_plots = [
     'n_symptomatic',
     'new_quarantined',
     'n_quarantined',
-    'new_vaccinations',
+    'new_doses',
     'new_vaccinated',
     'cum_vaccinated',
-    'cum_vaccinations',
+    'cum_doses',
     'test_yield',
     'r_eff',
 ]

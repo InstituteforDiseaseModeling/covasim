@@ -980,14 +980,11 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.scenkey = scenkey
             scen_sim.label = scenname
+            scen_sim.scen = scen
 
-            scen_sim.update_pars(scenpars)  # Update the parameters, if provided
-            scen_sim.validate_pars()
-            if 'variants' in scenpars: # Process variants
-                scen_sim.init_variants()
-                scen_sim.init_immunity(create=True)
-            elif 'imm_pars' in scenpars: # Process immunity
-                scen_sim.init_immunity(create=True) # TODO: refactor
+            # Update the parameters, if provided, and re-initialize aspects of the simulation
+            scen_sim.update_pars(scenpars)
+            scen_sim.initialized = False # Ensure it gets re-initialized
 
             run_args = dict(n_runs=self['n_runs'], noise=self['noise'], noisepar=self['noisepar'], keep_people=keep_people, verbose=verbose)
             if debug:

@@ -275,9 +275,9 @@ def date_formatter(start_day=None, dateformat=None, interval=None, start=None, e
         # Handle limits
         xmin, xmax = ax.get_xlim()
         if start:
-            xmin = sc.day(start, start_day=start_day)
+            xmin = sc.day(start, start_date=start_day)
         if end:
-            xmax = sc.day(end, start_day=start_day)
+            xmax = sc.day(end, start_date=start_day)
         ax.set_xlim((xmin, xmax))
 
         # Set the x-axis intervals
@@ -301,9 +301,9 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     # Handle start and end days
     xmin,xmax = ax.get_xlim()
     if date_args.start_day:
-        xmin = float(sc.day(date_args.start_day, start_day=start_day)) # Keep original type (float)
+        xmin = float(sc.day(date_args.start_day, start_date=start_day)) # Keep original type (float)
     if date_args.end_day:
-        xmax = float(sc.day(date_args.end_day, start_day=start_day))
+        xmax = float(sc.day(date_args.end_day, start_date=start_day))
     ax.set_xlim([xmin, xmax])
 
     # Set the x-axis intervals

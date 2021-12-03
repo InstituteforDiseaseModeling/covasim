@@ -7,7 +7,7 @@ import numpy as np
 import sciris as sc
 import covasim as cv
 
-do_plot = 0
+do_plot = 1
 do_save = 0
 baseline_filename  = sc.thisdir(__file__, 'baseline.json')
 benchmark_filename = sc.thisdir(__file__, 'benchmark.json')
@@ -23,20 +23,21 @@ def make_sim(use_defaults=False, do_plot=False, **kwargs):
     '''
 
     # Define the interventions
-    cb = cv.change_beta(days=40, changes=0.5)
     tp = cv.test_prob(start_day=20, symp_prob=0.1, asymp_prob=0.01)
+    vx = cv.vaccinate_prob('pfizer', days=30, prob=0.1)
+    cb = cv.change_beta(days=40, changes=0.5)
     ct = cv.contact_tracing(trace_probs=0.3, start_day=50)
 
     # Define the parameters
     pars = dict(
-        use_waning    = False,        # Whether or not to use waning and NAb calculations
+        use_waning    = True,         # Whether or not to use waning and NAb calculations
         pop_size      = 20e3,         # Population size
         pop_infected  = 100,          # Number of initial infections -- use more for increased robustness
         pop_type      = 'hybrid',     # Population to use -- "hybrid" is random with household, school,and work structure
         n_days        = 60,           # Number of days to simulate
         verbose       = 0,            # Don't print details of the run
         rand_seed     = 2,            # Set a non-default seed
-        interventions = [cb, tp, ct], # Include the most common interventions
+        interventions = [cb, tp, ct, vx], # Include the most common interventions
     )
     pars = sc.mergedicts(pars, kwargs)
 

@@ -16,6 +16,7 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import immunity as cvimm
 from . import analysis as cva
+from .settings import options as cvo
 
 # Almost everything in this file is contained in the Sim class
 __all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
@@ -302,6 +303,7 @@ class Sim(cvb.BaseSim):
             self.results[f'n_{key}'] = init_res(label, color=dcols[key])
 
         # Other variables
+        self.results['n_imports']           = init_res('Number of imported infections', scale=True)
         self.results['n_alive']             = init_res('Number alive', scale=True)
         self.results['n_naive']             = init_res('Number never infected', scale=True)
         self.results['n_preinfectious']     = init_res('Number preinfectious', scale=True, color=dcols.exposed)
@@ -437,7 +439,7 @@ class Sim(cvb.BaseSim):
         # Create the seed infections
         if self['pop_infected']:
             inds = cvu.choose(self['pop_size'], self['pop_infected'])
-            self.people.infect(inds=inds, layer='seed_infection')
+            self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
 
         return
 
@@ -574,6 +576,7 @@ class Sim(cvb.BaseSim):
             if n_imports>0:
                 importation_inds = cvu.choose(max_n=self['pop_size'], n=n_imports)
                 people.infect(inds=importation_inds, hosp_max=hosp_max, icu_max=icu_max, layer='importation')
+                self.results['n_imports'][t] += n_imports
 
         # Add variants
         for variant in self['variants']:
@@ -602,20 +605,14 @@ class Sim(cvb.BaseSim):
         diag = people.diagnosed
         quar = people.quarantined
         prel_trans = people.rel_trans
-        prel_sus = people.rel_sus
-
-        # Check nabs.
-        if self['use_waning']:
-            has_nabs = cvu.true(people.peak_nab)
-            if len(has_nabs):
-                cvimm.update_nab(people, inds=has_nabs)
+        prel_sus   = people.rel_sus
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
             # Check immunity
             if self['use_waning']:
-                cvimm.check_immunity(people, variant, sus=True)
+                cvimm.check_immunity(people, variant)
 
             # Deal with variant parameters
             rel_beta = self['rel_beta']
@@ -658,6 +655,11 @@ class Sim(cvb.BaseSim):
                 self.results['variant'][key][variant][t] += count[variant]
 
         # Update nab and immunity for this time step
+        if self['use_waning']:
+            has_nabs = cvu.true(people.peak_nab)
+            if len(has_nabs):
+                cvimm.update_nab(people, inds=has_nabs)
+
         inds_alive = cvu.false(people.dead)
         self.results['pop_nabs'][t]            = np.sum(people.nab[inds_alive[cvu.true(people.nab[inds_alive])]])/len(inds_alive)
         self.results['pop_protection'][t]      = np.nanmean(people.sus_imm)
@@ -910,13 +912,20 @@ class Sim(cvb.BaseSim):
             date_outcome = np.concatenate((date_recov, date_dead))
             inds         = np.concatenate((recov_inds, dead_inds))
             date_inf     = self.people.date_infectious[inds]
-            mean_inf     = date_outcome.mean() - date_inf.mean()
+            if len(date_outcome):
+                mean_inf     = date_outcome.mean() - date_inf.mean()
+            else:
+                if self['verbose']: print('Warning: there were no infections during the simulation')
+                mean_inf = 0 # Doesn't matter since r_eff is 0
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
-            raw_values = mean_inf*self.results['new_infections'].values/(self.results['n_infectious'].values+1e-6)
+            new_infections = self.results['new_infections'].values - self.results['n_imports'].values
+            n_infectious = self.results['n_infectious'].values
+            raw_values = mean_inf*np.divide(new_infections, n_infectious, out=np.zeros(self.npts), where=n_infectious>0)
+
+            # Handle smoothing, including with too-short arrays
             len_raw = len(raw_values) # Calculate the number of raw values
-            if sc.checktype(self['dur'], list): dur_pars = self['dur'][0] # TODO: fix this, need to somehow take all variants into account
-            else: dur_pars = self['dur']
+            dur_pars = self['dur'][0] if isinstance(self['dur'], list) else self['dur'] # Note: does not take variants into account
             if len_raw >= 3: # Can't smooth arrays shorter than this since the default smoothing kernel has length 3
                 initial_period = dur_pars['exp2inf']['par1'] + dur_pars['asym2rec']['par1'] # Approximate the duration of the seed infections for averaging
                 initial_period = int(min(len_raw, initial_period)) # Ensure we don't have too many points
@@ -1050,16 +1059,17 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def summarize(self, full=False, t=None, output=False):
+    def summarize(self, full=False, t=None, sep=None, output=False):
         '''
         Print a medium-length summary of the simulation, drawing from the last time
         point in the simulation by default. Called by default at the end of a sim run.
         See also sim.disp() (detailed output) and sim.brief() (short output).
 
         Args:
-            full (bool): whether or not to print all results (by default, only cumulative)
-            t (int/str): day or date to compute summary for (by default, the last point)
-            output (bool): whether to return the summary instead of printing it
+            full   (bool):    whether or not to print all results (by default, only cumulative)
+            t      (int/str): day or date to compute summary for (by default, the last point)
+            sep    (str):     thousands separator (default ',')
+            output (bool):    whether to return the summary instead of printing it
 
         **Examples**::
 
@@ -1072,11 +1082,13 @@ class Sim(cvb.BaseSim):
         summary = self.compute_summary(full=full, t=t, update=False, output=True)
 
         # Construct the output string
+        if sep is None: sep = cvo.sep # Default separator
         labelstr = f' "{self.label}"' if self.label else ''
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
             if full or key.startswith('cum_'):
-                string += f'   {summary[key]:5.0f} {self.results[key].name.lower()}\n'
+                val = np.round(summary[key])
+                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'.replace(',', sep) # Use replace since it's more flexible
 
         # Print or return string
         if not output:
@@ -1305,7 +1317,7 @@ class Sim(cvb.BaseSim):
         return fig
 
 
-def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
+def diff_sims(sim1, sim2, skip_key_diffs=False, skip=None, output=False, die=False):
     '''
     Compute the difference of the summaries of two simulations, and print any
     values which differ.
@@ -1314,6 +1326,7 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
         sim1 (sim/dict): either a simulation object or the sim.summary dictionary
         sim2 (sim/dict): ditto
         skip_key_diffs (bool): whether to skip keys that don't match between sims
+        skip (list): a list of values to skip
         output (bool): whether to return the output as a string (otherwise print)
         die (bool): whether to raise an exception if the sims don't match
         require_run (bool): require that the simulations have been run
@@ -1345,15 +1358,16 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, output=False, die=False):
         missing = list(sim1_keys - sim2_keys)
         extra   = list(sim2_keys - sim1_keys)
         if missing:
-            keymatchmsg += f'  Missing sim1 keys: {missing}\n'
+            keymatchmsg += f'  Missing sim1 keys: {missing}\ns'
         if extra:
             keymatchmsg += f'  Extra sim2 keys: {extra}\n'
 
     # Compare values
     valmatchmsg = ''
     mismatches = {}
+    skip = sc.tolist(skip)
     for key in sim2.keys(): # To ensure order
-        if key in sim1_keys: # If a key is missing, don't count it as a mismatch
+        if key in sim1_keys and key not in skip: # If a key is missing, don't count it as a mismatch
             sim1_val = sim1[key] if key in sim1 else 'not present'
             sim2_val = sim2[key] if key in sim2 else 'not present'
             both_nan = sc.isnumber(sim1_val, isnan=True) and sc.isnumber(sim2_val, isnan=True)

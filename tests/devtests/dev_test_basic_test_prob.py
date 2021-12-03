@@ -10,7 +10,7 @@ tweaking = {
 
 test_prob_start_day = 35
 prob_test_perfect_symptomatic = cv.test_prob(symp_prob=1.0, symp_quar_prob=1.0, asymp_quar_prob=1.0,
-                                          test_sensitivity=1.0, test_delay=1, start_day=test_prob_start_day)
+                                          sensitivity=1.0, test_delay=1, start_day=test_prob_start_day)
 
 my_parameters['interventions'] = prob_test_perfect_symptomatic
 

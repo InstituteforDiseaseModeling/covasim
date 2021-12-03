@@ -21,7 +21,8 @@ except ImportError as E: # pragma: no cover
     op = ImportError(errormsg)
 
 
-__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'Fit', 'Calibration', 'TransTree']
+__all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'nab_histogram',
+           'Fit', 'Calibration', 'TransTree']
 
 
 class Analyzer(sc.prettyobj):
@@ -45,12 +46,14 @@ class Analyzer(sc.prettyobj):
         self.finalized = False
         return
 
+
     def __call__(self, *args, **kwargs):
         # Makes Analyzer(sim) equivalent to Analyzer.apply(sim)
         if not self.initialized:
             errormsg = f'Analyzer (label={self.label}, {type(self)}) has not been initialized'
             raise RuntimeError(errormsg)
         return self.apply(*args, **kwargs)
+
 
     def initialize(self, sim=None):
         '''
@@ -84,6 +87,19 @@ class Analyzer(sc.prettyobj):
             sim: the Sim instance
         '''
         raise NotImplementedError
+
+
+    def shrink(self, in_place=False):
+        '''
+        Remove any excess stored data from the intervention; for use with sim.shrink().
+
+        Args:
+            in_place (bool): whether to shrink the intervention (else shrink a copy)
+        '''
+        if in_place:
+            return self
+        else:
+            return sc.dcp(self)
 
 
     def to_json(self):
@@ -885,6 +901,85 @@ class daily_stats(Analyzer):
         return fig
 
 
+class nab_histogram(Analyzer):
+    '''
+    Store histogram of log_{10}(NAb) distribution
+
+    Args:
+        days (list): days on which calculate the NAb histogram (if None, assume last day)
+        edges (list): log10 bin edges for histogram
+
+    **Example**::
+
+        sim = cv.Sim(analyzers=cv.nab_histogram())
+        sim.run()
+        sim['analyzers'][0].plot()
+    '''
+    def __init__(self, days=None, edges=None, **kwargs):
+        super().__init__(**kwargs)  # Initialize the Analyzer object
+        self.days = days  # To be converted to integer representations
+        self.edges = edges  # Edges of age bins in log10
+        self.hists = sc.odict()  # Store the actual snapshots
+
+
+    def initialize(self, sim):
+
+        # Check that the simulation parameters are correct
+        if not sim['use_waning']:
+            errormsg = 'The cv.nab_histogram() analyzer requires use_waning=True. Please enable waning.'
+            raise RuntimeError(errormsg)
+
+        super().initialize()
+
+        # Handle days
+        self.start_day = sc.date(sim['start_day'], as_date=False)  # Get the start day, as a string
+        self.end_day = sc.date(sim['end_day'], as_date=False)  # Get the start day, as a string
+        if self.days is None:
+            self.days = self.end_day  # If no day is supplied, use the last day
+        self.days, self.dates = cvi.process_days(sim, self.days,
+                                                 return_dates=True)  # Ensure days are in the right format
+
+        # Handle edges and nab bins
+        if self.edges is None:  # Default  bins
+            self.edges = np.arange(-4, 3)
+        self.bins = self.edges[:-1]  # Don't include the last edge in the bins
+
+        return
+
+
+    def apply(self, sim):
+        nonzero = sim.people.nab > 0
+        log_nabs = np.log10(sim.people.nab[nonzero])
+        for ind in cvi.find_day(self.days, sim.t):
+            date = self.dates[ind]  # Find the date for this index
+            self.hists[date] = sc.objdict()  # Initialize the dictionary
+            scale = sim.rescale_vec[sim.t]  # Determine current scale factor
+            self.hists[date]['bins'] = self.bins  # Copy here for convenience
+            self.hists[date]['n'] = np.histogram(log_nabs, bins=self.edges)[0] * scale  # Actually count the people
+            self.hists[date]['s'] = np.std(log_nabs)    # keep the std
+            self.hists[date]['m'] = np.mean(log_nabs)   # keep the mean
+
+
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
+        '''
+        Plot the results
+        '''
+
+        fig_args  = sc.mergedicts(dict(figsize=(9,5)), fig_args)
+        axis_args = sc.mergedicts(dict(left=0.10, right=0.95, bottom=0.10, top=0.95, wspace=0.25, hspace=0.4), axis_args)
+        plot_args = sc.mergedicts(dict(lw=2), plot_args)
+
+        fig, axs = pl.subplots(nrows=1, ncols=1, **fig_args)
+        pl.subplots_adjust(**axis_args)
+        for date, hist in self.hists.items():
+            axs.stairs(hist['n'], edges=self.edges, label=date, **plot_args)
+        axs.set_xlabel('Log10(NAb)')
+        axs.set_ylabel('Count')
+        axs.legend()
+        cvset.handle_show(do_show) # Whether or not to call pl.show()
+
+        return fig
+
 
 class Fit(Analyzer):
     '''
@@ -906,6 +1001,7 @@ class Fit(Analyzer):
         compute (bool): whether to compute the mismatch immediately
         verbose (bool): detail to print
         die (bool): whether to raise an exception if no data are supplied
+        label (str): the label for the analyzer
         kwargs (dict): passed to cv.compute_gof() -- see this function for more detail on goodness-of-fit calculation options
 
     **Example**::
@@ -916,8 +1012,8 @@ class Fit(Analyzer):
         fit.plot()
     '''
 
-    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, **kwargs):
-        super().__init__(**kwargs) # Initialize the Analyzer object
+    def __init__(self, sim, weights=None, keys=None, custom=None, compute=True, verbose=False, die=True, label=None, **kwargs):
+        super().__init__(label=label) # Initialize the Analyzer object
 
         # Handle inputs
         self.weights    = weights
@@ -1259,6 +1355,7 @@ class Calibration(Analyzer):
         total_trials (int)  : if n_trials is not supplied, calculate by dividing this number by n_workers)
         name         (str)  : the name of the database (default: 'covasim_calibration')
         db_name      (str)  : the name of the database file (default: 'covasim_calibration.db')
+        keep_db      (bool) : whether to keep the database after calibration (default: false)
         storage      (str)  : the location of the database (default: sqlite)
         label        (str)  : a label for this calibration object
         verbose      (bool) : whether to print details of the calibration
@@ -1278,7 +1375,7 @@ class Calibration(Analyzer):
     New in version 3.0.3.
     '''
 
-    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, storage=None, label=None, verbose=True):
+    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, keep_db=None, storage=None, label=None, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
         import multiprocessing as mp
@@ -1288,9 +1385,10 @@ class Calibration(Analyzer):
         if n_workers is None: n_workers = mp.cpu_count()
         if name      is None: name      = 'covasim_calibration'
         if db_name   is None: db_name   = f'{name}.db'
+        if keep_db   is None: keep_db   = False
         if storage   is None: storage   = f'sqlite:///{db_name}'
         if total_trials is not None: n_trials = total_trials/n_workers
-        self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, storage=storage)
+        self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, keep_db=keep_db, storage=storage)
 
         # Handle other inputs
         self.sim          = sim
@@ -1365,11 +1463,19 @@ class Calibration(Analyzer):
         return output
 
 
-    def make_study(self):
-        ''' Make a study, deleting one if it already exists '''
+    def remove_db(self):
+        ''' Remove the database file if keep_db is false and the path exists '''
         if os.path.exists(self.run_args.db_name):
             os.remove(self.run_args.db_name)
-            print(f'Removed existing calibration {self.run_args.db_name}')
+            if self.verbose:
+                print(f'Removed existing calibration {self.run_args.db_name}')
+        return
+
+
+    def make_study(self):
+        ''' Make a study, deleting one if it already exists '''
+        if not self.run_args.keep_db:
+            self.remove_db()
         output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
@@ -1407,6 +1513,8 @@ class Calibration(Analyzer):
 
         # Tidy up
         self.calibrated = True
+        if not self.run_args.keep_db:
+            self.remove_db()
         if verbose:
             self.summarize()
 
@@ -1526,7 +1634,8 @@ class TransTree(Analyzer):
 
             # Next, add edges from linelist
             for edge in people.infection_log:
-                self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
+                if edge['source'] is not None: # Skip seed infections
+                    self.graph.add_edge(edge['source'],edge['target'],date=edge['date'],layer=edge['layer'])
 
         return
 
