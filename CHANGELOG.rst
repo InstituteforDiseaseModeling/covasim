@@ -16,8 +16,9 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Multi-region and geographical support (planned for v3.2)
-- Economics and costing analysis (planned for v3.3)
+- Additional nuance in how immunity is modeled (planned for v3.2)
+- Multi-region and geographical support (planned for v3.3)
+- Economics and costing analysis (planned for v3.4)
 
 
 
@@ -88,7 +89,7 @@ Regression information
 - Results for simulations with ``use_waning=True`` will be substantially different due to the update in parameters and functional form.
 - ``r_eff`` results will not match previous versions due to the change in calculation method (but differences should be slight).
 - Simulations that have been saved to disk which include variants may not work correctly. If this is an issue, please email us and we can help write a migration script.
-- *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
+- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`__
 
 
 
