@@ -26,12 +26,15 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.1.0 (2021-11-30)
+Version 3.1.0 (2021-12-03)
 --------------------------
-This version contains important updates to the parameters around immunity, especially with regard to the delta variant. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity.
+This version contains important updates to the parameters around immunity. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity. Although we will continue to update parameter values as new data come in, the immunity and vaccine features are now out of the beta stage and ready to use.
 
 Highlights
 ^^^^^^^^^^
+- **New immunity parameters**: Waning immunity and cross-immunity functions have been updated to match currently available empirical data.
+- **Additional flexibility with vaccines**: Several new vaccines have been added (e.g. Sinopharm), and additional options have been provided to enable booster doses, simplify age targeting, etc.
+- **Historical immunity**: To avoid the need to calibration to past epidemic waves and vaccine rollouts, new interventions have been added that let you control immunity levels from historical events.
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,7 +85,9 @@ Other changes
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
-- This version of Covasim requires Sciris version 1.2.2 or later.
+- Results for simulations with ``use_waning=True`` will be substantially different due to the update in parameters and functional form.
+- ``r_eff`` results will not match previous versions due to the change in calculation method (but differences should be slight).
+- Simulations that have been saved to disk which include variants may not work correctly. If this is an issue, please email us and we can help write a migration script.
 - *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
 
 
