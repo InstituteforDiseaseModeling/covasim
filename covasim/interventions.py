@@ -2017,7 +2017,7 @@ class historical_wave(Intervention):
             kwargs     (dict)         : passed to Intervention()
 
         **Example**::
-            cv.Sim(interventions=[cv.historical_wave(120, 0.30)]).run().plot()
+            cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
         '''
         super().__init__(**kwargs)
         self.days_prior = sc.dcp(days_prior)
@@ -2025,6 +2025,7 @@ class historical_wave(Intervention):
         self.prob = sc.dcp(prob)
         self.subtarget = subtarget
         self.variants = 'wild' if variant is None else variant
+
 
     def apply(self, sim):
         if sim.t != 0:
@@ -2034,7 +2035,7 @@ class historical_wave(Intervention):
         if not sim['use_waning']:
             errormsg = 'cv.historical_wave() requires use_waning=True. Please enable waning.'
             raise RuntimeError(errormsg)
-        if sim['rescale']:
+        if sim['rescale'] and sim['pop_scale'] > 1:
             errormsg = 'cv.historical_wave() requires rescale=False, since rescaling assumes non-included agents are naive. Please disable dynamic rescaling.'
             raise RuntimeError(errormsg)
 
@@ -2174,7 +2175,5 @@ class historical_wave(Intervention):
         # reset the seed infections
         sim.people.infect(seed_inds, layer='seed_infection')
 
-    def apply(self, sim):
-        # nothing to do!
         return
 
