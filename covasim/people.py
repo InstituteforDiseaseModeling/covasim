@@ -466,7 +466,11 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.true(self.peak_nab[inds])
+        breakthrough_inds = inds[cvu.true(self.peak_nab[inds])]
+        if len(breakthrough_inds):
+            no_prior_breakthrough = (self.n_breakthroughs[breakthrough_inds] == 0) # We only adjust transmissibility for the first breakthrough
+            new_breakthrough_inds = breakthrough_inds[no_prior_breakthrough]
+            self.rel_trans[new_breakthrough_inds] *= self.pars['trans_redux']
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
@@ -475,7 +479,7 @@ class People(cvb.BasePeople):
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
         self.n_infections[inds]  += 1
-        self.n_breakthroughs[inds[breakthrough_inds]] += 1
+        self.n_breakthroughs[breakthrough_inds] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)

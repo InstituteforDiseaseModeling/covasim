@@ -606,10 +606,6 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
-        breakthrough_inf = cvu.true(people.n_breakthroughs)
-        if len(breakthrough_inf):
-            prel_trans[breakthrough_inf] *= self['trans_redux']
-
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
