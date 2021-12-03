@@ -1816,9 +1816,9 @@ class historical_vaccinate_prob(BaseVaccination):
     other interventions to initialize a population.
 
     Args:
-        vaccine (dict/str): which vaccine to use; see below for dict parameters
-        label        (str)     : if vaccine is supplied as a dict, the name of the vaccine
-        days     (int/arr)     : the day or array of days to apply the interventions
+        vaccine    (dict/str) : which vaccine to use; see below for dict parameters
+        label      (str)       : if vaccine is supplied as a dict, the name of the vaccine
+        days       (int/arr)   : the day or array of days to apply the interventions
         prob       (float)     : probability of being vaccinated (i.e., fraction of the population)
         subtarget  (dict)      : subtarget intervention to people with particular indices (see test_num() for details)
         compliance (float/arr) : compliance of the person to take each dose (if scalar than applied per dose)
@@ -2000,7 +2000,6 @@ class historical_vaccinate_prob(BaseVaccination):
     def NB_cdf(k, p, r=1):
         '''note that the NB distribution shows the fraction '''
         return 1 - sp.special.betainc(k + 1, r, p)
-        # return 1 - sp.special.betainc(k + 1, r, p) * sp.special.beta(k + 1, r)
 
 
 class historical_wave(Intervention):
@@ -2010,15 +2009,15 @@ class historical_wave(Intervention):
         Imprint a historical (pre t=0) wave of infections in the population NAbs
 
         Args:
-            days_prior  (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
-            prob       (float/list)    : probability of infection during the wave
-            dist       (dict/list)     : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
-            subtarget  (dict/list)     : subtarget intervention to people with particular indices  (see test_num() for details)
-            variants    (str/list)     : name of variant associated with the wave
-            kwargs     (dict)          : passed to Intervention()
+            days_prior (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
+            prob       (float/list)   : probability of infection during the wave
+            dist       (dict/list)    : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
+            subtarget  (dict/list)    : subtarget intervention to people with particular indices  (see test_num() for details)
+            variants   (str/list)     : name of variant associated with the wave
+            kwargs     (dict)         : passed to Intervention()
 
         **Example**::
-            cv.Sim(use_waning=True, interventions=[cv.historical_wave(120, 0.05)]).run().plot()
+            cv.Sim(interventions=[cv.historical_wave(120, 0.30)]).run().plot()
         '''
         super().__init__(**kwargs)
         self.days_prior = sc.dcp(days_prior)
@@ -2033,10 +2032,10 @@ class historical_wave(Intervention):
 
         # Check that the simulation parameters are correct
         if not sim['use_waning']:
-            errormsg = 'The cv.historical_wave() intervention requires use_waning=True. Please enable waning.'
+            errormsg = 'cv.historical_wave() requires use_waning=True. Please enable waning.'
             raise RuntimeError(errormsg)
         if sim['rescale']:
-            errormsg = 'The cv.historical_wave() intervention requires rescale=False. Please disable dynamic rescaling.'
+            errormsg = 'cv.historical_wave() requires rescale=False, since rescaling assumes non-included agents are naive. Please disable dynamic rescaling.'
             raise RuntimeError(errormsg)
 
         # deal with values for multiple waves
@@ -2066,7 +2065,7 @@ class historical_wave(Intervention):
             if variant in mapping:
                 variants += [mapping[variant]]
             else:
-                errormsg = f'historical_wave() cannot add a new variant, must be added to sim via cv.variant: {variant}'
+                errormsg = f'cv.historical_wave() cannot add the new variant "{variant}", must be added to sim via cv.variant(). Current variants are: {sc.strjoin(mapping.keys())}'
                 raise ValueError(errormsg)
 
         # pick individuls for each wave
@@ -2153,7 +2152,7 @@ class historical_wave(Intervention):
             for key,count in people.flows_variant.items():
                 for variant in range(nv):
                     sim.results['variant'][key][variant][0] += count[variant]
-            
+
             for key,count in flows.items():
                 sim.results[key][0] += count
 
