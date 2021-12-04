@@ -1421,12 +1421,20 @@ class Calibration(Analyzer):
                 extra = set(calib_pars.keys()) - set(valid_pars.keys())
                 errormsg = f'The following parameters are not part of the sim, nor is a custom function specified to use them: {sc.strjoin(extra)}'
                 raise ValueError(errormsg)
-        sim.run()
-        sim.compute_fit(**self.fit_args)
-        if return_sim:
-            return sim
-        else:
-            return sim.fit.mismatch
+        try:
+            sim.run()
+            sim.compute_fit(**self.fit_args)
+            if return_sim:
+                return sim
+            else:
+                return sim.fit.mismatch
+        except Exception as E:
+            if self.die:
+                raise E
+            else:
+                print(f'Warning, encountered error running sim: {E}')
+                output = None if return_sim else np.inf
+                return output
 
 
     def run_trial(self, trial):
