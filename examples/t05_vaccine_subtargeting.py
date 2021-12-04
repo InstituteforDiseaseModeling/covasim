@@ -24,6 +24,5 @@ if __name__ == '__main__':
     # Create, run, and plot the simulations
     sim1 = cv.Sim(label='Baseline')
     sim2 = cv.Sim(interventions=vaccine, label='With age-targeted vaccine')
-    msim = cv.MultiSim([sim1, sim2])
-    msim.run()
+    msim = cv.parallel([sim1, sim2])
     msim.plot()
