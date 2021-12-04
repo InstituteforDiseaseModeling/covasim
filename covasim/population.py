@@ -59,7 +59,7 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
                 pop_type = 'random'
 
         location = sim['location']
-        if location: # pragma: no cover
+        if location and verbose: # pragma: no cover
             print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
 
     # Actually create the population
@@ -146,7 +146,7 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
                 household_size = cvdata.get_household_size(location)
                 if 'h' in pars['contacts']:
                     pars['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
-                else:
+                elif pars['verbose']:
                     keystr = ', '.join(list(pars['contacts'].keys()))
                     print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
             except ValueError as E:
