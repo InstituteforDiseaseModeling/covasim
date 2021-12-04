@@ -741,7 +741,7 @@ class BaseSim(ParsObj):
             errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
             raise ValueError(errormsg)
 
-        ia_list = self.pars[which] # List of interventions or analyzers
+        ia_list = sc.tolist(self.pars[which]) # List of interventions or analyzers
         n_ia = len(ia_list) # Number of interventions/analyzers
 
         if label == 'summary': # Print a summary of the interventions
