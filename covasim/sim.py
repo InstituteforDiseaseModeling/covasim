@@ -1159,6 +1159,9 @@ class Sim(cvb.BaseSim):
             fit = sim.compute_fit()
             fit.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute fit since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         self.fit = cva.Fit(self, *args, **kwargs)
         return self.fit
 
@@ -1207,6 +1210,9 @@ class Sim(cvb.BaseSim):
             agehist = sim.make_age_histogram()
             agehist.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot make age histogram since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
@@ -1231,6 +1237,9 @@ class Sim(cvb.BaseSim):
             sim.run()
             tt = sim.make_transtree()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute transmission tree since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
