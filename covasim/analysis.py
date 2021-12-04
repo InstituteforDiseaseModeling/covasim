@@ -1358,6 +1358,7 @@ class Calibration(Analyzer):
         keep_db      (bool) : whether to keep the database after calibration (default: false)
         storage      (str)  : the location of the database (default: sqlite)
         label        (str)  : a label for this calibration object
+        die          (bool) : whether to stop if an exception is encountered (default: false)
         verbose      (bool) : whether to print details of the calibration
         kwargs       (dict) : passed to cv.Calibration()
 
@@ -1375,7 +1376,9 @@ class Calibration(Analyzer):
     New in version 3.0.3.
     '''
 
-    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None, n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None, keep_db=None, storage=None, label=None, verbose=True):
+    def __init__(self, sim, calib_pars=None, fit_args=None, custom_fn=None, par_samplers=None,
+                 n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None,
+                 keep_db=None, storage=None, label=None, die=False, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
         if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
         import multiprocessing as mp
@@ -1396,6 +1399,7 @@ class Calibration(Analyzer):
         self.fit_args     = sc.mergedicts(fit_args)
         self.par_samplers = sc.mergedicts(par_samplers)
         self.custom_fn    = custom_fn
+        self.die          = die
         self.verbose      = verbose
         self.calibrated   = False
 
@@ -1432,7 +1436,7 @@ class Calibration(Analyzer):
             if self.die:
                 raise E
             else:
-                print(f'Warning, encountered error running sim: {E}')
+                print(f'Warning, encountered error running sim!\nParameters:\n{valid_pars}\nTraceback:\n{sc.traceback()}')
                 output = None if return_sim else np.inf
                 return output
 
