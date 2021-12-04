@@ -34,7 +34,7 @@ class People(cvb.BasePeople):
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
 
-    ::Examples::
+    **Examples**::
 
         ppl1 = cv.People(2000)
 
