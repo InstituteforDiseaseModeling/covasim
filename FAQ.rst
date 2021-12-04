@@ -197,6 +197,11 @@ Is the underlying model capable of generating oscillations?
 Yes, although oscillatory modes are not a natural state of the system – you can get them with a combination of high infection rates, low testing rates, and high contact tracing rates with significant delays. This will create little clusters that grow stochastically until someone gets tested, then most of the cluster gets traced and shut down, but a few people usually escape to start the next cluster.
 
 
+Why doesn't anyone start off as infectious?
+-------------------------------------------
+If you run a simple simulation (e.g. ``sim = cv.Sim().run()``), you might notice that no one starts off as infectious (``sim.results.n_infectious[0]`` is 0). This is because they all start in the just-infected or "exposed" state, when they're not infectious yet (it takes a few days for someone to become infectious, determined by the parameter ``exp2inf``, exposed to infectious duration). This corresponds to the "E" compartment of an SEIR model.
+
+
 
 Common problems
 ^^^^^^^^^^^^^^^
@@ -204,7 +209,7 @@ Common problems
 I'm getting different results to someone else, or to what I got previously, with the same parameters. Why?
 ---------------------------------------------------------------------------------------------------------------
 
-One of the trickest aspects of working with agent-based models is getting the random number stream right. Covasim uses both ``numpy`` and ``numba`` random number streams. These are usually initialized automatically when a simulation is created/run (via ``cv.set_seed(seed)``, which you can call directly as well), but anything that disrupts the random number stream will result in differences between two simulation runs. This is also why seemingly trivial changes (e.g., adding an intervention that doesn't actually do anything) can cause simulation trajectories to diverge.
+One of the trickiest aspects of working with agent-based models is getting the random number stream right. Covasim uses both ``numpy`` and ``numba`` random number streams. These are usually initialized automatically when a simulation is created/run (via ``cv.set_seed(seed)``, which you can call directly as well), but anything that disrupts the random number stream will result in differences between two simulation runs. This is also why seemingly trivial changes (e.g., adding an intervention that doesn't actually do anything) can cause simulation trajectories to diverge.
 
 In addition, random number streams sometimes change with different library versions. For example, due to a bugfix, random number streams changed between ``numba`` 0.48 and 0.49. Therefore, simulation run with ``numba`` 0.48 or earlier won't (exactly) match simulations run with  ``numba`` 0.49 or later.
 
