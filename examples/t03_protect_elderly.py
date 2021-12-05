@@ -2,6 +2,8 @@
 Example of a custom intervention and a very quick scenario analysis
 '''
 
+import covasim as cv
+
 def protect_elderly(sim):
     if sim.t == sim.day('2021-04-01'):
         elderly = sim.people.age>70

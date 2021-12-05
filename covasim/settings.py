@@ -226,10 +226,11 @@ def set_matplotlib_global(key, value):
 
 def handle_show(do_show):
     ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    backend = pl.get_backend()
     if do_show is None:  # If not supplied, reset to global value
         do_show = options.show
-        if options.backend == 'agg': # Cannot show plots for a non-interactive backend
-            do_show = False
+    if backend == 'agg': # Cannot show plots for a non-interactive backend
+        do_show = False
     if do_show: # Now check whether to show
         pl.show()
     return do_show
