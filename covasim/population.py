@@ -171,70 +171,63 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     popdict['sex'] = sexes
 
     # Actually create the contacts
-    if   microstructure == 'random': contacts, layer_keys = make_random_contacts(pop_size, pars['contacts'], **kwargs)
-    elif microstructure == 'hybrid': contacts, layer_keys = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
+    if microstructure == 'random':
+        contacts = dict()
+        for lkey,n in pars['contacts']:
+            p1,p2 = make_random_contacts(pop_size, n, **kwargs)
+            contacts[lkey] = dict(p1=p1, p2=p2)
+    elif microstructure == 'hybrid':
+        contacts = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
     else: # pragma: no cover
         errormsg = f'Microstructure type "{microstructure}" not found; choices are random or hybrid'
         raise NotImplementedError(errormsg)
 
     popdict['contacts']   = contacts
-    popdict['layer_keys'] = layer_keys
+    popdict['layer_keys'] = list(pars['contacts'].keys())
 
     return popdict
 
 
-def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
+def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None):
     '''
-    Make random static contacts.
+    Make random static contacts for a single layer as an edgelist.
 
     Args:
         pop_size (int): number of agents to create contacts between (N)
-        contacts (dict): a dictionary with one entry per layer describing the average number of contacts per person for that layer
+        n (int): the average number of contacts per person for this layer
         overshoot (float): to avoid needing to take multiple Poisson draws
         dispersion (float): if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
 
     Returns:
-        contacts_list (list): a list of length N, where each entry is a dictionary by layer, and each dictionary entry is the UIDs of the agent's contacts
-        layer_keys (list): a list of layer keys, which is the same as the keys of the input "contacts" dictionary
+        p1 (list): a list of length N, containing the UIDs of the source agents
+        p2 (list): a list of length N of all the source agents' targets
     '''
 
     # Preprocessing
     pop_size = int(pop_size) # Number of people
-    contacts = sc.dcp(contacts)
-    is_dict = True
-    if sc.isnumber(contacts):
-        is_dict = False
-        contacts = {'a':contacts} # Convert to placeholder dict of all contacts
-    layer_keys = list(contacts.keys())
-    contacts_list = []
+    n = int(n)
+    p1 = [] # Initialize the "sources"
+    p2 = [] # Initialize the "targets"
 
     # Precalculate contacts
-    n_across_layers = np.sum(list(contacts.values()))
-    n_all_contacts  = int(pop_size*n_across_layers*overshoot) # The overshoot is used so we won't run out of contacts if the Poisson draws happen to be higher than the expected value
+    n_all_contacts  = int(pop_size*n*overshoot) # The overshoot is used so we won't run out of contacts if the Poisson draws happen to be higher than the expected value
     all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
-    p_counts = {}
-    for lkey in layer_keys:
-        if dispersion is None:
-            p_count = cvu.n_poisson(contacts[lkey], pop_size) # Draw the number of Poisson contacts for this person
-        else:
-            p_count = cvu.n_neg_binomial(rate=contacts[lkey], dispersion=dispersion, n=pop_size) # Or, from a negative binomial
-        p_counts[lkey] = np.array((p_count/2.0).round(), dtype=cvd.default_int)
+    if dispersion is None:
+        p_count = cvu.n_poisson(n, pop_size) # Draw the number of Poisson contacts for this person
+    else:
+        p_count = cvu.n_neg_binomial(rate=n, dispersion=dispersion, n=pop_size) # Or, from a negative binomial
+    p_count = np.array((p_count/2.0).round(), dtype=cvd.default_int)
 
     # Make contacts
     count = 0
     for p in range(pop_size):
-        contact_dict = {}
-        for lkey in layer_keys:
-            n_contacts = p_counts[lkey][p]
-            these_contacts = all_contacts[count:count+n_contacts] # Assign people
-            if is_dict:
-                contact_dict[lkey] = these_contacts
-            else:
-                contact_dict = these_contacts
-            count += n_contacts
-        contacts_list.append(contact_dict)
+        n_contacts = p_count[p]
+        these_contacts = all_contacts[count:count+n_contacts] # Assign people
+        count += n_contacts
+        p1.extend([p]*n_contacts)
+        p2.extend(these_contacts)
 
-    return contacts_list, layer_keys
+    return p1, p2
 
 
 def make_microstructured_contacts(pop_size, cluster_size):
