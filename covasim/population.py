@@ -274,10 +274,13 @@ def make_microstructured_contacts(pop_size, cluster_size, mapping=None):
 
         # Indices of people in this cluster
         cluster_indices = (pop_size-n_remaining) + np.arange(this_cluster)
-        for ind,i in enumerate(cluster_indices): # Add symmetric pairwise contacts in each cluster
-            for j in cluster_indices[ind+1:]:
-                p1.append(i)
-                p2.append(j)
+        for source in cluster_indices: # Add symmetric pairwise contacts in each cluster
+            targets = set()
+            for target in cluster_indices:
+                if target > source:
+                    targets.add(target)
+            p1.extend([source]*len(targets))
+            p2.extend(list(targets))
 
         n_remaining -= this_cluster
 
