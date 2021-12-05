@@ -266,7 +266,7 @@ class Sim(cvb.BaseSim):
 
         # Handle versioning
         default_ver = self._default_ver if self._default_ver else self.version
-        self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
+        self._legacy_trans = True#sc.compareversions(default_ver, '<3.1.1') # Handle regression
 
         # Handle verbose
         if self['verbose'] == 'brief':
