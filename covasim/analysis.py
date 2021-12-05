@@ -1473,7 +1473,10 @@ class Calibration(Analyzer):
 
     def run_workers(self):
         ''' Run multiple workers in parallel '''
-        output = sc.parallelize(self.worker, iterarg=self.run_args.n_workers)
+        if self.run_args.n_workers > 1: # Normal use case: run in parallel
+            output = sc.parallelize(self.worker, iterarg=self.run_args.n_workers)
+        else: # Special case: just run one
+            output = [self.worker()]
         return output
 
 

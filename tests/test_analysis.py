@@ -152,7 +152,7 @@ def test_calibration():
         tp.symp_prob = calib_pars['test_prob']
         return sim
 
-    calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=5)
+    calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=10, n_workers=1)
     calib.plot(to_plot=['cum_deaths', 'cum_diagnoses'])
 
     assert calib.after.fit.mismatch < calib.before.fit.mismatch

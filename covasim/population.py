@@ -317,7 +317,7 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
 
 
 
-def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs):
+def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs): # pragma: no cover
     '''
     Make a population using SynthPops, including contacts. Usually called automatically,
     but can also be called manually. Either a simulation object or a population must

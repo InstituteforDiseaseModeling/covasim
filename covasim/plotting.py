@@ -689,7 +689,7 @@ def import_plotly():
         return go
 
 
-def get_individual_states(sim):
+def get_individual_states(sim): # pragma: no cover
     ''' Helper function to convert people into integers '''
 
     people = sim.people
@@ -737,7 +737,7 @@ def get_individual_states(sim):
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
 
-def plotly_interventions(sim, fig, add_to_legend=False):
+def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
     ''' Add vertical lines for interventions to the plot '''
     go = import_plotly() # Load Plotly
     if sim['interventions']:
@@ -752,7 +752,7 @@ def plotly_interventions(sim, fig, add_to_legend=False):
     return
 
 
-def plotly_sim(sim, do_show=False):
+def plotly_sim(sim, do_show=False): # pragma: no cover
     ''' Main simulation results -- parallel of sim.plot() '''
 
     go = import_plotly() # Load Plotly
@@ -783,7 +783,7 @@ def plotly_sim(sim, do_show=False):
     return plots
 
 
-def plotly_people(sim, do_show=False):
+def plotly_people(sim, do_show=False): # pragma: no cover
     ''' Plot a "cascade" of people moving through different states '''
 
     go = import_plotly() # Load Plotly
@@ -812,7 +812,7 @@ def plotly_people(sim, do_show=False):
     return fig
 
 
-def plotly_animate(sim, do_show=False):
+def plotly_animate(sim, do_show=False): # pragma: no cover
     ''' Plot an animation of each person in the sim '''
 
     go = import_plotly() # Load Plotly

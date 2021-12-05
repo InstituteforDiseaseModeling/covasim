@@ -107,7 +107,7 @@ def test_waning(do_plot=False):
 
         # Run the simulations and pull out the results
         s0 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
-        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning', analyzers=cv.nab_histogram()).run()
         res0 = s0.summary
         res1 = s1.summary
         msim = cv.MultiSim([s0,s1])
