@@ -6,6 +6,11 @@
     font-size: 100%;
 }
 
+/* CK: slightly wider than default (800px) */
+.wy-nav-content {
+    max-width: 920px;
+}
+
 footer p {
     font-size: 14px;
     margin-top: 0px;
