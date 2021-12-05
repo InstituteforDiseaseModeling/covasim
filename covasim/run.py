@@ -1496,24 +1496,26 @@ Alternatively, to run without multiprocessing, set parallel=False.
     return sims
 
 
-def parallel(*args):
+def parallel(*args, **kwargs):
     '''
     A shortcut to ``cv.MultiSim()``, allowing the quick running of multiple simulations
     at once.
 
     Args:
-        The simulations to run
+        args (list): The simulations to run
+        kwargs (dict): passed to multi_run()
 
     Returns:
         A run MultiSim object.
 
-    **Example**::
+    **Examples**::
 
         s1 = cv.Sim(beta=0.01, label='Low')
         s2 = cv.Sim(beta=0.02, label='High')
         cv.parallel(s1, s2).plot()
+        msim = cv.parallel([s1, s2], keep_people=True)
 
     New in version 3.1.1.
     '''
     sims = sc.mergelists(*args)
-    return MultiSim(sims=sims).run()
+    return MultiSim(sims=sims).run(**kwargs)

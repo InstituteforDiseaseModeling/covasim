@@ -1040,7 +1040,10 @@ class BasePeople(FlexPretty):
         elif sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
         orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
-        pars = sc.mergedicts(orig_pars, pars)
+        if isinstance(orig_pars, dict):
+            for k,v in orig_pars:
+                if k not in pars:
+                    pars[k] = v
         if 'pop_size' not in pars:
             errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
             raise sc.KeyNotFoundError(errormsg)
