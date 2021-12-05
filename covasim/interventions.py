@@ -1796,6 +1796,8 @@ def prior_immunity(*args, **kwargs):
 
         pim1 = cv.prior_immunity(vaccine='pfizer', days=[-30], prob=0.7)
         pim2 = cv.prior_immunity(120, 0.05)
+
+    New in version 3.1.0.
     '''
 
     if 'vaccine' in kwargs:
@@ -1841,6 +1843,8 @@ class historical_vaccinate_prob(BaseVaccination):
 
         pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-30,0), prob=0.007) # 30-day vaccination campaign
         cv.Sim(interventions=pfizer).run().plot()
+
+    New in version 3.1.0.
     '''
     def __init__(self,  vaccine, days, label=None, prob=1.0, subtarget=None, compliance=1.0, **kwargs):
         super().__init__(vaccine, label=label, **kwargs)
@@ -2016,6 +2020,8 @@ class historical_wave(Intervention):
 
         **Example**::
             cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
+
+        New in version 3.1.0.
         '''
         super().__init__(**kwargs)
         self.days_prior = sc.dcp(days_prior)

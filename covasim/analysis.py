@@ -913,7 +913,9 @@ class nab_histogram(Analyzer):
 
         sim = cv.Sim(analyzers=cv.nab_histogram())
         sim.run()
-        sim['analyzers'][0].plot()
+        sim.get_analyzer().plot()
+
+    New in version 3.1.0.
     '''
     def __init__(self, days=None, edges=None, **kwargs):
         super().__init__(**kwargs)  # Initialize the Analyzer object
