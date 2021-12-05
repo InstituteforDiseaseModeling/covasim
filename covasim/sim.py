@@ -264,6 +264,10 @@ class Sim(cvb.BaseSim):
         if validate_layers:
             self.validate_layer_pars()
 
+        # Handle versioning
+        default_ver = self._default_ver if self._default_ver else self.version
+        self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
+
         # Handle verbose
         if self['verbose'] == 'brief':
             self['verbose'] = -1
@@ -636,8 +640,9 @@ class Sim(cvb.BaseSim):
                 rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
-                for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop
+                for p1,p2 in pairs:
+                    source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus, legacy=self._legacy_trans)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
