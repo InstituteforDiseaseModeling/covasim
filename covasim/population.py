@@ -174,8 +174,7 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     if microstructure == 'random':
         contacts = dict()
         for lkey,n in pars['contacts']:
-            p1,p2 = make_random_contacts(pop_size, n, **kwargs)
-            contacts[lkey] = dict(p1=p1, p2=p2)
+            contacts[lkey] = make_random_contacts(pop_size, n, **kwargs)
     elif microstructure == 'hybrid':
         contacts = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
     else: # pragma: no cover
@@ -188,24 +187,35 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     return popdict
 
 
-def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None):
+def _tidy_edgelist(p1, p2, mapping):
+    ''' Helper function to convert lists to arrays and optionally map arrays '''
+    p1 = np.array(p1, dtype=cvd.default_int)
+    p2 = np.array(p2, dtype=cvd.default_int)
+    if mapping:
+        p1 = mapping[p1]
+        p2 = mapping[p2]
+    output = dict(p1=p1, p2=p2)
+    return output
+
+def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None, mapping=None):
     '''
     Make random static contacts for a single layer as an edgelist.
 
     Args:
-        pop_size (int): number of agents to create contacts between (N)
-        n (int): the average number of contacts per person for this layer
-        overshoot (float): to avoid needing to take multiple Poisson draws
-        dispersion (float): if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
+        pop_size   (int)   : number of agents to create contacts between (N)
+        n          (int)   : the average number of contacts per person for this layer
+        overshoot  (float) : to avoid needing to take multiple Poisson draws
+        dispersion (float) : if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
+        mapping    (array) : optionally map the generated indices onto new indices
 
     Returns:
-        p1 (list): a list of length N, containing the UIDs of the source agents
-        p2 (list): a list of length N of all the source agents' targets
+        Dictionary of two arrays defining UIDs of the edgelist (sources and targets)
+
+    New in 3.1.1: optimized and updated arguments.
     '''
 
     # Preprocessing
     pop_size = int(pop_size) # Number of people
-    n = int(n)
     p1 = [] # Initialize the "sources"
     p2 = [] # Initialize the "targets"
 
@@ -227,10 +237,13 @@ def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None):
         p1.extend([p]*n_contacts)
         p2.extend(these_contacts)
 
-    return p1, p2
+    # Tidy up
+    output = _tidy_edgelist(p1, p2, mapping)
+
+    return output
 
 
-def make_microstructured_contacts(pop_size, cluster_size):
+def make_microstructured_contacts(pop_size, cluster_size, mapping=None):
     '''
     Create microstructured contacts -- i.e. for households.
 
@@ -238,17 +251,16 @@ def make_microstructured_contacts(pop_size, cluster_size):
         pop_size (int): total number of people
         cluster_size (int): the average size of each cluster (Poisson-sampled)
 
-    New in version 3.1.1: updated arguments.
+    New in version 3.1.1: optimized updated arguments.
     '''
 
     # Preprocessing -- same as above
     pop_size = int(pop_size) # Number of people
-    contacts_list = [None]*pop_size # Pre-populate, speed-optimized
+    p1 = [] # Initialize the "sources"
+    p2 = [] # Initialize the "targets"
 
     # Initialize
-    cluster_dict = dict() # Add dictionary for this layer
     n_remaining = pop_size # Make clusters - each person belongs to one cluster
-    contacts_dict = defaultdict(set) # Use defaultdict of sets for convenience while initializing. Could probably change this as part of performance optimization
 
     # Loop over the clusters
     cluster_id = -1
@@ -259,18 +271,18 @@ def make_microstructured_contacts(pop_size, cluster_size):
             this_cluster = n_remaining
 
         # Indices of people in this cluster
-        cluster_indices = (pop_size-n_remaining)+np.arange(this_cluster)
-        cluster_dict[cluster_id] = cluster_indices
+        cluster_indices = (pop_size-n_remaining) + np.arange(this_cluster)
         for ind,i in enumerate(cluster_indices): # Add symmetric pairwise contacts in each cluster
             for j in cluster_indices[ind+1:]:
-                contacts_dict[i].add(j)
+                p1.append(i)
+                p2.append(j)
 
         n_remaining -= this_cluster
 
-    for key in contacts_dict.keys():
-        contacts_list[key] = np.array(list(contacts_dict[key]), dtype=cvd.default_int)
+    # Tidy up
+    output = _tidy_edgelist(p1, p2, mapping)
 
-    return contacts_list
+    return output
 
 
 def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=None):
@@ -282,21 +294,19 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     '''
 
     # Handle inputs and defaults
-    layer_keys = ['h', 's', 'w', 'c']
     contacts = sc.mergedicts({'h':4, 's':20, 'w':20, 'c':20}, contacts) # Ensure essential keys are populated
     if school_ages is None:
         school_ages = [6, 22]
     if work_ages is None:
         work_ages   = [22, 65]
 
-    # Create the empty contacts list -- a list of {'h':[], 's':[], 'w':[]}
-    contacts_list = [{key:[] for key in layer_keys} for i in range(pop_size)]
+    contacts_dict = {}
 
     # Start with the household contacts for each person
-    h_contacts = make_microstructured_contacts(pop_size, contacts['h'])
+    contacts_dict['h'] = make_microstructured_contacts(pop_size, contacts['h'])
 
     # Make community contacts
-    c_contacts, _ = make_random_contacts(pop_size, contacts['c'])
+    contacts_dict['c'] = make_random_contacts(pop_size, contacts['c'])
 
     # Get the indices of people in each age bin
     ages = np.array(ages)
@@ -304,26 +314,10 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     w_inds = sc.findinds((ages >= work_ages[0])   * (ages < work_ages[1]))
 
     # Create the school and work contacts for each person
-    s_contacts, _ = make_random_contacts(len(s_inds), contacts['s'])
-    w_contacts, _ = make_random_contacts(len(w_inds), contacts['w'])
+    contacts_dict['s'] = make_random_contacts(len(s_inds), contacts['s'], mapping=s_inds)
+    contacts_dict['w'] = make_random_contacts(len(w_inds), contacts['w'], mapping=w_inds)
 
-    # Construct the actual lists of contacts -- households and communities
-    for i in range(pop_size):
-        this_h = h_contacts[i]
-        if this_h is None: this_h = []
-        contacts_list[i]['h'] = this_h  # Copy over household contacts -- present for everyone
-        contacts_list[i]['c'] = c_contacts[i]  # Copy over community contacts -- present for everyone
-
-    # Copy over school contacts
-    for i,ind in enumerate(s_inds):
-        contacts_list[ind]['s'] = s_inds[s_contacts[i]]
-
-    # Copy over work contacts
-    for i,ind in enumerate(w_inds):
-        contacts_list[ind]['w'] = w_inds[w_contacts[i]]
-
-    return contacts_list, layer_keys
-
+    return contacts_dict
 
 
 def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs): # pragma: no cover
