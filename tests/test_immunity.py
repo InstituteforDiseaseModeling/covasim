@@ -14,7 +14,7 @@ do_plot = 1
 cv.options.set(interactive=False) # Assume not running interactively
 
 # Shared parameters across simulations
-base_pars = dict(
+base_pars = sc.objdict(
     pop_size = 1e3,
     verbose  = -1,
 )
@@ -152,9 +152,10 @@ def test_vaccines(do_plot=False):
 
     nabs = []
     p1 = cv.variant('beta',   days=20, n_imports=20)
-    pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30)
+    pfizer = cv.vaccinate(vaccine='pfizer', days=30)
     sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
+    sim.shrink()
 
     if do_plot:
         nabs = np.array(nabs).sum(axis=1)
@@ -169,11 +170,17 @@ def test_vaccines(do_plot=False):
 def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
-    p1 = cv.variant('beta',   days=20, n_imports=20)
+    n_days = 60
+    p1 = cv.variant('beta', days=20, n_imports=20)
+    num_doses = {i:20*(i%2) for i in np.arange(n_days)} # Test subtarget and fluctuating doses
+    # num_doses = {i:10 for i in np.arange(n_days)} # Test subtarget and fluctuating doses
+    print(num_doses)
+    print('hi')
 
     n_doses = []
-    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=lambda sim: sim.t)
-    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
+    subtarget = None#dict(inds=np.arange(int(base_pars.pop_size//2)), vals=0.1)
+    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=num_doses, subtarget=subtarget)
+    sim  = cv.Sim(base_pars, n_days=n_days, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
     sim.run()
 
     n_doses = np.array(n_doses)
@@ -215,7 +222,7 @@ def test_two_vaccines(do_plot=False):
     vac1 = cv.vaccinate_num(vaccine='pfizer', sequence=[0], num_doses=1)
     vac2 = cv.vaccinate_num(vaccine='jj', sequence=[1], num_doses=1)
 
-    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     if do_plot:
@@ -223,6 +230,8 @@ def test_two_vaccines(do_plot=False):
         pl.figure()
         pl.plot(nabs)
         pl.show()
+
+    return sim
 
 
 def test_vaccine_target_eff():
@@ -391,14 +400,14 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
+    # sim1   = test_states()
+    # msims1 = test_waning(do_plot=do_plot)
+    # sim2   = test_variants(do_plot=do_plot)
+    # sim3   = test_vaccines(do_plot=do_plot)
     sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
-    sim6   = test_vaccine_target_eff()
-    res    = test_decays(do_plot=do_plot)
+    # sim5   = test_two_vaccines(do_plot=do_plot)
+    # sim6   = test_vaccine_target_eff()
+    # res    = test_decays(do_plot=do_plot)
 
     sc.toc(T)
     print('Done.')

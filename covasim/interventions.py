@@ -59,8 +59,8 @@ def preprocess_day(day, sim):
     Preprocess a day: leave it as-is if it's a function, or try to convert it to
     an integer if it's anything else.
     '''
-    if callable(day): # If it's callable, leave it as-is
-        return day
+    if callable(day):  # pragma: no cover
+        return day # If it's callable, leave it as-is
     else:
         day = sim.day(day) # Otherwise, convert it to an int
     return day
@@ -70,7 +70,7 @@ def get_day(day, interv=None, sim=None):
     '''
     Return the day if it's an integer, or call it if it's a function.
     '''
-    if callable(day):
+    if callable(day): # pragma: no cover
         return day(interv, sim) # If it's callable, call it
     else:
         return day # Otherwise, leave it as-is
@@ -87,7 +87,7 @@ def process_days(sim, days, return_dates=False):
     if sc.isstring(days) or not sc.isiterable(days):
         days = sc.promotetolist(days)
     for d,day in enumerate(days):
-        if day in ['end', -1]:
+        if day in ['end', -1]: # pragma: no cover
             day = sim['end_day']
         days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
     days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
@@ -128,8 +128,8 @@ def process_daily_data(daily_data, sim, start_day, as_int=False):
     if sc.isstring(daily_data):
         if daily_data == 'data':
             daily_data = sim.data['new_tests'] # Use default name
-        else:
-            try: # pragma: no cover
+        else: # pragma: no cover
+            try:
                 daily_data = sim.data[daily_data]
             except Exception as E:
                 errormsg = f'Tried to load testing data from sim.data["{daily_data}"], but that failed: {str(E)}.\nPlease ensure data are loaded into the sim and the column exists.'
@@ -288,7 +288,7 @@ class Intervention:
             self.input_args = {}
             for key,value in values.items():
                 if key == 'kwargs': # Store additional kwargs directly
-                    for k2,v2 in value.items():
+                    for k2,v2 in value.items(): # pragma: no cover
                         self.input_args[k2] = v2 # These are already a dict
                 elif key not in ['self', '__class__']: # Everything else, but skip these
                     self.input_args[key] = value
@@ -312,7 +312,7 @@ class Intervention:
         This method is run once as part of `sim.finalize()` enabling the intervention to perform any
         final operations after the simulation is complete (e.g. rescaling)
         '''
-        if self.finalized:
+        if self.finalized: # pragma: no cover
             raise RuntimeError('Intervention already finalized')  # Raise an error because finalizing multiple times has a high probability of producing incorrect results e.g. applying rescale factors twice
         self.finalized = True
         return
@@ -341,7 +341,7 @@ class Intervention:
         Args:
             in_place (bool): whether to shrink the intervention (else shrink a copy)
         '''
-        if in_place:
+        if in_place: # pragma: no cover
             return self
         else:
             return sc.dcp(self)
@@ -874,6 +874,7 @@ class test_prob(Intervention):
         test_delay       (int)       : days for test result to be known (default 0, i.e. results available instantly)
         start_day        (int)       : day the intervention starts (default: 0, i.e. first day of the simulation)
         end_day          (int)       : day the intervention ends (default: no end)
+        swab_delay       (dict)      : distribution for the delay from onset to swab; if this is present, it is used instead of test_delay
         kwargs           (dict)      : passed to Intervention()
 
     **Examples**::
@@ -963,7 +964,7 @@ class test_prob(Intervention):
         # Construct the testing probabilities piece by piece -- complicated, since need to do it in the right order
         test_probs = np.zeros(sim['pop_size']) # Begin by assigning equal testing probability to everyone
         test_probs[symp_inds]       = symp_prob            # People with symptoms (true positive)
-        test_probs[ili_inds]        = symp_prob            # People with symptoms (false positive)
+        test_probs[ili_inds]        = self.symp_prob       # People with symptoms (false positive) -- can't use swab delay since no date symptomatic
         test_probs[asymp_inds]      = self.asymp_prob      # People without symptoms
         test_probs[symp_quar_inds]  = self.symp_quar_prob  # People with symptoms in quarantine
         test_probs[asymp_quar_inds] = self.asymp_quar_prob # People without symptoms in quarantine
@@ -1335,7 +1336,7 @@ class BaseVaccination(Intervention):
             # Parse label
             vaccine_pars = vaccine
             label = vaccine_pars.pop('label', None) # Allow including the label in the parameters
-            if self.label is None:
+            if self.label is None: # pragma: no cover
                 if label is None:
                     self.label = 'custom'
                 else:
@@ -1355,7 +1356,7 @@ class BaseVaccination(Intervention):
         super().initialize()
 
         # Check that the simulation parameters are correct
-        if not sim['use_waning']:
+        if not sim['use_waning']: # pragma: no cover
             errormsg = f'The cv.{self.__class__.__name__} intervention requires use_waning=True. Please enable waning, or else use cv.simple_vaccine().'
             raise RuntimeError(errormsg)
 
@@ -1375,7 +1376,7 @@ class BaseVaccination(Intervention):
             if key not in self.p:
                 if key in default_variant_pars:
                     val = default_variant_pars[key]
-                else:
+                else: # pragma: no cover
                     val = 1.0
                     if sim['verbose']: print(f'Note: No cross-immunity specified for vaccine {self.label} and variant {key}, setting to 1.0')
                 self.p[key] = val
@@ -1393,7 +1394,7 @@ class BaseVaccination(Intervention):
                     boosted_nab = nabs[np.argmax(VE_symp>self.p['target_eff'][1])]
                     boost = (2**boosted_nab)/(2**peak_nab)
                     self.p['nab_boost'] = boost
-            else:
+            else: # pragma: no cover
                 errormsg = 'Provided mismatching efficacies and doses.'
                 raise ValueError(errormsg)
 
@@ -1444,7 +1445,7 @@ class BaseVaccination(Intervention):
 
         if t is None:
             t = sim.t
-        else:
+        else: # pragma: no cover
             assert t <= sim.t, 'Overriding the vaccination day should only be used for historical vaccination' # High potential for errors to creep in if future vaccines could be scheduled here
 
         # Perform checks

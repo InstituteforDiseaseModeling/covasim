@@ -1470,7 +1470,7 @@ def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, *
         cv.demo('full', overview=True) # Plot all results
         cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values
     '''
-    from . import interventions as cvi
+    from . import interventions as cvi # To avoid circular imports
     from . import run as cvr
 
     run_args = sc.mergedicts(run_args)

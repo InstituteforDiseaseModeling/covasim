@@ -219,7 +219,7 @@ def migrate_lognormal(pars, revert=False, verbose=True):
         verbose (bool): whether to print out the old and new values
     '''
     # Handle different input types
-    from . import base as cvb
+    from . import base as cvb # To avoid circular imports
     if isinstance(pars, cvb.BaseSim):
         pars = pars.pars # It's actually a sim, not a pars object
 
@@ -276,8 +276,7 @@ def migrate(obj, update=True, verbose=True, die=False):
         sims = cv.load('my-list-of-sims.obj')
         sims = [cv.migrate(sim) for sim in sims]
     '''
-    # Import here to avoid recursion
-    from . import base as cvb
+    from . import base as cvb # To avoid circular imports
     from . import run as cvr
     from . import interventions as cvi
 
