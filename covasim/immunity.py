@@ -99,7 +99,7 @@ class variant(sc.prettyobj):
 
         # Set label and parameters
         self.label = label
-        self.p = sc.objdict(variant_pars)
+        self.p = variant_pars
 
         return
 
@@ -330,7 +330,13 @@ def check_immunity(people, variant):
     imm[was_inf_same] = immunity[variant]
     imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
     if len(is_vacc) and len(pars['vaccine_pars']): # if using simple_vaccine, do not apply
-        imm[is_vacc] = [pars['vaccine_pars'][pars['vaccine_map'][i]][pars['variant_map'][variant]] for i in vacc_source]
+        vx_pars = pars['vaccine_pars']
+        vx_map = pars['vaccine_map']
+        var_key = pars['variant_map'][variant]
+        imm_arr = np.zeros(max(vx_map.keys())+1)
+        for num,key in vx_map.items():
+            imm_arr[num] = vx_pars[key][var_key]
+        imm[is_vacc] = imm_arr[vacc_source]
 
     current_nabs *= imm
     people.sus_imm[variant,:]  = calc_VE(current_nabs, 'sus',  nab_eff)
