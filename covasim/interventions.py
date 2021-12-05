@@ -2037,7 +2037,7 @@ class historical_wave(Intervention):
             return
 
         # Check that the simulation parameters are correct
-        if not sim['use_waning']:
+        if not sim['use_waning']: # pragma: no cover
             errormsg = 'cv.historical_wave() requires use_waning=True. Please enable waning.'
             raise RuntimeError(errormsg)
         if sim['rescale'] and sim['pop_scale'] > 1:
@@ -2098,25 +2098,25 @@ class historical_wave(Intervention):
 
             # require that all offsets are before the start of the sim
             filtered_wave_inds = cvu.true(this_inf_offset_days <= 0)
-            if len(filtered_wave_inds) == 0:
-                errormsg = f'WARNING: Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
-                print(errormsg)
+            if len(filtered_wave_inds) == 0: # pragma: no cover
+                warnmsg = f'WARNING: Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
+                print(warnmsg)
                 continue
 
             wave_inds = wave_inds + this_wave_inds[filtered_wave_inds].tolist()
             inf_offset_days = inf_offset_days + np.round(this_inf_offset_days[filtered_wave_inds]).astype(cvd.default_int).tolist()
             wave_id += len(filtered_wave_inds)*[wave]
 
-        if len(wave_id) == 0:
-            errormsg = 'WARNING: No waves resulted in any infections prior to the start of the simulation'
-            print(errormsg)
+        if len(wave_id) == 0: # pragma: no cover
+            warnmsg = 'WARNING: No waves resulted in any infections prior to the start of the simulation'
+            print(warnmsg)
             return
 
         wave_id = np.array(wave_id)
         wave_inds = np.array(wave_inds)
         inf_offset_days = np.array(inf_offset_days)
 
-        if len(wave_id) != len(inf_offset_days):
+        if len(wave_id) != len(inf_offset_days): # pragma: no cover
             raise  RuntimeError(f'arrays mismatch: {len(wave_id)} != {len(inf_offset_days)}')
 
         # we will need to extend the nab profiles
