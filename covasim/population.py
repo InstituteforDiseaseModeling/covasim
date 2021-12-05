@@ -173,7 +173,7 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     # Actually create the contacts
     if microstructure == 'random':
         contacts = dict()
-        for lkey,n in pars['contacts']:
+        for lkey,n in pars['contacts'].items():
             contacts[lkey] = make_random_contacts(pop_size, n, **kwargs)
     elif microstructure == 'hybrid':
         contacts = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
@@ -191,11 +191,13 @@ def _tidy_edgelist(p1, p2, mapping):
     ''' Helper function to convert lists to arrays and optionally map arrays '''
     p1 = np.array(p1, dtype=cvd.default_int)
     p2 = np.array(p2, dtype=cvd.default_int)
-    if mapping:
+    if mapping is not None:
+        mapping = np.array(mapping, dtype=cvd.default_int)
         p1 = mapping[p1]
         p2 = mapping[p2]
     output = dict(p1=p1, p2=p2)
     return output
+
 
 def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None, mapping=None):
     '''

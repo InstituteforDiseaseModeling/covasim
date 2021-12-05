@@ -1271,17 +1271,11 @@ class BasePeople(FlexPretty):
             lkey = self.layer_keys()[0]
 
         # Validate the supplied contacts
-        if isinstance(contacts, Contacts):
+        if isinstance(contacts, (Contacts, dict)): # If it's a Contacts object or a dict, we can use it directly
             new_contacts = contacts
         elif isinstance(contacts, Layer):
             new_contacts = {}
             new_contacts[lkey] = contacts
-        elif sc.checktype(contacts, 'array'):
-            new_contacts = {}
-            new_contacts[lkey] = pd.DataFrame(data=contacts)
-        elif isinstance(contacts, dict):
-            new_contacts = {}
-            new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
         else: # pragma: no cover
@@ -1404,10 +1398,13 @@ class Contacts(FlexDict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
-    def __init__(self, layer_keys=None):
+    def __init__(self, layer_keys=None, data=None):
         if layer_keys is not None:
             for lkey in layer_keys:
                 self[lkey] = Layer(label=lkey)
+        if data is not None:
+            for lkey,layer_data in data.items():
+                self[lkey] = Layer(**layer_data)
         return
 
     def __repr__(self):
@@ -1537,6 +1534,10 @@ class Layer(FlexDict):
         # Set data, if provided
         for key,value in kwargs.items():
             self[key] = np.array(value, dtype=self.meta.get(key))
+
+        # Set beta if not provided
+        if 'beta' not in self.keys():
+            self['beta'] = np.ones(len(self), dtype=cvd.default_float)
 
         return
 
