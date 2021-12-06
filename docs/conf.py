@@ -18,6 +18,7 @@ import sphinx_rtd_theme
 from datetime import datetime
 import covasim as cv
 
+os.environ['SPHINX_BUILD'] = 'True'
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 if sys.platform in ["linux", "darwin"]:
