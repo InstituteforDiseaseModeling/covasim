@@ -248,9 +248,13 @@ def migrate_variants(pars, verbose=True):
     '''
     Small helper function to add necessary variant parameters.
     '''
-    pars['use_waning'] = False
-    pars['n_variants'] = 1
-    pars['variants'] = []
+    pars['use_waning']   = False
+    pars['n_variants']   = 1
+    pars['variants']     = []
+    pars['variant_map']  = {}
+    pars['variant_pars'] = {}
+    pars['vaccine_map']  = {}
+    pars['vaccine_pars'] = {}
     return
 
 
@@ -285,7 +289,7 @@ def migrate(obj, update=True, verbose=True, die=False):
         sim = obj
 
         # Migration from <2.0.0 to 2.0.0
-        if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+        if sc.compareversions(sim.version, '<2.0.0'): # Migrate from <2.0 to 2.0
             if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
 
             # Add missing attribute
@@ -306,18 +310,22 @@ def migrate(obj, update=True, verbose=True, die=False):
                     pass
 
         # Migration from <2.1.0 to 2.1.0
-        if sc.compareversions(sim.version, '2.1.0') == -1:
+        if sc.compareversions(sim.version, '<2.1.0'):
             if verbose:
                 print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                 print('Note: updating lognormal stds to restore previous behavior; see v2.1.0 changelog for details')
             migrate_lognormal(sim.pars, verbose=verbose)
 
         # Migration from <3.0.0 to 3.0.0
-        if sc.compareversions(sim.version, '3.0.0') == -1:
+        if sc.compareversions(sim.version, '<3.0.0'):
             if verbose:
                 print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
                 print('Adding variant parameters')
             migrate_variants(sim.pars, verbose=verbose)
+
+        # Migration from <3.1.1 to 3.1.1
+        if sc.compareversions(sim.version, '<3.1.1'):
+            sim._legacy_trans = True
 
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover
