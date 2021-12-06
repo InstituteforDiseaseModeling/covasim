@@ -285,7 +285,7 @@ def migrate(obj, update=True, verbose=True, die=False):
         sim = obj
 
         # Migration from <2.0.0 to 2.0.0
-        if sc.compareversions(sim.version, '2.0.0') == -1: # Migrate from <2.0 to 2.0
+        if sc.compareversions(sim.version, '<2.0.0'): # Migrate from <2.0 to 2.0
             if verbose: print(f'Migrating sim from version {sim.version} to version {cvv.__version__}')
 
             # Add missing attribute

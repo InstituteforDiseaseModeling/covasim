@@ -251,14 +251,12 @@ class Sim(cvb.BaseSim):
             raise ValueError(errormsg)
 
         # Handle interventions, analyzers, and variants
-        self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+        for key in ['interventions', 'analyzers', 'variants']: # Ensure all of them are lists
+            self[key] = sc.dcp(sc.tolist(self[key], keepnone=False)) # All of these have initialize functions that run into issues if they're reused
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
-        self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
-        self['variants'] = sc.promotetolist(self['variants'], keepnone=False)
-        for key in ['interventions', 'analyzers', 'variants']:
-            self[key] = sc.dcp(self[key]) # All of these have initialize functions that run into issues if they're reused
+        self['variant_map'] = {int(k):v for k,v in self['variant_map'].items()} # Ensure keys are ints, not strings of ints if loaded from JSON
 
         # Optionally handle layer parameters
         if validate_layers:
@@ -266,7 +264,7 @@ class Sim(cvb.BaseSim):
 
         # Handle versioning
         default_ver = self._default_ver if self._default_ver else self.version
-        self._legacy_trans = True#sc.compareversions(default_ver, '<3.1.1') # Handle regression
+        self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
 
         # Handle verbose
         if self['verbose'] == 'brief':
