@@ -53,24 +53,6 @@ def test_rand():
     return a
 
 
-def test_poisson():
-    sc.heading('Poisson distribution')
-    s1 = cv.poisson_test(10, 10)
-    s2 = cv.poisson_test(10, 15)
-    s3 = cv.poisson_test(0, 100)
-    l1 = 1.0
-    l2 = 0.05
-    l3 = 1e-9
-    assert s1 == l1
-    assert s2 > l2
-    assert s3 < l3
-    print('Poisson assertions passed:')
-    print(f'f(10,10) {s1} == {l1}')
-    print(f'f(10,15) {s2} > {l2}')
-    print(f'f(0,100) {s3} < {l3}')
-    return s3
-
-
 def test_samples(do_plot=False, verbose=True):
     sc.heading('Samples distribution')
 
@@ -257,7 +239,6 @@ if __name__ == '__main__':
     T = sc.tic()
 
     rnd1    = test_rand()
-    rnd2    = test_poisson()
     samples = test_samples(do_plot=do_plot)
     people1 = test_choose()
     people2 = test_choose_w()

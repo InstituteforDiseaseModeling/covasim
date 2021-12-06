@@ -208,17 +208,6 @@ def test_misc():
     cv.git_info(json_path)
     cv.git_info(json_path, check=True)
 
-    # Poisson tests
-    c1 = 5
-    c2 = 8
-    for alternative in ['two-sided', 'larger', 'smaller']:
-        cv.poisson_test(c1, c2, alternative=alternative)
-    for method in ['score', 'wald', 'sqrt', 'exact-cond']:
-        cv.poisson_test(c1, c2, method=method)
-
-    with pytest.raises(ValueError):
-        cv.poisson_test(c1, c2, method='not a method')
-
     # Test locations
     for location in [None, 'viet-nam']:
         cv.data.show_locations(location)
