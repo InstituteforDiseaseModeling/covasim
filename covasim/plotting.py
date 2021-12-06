@@ -21,6 +21,22 @@ __all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_comp
 
 #%% Plotting helper functions
 
+def load_custom_fonts():
+    '''
+    Load custom fonts
+    '''
+    try:
+        import matplotlib.font_manager as mplfm
+        folder = sc.thisdir(__file__, aspath=True) / 'data' / 'assets'
+        for font in mplfm.findSystemFonts([folder]):
+            mplfm.fontManager.addfont(font)
+    except:
+        pass
+    return
+
+# Load custom fonts on import
+load_custom_fonts()
+
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
                 legend_args=None, date_args=None, show_args=None, mpl_args=None, **kwargs):
