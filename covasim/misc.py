@@ -248,9 +248,13 @@ def migrate_variants(pars, verbose=True):
     '''
     Small helper function to add necessary variant parameters.
     '''
-    pars['use_waning'] = False
-    pars['n_variants'] = 1
-    pars['variants'] = []
+    pars['use_waning']   = False
+    pars['n_variants']   = 1
+    pars['variants']     = []
+    pars['variant_map']  = {}
+    pars['variant_pars'] = {}
+    pars['vaccine_map']  = {}
+    pars['vaccine_pars'] = {}
     return
 
 
