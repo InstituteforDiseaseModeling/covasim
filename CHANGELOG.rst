@@ -29,13 +29,31 @@ Latest versions (3.1.x)
 
 Version 3.1.1 (2021-12-06)
 --------------------------
-- Performance improvements have been implemented in all aspects of Covasim, including:
-   - By changing certain imports to be just-in-time rather than up-front, module import time (``import covasim as cv``) was roughly halved (from about 0.7 s to 0.4 s).
-   - Population generation methods have been refactored; initializing a sim is now twice as fast (from about 0.4 s to 0.2 s for 20,000 people).
-   - Immunity and infection methods have been refactored, leading to about a 30% improvement in run time.
+
+Performance improvements
+^^^^^^^^^^^^^^^^^^^^^^^^
+Performance improvements have been implemented in all aspects of Covasim, including:
+- By changing certain imports to be just-in-time rather than up-front, module import time (``import covasim as cv``) was roughly halved (from about 0.7 s to 0.4 s).
+- Population generation methods have been refactored; initializing a sim is now twice as fast (from about 0.4 s to 0.2 s for 20,000 people).
+- Immunity and infection methods have been refactored, leading to about a 30% improvement in run time.
+
+Bugfixes
+^^^^^^^^
+- Fixed a bug in which ``sim.pars`` and ``sim.people.pars`` were not the same object. In almost all cases, the latter should now be a link to the former.
+- Fixed a bug whereby interventions and analyzers were not being shrunk correctly.
+- Fixed a bug with 2nd vaccine doses not being rescheduled if zero doses were given on the day they were scheduled.
+
+Other updates
+^^^^^^^^^^^^^
+- A new convenience function has been added: ``cv.parallel(sim1, sim2)`` is equivalent to ``cv.MultiSim([sim1, sim2]).run()``.
 - Calibrations now have multiple new analysis and plotting features, including ``calib.plot_trend()``, ``calib.plot_best()``, ``calib.to_json()``, etc.  ``calib.plot()`` has been renamed to ``calib.plot_sims()``.
 - By default, calibrations now keep going if a sim encounters an exception; to restore the previous behavior, use ``sim.calibrate(die=True)``. A calibration run with a single worker now does not use ``multiprocess``, to simplify debugging.
-- *Regression information*: The new infection calculation method is mathematically identical but draws differently from the random number stream, giving stochastically different results than before. To revert to the previous (slower) calculation method, set ``sim._legacy_trans = True`` after initialization. This legacy option is automatically enabled if running with an earlier version of parameters, e.g. ``cv.Sim(version='3.1.0')``. Calls to ``calib.plot()`` should be replaced with ``calib.plot_sims()``.
+- There is a new option for changing the thousands separator (e.g. to use European formatting), via e.g. ``cv.options.set(sep='.')``. This does not yet apply to plots, but will in a future version.
+- A convenience method has been added for setting correct plot options for Jupyter: ``cv.options.set('jupyter')``.
+- Population generation functions ``make_random_contacts()`` and ``make_microstructured_contacts()`` were updated to generate edgelists rather than lists-of-dicts.
+- ``cv.poisson_test()`` was removed as as it was no longer being used.
+- Tutorials, examples, and the FAQ have all been updated. In particular, all tutorials are now available to be run interactively with Binder via http://tutorials.covasim.org.
+- *Regression information*: The new infection calculation method is mathematically identical but draws differently from the random number stream, giving stochastically different results than before. To revert to the previous (slower) calculation method, set ``sim._legacy_trans = True`` after initialization. This legacy option is automatically enabled if running with an earlier version of parameters, e.g. ``cv.Sim(version='3.1.0')``. Calls to ``calib.plot()`` should be replaced with ``calib.plot_sims()``. If you were using ``cv.poisson_test()``, you're on your own now, but are invited to copy it from an older version of Covasim.
 - *GitHub info*: PR `1249 <https://github.com/amath-idm/covasim/pull/1249>`_
 
 
