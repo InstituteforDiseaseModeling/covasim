@@ -51,7 +51,7 @@ def set_default_options():
     options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
 
     optdesc.font_family = 'Set the default font family (e.g., Arial)'
-    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
+    options.font_family = os.getenv('COVASIM_FONT_FAMILY', 'Rosario')
 
     optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
@@ -71,7 +71,7 @@ orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
 matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
-numba_keys = ['precision', 'numba_parallel', 'numba_cache']
+numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
 
 def set_option(key=None, value=None, **kwargs):
@@ -263,3 +263,8 @@ def reload_numba():
 options.set = set_option
 options.get_default = get_default
 options.help = get_help
+
+
+# Finally, set the specified options
+for key in matplotlib_keys:
+    set_matplotlib_global(key, options[key])
