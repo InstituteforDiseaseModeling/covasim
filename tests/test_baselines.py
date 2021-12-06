@@ -66,7 +66,7 @@ def save_baseline():
 
     # Export default parameters
     s1 = make_sim(use_defaults=True)
-    s1.export_pars(filename=parameters_filename)
+    s1.export_pars(filename=parameters_filename) # If not different from previous version, can safely delete
 
     # Export results
     s2 = make_sim(use_defaults=False)
