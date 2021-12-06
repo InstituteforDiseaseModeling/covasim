@@ -68,6 +68,7 @@ class Sim(cvb.BaseSim):
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
         self._default_ver  = version  # Default version of parameters used
+        self._legacy_trans = None     # Whether to use the legacy transmission calculation method (slower; for reproducing earlier results)
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Make default parameters (using values from parameters.py)
@@ -263,8 +264,9 @@ class Sim(cvb.BaseSim):
             self.validate_layer_pars()
 
         # Handle versioning
-        default_ver = self._default_ver if self._default_ver else self.version
-        self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
+        if self._legacy_trans is None:
+            default_ver = self._default_ver if self._default_ver else self.version
+            self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
 
         # Handle verbose
         if self['verbose'] == 'brief':
