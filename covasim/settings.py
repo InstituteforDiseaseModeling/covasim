@@ -128,8 +128,9 @@ def set_option(key=None, value=None, **kwargs):
         )
         kwargs = sc.mergedicts(jupyter_kwargs, kwargs)
         try: # This makes plots much nicer, but isn't available on all systems
-            import matplotlib_inline
-            matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+            if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                import matplotlib_inline
+                matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
         except:
             pass
 

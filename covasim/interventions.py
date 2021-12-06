@@ -1718,7 +1718,9 @@ class vaccinate_num(BaseVaccination):
 
         # Work out how many people to vaccinate today
         num_people = process_doses(self.num_doses, sim)
-        if num_people == 0: return np.array([])
+        if num_people == 0:
+            self._scheduled_doses[sim.t + 1].update(self._scheduled_doses[sim.t])  # Defer any extras
+            return np.array([])
         num_agents = sc.randround(num_people / sim['pop_scale'])
 
         # First, see how many scheduled second doses we are going to deliver

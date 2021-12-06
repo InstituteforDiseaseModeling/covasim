@@ -1328,7 +1328,14 @@ class Fit(Analyzer):
 
         return fig
 
-
+def import_optuna():
+    ''' A helper function to import Optuna, which is an optional dependency '''
+    try:
+        import optuna as op # Import here since it's slow
+    except ModuleNotFoundError as E: # pragma: no cover
+        errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
+        raise ModuleNotFoundError(errormsg)
+    return op
 
 class Calibration(Analyzer):
     '''
@@ -1378,12 +1385,6 @@ class Calibration(Analyzer):
                  keep_db=None, storage=None, label=None, die=False, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
 
-        try:
-            import optuna as op # Import here since it's slow
-            self.op = op # Store in the class so it doesn't need to be imported globally
-        except ModuleNotFoundError as E: # pragma: no cover
-            errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
-            raise ModuleNotFoundError(errormsg)
         import multiprocessing as mp # Import here since it's also slow
 
         # Handle run arguments
@@ -1463,7 +1464,7 @@ class Calibration(Analyzer):
 
     def worker(self):
         ''' Run a single worker '''
-        op = self.op
+        op = import_optuna()
         if self.verbose:
             op.logging.set_verbosity(op.logging.DEBUG)
         else:
@@ -1483,7 +1484,11 @@ class Calibration(Analyzer):
 
 
     def remove_db(self):
-        ''' Remove the database file if keep_db is false and the path exists '''
+        '''
+        Remove the database file if keep_db is false and the path exists.
+
+        New in version 3.1.0.
+        '''
         if os.path.exists(self.run_args.db_name):
             os.remove(self.run_args.db_name)
             if self.verbose:
@@ -1493,9 +1498,10 @@ class Calibration(Analyzer):
 
     def make_study(self):
         ''' Make a study, deleting one if it already exists '''
+        op = import_optuna()
         if not self.run_args.keep_db:
             self.remove_db()
-        output = self.op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
 
@@ -1508,6 +1514,7 @@ class Calibration(Analyzer):
             verbose (bool): whether to print output from each trial
             kwargs (dict): if supplied, overwrite stored run_args (n_trials, n_workers, etc.)
         '''
+        op = import_optuna()
 
         # Load and validate calibration parameters
         if calib_pars is not None:
@@ -1521,7 +1528,7 @@ class Calibration(Analyzer):
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
-        self.study = self.op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        self.study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
         self.best_pars = sc.objdict(self.study.best_params)
         self.elapsed = sc.toc(t0, output=True)
 
@@ -1539,10 +1546,11 @@ class Calibration(Analyzer):
         if verbose:
             self.summarize()
 
-        return
+        return self
 
 
     def summarize(self):
+        ''' Print out results from the calibration '''
         if self.calibrated:
             print(f'Calibration for {self.run_args.n_workers*self.run_args.n_trials} total trials completed in {self.elapsed:0.1f} s.')
             before = self.before.fit.mismatch
@@ -1561,7 +1569,7 @@ class Calibration(Analyzer):
 
 
     def parse_study(self):
-        ''' Parse the study into a data frame '''
+        '''Parse the study into a data frame -- called automatically '''
         best = self.best_pars
 
         print('Making results structure...')
@@ -1593,7 +1601,11 @@ class Calibration(Analyzer):
 
 
     def to_json(self, filename=None):
-        ''' Convert the data to JSON '''
+        '''
+        Convert the data to JSON.
+
+        New in version 3.1.1.
+        '''
         order = np.argsort(self.df['mismatch'])
         json = []
         for o in order:
@@ -1609,14 +1621,22 @@ class Calibration(Analyzer):
 
 
     def plot_sims(self, **kwargs):
-        ''' Plot before and after '''
+        '''
+        Plot sims, before and after calibration.
+
+        New in version 3.1.1: renamed from plot() to plot_sims().
+        '''
         msim = cvr.MultiSim([self.before, self.after])
         fig = msim.plot(**kwargs)
         return fig
 
 
     def plot_trend(self, best_thresh=2):
-        ''' Plot the trend in best mismatch over time '''
+        '''
+        Plot the trend in best mismatch over time.
+
+        New in version 3.1.1.
+        '''
         mismatch = sc.dcp(self.df['mismatch'].values)
         best_mismatch = np.zeros(len(mismatch))
         for i in range(len(mismatch)):
@@ -1646,13 +1666,17 @@ class Calibration(Analyzer):
 
 
     def plot_all(self): # pragma: no cover
-        ''' Plot every point: warning, very slow! '''
+        '''
+        Plot every point in the calibration. Warning, very slow for more than a few hundred trials.
+
+        New in version 3.1.1.
+        '''
         g = pairplotpars(self.data, color_column='mismatch', bounds=self.par_bounds)
         return g
 
 
     def plot_best(self, best_thresh=2): # pragma: no cover
-        ''' Plot only the points with lowest mismatch '''
+        ''' Plot only the points with lowest mismatch. New in version 3.1.1. '''
         max_mismatch = self.df['mismatch'].min()*best_thresh
         inds = sc.findinds(self.df['mismatch'].values <= max_mismatch)
         g = pairplotpars(self.data, inds=inds, color_column='mismatch', bounds=self.par_bounds)
@@ -1660,7 +1684,11 @@ class Calibration(Analyzer):
 
 
     def plot_stride(self, npts=200): # pragma: no cover
-        '''Plot a fixed number of points in order across the results '''
+        '''
+        Plot a fixed number of points in order across the results.
+
+        New in version 3.1.1.
+        '''
         npts = min(len(self.df), npts)
         inds = np.linspace(0, len(self.df)-1, npts).round()
         g = pairplotpars(self.data, inds=inds, color_column='mismatch', bounds=self.par_bounds)
