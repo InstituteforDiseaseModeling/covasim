@@ -195,7 +195,7 @@ def plot_interventions(sim, ax):
     return
 
 
-def ax_style(ax=None, grid=True, grid_color='w', facecolor='#ffefff'):
+def ax_style(ax=None, grid=True, grid_color='w', facecolor='#efefff'):
     ''' Set axes style '''
     if ax is None:
         ax = pl.gca()
