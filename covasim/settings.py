@@ -44,6 +44,9 @@ def set_default_options():
     optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
     options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
+    optdesc.style = 'Set the default plotting style -- options are "covasim" plus those in pl.style.available'
+    options.style = os.getenv('COVASIM_STYLE', 'covasim')
+
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
@@ -70,7 +73,7 @@ options, optdesc = set_default_options()
 orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
-matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
+matplotlib_keys = ['backend', 'style', 'dpi', 'font_size', 'font_family']
 numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
 
@@ -212,14 +215,23 @@ def get_help(output=False):
         return
 
 
-def set_matplotlib_global(key, value):
+def set_matplotlib_global(key, value, available_fonts=None):
     ''' Set a global option for Matplotlib -- not for users '''
-    import pylab as pl
     if value: # Don't try to reset any of these to a None value
         if   key == 'font_size':   pl.rcParams['font.size']   = value
-        elif key == 'font_family': pl.rcParams['font.family'] = value
         elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
         elif key == 'backend':     pl.switch_backend(value)
+        elif key == 'font_family':
+            if available_fonts is None or value in available_fonts: # If available fonts are supplied, don't set to an invalid value
+                pl.rcParams['font.family'] = value
+        elif key == 'style':
+            if value is None or value.lower() == 'covasim':
+                pl.style.use('classic')
+            elif value in pl.style.available:
+                pl.style.use(value)
+            else:
+                errormsg = f'Style "{value}"; not found; options are "covasim" (default) plus:\n{sc.newlinejoin(pl.style.available)}'
+                raise ValueError(errormsg)
         else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
 
@@ -265,6 +277,32 @@ options.get_default = get_default
 options.help = get_help
 
 
+def load_custom_fonts():
+    '''
+    Load custom fonts for plotting
+    '''
+    try:
+        import matplotlib.font_manager as mplfm
+        folder = sc.thisdir(__file__, aspath=True) / 'data' / 'assets'
+        for font in mplfm.findSystemFonts([folder]):
+            mplfm.fontManager.addfont(font)
+    except:
+        pass
+
+    available_fonts = []
+    for f in mplfm.findSystemFonts():
+        try:
+            name = mplfm.get_font(f).family_name
+            available_fonts.append(name)
+        except:
+            pass
+    available_fonts = sorted(available_fonts)
+    return available_fonts
+
+# Load custom fonts on import
+available_fonts = load_custom_fonts()
+
+
 # Finally, set the specified options
 for key in matplotlib_keys:
-    set_matplotlib_global(key, options[key])
+    set_matplotlib_global(key, options[key], available_fonts=available_fonts)
