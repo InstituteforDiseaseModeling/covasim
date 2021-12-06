@@ -1328,7 +1328,14 @@ class Fit(Analyzer):
 
         return fig
 
-
+def import_optuna():
+    ''' A helper function to import Optuna, which is an optional dependency '''
+    try:
+        import optuna as op # Import here since it's slow
+    except ModuleNotFoundError as E: # pragma: no cover
+        errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
+        raise ModuleNotFoundError(errormsg)
+    return op
 
 class Calibration(Analyzer):
     '''
@@ -1378,12 +1385,6 @@ class Calibration(Analyzer):
                  keep_db=None, storage=None, label=None, die=False, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
 
-        try:
-            import optuna as op # Import here since it's slow
-            self.op = op # Store in the class so it doesn't need to be imported globally
-        except ModuleNotFoundError as E: # pragma: no cover
-            errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
-            raise ModuleNotFoundError(errormsg)
         import multiprocessing as mp # Import here since it's also slow
 
         # Handle run arguments
@@ -1463,7 +1464,7 @@ class Calibration(Analyzer):
 
     def worker(self):
         ''' Run a single worker '''
-        op = self.op
+        op = import_optuna()
         if self.verbose:
             op.logging.set_verbosity(op.logging.DEBUG)
         else:
@@ -1497,9 +1498,10 @@ class Calibration(Analyzer):
 
     def make_study(self):
         ''' Make a study, deleting one if it already exists '''
+        op = import_optuna()
         if not self.run_args.keep_db:
             self.remove_db()
-        output = self.op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
 
@@ -1512,6 +1514,7 @@ class Calibration(Analyzer):
             verbose (bool): whether to print output from each trial
             kwargs (dict): if supplied, overwrite stored run_args (n_trials, n_workers, etc.)
         '''
+        op = import_optuna()
 
         # Load and validate calibration parameters
         if calib_pars is not None:
@@ -1525,7 +1528,7 @@ class Calibration(Analyzer):
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
-        self.study = self.op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        self.study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
         self.best_pars = sc.objdict(self.study.best_params)
         self.elapsed = sc.toc(t0, output=True)
 
