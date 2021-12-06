@@ -226,7 +226,7 @@ def set_matplotlib_global(key, value, available_fonts=None):
                 pl.rcParams['font.family'] = value
         elif key == 'style':
             if value is None or value.lower() == 'covasim':
-                pl.style.use('classic')
+                pl.style.use('default')
             elif value in pl.style.available:
                 pl.style.use(value)
             else:

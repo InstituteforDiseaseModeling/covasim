@@ -195,6 +195,17 @@ def plot_interventions(sim, ax):
     return
 
 
+def ax_style(ax=None, grid=True, grid_color='w', facecolor='#ffefff'):
+    ''' Set axes style '''
+    if ax is None:
+        ax = pl.gca()
+    if cvset.options.style == 'covasim':
+        sc.boxoff(ax)
+        ax.patch.set_facecolor(facecolor)
+        ax.grid(grid, color=grid_color)
+    return
+
+
 def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_legend=True):
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
 
@@ -213,9 +224,9 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     if popped:
         legend_args['show_legend'] = show_legend
 
-    # Set the title and gridlines
+    # Set the title, gridlines, and color
     ax.set_title(title)
-    ax.grid(grid)
+    ax_style(ax)
 
     # Set the y axis style
     if setylim:
