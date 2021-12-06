@@ -14,11 +14,6 @@ from . import interventions as cvi
 from . import settings as cvset
 from . import plotting as cvpl
 from . import run as cvr
-try:
-    import optuna as op
-except ImportError as E: # pragma: no cover
-    errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
-    op = ImportError(errormsg)
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'nab_histogram',
@@ -1382,8 +1377,14 @@ class Calibration(Analyzer):
                  n_trials=None, n_workers=None, total_trials=None, name=None, db_name=None,
                  keep_db=None, storage=None, label=None, die=False, verbose=True):
         super().__init__(label=label) # Initialize the Analyzer object
-        if isinstance(op, Exception): raise op # If Optuna failed to import, raise that exception now
-        import multiprocessing as mp
+
+        try:
+            import optuna as op # Import here since it's slow
+            self.op = op # Store in the class so it doesn't need to be imported globally
+        except ModuleNotFoundError as E: # pragma: no cover
+            errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
+            raise ModuleNotFoundError(errormsg)
+        import multiprocessing as mp # Import here since it's also slow
 
         # Handle run arguments
         if n_trials  is None: n_trials  = 20
@@ -1462,6 +1463,7 @@ class Calibration(Analyzer):
 
     def worker(self):
         ''' Run a single worker '''
+        op = self.op
         if self.verbose:
             op.logging.set_verbosity(op.logging.DEBUG)
         else:
@@ -1493,7 +1495,7 @@ class Calibration(Analyzer):
         ''' Make a study, deleting one if it already exists '''
         if not self.run_args.keep_db:
             self.remove_db()
-        output = op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        output = self.op.create_study(storage=self.run_args.storage, study_name=self.run_args.name)
         return output
 
 
@@ -1519,7 +1521,7 @@ class Calibration(Analyzer):
         t0 = sc.tic()
         self.make_study()
         self.run_workers()
-        self.study = op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
+        self.study = self.op.load_study(storage=self.run_args.storage, study_name=self.run_args.name)
         self.best_pars = sc.objdict(self.study.best_params)
         self.elapsed = sc.toc(t0, output=True)
 

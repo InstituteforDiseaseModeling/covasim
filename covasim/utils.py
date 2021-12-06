@@ -11,7 +11,6 @@ import numba as nb # For faster computations
 import numpy as np # For numerics
 import random # Used only for resetting the seed
 import sciris as sc # For additional utilities
-import scipy.stats as sps # For distributions
 from .settings import options as cvo # To set options
 from . import defaults as cvd # To set default types
 
@@ -245,12 +244,13 @@ def get_pdf(dist=None, par1=None, par2=None):
     symptom-to-swab for testing. For example, for Washington State, these values
     are dist='lognormal', par1=10, par2=170.
     '''
+    import scipy.stats as sps # Import here since slow
 
     choices = [
         'none',
         'uniform',
         'lognormal',
-        ]
+    ]
 
     if dist in ['None', 'none', None]:
         return None
