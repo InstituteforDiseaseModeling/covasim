@@ -29,7 +29,7 @@ def set_default_options():
     optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
-    optdesc.sep = 'Set thousands separtor'
+    optdesc.sep = 'Set thousands seperator for text output'
     options.sep = str(os.getenv('COVASIM_SEP', ','))
 
     optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
@@ -59,7 +59,7 @@ def set_default_options():
     optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
     options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
 
-    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
+    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
     options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
 
     return options, optdesc
@@ -105,15 +105,36 @@ def set_option(key=None, value=None, **kwargs):
         cv.options.set(font_size=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
         cv.options.set(interactive=False) # Turn off interactive plots
         cv.options.set('defaults') # Reset to default options
+        cv.options.set('jupyter') # Defaults for Jupyter
+
+    New in version 3.1.1: Jupyter defaults
     '''
 
-    if key is not None:
-        kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
 
     # Reset to defaults
     if key in ['default', 'defaults']:
         kwargs = orig_options # Reset everything to default
+
+    # Handle Jupyter
+    elif sc.isstring(key) and 'jupyter' in key.lower():
+        jupyter_kwargs = dict(
+            dpi = 100,
+            show = False,
+            close = True,
+        )
+        kwargs = sc.mergedicts(jupyter_kwargs, kwargs)
+        try: # This makes plots much nicer, but isn't available on all systems
+            if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                import matplotlib_inline
+                matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+        except:
+            pass
+
+    # Handle other keys
+    elif key is not None:
+        kwargs = sc.mergedicts(kwargs, {key:value})
+
 
     # Handle interactivity
     if 'interactive' in kwargs.keys():
@@ -206,10 +227,11 @@ def set_matplotlib_global(key, value):
 
 def handle_show(do_show):
     ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    backend = pl.get_backend()
     if do_show is None:  # If not supplied, reset to global value
         do_show = options.show
-        if options.backend == 'agg': # Cannot show plots for a non-interactive backend
-            do_show = False
+    if backend == 'agg': # Cannot show plots for a non-interactive backend
+        do_show = False
     if do_show: # Now check whether to show
         pl.show()
     return do_show

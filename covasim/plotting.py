@@ -92,7 +92,12 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
         errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
         raise RuntimeError(errormsg)
 
-    # If not specified or specified as a string, load defaults
+    # If it matches a result key, convert to a list
+    reskeys = sim.result_keys()
+    if to_plot in reskeys:
+        to_plot = sc.tolist(to_plot)
+
+    # If not specified or specified as another string, load defaults
     if to_plot is None or isinstance(to_plot, str):
         to_plot = cvd.get_default_plots(to_plot, kind=kind, sim=sim)
 
@@ -100,7 +105,7 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
     if isinstance(to_plot, list):
         to_plot_list = to_plot # Store separately
         to_plot = sc.odict() # Create the dict
-        reskeys = sim.result_keys()
+
         for reskey in to_plot_list:
             name = sim.results[reskey].name if reskey in reskeys else sim.results['variant'][reskey].name
             to_plot[name] = [reskey] # Use the result name as the key and the reskey as the value
@@ -689,7 +694,7 @@ def import_plotly():
         return go
 
 
-def get_individual_states(sim):
+def get_individual_states(sim): # pragma: no cover
     ''' Helper function to convert people into integers '''
 
     people = sim.people
@@ -737,7 +742,7 @@ def get_individual_states(sim):
 plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
 
 
-def plotly_interventions(sim, fig, add_to_legend=False):
+def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
     ''' Add vertical lines for interventions to the plot '''
     go = import_plotly() # Load Plotly
     if sim['interventions']:
@@ -752,7 +757,7 @@ def plotly_interventions(sim, fig, add_to_legend=False):
     return
 
 
-def plotly_sim(sim, do_show=False):
+def plotly_sim(sim, do_show=False): # pragma: no cover
     ''' Main simulation results -- parallel of sim.plot() '''
 
     go = import_plotly() # Load Plotly
@@ -783,7 +788,7 @@ def plotly_sim(sim, do_show=False):
     return plots
 
 
-def plotly_people(sim, do_show=False):
+def plotly_people(sim, do_show=False): # pragma: no cover
     ''' Plot a "cascade" of people moving through different states '''
 
     go = import_plotly() # Load Plotly
@@ -812,7 +817,7 @@ def plotly_people(sim, do_show=False):
     return fig
 
 
-def plotly_animate(sim, do_show=False):
+def plotly_animate(sim, do_show=False): # pragma: no cover
     ''' Plot an animation of each person in the sim '''
 
     go = import_plotly() # Load Plotly

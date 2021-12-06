@@ -16,7 +16,7 @@ from .settings import options as cvo
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['make_metapars', 'MultiSim', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['make_metapars', 'MultiSim', 'Scenarios', 'single_run', 'multi_run', 'parallel']
 
 
 
@@ -1494,3 +1494,28 @@ Alternatively, to run without multiprocessing, set parallel=False.
             sims.append(sim)
 
     return sims
+
+
+def parallel(*args, **kwargs):
+    '''
+    A shortcut to ``cv.MultiSim()``, allowing the quick running of multiple simulations
+    at once.
+
+    Args:
+        args (list): The simulations to run
+        kwargs (dict): passed to multi_run()
+
+    Returns:
+        A run MultiSim object.
+
+    **Examples**::
+
+        s1 = cv.Sim(beta=0.01, label='Low')
+        s2 = cv.Sim(beta=0.02, label='High')
+        cv.parallel(s1, s2).plot()
+        msim = cv.parallel([s1, s2], keep_people=True)
+
+    New in version 3.1.1.
+    '''
+    sims = sc.mergelists(*args)
+    return MultiSim(sims=sims).run(**kwargs)

@@ -5,16 +5,16 @@ Tests for immune waning, variants, and vaccine intervention.
 #%% Imports and settings
 import sciris as sc
 import covasim as cv
-import covasim.parameters as cvpar
 import pandas as pd
 import pylab as pl
 import numpy as np
+import pytest
 
 do_plot = 1
 cv.options.set(interactive=False) # Assume not running interactively
 
 # Shared parameters across simulations
-base_pars = dict(
+base_pars = sc.objdict(
     pop_size = 1e3,
     verbose  = -1,
 )
@@ -107,7 +107,7 @@ def test_waning(do_plot=False):
 
         # Run the simulations and pull out the results
         s0 = cv.Sim(base_pars, **pars, use_waning=False, label='No waning').run()
-        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning').run()
+        s1 = cv.Sim(base_pars, **pars, use_waning=True, label='With waning', analyzers=cv.nab_histogram()).run()
         res0 = s0.summary
         res1 = s1.summary
         msim = cv.MultiSim([s0,s1])
@@ -152,9 +152,10 @@ def test_vaccines(do_plot=False):
 
     nabs = []
     p1 = cv.variant('beta',   days=20, n_imports=20)
-    pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30)
+    pfizer = cv.vaccinate(vaccine='pfizer', days=30)
     sim  = cv.Sim(base_pars, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
+    sim.shrink()
 
     if do_plot:
         nabs = np.array(nabs).sum(axis=1)
@@ -169,11 +170,14 @@ def test_vaccines(do_plot=False):
 def test_vaccines_sequential(do_plot=False):
     sc.heading('Testing sequential vaccine...')
 
-    p1 = cv.variant('beta',   days=20, n_imports=20)
+    n_days = 60
+    p1 = cv.variant('beta', days=20, n_imports=20)
+    num_doses = {i:(i**2)*(i%2==0) for i in np.arange(n_days)} # Test subtarget and fluctuating doses
 
     n_doses = []
-    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=lambda sim: sim.t)
-    sim  = cv.Sim(base_pars, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
+    subtarget = dict(inds=np.arange(int(base_pars.pop_size//2)), vals=0.1)
+    pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=num_doses, subtarget=subtarget)
+    sim  = cv.Sim(base_pars, n_days=n_days, rescale=False, use_waning=True, variants=p1, interventions=pfizer, analyzers=lambda sim: n_doses.append(sim.people.doses.copy()))
     sim.run()
 
     n_doses = np.array(n_doses)
@@ -215,7 +219,7 @@ def test_two_vaccines(do_plot=False):
     vac1 = cv.vaccinate_num(vaccine='pfizer', sequence=[0], num_doses=1)
     vac2 = cv.vaccinate_num(vaccine='jj', sequence=[1], num_doses=1)
 
-    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, rescale=False, use_waning=True, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
+    sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
     sim.run()
 
     if do_plot:
@@ -224,6 +228,8 @@ def test_two_vaccines(do_plot=False):
         pl.plot(nabs)
         pl.show()
 
+    return sim
+
 
 def test_vaccine_target_eff():
 
@@ -231,7 +237,7 @@ def test_vaccine_target_eff():
     target_eff_1 = 0.7
     target_eff_2 = 0.95
 
-    default_pars = cvpar.get_vaccine_dose_pars(default=True)
+    default_pars = cv.parameters.get_vaccine_dose_pars(default=True)
     test_pars = dict(doses=2, interval=21, target_eff=[target_eff_1, target_eff_2])
     vacc_pars = sc.mergedicts(default_pars, test_pars)
 
@@ -384,6 +390,18 @@ def test_decays(do_plot=False):
     return res
 
 
+def test_historical():
+    pfizer = cv.prior_immunity(vaccine='pfizer', days=np.arange(-30, 0), prob=0.007)
+    wave = cv.historical_wave(120, 0.05)
+    sim1 = cv.Sim(base_pars, interventions=pfizer).run()
+    sim2 = cv.Sim(base_pars, interventions=wave).run()
+    with pytest.raises(RuntimeError):
+        cv.Sim(base_pars, pop_scale=5, interventions=wave).run()
+    with pytest.raises(ValueError):
+        cv.Sim(base_pars, interventions=cv.historical_wave(120, 0.05, variant='invalid')).run()
+    return sim1, sim2
+
+
 #%% Run as a script
 if __name__ == '__main__':
 
@@ -391,14 +409,15 @@ if __name__ == '__main__':
     cv.options.set(interactive=do_plot)
     T = sc.tic()
 
-    sim1   = test_states()
-    msims1 = test_waning(do_plot=do_plot)
-    sim2   = test_variants(do_plot=do_plot)
-    sim3   = test_vaccines(do_plot=do_plot)
-    sim4   = test_vaccines_sequential(do_plot=do_plot)
-    sim5   = test_two_vaccines(do_plot=do_plot)
-    sim6   = test_vaccine_target_eff()
-    res    = test_decays(do_plot=do_plot)
+    sim1  = test_states()
+    msim  = test_waning(do_plot=do_plot)
+    sim2  = test_variants(do_plot=do_plot)
+    sim3  = test_vaccines(do_plot=do_plot)
+    sim4  = test_vaccines_sequential(do_plot=do_plot)
+    sim5  = test_two_vaccines(do_plot=do_plot)
+    sim6  = test_vaccine_target_eff()
+    res   = test_decays(do_plot=do_plot)
+    sims7 = test_historical()
 
     sc.toc(T)
     print('Done.')

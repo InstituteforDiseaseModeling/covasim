@@ -68,6 +68,7 @@ class Sim(cvb.BaseSim):
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
         self._default_ver  = version  # Default version of parameters used
+        self._legacy_trans = None     # Whether to use the legacy transmission calculation method (slower; for reproducing earlier results)
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Make default parameters (using values from parameters.py)
@@ -251,18 +252,21 @@ class Sim(cvb.BaseSim):
             raise ValueError(errormsg)
 
         # Handle interventions, analyzers, and variants
-        self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+        for key in ['interventions', 'analyzers', 'variants']: # Ensure all of them are lists
+            self[key] = sc.dcp(sc.tolist(self[key], keepnone=False)) # All of these have initialize functions that run into issues if they're reused
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
-        self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
-        self['variants'] = sc.promotetolist(self['variants'], keepnone=False)
-        for key in ['interventions', 'analyzers', 'variants']:
-            self[key] = sc.dcp(self[key]) # All of these have initialize functions that run into issues if they're reused
+        self['variant_map'] = {int(k):v for k,v in self['variant_map'].items()} # Ensure keys are ints, not strings of ints if loaded from JSON
 
         # Optionally handle layer parameters
         if validate_layers:
             self.validate_layer_pars()
+
+        # Handle versioning
+        if self._legacy_trans is None:
+            default_ver = self._default_ver if self._default_ver else self.version
+            self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
 
         # Handle verbose
         if self['verbose'] == 'brief':
@@ -636,8 +640,9 @@ class Sim(cvb.BaseSim):
                 rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
-                for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop
+                for p1,p2 in pairs:
+                    source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus, legacy=self._legacy_trans)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
@@ -1159,6 +1164,9 @@ class Sim(cvb.BaseSim):
             fit = sim.compute_fit()
             fit.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute fit since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         self.fit = cva.Fit(self, *args, **kwargs)
         return self.fit
 
@@ -1207,6 +1215,9 @@ class Sim(cvb.BaseSim):
             agehist = sim.make_age_histogram()
             agehist.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot make age histogram since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
@@ -1231,6 +1242,9 @@ class Sim(cvb.BaseSim):
             sim.run()
             tt = sim.make_transtree()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute transmission tree since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
@@ -1461,7 +1475,7 @@ def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, *
         cv.demo('full', overview=True) # Plot all results
         cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values
     '''
-    from . import interventions as cvi
+    from . import interventions as cvi # To avoid circular imports
     from . import run as cvr
 
     run_args = sc.mergedicts(run_args)

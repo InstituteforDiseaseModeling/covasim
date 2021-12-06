@@ -633,16 +633,20 @@ class BaseSim(ParsObj):
 
     def shrink(self, skip_attrs=None, in_place=True):
         '''
-        "Shrinks" the simulation by removing the people, and returns
-        a copy of the "shrunken" simulation. Used to reduce the memory required
+        "Shrinks" the simulation by removing the people and other memory-intensive
+        attributes (e.g., some interventions and analyzers), and returns a copy of
+        the "shrunken" simulation. Used to reduce the memory required for RAM or
         for saved files.
 
         Args:
-            skip_attrs (list): a list of attributes to skip in order to perform the shrinking; default "people"
+            skip_attrs (list): a list of attributes to skip (remove) in order to perform the shrinking; default "people"
+            in_palce (bool): whether to perform the shrinking in place (default), or return a shrunken copy instead
 
         Returns:
             shrunken (Sim): a Sim object with the listed attributes removed
         '''
+        from . import interventions as cvi # To avoid circular imports
+        from . import analysis as cva
 
         # By default, skip people (~90% of memory), the popdict (which is usually empty anyway), and _orig_pars (which is just a backup)
         if skip_attrs is None:
@@ -653,16 +657,15 @@ class BaseSim(ParsObj):
             shrunken = self
             for attr in skip_attrs:
                 setattr(self, attr, None)
-            return
         else:
             shrunken = object.__new__(self.__class__)
             shrunken.__dict__ = {k:(v if k not in skip_attrs else None) for k,v in self.__dict__.items()}
 
         # Shrink interventions and analyzers, with a lot of checking along the way
-        if hasattr(shrunken, 'pars'): # In case the user removes this
-            for key in ['interventions', 'analyzers']:
-                ia_list = self.pars[key] # List of interventions or analyzers
-                self.pars[key] = [ia.shrink(in_place=in_place) for ia in ia_list] # Actually shrink, and re-store
+        for key in ['interventions', 'analyzers']:
+            ias = self.pars[key] # List of interventions or analyzers
+            shrunken_ias = [ia.shrink(in_place=in_place) for ia in ias if isinstance(ia, (cvi.Intervention, cva.Analyzer))]
+            self.pars[key] = shrunken_ias # Actually shrink, and re-store
 
         # Don't return if in place
         if in_place:
@@ -741,7 +744,7 @@ class BaseSim(ParsObj):
             errormsg = f'This method is only defined for interventions and analyzers, not "{which}"'
             raise ValueError(errormsg)
 
-        ia_list = self.pars[which] # List of interventions or analyzers
+        ia_list = sc.tolist(self.pars[which]) # List of interventions or analyzers
         n_ia = len(ia_list) # Number of interventions/analyzers
 
         if label == 'summary': # Print a summary of the interventions
@@ -1037,7 +1040,10 @@ class BasePeople(FlexPretty):
         elif sc.isnumber(pars): # Interpret as a population size
             pars = {'pop_size':pars} # Ensure it's a dictionary
         orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
-        pars = sc.mergedicts(orig_pars, pars)
+        if isinstance(orig_pars, dict):
+            for k,v in orig_pars:
+                if k not in pars:
+                    pars[k] = v
         if 'pop_size' not in pars:
             errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
             raise sc.KeyNotFoundError(errormsg)
@@ -1265,17 +1271,11 @@ class BasePeople(FlexPretty):
             lkey = self.layer_keys()[0]
 
         # Validate the supplied contacts
-        if isinstance(contacts, Contacts):
+        if isinstance(contacts, (Contacts, dict)): # If it's a Contacts object or a dict, we can use it directly
             new_contacts = contacts
         elif isinstance(contacts, Layer):
             new_contacts = {}
             new_contacts[lkey] = contacts
-        elif sc.checktype(contacts, 'array'):
-            new_contacts = {}
-            new_contacts[lkey] = pd.DataFrame(data=contacts)
-        elif isinstance(contacts, dict):
-            new_contacts = {}
-            new_contacts[lkey] = pd.DataFrame.from_dict(contacts)
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist
             new_contacts = self.make_edgelist(contacts) # Assume contains key info
         else: # pragma: no cover
@@ -1398,10 +1398,13 @@ class Contacts(FlexDict):
     '''
     A simple (for now) class for storing different contact layers.
     '''
-    def __init__(self, layer_keys=None):
+    def __init__(self, layer_keys=None, data=None):
         if layer_keys is not None:
             for lkey in layer_keys:
                 self[lkey] = Layer(label=lkey)
+        if data is not None:
+            for lkey,layer_data in data.items():
+                self[lkey] = Layer(**layer_data)
         return
 
     def __repr__(self):
@@ -1531,6 +1534,10 @@ class Layer(FlexDict):
         # Set data, if provided
         for key,value in kwargs.items():
             self[key] = np.array(value, dtype=self.meta.get(key))
+
+        # Set beta if not provided
+        if 'beta' not in self.keys():
+            self['beta'] = np.ones(len(self), dtype=cvd.default_float)
 
         return
 

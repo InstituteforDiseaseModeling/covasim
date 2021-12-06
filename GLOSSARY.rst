@@ -2,7 +2,7 @@
 Glossary
 ========
 
-This document contains a list of commonly used terms, both in Covasim and for COVID-19 more generally. If there are others you'd like to see included, please email us at covasim@idmod.org. Cross-references are listed in *italics*.
+This document contains a list of commonly used terms, both in Covasim and for COVID-19 more generally. If there are others you'd like to see included, please email us at info@covasim.org. Cross-references are listed in *italics*.
 
 - **agent**: The basic unit of the model. Typically, one agent in the simulation corresponds to one person in the population, but the population may also be subsampled, such that a larger population is represented by a smaller number of agents. This depends on the assumption that the full population behaves the same way that a subset of the population behaves. See also *dynamic rescaling*.
 - **agent-based model**: The modeling approach that tracks individual *agents* in the population. Compared to *compartmental model*, agent-based models are typically slower, but allow much greater detail in simulations. Covasim is an agent-based model.
