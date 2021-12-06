@@ -18,7 +18,7 @@ import sphinx_rtd_theme
 from datetime import datetime
 import covasim as cv
 
-os.environ['SPHINX_BUILD'] = 'True'
+os.environ['SPHINX_BUILD'] = 'True' # This is used so cv.options.set('jupyter') doesn't reset the Matplotlib renderer
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 if sys.platform in ["linux", "darwin"]:
