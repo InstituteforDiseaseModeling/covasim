@@ -33,6 +33,7 @@ Version 3.1.1 (2021-12-06)
 Performance improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^
 Performance improvements have been implemented in all aspects of Covasim, including:
+
 - By changing certain imports to be just-in-time rather than up-front, module import time (``import covasim as cv``) was roughly halved (from about 0.7 s to 0.4 s).
 - Population generation methods have been refactored; initializing a sim is now twice as fast (from about 0.4 s to 0.2 s for 20,000 people).
 - Immunity and infection methods have been refactored, leading to about a 30% improvement in run time.
