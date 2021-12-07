@@ -209,7 +209,8 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
 
     # Set the title and gridlines
     ax.set_title(title)
-    ax.grid(grid, color='lightgray', linestyle='-', linewidth=0.5)
+    if grid:
+        ax.grid(color='lightgray', linestyle='-', linewidth=0.5)
 
     # Set the y axis style
     if setylim:
