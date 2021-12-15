@@ -1625,6 +1625,7 @@ class vaccinate_prob(BaseVaccination):
 
             # Vaccinate people with their first dose
             for _ in find_day(self.days, sim.t, interv=self, sim=sim):
+
                 vacc_probs = np.zeros(sim['pop_size'])
 
                 # Find eligible people
