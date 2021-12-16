@@ -455,7 +455,7 @@ def get_cross_immunity(default=False):
         return pars
 
 
-def get_vaccine_variant_pars(default=False):
+def get_vaccine_variant_pars(default=False, vaccine=None):
     '''
     Define the effectiveness of each vaccine against each variant
     '''
@@ -528,6 +528,13 @@ def get_vaccine_variant_pars(default=False):
 
     if default:
         return pars['default']
+    elif vaccine is not None:
+        try:
+            return pars[vaccine]
+        else:
+            except Exception as E:
+            errormsg = f'No parameters for the efficacy of vaccine "{vaccine}" against variants.'
+            raise ValueError(errormsg) from E
     else:
         return pars
 
