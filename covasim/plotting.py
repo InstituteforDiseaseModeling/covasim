@@ -403,7 +403,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for resnum,reskey in enumerate(keylabels):
-            res_t = sim.results['t']
+            res_t = sim.results['date']
             if reskey in variant_keys:
                 res = sim.results['variant'][reskey]
                 ns = sim['n_variants']
