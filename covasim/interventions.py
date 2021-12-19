@@ -1885,6 +1885,7 @@ class historical_vaccinate_prob(BaseVaccination):
         self.vaccinated       = [None]*new_nab_length # Keep track of inds of people vaccinated on each day
 
         # find the seed infections (set during sim.init_people()) and blank them out
+        # This ensures NAb levels prior to the start of the simulation reflect vaccination only
         seed_inds = cvu.true(sim.people.date_exposed == 0)
         sim.people.make_naive(seed_inds)
 
@@ -1907,8 +1908,17 @@ class historical_vaccinate_prob(BaseVaccination):
             if len(to_update):
                 cvi.update_nab(sim.people, inds=to_update)
 
-        # reset the seed infections
+        # Re-compute immunity so that seed infection prognoses will reflect the NAb level
+        sim.people.t = 0
+        for variant in range(len(sim['variants'])):
+            cvi.check_immunity(sim.people, variant)
+
+        # Re-infect the seed cases so they get updated prognoses
         sim.people.infect(seed_inds, layer='seed_infection')
+
+        # Restore the time index so that it matches sim.t (noting that these would both usually be 0)
+        sim.people.t = sim.t
+
         return
 
 
