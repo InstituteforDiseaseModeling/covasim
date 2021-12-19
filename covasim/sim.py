@@ -614,10 +614,6 @@ class Sim(cvb.BaseSim):
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
-            # Check immunity
-            if self['use_waning']:
-                cvimm.check_immunity(people, variant)
-
             # Deal with variant parameters
             rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
