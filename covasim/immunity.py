@@ -314,7 +314,7 @@ def check_immunity(people):
     # Handle parameters and indices
     pars = people.pars
 
-    for variant in pars['n_variants']:
+    for variant in range(pars['n_variants']):
         immunity = pars['immunity'][variant, :]  # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
         nab_eff = pars['nab_eff']
         current_nabs = sc.dcp(people.nab)
