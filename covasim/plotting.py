@@ -484,45 +484,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
-
-def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                date_args=None, mpl_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
-                do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
-    ''' Plot a single result -- see Sim.plot_result() for documentation '''
-
-    # Handle inputs
-    sep_figs = False # Only one figure
-    fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
-    axis_args = sc.mergedicts({'top': 0.95}, axis_args)
-    args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
-                       date_args=date_args, mpl_args=mpl_args, **kwargs)
-    fig, figs = create_figs(args, sep_figs, fig, ax)
-
-    # Gather results
-    res = sim.results[key]
-    res_t = sim.results['t']
-    if color is None:
-        color = res.color
-
-    # Reuse the figure, if available
-    if ax is None: # Otherwise, make a new one
-        try:
-            ax = fig.axes[0]
-        except:
-            ax = fig.add_subplot(111, label='ax1')
-
-    # Do the plotting
-    if label is None:
-        label = res.name
-    if res.low is not None and res.high is not None:
-        ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
-    ax.plot(res_t, res.values, c=color, label=label, **args.plot)
-    plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
-    plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+plot_result = plot_sim # Used for backwards compatibility
 
 
 def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, mpl_args=None, grid=False,
