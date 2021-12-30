@@ -1269,9 +1269,6 @@ class Sim(cvb.BaseSim):
             date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
             font_family  (str):  Font face
@@ -1293,8 +1290,8 @@ class Sim(cvb.BaseSim):
             - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
             - ``interval``:   the number of days between tick marks
             - ``rotation``:   whether to rotate labels
-            - ``start_day``:  the first day to plot
-            - ``end_day``:    the last day to plot
+            - ``start``:      the first day to plot
+            - ``end``:        the last day to plot
 
         Returns:
             fig: Figure handle
@@ -1306,6 +1303,7 @@ class Sim(cvb.BaseSim):
             sim.plot()
 
         New in version 2.1.0: argument passing, date_args, and mpl_args
+        New in version 3.1.2: updated date arguments
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig

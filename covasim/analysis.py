@@ -565,7 +565,7 @@ class daily_age_stats(Analyzer):
                     ax.legend()
                     ax.set_xlabel('Day')
                     ax.set_ylabel('Count')
-                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+                    sc.dateformatter(start_date=self.start_day, dateformat=dateformat, ax=ax)
 
             # Plot total histograms
             else:
@@ -1243,7 +1243,7 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None), date_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -2052,7 +2052,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
+            sc.dateformatter(start_date=self.sim_start, ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(
