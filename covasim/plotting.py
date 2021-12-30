@@ -9,14 +9,12 @@ webapp.
 import numpy as np
 import pylab as pl
 import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
 from . import misc as cvm
 from . import defaults as cvd
 from . import settings as cvset
 
 
-__all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
 #%% Plotting helper functions
@@ -239,72 +237,6 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None, sim=None):
-    '''
-    Create an automatic date formatter based on a number of days and a start day.
-
-    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
-    axis uses dates already. To be used in conjunction with setting the x-axis
-    tick label formatter.
-
-    Args:
-        start_day (str/date): the start day, either as a string or date object
-        dateformat (str): the date format (default '%b-%d')
-        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        ax (axes): if supplied, automatically set the x-axis formatter for this axis
-        sim (Sim): if supplied, get the start day from this
-
-    **Examples**::
-
-        # Automatically configure the axis with default option
-        cv.date_formatter(sim=sim, ax=ax)
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = cv.date_formatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%Y-%m-%d', ax=ax)
-        ax.xaxis.set_major_formatter(formatter)
-    '''
-
-    # Set the default -- "Mar-01"
-    if dateformat is None:
-        dateformat = '%b-%d'
-
-    # Convert to a date object
-    if start_day is None and sim is not None:
-        start_day = sim['start_day']
-    if start_day is None:
-        errormsg = 'If not supplying a start day, you must supply a sim object'
-        raise ValueError(errormsg)
-    start_day = sc.date(start_day)
-
-    @ticker.FuncFormatter
-    def mpl_formatter(x, pos):
-        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
-
-    # Set initial tick marks (intervals and limits)
-    if ax is not None:
-
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start:
-            xmin = sc.day(start, start_date=start_day)
-        if end:
-            xmax = sc.day(end, start_date=start_day)
-        ax.set_xlim((xmin, xmax))
-
-        # Set the x-axis intervals
-        if interval:
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
-
-        # Set the formatter
-        ax.xaxis.set_major_formatter(mpl_formatter)
-
-    return mpl_formatter
-
-
 def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     ''' Set the tick marks, using dates by default '''
 
@@ -327,14 +259,7 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
 
     # Set xticks as dates
     if date_args.as_dates:
-
-        date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
-        if not date_args.interval:
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-    # Handle rotation
-    if date_args.rotation:
-        ax.tick_params(axis='x', labelrotation=date_args.rotation)
+        sc.dateformatter(ax=ax, start_day=start_day, interval=date_args.interval, dateformat=date_args.dateformat, rotation=date_args.rotation)
 
     return
 
