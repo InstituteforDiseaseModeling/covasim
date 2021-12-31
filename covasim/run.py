@@ -16,7 +16,7 @@ from .settings import options as cvo
 
 
 # Specify all externally visible functions this file defines
-__all__ = ['make_metapars', 'MultiSim', 'Scenarios', 'single_run', 'multi_run']
+__all__ = ['make_metapars', 'MultiSim', 'Scenarios', 'single_run', 'multi_run', 'parallel']
 
 
 
@@ -912,8 +912,9 @@ class Scenarios(cvb.ParsObj):
             self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
-        self.npts = self.base_sim.npts
-        self.tvec = self.base_sim.tvec
+        self.npts       = self.base_sim.npts
+        self.tvec       = self.base_sim.tvec
+        self.datevec    = self.base_sim.datevec
         self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high
@@ -980,6 +981,7 @@ class Scenarios(cvb.ParsObj):
             scen_sim = sc.dcp(self.base_sim)
             scen_sim.scenkey = scenkey
             scen_sim.label = scenname
+            scen_sim.scen = scen
 
             # Update the parameters, if provided, and re-initialize aspects of the simulation
             scen_sim.update_pars(scenpars)
@@ -1493,3 +1495,28 @@ Alternatively, to run without multiprocessing, set parallel=False.
             sims.append(sim)
 
     return sims
+
+
+def parallel(*args, **kwargs):
+    '''
+    A shortcut to ``cv.MultiSim()``, allowing the quick running of multiple simulations
+    at once.
+
+    Args:
+        args (list): The simulations to run
+        kwargs (dict): passed to multi_run()
+
+    Returns:
+        A run MultiSim object.
+
+    **Examples**::
+
+        s1 = cv.Sim(beta=0.01, label='Low')
+        s2 = cv.Sim(beta=0.02, label='High')
+        cv.parallel(s1, s2).plot()
+        msim = cv.parallel([s1, s2], keep_people=True)
+
+    New in version 3.1.1.
+    '''
+    sims = sc.mergelists(*args)
+    return MultiSim(sims=sims).run(**kwargs)

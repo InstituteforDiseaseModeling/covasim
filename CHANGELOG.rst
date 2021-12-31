@@ -16,8 +16,9 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Multi-region and geographical support (planned for v3.2)
-- Economics and costing analysis (planned for v3.3)
+- Additional nuance in how immunity is modeled (planned for v3.2)
+- Multi-region and geographical support (planned for v3.3)
+- Economics and costing analysis (planned for v3.4)
 
 
 
@@ -26,43 +27,100 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.1.0 (2021-11-30)
+Version 3.1.1 (2021-12-06)
 --------------------------
-This version contains important updates to the parameters around immunity, especially with regard to the delta variant. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity.
+
+Performance improvements
+^^^^^^^^^^^^^^^^^^^^^^^^
+Performance improvements have been implemented in all aspects of Covasim, including:
+
+- By changing certain imports to be just-in-time rather than up-front, module import time (``import covasim as cv``) was roughly halved (from about 0.7 s to 0.4 s).
+- Population generation methods have been refactored; initializing a sim is now twice as fast (from about 0.4 s to 0.2 s for 20,000 people).
+- Immunity and infection methods have been refactored, leading to about a 30% improvement in run time (from about 0.7 to 0.5 s for 20,000 people 60 days).
+
+Bugfixes
+^^^^^^^^
+- Fixed a bug in which ``sim.pars`` and ``sim.people.pars`` were not the same object. In almost all cases, the latter should now be a link to the former.
+- Fixed a bug whereby interventions and analyzers were not being shrunk correctly.
+- Fixed a bug with 2nd vaccine doses not being rescheduled if zero doses were given on the day they were scheduled.
+
+Other updates
+^^^^^^^^^^^^^
+- A new convenience function has been added: ``cv.parallel(sim1, sim2)`` is equivalent to ``cv.MultiSim([sim1, sim2]).run()``.
+- Calibrations now have multiple new analysis and plotting features, including ``calib.plot_trend()``, ``calib.plot_best()``, ``calib.to_json()``, etc.  ``calib.plot()`` has been renamed to ``calib.plot_sims()``.
+- By default, calibrations now keep going if a sim encounters an exception; to restore the previous behavior, use ``sim.calibrate(die=True)``. A calibration run with a single worker now does not use ``multiprocess``, to simplify debugging.
+- There is a new option for changing the thousands separator (e.g. to use European formatting), via e.g. ``cv.options.set(sep='.')``. This does not yet apply to plots, but will in a future version.
+- A convenience method has been added for setting correct plot options for Jupyter: ``cv.options.set('jupyter')``.
+- Population generation functions ``make_random_contacts()`` and ``make_microstructured_contacts()`` were updated to generate edgelists rather than lists-of-dicts.
+- ``cv.poisson_test()`` was removed as as it was no longer being used.
+- Tutorials, examples, and the FAQ have all been updated. In particular, all tutorials are now available to be run interactively with Binder via http://tutorials.covasim.org.
+- *Regression information*: The new infection calculation method is mathematically identical but draws differently from the random number stream, giving stochastically different results than before. To revert to the previous (slower) calculation method, set ``sim._legacy_trans = True`` after initialization. This legacy option is automatically enabled if running with an earlier version of parameters, e.g. ``cv.Sim(version='3.1.0')``. Calls to ``calib.plot()`` should be replaced with ``calib.plot_sims()``. If you were using ``cv.poisson_test()``, you're on your own now, but are invited to copy it from an older version of Covasim.
+- *GitHub info*: PR `1249 <https://github.com/amath-idm/covasim/pull/1249>`_
+
+
+Version 3.1.0 (2021-12-03)
+--------------------------
+This version contains important updates to the parameters around immunity. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity. Although we will continue to update parameter values as new data come in, the immunity and vaccine features are now out of the beta stage and ready to use.
 
 Highlights
 ^^^^^^^^^^
+- **New immunity parameters**: Waning immunity and cross-immunity functions have been updated to match currently available empirical data.
+- **Additional flexibility with vaccines**: Several new vaccines have been added (e.g. Sinopharm), and additional options have been provided to enable booster doses, simplify age targeting, etc.
+- **Historical immunity**: To avoid the need to calibration to past epidemic waves and vaccine rollouts, new interventions have been added that let you control immunity levels from historical events.
 
 Immunity-related parameter changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- By default, simulations now use full immune dynamics (i.e. ``use_waning=True``).
 - When NAbs are primed, they are normalized to be equivalent to "vaccine NAbs". This is done so that when we check immunity, we can calculate immune protection using a single curve and account for multiple sources of immunity (vaccine and natural).
-- Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
+- Antibody kinetics were adjusted based on recent observational data suggesting a faster decay of NAbs and subsequent protection against infection. Source: https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02183-8/fulltext
 - A parameter ``trans_redux`` has been added to capture the reduction in transmission for breakthrough infections.
+- Cross-immunity parameters have been updated.
+- Default variant names now follow WHO conventions, e.g. ``'alpha'`` rather than ``'b117'``. (The other names can still be used, however.)
+- ``'sinopharm'`` and ``'sinovac'`` have been added as built-in vaccines. Aliases have been added for other vaccines (e.g. ``'spikevax'`` for Moderna).
+- Vaccine interventions now support booster doses.
+- Age-targeting of vaccines can now be specified as e.g. ``sequence='age'``.
 
 Changes to states and results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- ``sim.people.vaccinations`` has been renamed to ``sim.people.doses``, and keeps track of how many doses of any vaccine each agent has had.
+- ``people.vaccinations`` has been renamed to ``people.doses``, and keeps track of how many doses of any vaccine each agent has had. Likewise, ``new_vaccinations`` and ``cum_vaccinations`` have been renamed ``new_doses`` and ``cum_doses``.
+- People have a new state, ``n_breakthroughs``, which tracks how many breakthrough infections they've had.
+- NAb states have been updated: ``prior_symptoms`` has been removed and ``t_nab_event`` (the time when they were infected or vaccinated) has been added.
+- A new result, ``n_imports``, has been added, which counts the number of imported infections (including from variants).
 
 New functions, methods and classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - Added three new interventions designed to initiate a population with some prior immunity. The class ``cv.prior_immunity()`` is a wrapper for two options, ``cv.historical_vaccinate_prob()`` and  ``cv.historical_wave()``.
-- ``cv.historical_vaccinate_prob()`` allocates vaccines parametrized by the daily probability of being vaccinated.  Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into the simulation).
-- ``cv.historical_wave()`` imprints a historical (pre t=0) wave of infections in the population NAbs.
+- ``cv.historical_vaccinate_prob()`` allocates vaccines parametrized by the daily probability of being vaccinated.  Unlike ``cv.vaccinate_prob()``, this function allows vaccination prior to ``t=0`` (and continuing into the simulation).
+- ``cv.historical_wave()`` imprints a historical (pre ``t=0``) wave of infections in the population NAbs.
+- A new analyzer, ``cv.nab_histogram()``, allows easy computation of statistics relating to NAbs.
 
 Bugfixes
 ^^^^^^^^
-- The scenario label now matches the scenario name rather than key.
-- Interventions and analyzers are now initialized when provided as part of a scenario.
-- Importations are now sampled without replacement.
+- Keyword arguments to ``cv.Fit()`` are now correctly passed to ``cv.compute_gof()``. (Thanks to Zishu Liu for finding this bug.)
+- The transmission tree can now be exported using the latest version of NetworkX. (Thanks to Alexander Zarebski for finding this bug.)
+- The ``r_eff`` calculation method has been updated to avoid divide-by-zero issues.
+- Rescaling now does *not* reset vaccination status; previously, dynamic rescaling erased it.
+- Previously, ``cv.clip_edges()`` and ``cv.vaccinate_prob()`` used a lot of memory; these "memory leaks" have been fixed with new ``finalize()`` methods.
+- Some results (e.g. number of tests) were being incorrectly rounded to integers prior to rescaling; this has been fixed.
+- Imported infections are now sampled without replacement.
+- Scenarios now re-initialize the sim object. The scenario label now matches the scenario name rather than key.
 
 Other changes
 ^^^^^^^^^^^^^
-- By default, calibration now removes the database of individual trials. Set ``keep_db=True`` to keep it.
+- Result fields can now be accessed as keys as well as attributes, e.g. any combination of ``msim.results['r_eff']['high']`` and ``msim.results.r_eff.high`` works.
+- Interventions and analyzers now have a ``shrink()`` method, for cleaning up memory-hungry intermediate results at the end of a simulation.
+- By default, calibration now removes the database of individual trials. Set ``keep_db=True`` to keep it. There is also a ``remove_db()`` method to manually remove the database.
+- Population creation methods have been updated to be more flexible, with keyword arguments being passed to helper functions.
+- Simulation summaries now by default use comma-separated values. To change this to e.g. a dot, you can set a global option: ``cv.options.set(sep='.')``, or e.g. ``sim.summarize(sep='')``.
+- ``cv.diff_sims()`` can now optionally skip specific results using the ``skip`` keyword.
+- Vaccination is now included in the regression tests.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
-- This version of Covasim requires Sciris version 1.2.2 or later.
-- *GitHub info*: PR `927 <https://github.com/amath-idm/covasim/pull/927>`__
+- Results for simulations with ``use_waning=True`` will be substantially different due to the update in parameters and functional form.
+- ``r_eff`` results will not match previous versions due to the change in calculation method (but differences should be slight).
+- Simulations that have been saved to disk which include variants may not work correctly. If this is an issue, please email us and we can help write a migration script.
+- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`__
 
 
 
@@ -159,7 +217,7 @@ Version 3.0.1 (2021-04-16)
 
 Version 3.0.0 (2021-04-13)
 --------------------------
-This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
+This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at info@covasim.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
 
 Highlights
 ^^^^^^^^^^

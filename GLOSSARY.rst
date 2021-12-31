@@ -2,7 +2,7 @@
 Glossary
 ========
 
-This document contains a list of commonly used terms, both in Covasim and for COVID-19 more generally. If there are others you'd like to see included, please email us at covasim@idmod.org. Cross-references are listed in *italics*.
+This document contains a list of commonly used terms, both in Covasim and for COVID-19 more generally. If there are others you'd like to see included, please email us at info@covasim.org. Cross-references are listed in *italics*.
 
 - **agent**: The basic unit of the model. Typically, one agent in the simulation corresponds to one person in the population, but the population may also be subsampled, such that a larger population is represented by a smaller number of agents. This depends on the assumption that the full population behaves the same way that a subset of the population behaves. See also *dynamic rescaling*.
 - **agent-based model**: The modeling approach that tracks individual *agents* in the population. Compared to *compartmental model*, agent-based models are typically slower, but allow much greater detail in simulations. Covasim is an agent-based model.
@@ -27,6 +27,7 @@ This document contains a list of commonly used terms, both in Covasim and for CO
 - **isolation**: The behavior change that occurs after a person has received a positive diagnosis. See also *quarantine*.
 - **layer**: The way in which two people are connected. Also called a contact layer or network layer. Examples include households, schools, workplaces, communities, and *LTCFs*.
 - **long-term care facilities** (LTCFs): Facilities to care for people over long periods of time, also known as assisted living facilities, aged-care facilities, or nursing homes.
+- **neutralizing antibodies** (NAbs): The antibodies that offer protection against SARS-CoV-2 infection and COVID-19 disease severity, which may be due to prior infection (natural immunity) or from vaccination.
 - **non-pharmaceutical intervention**: Any *intervention* to reduce the spread or severity of COVID-19 other than therapeutics or vaccination. Examples including distancing, hand washing, mask wearing, etc.
 - **parameter**: One or more values (usually numbers) that define how the simulation runs. For example, "probability of developing severe disease" could be considered a parameter (i.e., list of values by age), as could "probability of developing severe disease for people aged 60-70" (i.e., a single number). Parameters can also be qualitative values (e.g., population type) or true/false values (e.g., whether or not to dynamically rescale the population).
 - **primary case**: The earliest-infected person diagnosed in a cluster of infections, i.e. the person who is the source of other infections in that cluster. Usually, but not always, this person is also the earliest person in the cluster to be diagnosed. (If *back-tracing* is used, the primary case may be diagnosed after one or more of the secondary cases.) See also *secondary infections*.

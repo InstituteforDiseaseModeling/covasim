@@ -28,6 +28,5 @@ sim.people.prime = np.array([sc.isprime(i) for i in range(len(sim.people))]) # D
 
 # Run and plot
 if __name__ == '__main__':
-    msim = cv.MultiSim([orig_sim, sim])
-    msim.run()
+    msim = cv.parallel([orig_sim, sim])
     msim.plot()

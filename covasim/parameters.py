@@ -138,14 +138,14 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # If version is specified, load old parameters
     if version is not None:
         version_pars = cvm.get_version_pars(version, verbose=pars['verbose'])
-        if sc.compareversions(version, '3.0.0') == -1: # Waning was introduced in 3.0, so is always false before
+        if sc.compareversions(version, '<3.0.0'): # Waning was introduced in 3.0, so is always false before
             version_pars['use_waning'] = False
         for key in pars.keys(): # Only loop over keys that have been populated
             if key in version_pars: # Only replace keys that exist in the old version
                 pars[key] = version_pars[key]
 
         # Handle code change migration
-        if sc.compareversions(version, '2.1.0') == -1 and 'migrate_lognormal' not in pars:
+        if sc.compareversions(version, '<2.1.0') and 'migrate_lognormal' not in pars:
             cvm.migrate_lognormal(pars, verbose=pars['verbose'])
 
     return pars

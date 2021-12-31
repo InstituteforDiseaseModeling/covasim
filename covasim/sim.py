@@ -16,6 +16,7 @@ from . import plotting as cvplt
 from . import interventions as cvi
 from . import immunity as cvimm
 from . import analysis as cva
+from .settings import options as cvo
 
 # Almost everything in this file is contained in the Sim class
 __all__ = ['Sim', 'diff_sims', 'demo', 'AlreadyRunError']
@@ -67,6 +68,7 @@ class Sim(cvb.BaseSim):
         self.complete      = False    # Whether a simulation has completed running
         self.results_ready = False    # Whether or not results are ready
         self._default_ver  = version  # Default version of parameters used
+        self._legacy_trans = None     # Whether to use the legacy transmission calculation method (slower; for reproducing earlier results)
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
 
         # Make default parameters (using values from parameters.py)
@@ -250,18 +252,21 @@ class Sim(cvb.BaseSim):
             raise ValueError(errormsg)
 
         # Handle interventions, analyzers, and variants
-        self['interventions'] = sc.promotetolist(self['interventions'], keepnone=False)
+        for key in ['interventions', 'analyzers', 'variants']: # Ensure all of them are lists
+            self[key] = sc.dcp(sc.tolist(self[key], keepnone=False)) # All of these have initialize functions that run into issues if they're reused
         for i,interv in enumerate(self['interventions']):
             if isinstance(interv, dict): # It's a dictionary representation of an intervention
                 self['interventions'][i] = cvi.InterventionDict(**interv)
-        self['analyzers'] = sc.promotetolist(self['analyzers'], keepnone=False)
-        self['variants'] = sc.promotetolist(self['variants'], keepnone=False)
-        for key in ['interventions', 'analyzers', 'variants']:
-            self[key] = sc.dcp(self[key]) # All of these have initialize functions that run into issues if they're reused
+        self['variant_map'] = {int(k):v for k,v in self['variant_map'].items()} # Ensure keys are ints, not strings of ints if loaded from JSON
 
         # Optionally handle layer parameters
         if validate_layers:
             self.validate_layer_pars()
+
+        # Handle versioning
+        if self._legacy_trans is None:
+            default_ver = self._default_ver if self._default_ver else self.version
+            self._legacy_trans = sc.compareversions(default_ver, '<3.1.1') # Handle regression
 
         # Handle verbose
         if self['verbose'] == 'brief':
@@ -606,10 +611,6 @@ class Sim(cvb.BaseSim):
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
-        breakthrough_inf = cvu.true(people.n_breakthroughs)
-        if len(breakthrough_inf):
-            prel_trans[breakthrough_inf] *= self['trans_redux']
-
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
@@ -639,8 +640,9 @@ class Sim(cvb.BaseSim):
                 rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
-                for sources, targets in [[p1, p2], [p2, p1]]:  # Loop over the contact network from p1->p2 and p2->p1
-                    source_inds, target_inds = cvu.compute_infections(beta, sources, targets, betas, rel_trans, rel_sus)  # Calculate transmission!
+                pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop
+                for p1,p2 in pairs:
+                    source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus, legacy=self._legacy_trans)  # Calculate transmission!
                     people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
@@ -1062,16 +1064,17 @@ class Sim(cvb.BaseSim):
             return
 
 
-    def summarize(self, full=False, t=None, output=False):
+    def summarize(self, full=False, t=None, sep=None, output=False):
         '''
         Print a medium-length summary of the simulation, drawing from the last time
         point in the simulation by default. Called by default at the end of a sim run.
         See also sim.disp() (detailed output) and sim.brief() (short output).
 
         Args:
-            full (bool): whether or not to print all results (by default, only cumulative)
-            t (int/str): day or date to compute summary for (by default, the last point)
-            output (bool): whether to return the summary instead of printing it
+            full   (bool):    whether or not to print all results (by default, only cumulative)
+            t      (int/str): day or date to compute summary for (by default, the last point)
+            sep    (str):     thousands separator (default ',')
+            output (bool):    whether to return the summary instead of printing it
 
         **Examples**::
 
@@ -1084,12 +1087,13 @@ class Sim(cvb.BaseSim):
         summary = self.compute_summary(full=full, t=t, update=False, output=True)
 
         # Construct the output string
+        if sep is None: sep = cvo.sep # Default separator
         labelstr = f' "{self.label}"' if self.label else ''
         string = f'Simulation{labelstr} summary:\n'
         for key in self.result_keys():
             if full or key.startswith('cum_'):
                 val = np.round(summary[key])
-                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'
+                string += f'   {val:10,.0f} {self.results[key].name.lower()}\n'.replace(',', sep) # Use replace since it's more flexible
 
         # Print or return string
         if not output:
@@ -1160,6 +1164,9 @@ class Sim(cvb.BaseSim):
             fit = sim.compute_fit()
             fit.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute fit since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         self.fit = cva.Fit(self, *args, **kwargs)
         return self.fit
 
@@ -1208,6 +1215,9 @@ class Sim(cvb.BaseSim):
             agehist = sim.make_age_histogram()
             agehist.plot()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot make age histogram since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         agehist = cva.age_histogram(sim=self, *args, **kwargs)
         if output:
             return agehist
@@ -1232,6 +1242,9 @@ class Sim(cvb.BaseSim):
             sim.run()
             tt = sim.make_transtree()
         '''
+        if not self.results_ready:
+            errormsg = 'Cannot compute transmission tree since results are not ready yet -- did you run the sim?'
+            raise RuntimeError(errormsg)
         tt = cva.TransTree(self, *args, **kwargs)
         if output:
             return tt
@@ -1253,11 +1266,9 @@ class Sim(cvb.BaseSim):
             scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
             mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
             font_family  (str):  Font face
@@ -1272,6 +1283,16 @@ class Sim(cvb.BaseSim):
             ax           (axes): Axes instance to plot into
             kwargs       (dict): Parsed among figure, plot, scatter, date, and other settings (will raise an error if not recognized)
 
+        The optional dictionary "date_args" allows several settings for controlling
+        how the x-axis of plots are shown, if this axis is dates. These options are:
+
+            - ``as_dates``:   whether to format them as dates (else, format them as days since the start)
+            - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
+            - ``interval``:   the number of days between tick marks
+            - ``rotation``:   whether to rotate labels
+            - ``start``:      the first day to plot
+            - ``end``:        the last day to plot
+
         Returns:
             fig: Figure handle
 
@@ -1280,6 +1301,9 @@ class Sim(cvb.BaseSim):
             sim = cv.Sim()
             sim.run()
             sim.plot()
+
+        New in version 2.1.0: argument passing, date_args, and mpl_args
+        New in version 3.1.2: updated date arguments
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
@@ -1449,7 +1473,7 @@ def demo(preset=None, to_plot=None, scens=None, run_args=None, plot_args=None, *
         cv.demo('full', overview=True) # Plot all results
         cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values
     '''
-    from . import interventions as cvi
+    from . import interventions as cvi # To avoid circular imports
     from . import run as cvr
 
     run_args = sc.mergedicts(run_args)

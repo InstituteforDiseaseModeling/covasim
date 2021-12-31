@@ -64,8 +64,7 @@ if __name__ == '__main__':
     sim = cv.Sim(pars, interventions=protect, label='Protect the elderly')
 
     # Run and plot
-    msim = cv.MultiSim([orig_sim, sim])
-    msim.run()
+    msim = cv.parallel([orig_sim, sim])
     msim.plot()
 
     # Plot intervention

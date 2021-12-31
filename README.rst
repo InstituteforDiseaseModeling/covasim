@@ -19,7 +19,7 @@ The Covasim webapp is available at http://app.covasim.org, and the repository fo
 
 Covasim was developed by the `Institute for Disease Modeling <https://idmod.org/>`__, with additional contributions from the `University of Copenhagen <https://www.math.ku.dk/english>`__, the `Burnet Institute <https://www.burnet.edu.au/>`__, `GitHub <https://github.com/>`__, and `Microsoft <https://www.microsoft.com/en-us/ai/ai-for-health-covid-data>`__.
 
-Questions or comments can be directed to covasim@idmod.org, or on this project's
+Questions or comments can be directed to info@covasim.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
 
 .. _GitHub: https://github.com/institutefordiseasemodeling/covasim
@@ -56,7 +56,7 @@ Covasim has been used for analyses in over a dozen countries, both to inform pol
 
 10. **Modelling the impact of reopening schools in early 2021 in the presence of the new SARS-CoV-2 variant in the UK**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (under review; posted 2021-02-09). *medRxiv* 2021.02.07.21251287; doi: https://doi.org/10.1101/2021.02.07.21251287.
 
-If you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:covasim@idmod.org>`__.
+If you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:info@covasim.org>`__.
 
 
 Requirements

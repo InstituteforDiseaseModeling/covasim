@@ -66,7 +66,7 @@ def save_baseline():
 
     # Export default parameters
     s1 = make_sim(use_defaults=True)
-    s1.export_pars(filename=parameters_filename)
+    s1.export_pars(filename=parameters_filename) # If not different from previous version, can safely delete
 
     # Export results
     s2 = make_sim(use_defaults=False)
@@ -95,10 +95,10 @@ def test_baseline():
     return new
 
 
-def test_benchmark(do_save=do_save, repeats=1):
+def test_benchmark(do_save=do_save, repeats=1, verbose=True):
     ''' Compare benchmark performance '''
 
-    print('Running benchmark...')
+    if verbose: print('Running benchmark...')
     previous = sc.loadjson(benchmark_filename)
 
     t_inits = []
@@ -167,16 +167,22 @@ def test_benchmark(do_save=do_save, repeats=1):
             'cpu_performance': ratio,
             }
 
-    print('Previous benchmark:')
-    sc.pp(previous)
+    if verbose:
+        print('Previous benchmark:')
+        sc.pp(previous)
 
-    print('\nNew benchmark:')
-    sc.pp(json)
+        print('\nNew benchmark:')
+        sc.pp(json)
+    else:
+        brief = sc.dcp(json['time'])
+        brief['cpu_performance'] = json['cpu_performance']
+        sc.pp(brief)
 
     if do_save:
         sc.savejson(filename=benchmark_filename, obj=json, indent=2)
 
-    print('Done.')
+    if verbose:
+        print('Done.')
 
     return json
 

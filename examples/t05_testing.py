@@ -21,6 +21,5 @@ sim2 = cv.Sim(pars, interventions=tn_fixed, label='Constant daily number of test
 sim3 = cv.Sim(pars, interventions=tp, label='Probability-based testing')
 
 # Run and plot results
-msim = cv.MultiSim([sim1, sim2, sim3])
-msim.run()
+msim = cv.parallel(sim1, sim2, sim3)
 msim.plot(to_plot=['new_infections', 'new_tests', 'new_diagnoses', 'cum_diagnoses'])

@@ -8,3 +8,4 @@ nbsphinx
 pandoc
 pypandoc
 optuna
+seaborn

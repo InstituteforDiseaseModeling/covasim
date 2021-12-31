@@ -29,6 +29,9 @@ def set_default_options():
     optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
+    optdesc.sep = 'Set thousands seperator for text output'
+    options.sep = str(os.getenv('COVASIM_SEP', ','))
+
     optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
     options.show = int(os.getenv('COVASIM_SHOW', True))
 
@@ -41,6 +44,9 @@ def set_default_options():
     optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
     options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
+    optdesc.style = 'Set the default plotting style -- options are "covasim" plus those in pl.style.available'
+    options.style = os.getenv('COVASIM_STYLE', 'covasim')
+
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
@@ -48,7 +54,7 @@ def set_default_options():
     options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
 
     optdesc.font_family = 'Set the default font family (e.g., Arial)'
-    options.font_family = os.getenv('COVASIM_FONT_FAMILY', pl.rcParams['font.family'])
+    options.font_family = os.getenv('COVASIM_FONT_FAMILY', 'Rosario')
 
     optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
     options.precision = int(os.getenv('COVASIM_PRECISION', 32))
@@ -56,7 +62,7 @@ def set_default_options():
     optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
     options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
 
-    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time, but harder to update'
+    optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
     options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
 
     return options, optdesc
@@ -67,8 +73,8 @@ options, optdesc = set_default_options()
 orig_options = sc.dcp(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
-matplotlib_keys = ['font_size', 'font_family', 'dpi', 'backend']
-numba_keys = ['precision', 'numba_parallel', 'numba_cache']
+matplotlib_keys = ['backend', 'style', 'dpi', 'font_size', 'font_family']
+numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
 
 def set_option(key=None, value=None, **kwargs):
@@ -102,15 +108,36 @@ def set_option(key=None, value=None, **kwargs):
         cv.options.set(font_size=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
         cv.options.set(interactive=False) # Turn off interactive plots
         cv.options.set('defaults') # Reset to default options
+        cv.options.set('jupyter') # Defaults for Jupyter
+
+    New in version 3.1.1: Jupyter defaults
     '''
 
-    if key is not None:
-        kwargs = sc.mergedicts(kwargs, {key:value})
     reload_required = False
 
     # Reset to defaults
     if key in ['default', 'defaults']:
         kwargs = orig_options # Reset everything to default
+
+    # Handle Jupyter
+    elif sc.isstring(key) and 'jupyter' in key.lower():
+        jupyter_kwargs = dict(
+            dpi = 100,
+            show = False,
+            close = True,
+        )
+        kwargs = sc.mergedicts(jupyter_kwargs, kwargs)
+        try: # This makes plots much nicer, but isn't available on all systems
+            if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                import matplotlib_inline
+                matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+        except:
+            pass
+
+    # Handle other keys
+    elif key is not None:
+        kwargs = sc.mergedicts(kwargs, {key:value})
+
 
     # Handle interactivity
     if 'interactive' in kwargs.keys():
@@ -189,24 +216,34 @@ def get_help(output=False):
         return
 
 
-def set_matplotlib_global(key, value):
+def set_matplotlib_global(key, value, available_fonts=None):
     ''' Set a global option for Matplotlib -- not for users '''
-    import pylab as pl
     if value: # Don't try to reset any of these to a None value
         if   key == 'font_size':   pl.rcParams['font.size']   = value
-        elif key == 'font_family': pl.rcParams['font.family'] = value
         elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
         elif key == 'backend':     pl.switch_backend(value)
+        elif key == 'font_family':
+            if available_fonts is None or value in available_fonts: # If available fonts are supplied, don't set to an invalid value
+                pl.rcParams['font.family'] = value
+        elif key == 'style':
+            if value is None or value.lower() == 'covasim':
+                pl.style.use('default')
+            elif value in pl.style.available:
+                pl.style.use(value)
+            else:
+                errormsg = f'Style "{value}"; not found; options are "covasim" (default) plus:\n{sc.newlinejoin(pl.style.available)}'
+                raise ValueError(errormsg)
         else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
 
 
 def handle_show(do_show):
     ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    backend = pl.get_backend()
     if do_show is None:  # If not supplied, reset to global value
         do_show = options.show
-        if options.backend == 'agg': # Cannot show plots for a non-interactive backend
-            do_show = False
+    if backend == 'agg': # Cannot show plots for a non-interactive backend
+        do_show = False
     if do_show: # Now check whether to show
         pl.show()
     return do_show
@@ -239,3 +276,34 @@ def reload_numba():
 options.set = set_option
 options.get_default = get_default
 options.help = get_help
+
+
+def load_custom_fonts():
+    '''
+    Load custom fonts for plotting
+    '''
+    try:
+        import matplotlib.font_manager as mplfm
+        folder = sc.thisdir(__file__, aspath=True) / 'data' / 'assets'
+        for font in mplfm.findSystemFonts([folder]):
+            mplfm.fontManager.addfont(font)
+    except:
+        pass
+
+    available_fonts = []
+    for f in mplfm.findSystemFonts():
+        try:
+            name = mplfm.get_font(f).family_name
+            available_fonts.append(name)
+        except:
+            pass
+    available_fonts = sorted(available_fonts)
+    return available_fonts
+
+# Load custom fonts on import
+available_fonts = load_custom_fonts()
+
+
+# Finally, set the specified options
+for key in matplotlib_keys:
+    set_matplotlib_global(key, options[key], available_fonts=available_fonts)
