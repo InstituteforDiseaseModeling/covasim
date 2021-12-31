@@ -205,7 +205,6 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
 
     # Handle show_legend being in the legend args, since in some cases this is the only way it can get passed
-    show_legend = show_args.pop('legend', show_legend)
     if 'show_legend' in legend_args:
         show_legend = legend_args.pop('show_legend')
         popped = True
@@ -213,7 +212,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
         popped = False
 
     # Show the legend
-    if show_legend:
+    if show_legend and show_args['legend']: # It's pretty ugly, but there are multiple ways of controlling whether the legend shows
         ax.legend(**legend_args)
 
     # If we removed it from the legend_args dict, put it back now
@@ -279,6 +278,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     if args.show['maximize']:
         for f in figlist:
             sc.maximize(fig=f)
+        pl.pause(0.01) # Force refresh
 
     # Use tight layout for all figures
     if args.show['tight']:
@@ -422,7 +422,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                 if args.show['ticks']:
                     reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['legend']:
-            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
