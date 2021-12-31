@@ -1397,12 +1397,20 @@ class FlexDict(dict):
 class Contacts(FlexDict):
     '''
     A simple (for now) class for storing different contact layers.
+
+    Args:
+        data (dict): a dictionary that looks like a Contacts object
+        layer_keys (list): if provided, create an empty Contacts object with these layers
+        kwargs (dict): additional layer(s), merged with data
+
+    New in version 3.1.2: swapped order of arguments
     '''
-    def __init__(self, layer_keys=None, data=None):
+    def __init__(self, data=None, layer_keys=None, **kwargs):
+        data = sc.mergedicts(data, kwargs)
         if layer_keys is not None:
             for lkey in layer_keys:
                 self[lkey] = Layer(label=lkey)
-        if data is not None:
+        if data:
             for lkey,layer_data in data.items():
                 self[lkey] = Layer(**layer_data)
         return
@@ -1549,8 +1557,9 @@ class Layer(FlexDict):
             self[key] = np.array(value, dtype=self.meta.get(key))
 
         # Set beta if not provided
-        if 'beta' not in self.keys():
-            self['beta'] = np.ones(len(self), dtype=cvd.default_float)
+        key = 'beta'
+        if key not in kwargs.keys():
+            self[key] = np.ones(len(self), dtype=self.meta[key])
 
         return
 

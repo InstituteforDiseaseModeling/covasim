@@ -8,6 +8,7 @@ import sciris as sc
 from . import requirements as cvreq
 from . import utils as cvu
 from . import misc as cvm
+from . import base as cvb
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -372,6 +373,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
 
     # Convert to the People object
     people = population.to_people()
+    people.contacts = cvb.Contacts(**people.contacts) # Convert from SynthPops to Covasim
 
     # Add community contacts
     c_contacts = make_random_contacts(pop_size, community_contacts)
