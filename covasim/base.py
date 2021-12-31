@@ -192,11 +192,11 @@ class Result(object):
         return len(self.values)
 
 
-def set_metadata(obj):
+def set_metadata(obj, **kwargs):
     ''' Set standard metadata for an object '''
-    obj.created = sc.now()
-    obj.version = cvv.__version__
-    obj.git_info = cvm.git_info()
+    obj.created = kwargs.get('created', sc.now())
+    obj.version = kwargs.get('version', cvv.__version__)
+    obj.git_info = kwargs.get('git_info', cvm.git_info())
     return
 
 
@@ -1095,7 +1095,31 @@ class BasePeople(FlexPretty):
         return np.arange(len(self))
 
 
-    def validate(self, die=True, verbose=False):
+    def validate(self, sim_pars=None, die=True, verbose=False):
+        '''
+        Perform validation on the People object.
+
+        Args:
+            sim_pars (dict): dictionary of parameters from the sim to ensure they match the current People object
+            die (bool): whether to raise an exception if validation fails
+            verbose (bool): detail to print
+        '''
+
+        # Check that parameters match
+        if sim_pars is not None:
+            mismatches = {}
+            keys = ['pop_size', 'pop_type', 'location', 'pop_infected', 'frac_susceptible'] # These are the keys used in generating the population
+            for key in keys:
+                sim_v = sim_pars.get(key)
+                ppl_v = self.pars.get(key)
+                if sim_v is not None and ppl_v is not None:
+                    if sim_v != ppl_v:
+                        mismatches[key] = sc.objdict(sim=sim_v, people=ppl_v)
+            if len(mismatches):
+                errormsg = 'Validation failed due to the following mismatches between the sim and the people parameters:\n'
+                for k,v in mismatches.items():
+                    errormsg += f'  {k}: sim={v.sim}, people={v.people}'
+                raise ValueError(errormsg)
 
         # Check that the keys match
         contact_layer_keys = set(self.contacts.keys())
@@ -1246,12 +1270,17 @@ class BasePeople(FlexPretty):
         return G
 
 
-    def save(self, filename=None, **kwargs):
+    def save(self, filename=None, force=False, **kwargs):
         '''
         Save to disk as a gzipped pickle.
 
+        Note: by default this function raises an exception if trying to save a
+        run or partially run People object, since the changes that happen during
+        a run are usually irreversible.
+
         Args:
             filename (str or None): the name or path of the file to save to; if None, uses stored
+            force (bool): whether to allow saving even of a run or partially-run People object
             kwargs: passed to ``sc.makefilepath()``
 
         Returns:
@@ -1259,10 +1288,24 @@ class BasePeople(FlexPretty):
 
         **Example**::
 
+            sim = cv.Sim()
+            sim.initialize()
             sim.people.save() # Saves to a .ppl file
         '''
 
-        # Set keep_people based on whether or not we're in the middle of a run
+        # Check if we're trying to save an already run People object
+        if self.t > 0 and not force:
+            errormsg = f'''
+The People object has already been run (t = {self.t}), which is usually not the
+correct state to save it in since it cannot be re-initialized. If this is intentional,
+use sim.people.save(force=True). Otherwise, the correct approach is:
+
+    sim = cv.Sim(...)
+    sim.initialize() # Create the people object but do not run
+    sim.people.save() # Save people immediately after initialization
+    sim.run() # The People object is
+'''
+            raise RuntimeError(errormsg)
 
         # Handle the filename
         if filename is None:

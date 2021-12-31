@@ -357,12 +357,12 @@ def make_synthpop(sim=None, popdict=None, layer_mapping=None, community_contacts
             raise ValueError(errormsg)
 
     # Main use case -- generate a new population
+    pop_size = sim['pop_size']
     if popdict is None:
         if sim is None: # pragma: no cover
             errormsg = 'Either a simulation or a population must be supplied'
             raise ValueError(errormsg)
-        pop_size = sim['pop_size']
-        popdict = sp.Pop(n=pop_size, rand_seed=sim['rand_seed'], **kwargs) # Actually generate it
+        people = sp.Pop(n=pop_size, rand_seed=sim['rand_seed'], **kwargs).to_people() # Actually generate it
     else: # Otherwise, convert to a sp.People object (similar to a cv.People object)
         if isinstance(popdict, sp.Pop):
             people = popdict.to_people()

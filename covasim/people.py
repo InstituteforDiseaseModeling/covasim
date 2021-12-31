@@ -99,6 +99,7 @@ class People(cvb.BasePeople):
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
+        self.infections_initialized = False
 
         # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:
@@ -125,10 +126,10 @@ class People(cvb.BasePeople):
         return
 
 
-    def initialize(self):
+    def initialize(self, sim_pars=None):
         ''' Perform initializations '''
         self.set_prognoses()
-        self.validate()
+        self.validate(sim_pars=sim_pars)
         self.initialized = True
         return
 

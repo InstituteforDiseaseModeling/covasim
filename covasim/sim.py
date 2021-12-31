@@ -46,7 +46,7 @@ class Sim(cvb.BaseSim):
         sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
+    def __init__(self, pars=None, datafile=None, label=None, simfile=None,
                  popfile=None, popdict=None, version=None, **kwargs):
 
         # Set attributes
@@ -75,18 +75,18 @@ class Sim(cvb.BaseSim):
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
-        self.load_data(datafile, datacols) # Load the data, if provided
+        self.load_data(datafile) # Load the data, if provided
 
         return
 
 
-    def load_data(self, datafile=None, datacols=None, verbose=None, **kwargs):
+    def load_data(self, datafile=None, verbose=None, **kwargs):
         ''' Load the data to calibrate against, if provided '''
         if verbose is None:
             verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
+            self.data = cvm.load_data(datafile=datafile, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
 
@@ -345,34 +345,35 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, popfile=None, **kwargs):
+    def load_population(self, popfile=None, init_people=True, **kwargs):
         '''
         Load the population dictionary from file -- typically done automatically
-        as part of sim.initialize(). Supports loading either saved population
-        dictionaries (popdicts, file ending .pop by convention), or ready-to-go
-        People objects (file ending .ppl by convention). Either object an also be
-        supplied directly. Once a population file is loaded, it is removed from
-        the Sim object.
+        as part of ``sim.initialize()``.
+
+        Supports loading either saved population dictionaries (popdicts, file ending
+        .pop by convention), or ready-to-go People objects (file ending .ppl by
+        convention). Either object an also be supplied directly. Once a population
+        file is loaded, it is removed from the Sim object.
 
         Args:
             popfile (str or obj): if a string, name of the file; otherwise, the popdict or People object to load
-            kwargs (dict): passed to ``sc.makefilepath()``
+            init_people (bool): whether to immediately convert the loaded popdict into an initialized People object
+            kwargs (dict): passed to ``sim.init_people()``
         '''
         # Set the file path if not is provided
         if popfile is None and self.popfile is not None:
             popfile = self.popfile
 
-        # Handle the population (if it exists)
-        if popfile is not None:
+        # Load the population into the popdict
+        self.popdict = cvm.load(popfile)
+        if self['verbose']:
+            print(f'Loading population from {filepath}')
 
-            # Load from disk or use directly
-            if isinstance(popfile, str): # It's a string, assume it's a filename
-                filepath = sc.makefilepath(filename=popfile, **kwargs)
-                obj = cvm.load(filepath)
-                if self['verbose']:
-                    print(f'Loading population from {filepath}')
-            else:
-                obj = popfile # Use it directly
+        if init_people:
+            self.init_people(**kwargs)
+
+        return
+
 
             # Process the input
             if isinstance(obj, dict):
@@ -397,19 +398,19 @@ class Sim(cvb.BaseSim):
                 errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
                 raise ValueError(errormsg)
 
-
             self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
             self.popfile = None # Once loaded, remove to save memory
 
         return
 
 
-    def init_people(self, popdict=None, reset=False, verbose=None, **kwargs):
+    def init_people(self, popdict=None, init_infect=True, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
             popdict (any):  pre-generated people of various formats
+            init_infect (bool): whether to initialize infections
             reset   (bool): whether to regenerate the people even if they already exist
             verbose (int):  detail to print
             kwargs  (dict): passed to cv.make_people()
@@ -426,11 +427,19 @@ class Sim(cvb.BaseSim):
                 resetstr = ' (resetting people)' if reset else ' (warning: not resetting sim.people)'
             print(f'Initializing sim{resetstr} with {self["pop_size"]:0n} people for {self["n_days"]} days')
         if self.popfile and self.popdict is None: # If there's a popdict, we initialize it via cvpop.make_people()
-            self.load_population()
+            self.load_population(init_people=False)
 
         # Actually make the people
         self.people = cvpop.make_people(self, reset=reset, verbose=verbose, **kwargs)
-        self.people.initialize() # Fully initialize the people
+        self.people.initialize(sim_pars=self.pars) # Fully initialize the people
+        if init_infect:
+            self.init_infections()
+
+        return
+
+
+    def init_infections(self):
+        ''' Initialize prior immunity and seed infections '''
 
         # Handle anyone who isn't susceptible
         if self['frac_susceptible'] < 1:
@@ -695,7 +704,7 @@ class Sim(cvb.BaseSim):
         '''
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
-        T = sc.tic()
+        T = sc.timer()
 
         if not self.initialized:
             self.initialize()
@@ -712,13 +721,14 @@ class Sim(cvb.BaseSim):
         # Check for AlreadyRun errors
         errormsg = None
         until = self.npts if until is None else self.day(until)
+        print('hohoho', self.t, self.people.t)
         if until > self.npts:
             errormsg = f'Requested to run until t={until} but the simulation end is t={self.npts}'
         if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
             errormsg = f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached'
         if self.complete:
             errormsg = 'Simulation is already complete (call sim.initialize() to re-run)'
-        if self.people.t > 0:
+        if self.people.t != self.t:
             errormsg = 'The simulation has not been run, but the people object has been: if this is intentional, manually set sim.people.t = 0. Remember to save the people object before running the sim.'
         if errormsg:
             raise AlreadyRunError(errormsg)
@@ -727,7 +737,7 @@ class Sim(cvb.BaseSim):
         while self.t < until:
 
             # Check if we were asked to stop
-            elapsed = sc.toc(T, output=True)
+            elapsed = T.toc(output=True)
             if self['timelimit'] and elapsed > self['timelimit']:
                 sc.printv(f"Time limit ({self['timelimit']} s) exceeded; call sim.finalize() to compute results if desired", 1, verbose)
                 return
