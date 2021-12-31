@@ -1267,7 +1267,7 @@ class Sim(cvb.BaseSim):
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
             date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
-            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, the legend; additionally, "outer" will show the axes only on the outer plots
             mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
@@ -1292,6 +1292,7 @@ class Sim(cvb.BaseSim):
             - ``rotation``:   whether to rotate labels
             - ``start``:      the first day to plot
             - ``end``:        the last day to plot
+            - ``outer``:      only show the date labels on the outer (bottom) plots
 
         Returns:
             fig: Figure handle

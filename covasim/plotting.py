@@ -32,7 +32,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=True, maximize=False)
     defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
@@ -62,14 +62,6 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         errormsg += f'Valid keywords are:\n{valid}\n\n'
         errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
         raise sc.KeyNotFoundError(errormsg)
-
-    # Handle what to show
-    show_keys = defaults.show.keys()
-    args.show = {k:True for k in show_keys}
-    if show_args in [True, False]: # Handle all on or all off
-        args.show = {k:show_args for k in show_keys}
-    else:
-        args.show = sc.mergedicts(args.show, show_args)
 
     # Handle global Matplotlib arguments
     args.mpl_orig = sc.objdict()
@@ -200,14 +192,14 @@ def ax_style(ax=None, grid=True, grid_color='w', facecolor='#efefff'):
         sc.boxoff(ax)
         ax.patch.set_facecolor(facecolor)
         ax.grid(grid, color=grid_color)
-        ax.label_outer()
     return
 
 
-def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_legend=True):
+def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_args, show_legend=True):
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
 
     # Handle show_legend being in the legend args, since in some cases this is the only way it can get passed
+    show_legend = show_args.pop('legend', show_legend)
     if 'show_legend' in legend_args:
         show_legend = legend_args.pop('show_legend')
         popped = True
@@ -234,6 +226,14 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
         if ylims[1] >= 1000:
             sc.commaticks(ax=ax)
 
+    # Optionally remove x-axis labels except on bottom plots -- don't use ax.label_outer() since we need to keep the y-labels
+    if show_args['outer']:
+        lastrow = ax.get_subplotspec().is_last_row()
+        if not lastrow:
+            for label in ax.get_xticklabels(which="both"):
+                label.set_visible(False)
+            ax.set_xlabel('')
+
     return
 
 
@@ -246,10 +246,8 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
         start_day = sim['start_day']
 
     # Set xticks as dates
-    if date_args.as_dates:
-        as_dates = date_args.pop('as_dates') # Remove...
+    if date_args.pop('as_dates'):
         sc.dateformatter(ax=ax, **date_args) # Actually format the axis with dates, rotation, etc.
-        date_args.as_dates = as_dates # ...and restore
     else:
         # Handle start and end days
         xmin,xmax = ax.get_xlim()
@@ -269,20 +267,31 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
 def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     ''' Handle saving, figure showing, and what value to return '''
 
+    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
+
+    # Optionally maximize -- does not work on all systems
+    if args.show['maximize']:
+        for f in figlist:
+            sc.maximize(fig=f)
+
+    # Use tight layout for all figures
+    if args.show['tight']:
+        for f in figlist:
+            sc.figlayout(fig=f)
+
     # Handle saving
     if do_save:
         if fig_path is not None: # No figpath provided - see whether do_save is a figpath
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(filename=fig_path) # Save the figure
+        if len(figlist) >1:
+            print('Warning: only the last figure was saved')
 
     # Show the figure, or close it
     do_show = cvset.handle_show(do_show)
     if cvset.options.close and not do_show:
-        if sep_figs:
-            for fig in figs:
-                pl.close(fig)
-        else:
-            pl.close(fig)
+        for f in figlist:
+            pl.close(f)
 
     # Reset Matplotlib defaults
     for key,value in args.mpl_orig.items():
@@ -354,8 +363,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
-        if args.show['legend']:
-            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
