@@ -5,7 +5,6 @@ Defines functions for making the population.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
-from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
 from . import misc as cvm
@@ -355,14 +354,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c', 'LTCF':'l'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
-    # Handle other input arguments
-    if population is None:
-        if sim is None: # pragma: no cover
-            errormsg = 'Either a simulation or a population must be supplied'
-            raise ValueError(errormsg)
-        pop_size = sim['pop_size']
-        population = sp.make_population(n=pop_size, rand_seed=sim['rand_seed'], **kwargs)
-
+    # Handle community contacts
     if community_contacts is None:
         if sim is not None:
             community_contacts = sim['contacts']['c']
@@ -370,46 +362,27 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
             errormsg = 'If a simulation is not supplied, the number of community contacts must be specified'
             raise ValueError(errormsg)
 
-    # Create the basic lists
-    pop_size = len(population)
-    uids, ages, sexes, contacts = [], [], [], []
-    for uid,person in population.items():
-        uids.append(uid)
-        ages.append(person['age'])
-        sexes.append(person['sex'])
+    # Handle the population
+    if population is None:
+        if sim is None: # pragma: no cover
+            errormsg = 'Either a simulation or a population must be supplied'
+            raise ValueError(errormsg)
+        pop_size = sim['pop_size']
+        population = sp.Pop(n=pop_size, rand_seed=sim['rand_seed'], **kwargs) # Actually generate it
 
-    # Replace contact UIDs with ints
-    uid_mapping = {uid:u for u,uid in enumerate(uids)}
-    for uid in uids:
-        iid = uid_mapping[uid] # Integer UID
-        person = population.pop(uid)
-        uid_contacts = sc.dcp(person['contacts'])
-        int_contacts = {}
-        for spkey in uid_contacts.keys():
-            try:
-                lkey = layer_mapping[spkey] # Map the SynthPops key into a Covasim layer key
-            except KeyError: # pragma: no cover
-                errormsg = f'Could not find key "{spkey}" in layer mapping "{layer_mapping}"'
-                raise sc.KeyNotFoundError(errormsg)
-            int_contacts[lkey] = []
-            for cid in uid_contacts[spkey]: # Contact ID
-                icid = uid_mapping[cid] # Integer contact ID
-                if icid>iid: # Don't add duplicate contacts
-                    int_contacts[lkey].append(icid)
-            int_contacts[lkey] = np.array(int_contacts[lkey], dtype=cvd.default_int)
-        contacts.append(int_contacts)
+    # Convert to the People object
+    people = population.to_people()
 
     # Add community contacts
-    c_contacts, _ = make_random_contacts(pop_size, {'c':community_contacts})
-    for i in range(int(pop_size)):
-        contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
+    c_contacts = make_random_contacts(pop_size, community_contacts)
+    people.contacts.add_layer(c=c_contacts)
 
-    # Finalize
-    popdict = {}
-    popdict['uid']        = np.array(list(uid_mapping.values()), dtype=cvd.default_int)
-    popdict['age']        = np.array(ages)
-    popdict['sex']        = np.array(sexes)
-    popdict['contacts']   = sc.dcp(contacts)
-    popdict['layer_keys'] = list(layer_mapping.values())
+    # Finalize --
+    # popdict = {}
+    # popdict['uid']        = np.array(list(uid_mapping.values()), dtype=cvd.default_int)
+    # popdict['age']        = np.array(ages)
+    # popdict['sex']        = np.array(sexes)
+    # popdict['contacts']   = sc.dcp(contacts)
+    people['layer_keys'] = list(layer_mapping.values())
 
-    return popdict
+    return people

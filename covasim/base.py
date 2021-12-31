@@ -1439,6 +1439,13 @@ class Contacts(FlexDict):
             sim.people.contacts.add_layer(hospitals=hospitals_layer)
         '''
         for lkey,layer in kwargs.items():
+            if not isinstance(layer, Layer):
+                try:
+                    layer = Layer(layer, label=lkey)
+                except Exception as E:
+                    exc = type(E)
+                    errormsg = f'Could not parse {type(layer)} as layer: must be Layer or dict'
+                    raise exc(errormsg) from E
             layer.validate()
             self[lkey] = layer
         return
@@ -1511,14 +1518,17 @@ class Layer(FlexDict):
         p2 = np.random.randint(n_people, size=n)
         beta = np.ones(n)
         layer = cv.Layer(p1=p1, p2=p2, beta=beta, label='rand')
+        layer = cv.Layer(dict(p1=p1, p2=p2, beta=beta), label='rand') # Alternate method
 
         # Convert one layer to another with extra columns
         index = np.arange(n)
         self_conn = p1 == p2
         layer2 = cv.Layer(**layer, index=index, self_conn=self_conn, label=layer.label)
+
+    New in version 3.1.2: allow a single dictionary input
     '''
 
-    def __init__(self, label=None, **kwargs):
+    def __init__(self, *args, label=None, **kwargs):
         self.meta = {
             'p1':    cvd.default_int,   # Person 1
             'p2':    cvd.default_int,   # Person 2
@@ -1526,6 +1536,9 @@ class Layer(FlexDict):
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
         self.label = label
+
+        # Handle args
+        kwargs = sc.mergedicts(*args, kwargs)
 
         # Initialize the keys of the layers
         for key,dtype in self.meta.items():
