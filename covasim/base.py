@@ -288,8 +288,7 @@ class BaseSim(ParsObj):
         ''' Set the metadata for the simulation -- creation time and filename '''
         set_metadata(self)
         if simfile is None:
-            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.simfile = f'covasim_{datestr}.sim'
+            self.simfile = 'covasim.sim'
         return
 
 
@@ -687,7 +686,7 @@ class BaseSim(ParsObj):
 
         **Example**::
 
-            sim.save() # Saves to a .sim file with the date and time of creation by default
+            sim.save() # Saves to a .sim file
         '''
 
         # Set keep_people based on whether or not we're in the middle of a run
@@ -1191,12 +1190,12 @@ class BasePeople(FlexPretty):
         return p
 
 
-    def to_people(self):
+    def to_list(self):
         ''' Return all people as a list '''
         return list(self)
 
 
-    def from_people(self, people, resize=True):
+    def from_list(self, people, resize=True):
         ''' Convert a list of people back into a People object '''
 
         # Handle population size
@@ -1245,6 +1244,59 @@ class BasePeople(FlexPretty):
             edge['beta'] *= self.pars['beta_layer'][edge['layer']]
 
         return G
+
+
+    def save(self, filename=None, **kwargs):
+        '''
+        Save to disk as a gzipped pickle.
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            kwargs: passed to ``sc.makefilepath()``
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        **Example**::
+
+            sim.people.save() # Saves to a .ppl file
+        '''
+
+        # Set keep_people based on whether or not we're in the middle of a run
+
+        # Handle the filename
+        if filename is None:
+            filename = 'covasim.ppl'
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        self.filename = filename # Store the actual saved filename
+        cvm.save(filename=filename, obj=self)
+
+        return filename
+
+
+    @staticmethod
+    def load(filename, *args, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
+
+        Args:
+            filename (str): the name or path of the file to load from
+            args (list): passed to ``cv.load()``
+            kwargs (dict): passed to ``cv.load()``
+
+        Returns:
+            people (People): the loaded people object
+
+        **Example**::
+
+            people = cv.people.load('my-people.ppl')
+        '''
+        people = cvm.load(filename, *args, **kwargs)
+        if not isinstance(people, BasePeople): # pragma: no cover
+            errormsg = f'Cannot load object of {type(people)} as a People object'
+            raise TypeError(errormsg)
+        return people
+
 
 
     def init_contacts(self, reset=False):
@@ -1606,19 +1658,23 @@ class Layer(FlexDict):
         return self.meta.keys()
 
 
-    def validate(self):
-        ''' Check the integrity of the layer: right types, right lengths '''
+    def validate(self, force=True):
+        '''
+        Check the integrity of the layer: right types, right lengths.
+
+        If dtype is incorrect, try to convert automatically; if length is incorrect,
+        do not.
+        '''
         n = len(self[self.basekey])
         for key,dtype in self.meta.items():
             if dtype:
                 actual = self[key].dtype
                 expected = dtype
                 if actual != expected:
-                    errormsg = f'Expecting dtype "{expected}" for layer key "{key}"; got "{actual}"'
-                    raise TypeError(errormsg)
+                    self[key] = np.array(self[key], dtype=expected) # Probably harmless, so try to convert to correct type
             actual_n = len(self[key])
             if n != actual_n:
-                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}'
+                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}' # We can't fix length mismatches
                 raise TypeError(errormsg)
         return
 
