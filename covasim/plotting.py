@@ -63,6 +63,12 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
         raise sc.KeyNotFoundError(errormsg)
 
+    # Handle what to show
+    show_keys = ['data', 'ticks', 'interventions', 'legend']
+    if show_args in [True, False]: # Handle all on or all off
+        for k in show_keys:
+            args.show[k] = show_args
+
     # Handle global Matplotlib arguments
     args.mpl_orig = sc.objdict()
     for key,value in args.mpl.items():
@@ -455,7 +461,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     ax.plot(res_t, res.values, c=color, label=label, **args.plot)
     plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
     reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
