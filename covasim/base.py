@@ -1041,7 +1041,7 @@ class BasePeople(FlexPretty):
             pars = {'pop_size':pars} # Ensure it's a dictionary
         orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
         if isinstance(orig_pars, dict):
-            for k,v in orig_pars:
+            for k,v in orig_pars.items():
                 if k not in pars:
                     pars[k] = v
         if 'pop_size' not in pars:

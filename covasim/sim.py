@@ -1267,7 +1267,7 @@ class Sim(cvb.BaseSim):
             axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
             legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
             date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
-            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, the legend; additionally, "outer" will show the axes only on the outer plots
             mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
@@ -1292,18 +1292,28 @@ class Sim(cvb.BaseSim):
             - ``rotation``:   whether to rotate labels
             - ``start``:      the first day to plot
             - ``end``:        the last day to plot
+            - ``outer``:      only show the date labels on the outer (bottom) plots
+
+        The ``show_args`` dictionary allows several other formatting options, such as:
+
+            - ``tight``:    use tight layout for the figure (default true)
+            - ``maximize``: try to make the figure full screen (default false)
+            - ``outer``:    only show outermost (bottom) date labels (default false)
+
+        Date, show, and other arguments can also be passed directly to ``sim.plot()``.
 
         Returns:
             fig: Figure handle
 
-        **Example**::
+        **Examples**::
 
-            sim = cv.Sim()
-            sim.run()
-            sim.plot()
+            sim = cv.Sim().run()
+            sim.plot() # Default plotting
+            sim.plot('overview') # Show overview
+            sim.plot('overview', maximize=True, outer=True, rotation=15) # Make some modifications to make plots easier to see
 
-        New in version 2.1.0: argument passing, date_args, and mpl_args
-        New in version 3.1.2: updated date arguments
+        | New in version 2.1.0: argument passing, date_args, and mpl_args
+        | New in version 3.1.2: updated date arguments
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
