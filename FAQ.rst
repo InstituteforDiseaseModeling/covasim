@@ -2,7 +2,7 @@
 FAQ
 ===
 
-This document contains answers to frequently (and some not so frequently) asked questions. If there are others you'd like to see included, please email us at covasim@idmod.org.
+This document contains answers to frequently (and some not so frequently) asked questions. If there are others you'd like to see included, please email us at info@covasim.org.
 
 .. contents:: **Contents**
    :local:
@@ -23,7 +23,7 @@ Can Covasim be run on HPC clusters?
 
 Yes. On a single-node setup, it is quite easy: in fact, ``MultiSim`` objects will automatically scale to the number of cores available. This can also be specified explicitly with e.g. ``msim.run(n_cpus=24)``.
 
-For more complex use cases (e.g. running across multiple virtual machines), we recommend using `Celery <https://docs.celeryproject.org>`__; please `email us <mailto:covasim@idmod.org>`__ for more information.
+For more complex use cases (e.g. running across multiple virtual machines), we recommend using `Celery <https://docs.celeryproject.org>`__; please `email us <mailto:info@covasim.org>`__ for more information.
 
 
 What method is best for saving simulation objects?
@@ -102,13 +102,13 @@ I want to generate a contact network for <insert location here>. How do I do thi
 
 There are a few options. For many cases, the default options work reasonably well, i.e. ``sim = cv.Sim(pop_type='hybrid', location='eswatini')``. If you want to use location that is not currently supported, there is generally a lot of data required (census data, school enrolment rates, workplace size and participation rates, etc.). Detailed contact networks are generally created using the `SynthPops <http://synthpops.org>`__ library.
 
-Another option is to adapt the functions in ``population.py`` for your purposes. Covasim can also read in fairly generic representations of populations; for example you could create a random network and then modify the edge list (i.e. ``sim.people.contacts``) to reflect the network you want. Please `email us <mailto:covasim@idmod.org>`__ for more information.
+Another option is to adapt the functions in ``population.py`` for your purposes. Covasim can also read in fairly generic representations of populations; for example you could create a random network and then modify the edge list (i.e. ``sim.people.contacts``) to reflect the network you want. Please `email us <mailto:info@covasim.org>`__ for more information.
 
 
 Is it possible to model interacting geographical regions?
 ---------------------------------------------------------------------------------
 
-Possible, but not easy. Your best option is to create a single simulation where the contact network structure reflects the different regions. Please `email us <mailto:covasim@idmod.org>`__ for more information.
+Possible, but not easy. Your best option is to create a single simulation where the contact network structure reflects the different regions. Please `email us <mailto:info@covasim.org>`__ for more information.
 
 
 Is it possible to model births, non-COVID deaths, or migration?
