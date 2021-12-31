@@ -912,8 +912,9 @@ class Scenarios(cvb.ParsObj):
             self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
-        self.npts = self.base_sim.npts
-        self.tvec = self.base_sim.tvec
+        self.npts       = self.base_sim.npts
+        self.tvec       = self.base_sim.tvec
+        self.datevec    = self.base_sim.datevec
         self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high

@@ -9,14 +9,12 @@ webapp.
 import numpy as np
 import pylab as pl
 import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
 from . import misc as cvm
 from . import defaults as cvd
 from . import settings as cvset
 
 
-__all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
 #%% Plotting helper functions
@@ -33,7 +31,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
-    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None)
+    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
     defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True)
     defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
 
@@ -52,7 +50,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.axis    = sc.mergedicts(defaults.axis,    axis_args)
     args.fill    = sc.mergedicts(defaults.fill,    fill_args)
     args.legend  = sc.mergedicts(defaults.legend,  legend_args)
-    args.date    = sc.mergedicts(defaults.date,    fill_args)
+    args.date    = sc.mergedicts(defaults.date,    date_args)
     args.show    = sc.mergedicts(defaults.show,    show_args)
     args.mpl     = sc.mergedicts(defaults.mpl,     mpl_args)
 
@@ -239,72 +237,6 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
     return
 
 
-def date_formatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None, sim=None):
-    '''
-    Create an automatic date formatter based on a number of days and a start day.
-
-    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
-    axis uses dates already. To be used in conjunction with setting the x-axis
-    tick label formatter.
-
-    Args:
-        start_day (str/date): the start day, either as a string or date object
-        dateformat (str): the date format (default '%b-%d')
-        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        ax (axes): if supplied, automatically set the x-axis formatter for this axis
-        sim (Sim): if supplied, get the start day from this
-
-    **Examples**::
-
-        # Automatically configure the axis with default option
-        cv.date_formatter(sim=sim, ax=ax)
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = cv.date_formatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%Y-%m-%d', ax=ax)
-        ax.xaxis.set_major_formatter(formatter)
-    '''
-
-    # Set the default -- "Mar-01"
-    if dateformat is None:
-        dateformat = '%b-%d'
-
-    # Convert to a date object
-    if start_day is None and sim is not None:
-        start_day = sim['start_day']
-    if start_day is None:
-        errormsg = 'If not supplying a start day, you must supply a sim object'
-        raise ValueError(errormsg)
-    start_day = sc.date(start_day)
-
-    @ticker.FuncFormatter
-    def mpl_formatter(x, pos):
-        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
-
-    # Set initial tick marks (intervals and limits)
-    if ax is not None:
-
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start:
-            xmin = sc.day(start, start_date=start_day)
-        if end:
-            xmax = sc.day(end, start_date=start_day)
-        ax.set_xlim((xmin, xmax))
-
-        # Set the x-axis intervals
-        if interval:
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
-
-        # Set the formatter
-        ax.xaxis.set_major_formatter(mpl_formatter)
-
-    return mpl_formatter
-
-
 def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     ''' Set the tick marks, using dates by default '''
 
@@ -313,28 +245,23 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     if start_day is None and sim is not None:
         start_day = sim['start_day']
 
-    # Handle start and end days
-    xmin,xmax = ax.get_xlim()
-    if date_args.start_day:
-        xmin = float(sc.day(date_args.start_day, start_date=start_day)) # Keep original type (float)
-    if date_args.end_day:
-        xmax = float(sc.day(date_args.end_day, start_date=start_day))
-    ax.set_xlim([xmin, xmax])
-
-    # Set the x-axis intervals
-    if date_args.interval:
-        ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
-
     # Set xticks as dates
     if date_args.as_dates:
+        as_dates = date_args.pop('as_dates') # Remove...
+        sc.dateformatter(ax=ax, **date_args) # Actually format the axis with dates, rotation, etc.
+        date_args.as_dates = as_dates # ...and restore
+    else:
+        # Handle start and end days
+        xmin,xmax = ax.get_xlim()
+        if date_args.start:
+            xmin = float(sc.day(date_args.start, start_date=start_day)) # Keep original type (float)
+        if date_args.end:
+            xmax = float(sc.day(date_args.end, start_date=start_day))
+        ax.set_xlim([xmin, xmax])
 
-        date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
-        if not date_args.interval:
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-    # Handle rotation
-    if date_args.rotation:
-        ax.tick_params(axis='x', labelrotation=date_args.rotation)
+        # Set the x-axis intervals
+        if date_args.interval:
+            ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
 
     return
 
@@ -451,6 +378,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         reskeys = sc.promotetolist(reskeys) # In case it's a string
         for reskey in reskeys:
+            res_t = scens.datevec
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
@@ -462,16 +390,16 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                         res_y = scendata.best[variant,:]
                         color = variant_colors[variant]  # Choose the color
                         label = 'wild type' if variant == 0 else sim['variants'][variant - 1].label
-                        ax.fill_between(scens.tvec, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
-                        ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
+                        ax.fill_between(res_t, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
+                        ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
                 else:
                     res_y = scendata.best
                     color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
                     label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
-                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
-                    ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
+                    ax.fill_between(res_t, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
+                    ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                     if args.show['data']:
                         plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
