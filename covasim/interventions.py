@@ -1267,7 +1267,6 @@ class BaseVaccination(Intervention):
     Some quantities are tracked during execution for reporting after running the simulation.
     These are:
 
-        - ``vaccinated``:        whether or not a person is vaccinated
         - ``doses``:             the number of vaccine doses per person
         - ``vaccination_dates``: integer; dates of all doses for this vaccine
 
