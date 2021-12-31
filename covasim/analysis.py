@@ -559,11 +559,11 @@ class daily_age_stats(Analyzer):
                 for a,age in enumerate(ages):
                     label = f'Age {age}'
                     df = self.df[self.df.age==age]
-                    ax.plot(df.day, df[f'new_{state}'], c=colors[a], label=label)
+                    ax.plot(df.date, df[f'new_{state}'], c=colors[a], label=label)
                     has_data = has_data or len(df)
                 if has_data:
                     ax.legend()
-                    ax.set_xlabel('Day')
+                    ax.set_xlabel('Date')
                     ax.set_ylabel('Count')
                     sc.dateformatter(start_date=self.start_day, dateformat=dateformat, ax=ax)
 
