@@ -32,7 +32,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=True, maximize=False)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
     defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
