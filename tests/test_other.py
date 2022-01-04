@@ -95,8 +95,8 @@ def test_basepeople():
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
-    people = ppl.to_people()
-    ppl.from_people(people)
+    people = ppl.to_list()
+    ppl.from_list(people)
     ppl.make_edgelist([{'new_key':[0,1,2]}])
     ppl.brief()
 
@@ -169,9 +169,6 @@ def test_misc():
 
     with pytest.raises(NotImplementedError):
         cv.load_data('example_data.unsupported_extension')
-
-    with pytest.raises(ValueError):
-        cv.load_data(xlsx_file, columns=['missing_column'])
 
     # Dates
     d1 = cv.date('2020-04-04')
@@ -286,11 +283,12 @@ def test_population():
         sim.initialize()
 
     # Save/load
-    sim = cv.Sim(pop_size=100, popfile=pop_path, save_pop=True)
+    sim = cv.Sim(pop_size=100)
     sim.initialize()
-    cv.Sim(pop_size=100, popfile=pop_path, load_pop=True)
+    sim.people.save(pop_path)
+    cv.Sim(pop_size=100, popfile=pop_path)
     with pytest.raises(ValueError):
-        sim = cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)
+        sim = cv.Sim(pop_size=101, popfile=pop_path)
         sim.initialize()
 
     remove_files(pop_path)

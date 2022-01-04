@@ -875,11 +875,133 @@ class BasePeople(FlexPretty):
     whereas this class exists to handle the less interesting implementation details.
     '''
 
+    def set_pars(self, pars=None):
+        '''
+        Re-link the parameters stored in the people object to the sim containing it,
+        and perform some basic validation.
+        '''
+        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
+        if pars is None:
+            if orig_pars is not None: # If it has existing parameters, use them
+                pars = orig_pars
+            else:
+                pars = {}
+        elif sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+
+        # Copy from old parameters to new parameters
+        if isinstance(orig_pars, dict):
+            for k,v in orig_pars.items():
+                if k not in pars:
+                    pars[k] = v
+
+        # Do minimal validation -- needed here since pop_size should be converted to an int when first set
+        if 'pop_size' not in pars:
+            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
+            raise sc.KeyNotFoundError(errormsg)
+        pars['pop_size'] = int(pars['pop_size'])
+        pars.setdefault('n_variants', 1)
+        pars.setdefault('location', None)
+        self.pars = pars # Actually store the pars
+        return
+
+
+    def validate(self, sim_pars=None, die=True, verbose=False):
+        '''
+        Perform validation on the People object.
+
+        Args:
+            sim_pars (dict): dictionary of parameters from the sim to ensure they match the current People object
+            die (bool): whether to raise an exception if validation fails
+            verbose (bool): detail to print
+        '''
+
+        # Check that parameters match
+        if sim_pars is not None:
+            mismatches = {}
+            keys = ['pop_size', 'pop_type', 'location', 'pop_infected', 'frac_susceptible', 'n_variants'] # These are the keys used in generating the population
+            for key in keys:
+                sim_v = sim_pars.get(key)
+                ppl_v = self.pars.get(key)
+                if sim_v is not None and ppl_v is not None:
+                    if sim_v != ppl_v:
+                        mismatches[key] = sc.objdict(sim=sim_v, people=ppl_v)
+            if len(mismatches):
+                errormsg = 'Validation failed due to the following mismatches between the sim and the people parameters:\n'
+                for k,v in mismatches.items():
+                    errormsg += f'  {k}: sim={v.sim}, people={v.people}'
+                raise ValueError(errormsg)
+
+        # Check that the keys match
+        contact_layer_keys = set(self.contacts.keys())
+        layer_keys    = set(self.layer_keys())
+        if contact_layer_keys != layer_keys:
+            errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
+            raise ValueError(errormsg)
+
+        # Check that the length of each array is consistent
+        expected_len = len(self)
+        expected_variants = self.pars['n_variants']
+        for key in self.keys():
+            if self[key].ndim == 1:
+                actual_len = len(self[key])
+            else: # If it's 2D, variants need to be checked separately
+                actual_variants, actual_len = self[key].shape
+                if actual_variants != expected_variants:
+                    if verbose:
+                        print(f'Resizing "{key}" from {actual_variants} to {expected_variants}')
+                    self._resize_arrays(keys=key, new_size=(expected_variants, expected_len))
+            if actual_len != expected_len: # pragma: no cover
+                if die:
+                    errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
+                    raise IndexError(errormsg)
+                else:
+                    if verbose:
+                        print(f'Resizing "{key}" from {actual_len} to {expected_len}')
+                    self._resize_arrays(keys=key)
+
+        # Check that the layers are valid
+        for layer in self.contacts.values():
+            layer.validate()
+
+        return
+
+
+    def _resize_arrays(self, new_size=None, keys=None):
+        ''' Resize arrays if any mismatches are found '''
+
+        # Handle None or tuple input (representing variants and pop_size)
+        if new_size is None:
+            new_size = len(self)
+        pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
+        self.pars['pop_size'] = pop_size
+
+        # Reset sizes
+        if keys is None:
+            keys = self.keys()
+        keys = sc.promotetolist(keys)
+        for key in keys:
+            self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
+
+        return
+
+
+    def lock(self):
+        ''' Lock the people object to prevent keys from being added '''
+        self._lock = True
+        return
+
+
+    def unlock(self):
+        ''' Unlock the people object to allow keys to be added '''
+        self._lock = False
+        return
+
+
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr')
             If the key is an integer, alias `people.person()` to return a `Person` instance
         '''
-
         try:
             return self.__dict__[key]
         except: # pragma: no cover
@@ -896,18 +1018,6 @@ class BasePeople(FlexPretty):
             errormsg = f'Key "{key}" is not a current attribute of people, and the people object is locked; see people.unlock()'
             raise AttributeError(errormsg)
         self.__dict__[key] = value
-        return
-
-
-    def lock(self):
-        ''' Lock the people object to prevent keys from being added '''
-        self._lock = True
-        return
-
-
-    def unlock(self):
-        ''' Unlock the people object to allow keys to be added '''
-        self._lock = False
         return
 
 
@@ -1069,117 +1179,6 @@ class BasePeople(FlexPretty):
     def indices(self):
         ''' The indices of each people array '''
         return np.arange(len(self))
-
-
-    def set_pars(self, pars=None):
-        '''
-        Re-link the parameters stored in the people object to the sim containing it,
-        and perform some basic validation.
-        '''
-        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
-        if pars is None:
-            if orig_pars is not None: # If it has existing parameters, use them
-                pars = orig_pars
-            else:
-                pars = {}
-        elif sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-
-        # Copy from old parameters to new parameters
-        if isinstance(orig_pars, dict):
-            for k,v in orig_pars.items():
-                if k not in pars:
-                    pars[k] = v
-
-        # Do minimal validation -- needed here since pop_size should be converted to an int when first set
-        if 'pop_size' not in pars:
-            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
-            raise sc.KeyNotFoundError(errormsg)
-        pars['pop_size'] = int(pars['pop_size'])
-        pars.setdefault('n_variants', 1)
-        pars.setdefault('location', None)
-        self.pars = pars # Actually store the pars
-        return
-
-
-    def validate(self, sim_pars=None, die=True, verbose=False):
-        '''
-        Perform validation on the People object.
-
-        Args:
-            sim_pars (dict): dictionary of parameters from the sim to ensure they match the current People object
-            die (bool): whether to raise an exception if validation fails
-            verbose (bool): detail to print
-        '''
-
-        # Check that parameters match
-        if sim_pars is not None:
-            mismatches = {}
-            keys = ['pop_size', 'pop_type', 'location', 'pop_infected', 'frac_susceptible'] # These are the keys used in generating the population
-            for key in keys:
-                sim_v = sim_pars.get(key)
-                ppl_v = self.pars.get(key)
-                if sim_v is not None and ppl_v is not None:
-                    if sim_v != ppl_v:
-                        mismatches[key] = sc.objdict(sim=sim_v, people=ppl_v)
-            if len(mismatches):
-                errormsg = 'Validation failed due to the following mismatches between the sim and the people parameters:\n'
-                for k,v in mismatches.items():
-                    errormsg += f'  {k}: sim={v.sim}, people={v.people}'
-                raise ValueError(errormsg)
-
-        # Check that the keys match
-        contact_layer_keys = set(self.contacts.keys())
-        layer_keys    = set(self.layer_keys())
-        if contact_layer_keys != layer_keys:
-            errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
-            raise ValueError(errormsg)
-
-        # Check that the length of each array is consistent
-        expected_len = len(self)
-        expected_variants = self.pars['n_variants']
-        for key in self.keys():
-            if self[key].ndim == 1:
-                actual_len = len(self[key])
-            else: # If it's 2D, variants need to be checked separately
-                actual_variants, actual_len = self[key].shape
-                if actual_variants != expected_variants:
-                    if verbose:
-                        print(f'Resizing "{key}" from {actual_variants} to {expected_variants}')
-                    self._resize_arrays(keys=key, new_size=(expected_variants, expected_len))
-            if actual_len != expected_len: # pragma: no cover
-                if die:
-                    errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
-                    raise IndexError(errormsg)
-                else:
-                    if verbose:
-                        print(f'Resizing "{key}" from {actual_len} to {expected_len}')
-                    self._resize_arrays(keys=key)
-
-        # Check that the layers are valid
-        for layer in self.contacts.values():
-            layer.validate()
-
-        return
-
-
-    def _resize_arrays(self, new_size=None, keys=None):
-        ''' Resize arrays if any mismatches are found '''
-
-        # Handle None or tuple input (representing variants and pop_size)
-        if new_size is None:
-            new_size = len(self)
-        pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
-        self.pars['pop_size'] = pop_size
-
-        # Reset sizes
-        if keys is None:
-            keys = self.keys()
-        keys = sc.promotetolist(keys)
-        for key in keys:
-            self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
-
-        return
 
 
     def to_df(self):

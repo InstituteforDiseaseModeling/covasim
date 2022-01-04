@@ -61,6 +61,7 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
 
     # If a people object or popdict is supplied, use it
     if sim.people and not reset:
+        sim.people.initialize(sim_pars=sim.pars)
         return sim.people # If it's already there, just return
     elif sim.popdict and popdict is None:
         popdict = sim.popdict # Use stored one
@@ -73,27 +74,51 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
     # Main use case: no popdict is supplied, so create one
     else:
         if popdict is None:
-            # Create the population
-            if pop_type in ['random', 'clustered', 'hybrid']:
-                popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
-            elif pop_type is None: # pragma: no cover
-                errormsg = 'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
-                raise ValueError(errormsg)
+            if pop_type in ['random', 'hybrid']:
+                popdict = make_randpop(sim, microstructure=pop_type, **kwargs) # Main use case: create a random or hybrid population
             else: # pragma: no cover
-                errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
+                errormsg = f'Population type "{pop_type}" not found; choices are random, hybrid, or synthpops'
                 raise ValueError(errormsg)
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:
         sim['prognoses'] = cvpar.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
 
-    # Actually create the people
+    # Do minimal validation and create the people
+    validate_popdict(popdict, sim.pars)
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
 
-    average_age = sum(popdict['age']/pop_size)
-    sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
+    sc.printv(f'Created {pop_size} people, average age {people.age.mean():0.2f} years', 2, verbose)
 
     return people
+
+
+def validate_popdict(popdict, pars):
+    '''
+    Check that the popdict is the correct type, has the correct keys, and has
+    the correct length
+    '''
+
+    # Check it's the right type
+    try:
+        popdict.keys() # Although not used directly, this is used in the error message below, and is a good proxy for a dict-like object
+    except Exception as E:
+        errormsg = f'The popdict should be a dictionary or cv.People object, but instead is {type(popdict)}'
+        raise TypeError(errormsg) from E
+
+    # Check keys and lengths
+    required_keys = ['uid', 'age', 'sex']
+    pop_size = pars['pop_size']
+    for key in required_keys:
+        if key not in popdict:
+            errormsg = f'Could not find required key "{key}" in popdict; available keys are: {sc.strjoin(popdict.keys())}'
+            sc.KeyNotFoundError(errormsg)
+        actual_size = len(popdict[key])
+        if actual_size != pop_size:
+            errormsg = f'Could not use supplied popdict since key {key} has length {actual_size}, but all keys must have length {pop_size}'
+            raise ValueError(errormsg)
+
+    return
 
 
 def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure='random', **kwargs):

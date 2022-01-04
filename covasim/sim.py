@@ -704,15 +704,14 @@ class Sim(cvb.BaseSim):
         # Check for AlreadyRun errors
         errormsg = None
         until = self.npts if until is None else self.day(until)
-        print('hohoho', self.t, self.people.t)
         if until > self.npts:
             errormsg = f'Requested to run until t={until} but the simulation end is t={self.npts}'
         if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
             errormsg = f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached'
         if self.complete:
             errormsg = 'Simulation is already complete (call sim.initialize() to re-run)'
-        if self.people.t != self.t:
-            errormsg = 'The simulation has not been run, but the people object has been: if this is intentional, manually set sim.people.t = 0. Remember to save the people object before running the sim.'
+        if self.people.t not in [self.t, self.t-1]: # Depending on how the sim stopped, either of these states are possible
+            errormsg = f'The simulation has been run independently from the people (t={self.t}, people.t={self.people.t}): if this is intentional, manually set sim.people.t = sim.t. Remember to save the people object before running the sim.'
         if errormsg:
             raise AlreadyRunError(errormsg)
 
