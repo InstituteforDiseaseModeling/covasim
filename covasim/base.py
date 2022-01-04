@@ -1029,30 +1029,6 @@ class BasePeople(FlexPretty):
         return len(self[key]) - self.count(key)
 
 
-    def set_pars(self, pars=None):
-        '''
-        Re-link the parameters stored in the people object to the sim containing it,
-        and perform some basic validation.
-        '''
-        if pars is None:
-            pars = {}
-        elif sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
-        if isinstance(orig_pars, dict):
-            for k,v in orig_pars.items():
-                if k not in pars:
-                    pars[k] = v
-        if 'pop_size' not in pars:
-            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
-            raise sc.KeyNotFoundError(errormsg)
-        pars['pop_size'] = int(pars['pop_size'])
-        pars.setdefault('n_variants', 1)
-        pars.setdefault('location', None)
-        self.pars = pars # Actually store the pars
-        return
-
-
     def keys(self):
         ''' Returns keys for all properties of the people object '''
         return self.meta.all_states[:]
@@ -1093,6 +1069,37 @@ class BasePeople(FlexPretty):
     def indices(self):
         ''' The indices of each people array '''
         return np.arange(len(self))
+
+
+    def set_pars(self, pars=None):
+        '''
+        Re-link the parameters stored in the people object to the sim containing it,
+        and perform some basic validation.
+        '''
+        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
+        if pars is None:
+            if orig_pars is not None: # If it has existing parameters, use them
+                pars = orig_pars
+            else:
+                pars = {}
+        elif sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+
+        # Copy from old parameters to new parameters
+        if isinstance(orig_pars, dict):
+            for k,v in orig_pars.items():
+                if k not in pars:
+                    pars[k] = v
+
+        # Do minimal validation -- needed here since pop_size should be converted to an int when first set
+        if 'pop_size' not in pars:
+            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
+            raise sc.KeyNotFoundError(errormsg)
+        pars['pop_size'] = int(pars['pop_size'])
+        pars.setdefault('n_variants', 1)
+        pars.setdefault('location', None)
+        self.pars = pars # Actually store the pars
+        return
 
 
     def validate(self, sim_pars=None, die=True, verbose=False):

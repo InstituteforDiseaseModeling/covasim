@@ -99,7 +99,6 @@ class People(cvb.BasePeople):
 
         # Although we have called init(), we still need to call initialize()
         self.initialized = False
-        self.infections_initialized = False
 
         # Handle contacts, if supplied (note: they usually are)
         if 'contacts' in kwargs:
@@ -128,8 +127,9 @@ class People(cvb.BasePeople):
 
     def initialize(self, sim_pars=None):
         ''' Perform initializations '''
+        self.validate(sim_pars=sim_pars) # First, check that essential-to-match parameters match
+        self.set_pars(sim_pars) # Replace the saved parameters with this simulation's
         self.set_prognoses()
-        self.validate(sim_pars=sim_pars)
         self.initialized = True
         return
 

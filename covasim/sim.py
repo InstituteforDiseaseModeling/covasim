@@ -367,7 +367,7 @@ class Sim(cvb.BaseSim):
         # Load the population into the popdict
         self.popdict = cvm.load(popfile)
         if self['verbose']:
-            print(f'Loading population from {filepath}')
+            print(f'Loading population from {popfile}')
 
         if init_people:
             self.init_people(**kwargs)
@@ -375,45 +375,16 @@ class Sim(cvb.BaseSim):
         return
 
 
-            # Process the input
-            if isinstance(obj, dict):
-                self.popdict = obj
-                n_actual     = len(self.popdict['uid'])
-                layer_keys   = self.popdict['layer_keys']
-
-            elif isinstance(obj, cvb.BasePeople):
-                n_actual = len(obj)
-                self.people = obj
-                self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
-                layer_keys  = self.people.layer_keys()
-
-                # Perform validation
-                n_expected = self['pop_size']
-                if n_actual != n_expected: # External consistency check
-                    errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
-                    raise ValueError(errormsg)
-                self.people.validate() # Internal consistency check
-
-            else: # pragma: no cover
-                errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
-                raise ValueError(errormsg)
-
-            self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
-            self.popfile = None # Once loaded, remove to save memory
-
-        return
-
-
-    def init_people(self, popdict=None, init_infect=True, reset=False, verbose=None, **kwargs):
+    def init_people(self, popdict=None, init_infections=True, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
         Args:
-            popdict (any):  pre-generated people of various formats
-            init_infect (bool): whether to initialize infections
-            reset   (bool): whether to regenerate the people even if they already exist
-            verbose (int):  detail to print
-            kwargs  (dict): passed to cv.make_people()
+            popdict         (any):  pre-generated people of various formats
+            init_infections (bool): whether to initialize infections
+            reset           (bool): whether to regenerate the people even if they already exist
+            verbose         (int):  detail to print
+            kwargs          (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
@@ -432,24 +403,36 @@ class Sim(cvb.BaseSim):
         # Actually make the people
         self.people = cvpop.make_people(self, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize(sim_pars=self.pars) # Fully initialize the people
-        if init_infect:
+        self.reset_layer_pars(force=False) # Ensure that layer keys match the loaded population
+        if init_infections:
             self.init_infections()
 
         return
 
 
-    def init_infections(self):
-        ''' Initialize prior immunity and seed infections '''
+    def init_infections(self, force=False):
+        '''
+        Initialize prior immunity and seed infections.
 
-        # Handle anyone who isn't susceptible
-        if self['frac_susceptible'] < 1:
-            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
-            self.people.make_nonnaive(inds=inds)
+        Args:
+            force (bool): initialize prior infections even if already initialized
+        '''
 
-        # Create the seed infections
-        if self['pop_infected']:
-            inds = cvu.choose(self['pop_size'], self['pop_infected'])
-            self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
+        # If anyone is non-naive, don't re-initialize
+        if self.people.count_not('naive') == 0 or force: # Everyone is naive
+
+            # Handle anyone who isn't susceptible
+            if self['frac_susceptible'] < 1:
+                inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+                self.people.make_nonnaive(inds=inds)
+
+            # Create the seed infections
+            if self['pop_infected']:
+                inds = cvu.choose(self['pop_size'], self['pop_infected'])
+                self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
+
+        elif self['verbose']:
+            print(f'People already initialized with {self.people.count_not("naive")} people non-naive and {self.people.count("exposed")} exposed; not reinitializing')
 
         return
 
