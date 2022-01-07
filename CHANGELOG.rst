@@ -347,7 +347,7 @@ Bugfixes
 ^^^^^^^^
 - Previously, the lognormal distributions were unintentionally using the variance of the distribution, instead of the standard deviation, as the second parameter. This makes a small difference to the results (slightly higher transmission due to the increased variance). Old simulations that are loaded will automatically have their parameters updated so they give the same results; however, new simulations will now give slightly different results than they did previously. (Thanks to Ace Thompson for identifying this.)
 - If a results object has low and high values, these are now exported to JSON (and also to Excel).
-- MultiSim and Scenarios ``run.()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
+- MultiSim and Scenarios ``.run()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
 
 Plotting and options
 ^^^^^^^^^^^^^^^^^^^^
