@@ -76,14 +76,11 @@ def set_default_options():
     optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
     options.style = os.getenv('COVASIM_STYLE', 'covasim')
 
-    optdesc.rc_covasim = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
-    options.rc_covasim = sc.dcp(rc_covasim)
+    optdesc.rc = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
+    options.rc = sc.dcp(rc_covasim)
 
     optdesc.rc_simple = 'Simple Matplotlib rc (run control) parameters for Covasim; used with style="simple"'
     options.rc_simple = sc.dcp(rc_simple)
-
-    optdesc.rc = 'Matplotlib rc (run control) parameters for Covasim'
-    options.rc = sc.dcp(rc_covasim)
 
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
@@ -236,15 +233,19 @@ def get_help(output=False):
         entry.key = key
         entry.current = options[key]
         entry.default = orig_options[key]
-        entry.variable = f'COVASIM_{key.upper()}' # NB, hard-coded above!
+        if not key.startswith('rc'):
+            entry.variable = f'COVASIM_{key.upper()}' # NB, hard-coded above!
+        else:
+            entry.variable = 'No environment variable'
         entry.desc = optdesc[key]
         optdict[key] = entry
 
     # Convert to a dataframe for nice printing
     print('Covasim global options ("Environment" = name of corresponding environment variable):')
     for key,entry in optdict.items():
-        print(f'\n{key}')
+        sc.heading(f'\n{key}', spaces=1)
         changestr = '' if entry.current == entry.default else ' (modified)'
+        print(f'          Key: {key}')
         print(f'      Current: {entry.current}{changestr}')
         print(f'      Default: {entry.default}')
         print(f'  Environment: {entry.variable}')
