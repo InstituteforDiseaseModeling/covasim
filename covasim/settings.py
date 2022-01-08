@@ -16,6 +16,35 @@ import sciris as sc
 __all__ = ['options']
 
 
+# Define default plotting options -- based on Seaborn
+rc_covasim = {
+    'figure.facecolor': 'white',
+    'axes.facecolor': 'efefff',
+    'axes.grid': True,
+    'axes.spines.right': False,
+    'axes.spines.top': False,
+
+    'grid.color': 'white',
+    'grid.linestyle': '-',
+    'grid.linewidth': 1,
+
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Rosario', 'Muli', 'Arial', 'Liberation Sans', 'DejaVu Sans', 'sans-serif'],
+
+    'image.cmap': 'parula',
+    'legend.frameon': False,
+}
+
+# Simple options -- similar to Matplotlib default
+rc_simple = {
+    'axes.spines.right': False,
+    'axes.spines.top': False,
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Muli', 'Arial', 'Liberation Sans', 'DejaVu Sans', 'sans-serif'],
+    'legend.frameon': False,
+}
+
+
 def set_default_options():
     '''
     Set the default options for Covasim -- not to be called by the user, use
@@ -44,8 +73,17 @@ def set_default_options():
     optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
     options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
-    optdesc.style = 'Set the default plotting style -- options are "covasim" plus those in pl.style.available'
+    optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
     options.style = os.getenv('COVASIM_STYLE', 'covasim')
+
+    optdesc.rc_covasim = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
+    options.rc_covasim = sc.dcp(rc_covasim)
+
+    optdesc.rc_simple = 'Simple Matplotlib rc (run control) parameters for Covasim; used with style="simple"'
+    options.rc_simple = sc.dcp(rc_simple)
+
+    optdesc.rc = 'Matplotlib rc (run control) parameters for Covasim'
+    options.rc = sc.dcp(rc_covasim)
 
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
@@ -91,6 +129,7 @@ def set_option(key=None, value=None, **kwargs):
     Options are (see also ``cv.options.help()``):
 
         - verbose:        default verbosity for simulations to use
+        - style:          the plotting style to use
         - font_size:      the font size used for the plots
         - font_family:    the font family/face used for the plots
         - dpi:            the overall DPI for the figure
@@ -110,7 +149,8 @@ def set_option(key=None, value=None, **kwargs):
         cv.options.set('defaults') # Reset to default options
         cv.options.set('jupyter') # Defaults for Jupyter
 
-    New in version 3.1.1: Jupyter defaults
+    | New in version 3.1.1: Jupyter defaults
+    | New in version 3.1.2: Updated plotting styles
     '''
 
     reload_required = False
@@ -272,38 +312,22 @@ def reload_numba():
     return
 
 
+
+def load_custom_fonts():
+    '''
+    Load custom fonts for plotting
+    '''
+    folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
+    sc.fonts(add=folder)
+    return
+
+# Load custom fonts on import
+load_custom_fonts()
+
+
 # Add these here to be more accessible to the user
 options.set = set_option
 options.get_default = get_default
 options.help = get_help
 
 
-def load_custom_fonts():
-    '''
-    Load custom fonts for plotting
-    '''
-    try:
-        import matplotlib.font_manager as mplfm
-        folder = sc.thisdir(__file__, aspath=True) / 'data' / 'assets'
-        for font in mplfm.findSystemFonts([folder]):
-            mplfm.fontManager.addfont(font)
-    except:
-        pass
-
-    available_fonts = []
-    for f in mplfm.findSystemFonts():
-        try:
-            name = mplfm.get_font(f).family_name
-            available_fonts.append(name)
-        except:
-            pass
-    available_fonts = sorted(available_fonts)
-    return available_fonts
-
-# Load custom fonts on import
-available_fonts = load_custom_fonts()
-
-
-# Finally, set the specified options
-for key in matplotlib_keys:
-    set_matplotlib_global(key, options[key], available_fonts=available_fonts)
