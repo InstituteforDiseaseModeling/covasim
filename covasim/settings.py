@@ -48,7 +48,7 @@ rc_covasim = sc.mergedicts(rc_simple, {
 
 #%% Define the options class
 
-class Options(sc.objdict):
+class Options(dict):
     '''
     Set options for Covasim. Use ``cv.options.set('defaults')`` to reset all
     values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
@@ -93,6 +93,18 @@ class Options(sc.objdict):
         self.load_custom_fonts() # Load custom fonts on module import
         return
 
+    # Overwrite dictionary methods with the options dict rather than the base class
+    def __getitem__( self, *args, **kwargs): return self.options.__getitem__( *args, **kwargs)
+    def __setitem__( self, *args, **kwargs): return self.options.__setitem__( *args, **kwargs)
+    def __contains__(self, *args, **kwargs): return self.options.__contains__(*args, **kwargs)
+    def __len__(     self, *args, **kwargs): return self.options.__len__(     *args, **kwargs)
+    def get(         self, *args, **kwargs): return self.options.get(         *args, **kwargs)
+    def items(       self, *args, **kwargs): return self.options.items(       *args, **kwargs)
+    def keys(        self, *args, **kwargs): return self.options.keys(        *args, **kwargs)
+    def setdefault(  self, *args, **kwargs): return self.options.setdefault(  *args, **kwargs)
+    def update(      self, *args, **kwargs): return self.options.update(      *args, **kwargs)
+    def values(      self, *args, **kwargs): return self.options.values(      *args, **kwargs)
+
 
     def __call__(self, *args, **kwargs):
         '''Allow ``cv.options(dpi=150)`` instead of ``cv.options.set(dpi=150)`` '''
@@ -101,7 +113,7 @@ class Options(sc.objdict):
 
     def __repr__(self):
         output = 'Covasim options (see also cv.options.help()):\n'
-        for k,v in self.options.items():
+        for k,v in self.items():
             output += f'  {k:>12s}: {repr(v)}\n'
         return output
 
