@@ -467,7 +467,7 @@ def get_cross_immunity(default=False, variant=None):
         ),
     )
 
-    _get_from_pars(pars, default, key=variant, defaultkey='wild')
+    return _get_from_pars(pars, default, key=variant, defaultkey='wild')
 
 
 def get_vaccine_variant_pars(default=False, vaccine=None):
