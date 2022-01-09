@@ -217,7 +217,7 @@ Version 3.0.1 (2021-04-16)
 
 Version 3.0.0 (2021-04-13)
 --------------------------
-This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
+This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at info@covasim.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
 
 Highlights
 ^^^^^^^^^^
@@ -347,7 +347,7 @@ Bugfixes
 ^^^^^^^^
 - Previously, the lognormal distributions were unintentionally using the variance of the distribution, instead of the standard deviation, as the second parameter. This makes a small difference to the results (slightly higher transmission due to the increased variance). Old simulations that are loaded will automatically have their parameters updated so they give the same results; however, new simulations will now give slightly different results than they did previously. (Thanks to Ace Thompson for identifying this.)
 - If a results object has low and high values, these are now exported to JSON (and also to Excel).
-- MultiSim and Scenarios ``run.()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
+- MultiSim and Scenarios ``.run()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
 
 Plotting and options
 ^^^^^^^^^^^^^^^^^^^^

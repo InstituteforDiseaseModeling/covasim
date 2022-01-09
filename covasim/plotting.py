@@ -9,18 +9,15 @@ webapp.
 import numpy as np
 import pylab as pl
 import sciris as sc
-import datetime as dt
-import matplotlib.ticker as ticker
 from . import misc as cvm
 from . import defaults as cvd
 from . import settings as cvset
 
 
-__all__ = ['date_formatter', 'plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
+__all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
 
 #%% Plotting helper functions
-
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
                 legend_args=None, date_args=None, show_args=None, mpl_args=None, **kwargs):
@@ -34,8 +31,8 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
-    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True)
+    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
     defaults.mpl     = sc.objdict(dpi=None, fontsize=None, fontfamily=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
@@ -53,7 +50,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.axis    = sc.mergedicts(defaults.axis,    axis_args)
     args.fill    = sc.mergedicts(defaults.fill,    fill_args)
     args.legend  = sc.mergedicts(defaults.legend,  legend_args)
-    args.date    = sc.mergedicts(defaults.date,    fill_args)
+    args.date    = sc.mergedicts(defaults.date,    date_args)
     args.show    = sc.mergedicts(defaults.show,    show_args)
     args.mpl     = sc.mergedicts(defaults.mpl,     mpl_args)
 
@@ -67,12 +64,10 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         raise sc.KeyNotFoundError(errormsg)
 
     # Handle what to show
-    show_keys = defaults.show.keys()
-    args.show = {k:True for k in show_keys}
+    show_keys = ['data', 'ticks', 'interventions', 'legend']
     if show_args in [True, False]: # Handle all on or all off
-        args.show = {k:show_args for k in show_keys}
-    else:
-        args.show = sc.mergedicts(args.show, show_args)
+        for k in show_keys:
+            args.show[k] = show_args
 
     # Handle global Matplotlib arguments
     args.mpl_orig = sc.objdict()
@@ -183,8 +178,7 @@ def plot_data(sim, ax, key, scatter_args, color=None):
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         if color is None:
             color = sim.results[key].color
-        data_t = (sim.data.index-sim['start_day'])/np.timedelta64(1,'D') # Convert from data date to model output index based on model start date
-        ax.scatter(data_t, sim.data[key], c=[color], label='Data', **scatter_args)
+        ax.scatter(sim.data.index, sim.data[key], c=[color], label='Data', **scatter_args)
     return
 
 
@@ -196,7 +190,18 @@ def plot_interventions(sim, ax):
     return
 
 
-def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_legend=True):
+def ax_style(ax=None, grid=True, grid_color='w', facecolor='#efefff'):
+    ''' Set axes style '''
+    if ax is None:
+        ax = pl.gca()
+    if cvset.options.style == 'covasim':
+        sc.boxoff(ax)
+        ax.patch.set_facecolor(facecolor)
+        ax.grid(grid, color=grid_color)
+    return
+
+
+def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_args, show_legend=True):
     ''' Plot styling -- set the plot title, add a legend, and optionally add gridlines'''
 
     # Handle show_legend being in the legend args, since in some cases this is the only way it can get passed
@@ -207,16 +212,16 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
         popped = False
 
     # Show the legend
-    if show_legend:
+    if show_legend and show_args['legend']: # It's pretty ugly, but there are multiple ways of controlling whether the legend shows
         ax.legend(**legend_args)
 
     # If we removed it from the legend_args dict, put it back now
     if popped:
         legend_args['show_legend'] = show_legend
 
-    # Set the title and gridlines
+    # Set the title, gridlines, and color
     ax.set_title(title)
-    ax.grid(grid)
+    ax_style(ax, grid=grid)
 
     # Set the y axis style
     if setylim:
@@ -226,73 +231,15 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_le
         if ylims[1] >= 1000:
             sc.commaticks(ax=ax)
 
+    # Optionally remove x-axis labels except on bottom plots -- don't use ax.label_outer() since we need to keep the y-labels
+    if show_args['outer']:
+        lastrow = ax.get_subplotspec().is_last_row()
+        if not lastrow:
+            for label in ax.get_xticklabels(which="both"):
+                label.set_visible(False)
+            ax.set_xlabel('')
+
     return
-
-
-def date_formatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None, sim=None):
-    '''
-    Create an automatic date formatter based on a number of days and a start day.
-
-    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
-    axis uses dates already. To be used in conjunction with setting the x-axis
-    tick label formatter.
-
-    Args:
-        start_day (str/date): the start day, either as a string or date object
-        dateformat (str): the date format (default '%b-%d')
-        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        ax (axes): if supplied, automatically set the x-axis formatter for this axis
-        sim (Sim): if supplied, get the start day from this
-
-    **Examples**::
-
-        # Automatically configure the axis with default option
-        cv.date_formatter(sim=sim, ax=ax)
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = cv.date_formatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%Y-%m-%d', ax=ax)
-        ax.xaxis.set_major_formatter(formatter)
-    '''
-
-    # Set the default -- "Mar-01"
-    if dateformat is None:
-        dateformat = '%b-%d'
-
-    # Convert to a date object
-    if start_day is None and sim is not None:
-        start_day = sim['start_day']
-    if start_day is None:
-        errormsg = 'If not supplying a start day, you must supply a sim object'
-        raise ValueError(errormsg)
-    start_day = sc.date(start_day)
-
-    @ticker.FuncFormatter
-    def mpl_formatter(x, pos):
-        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
-
-    # Set initial tick marks (intervals and limits)
-    if ax is not None:
-
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start:
-            xmin = sc.day(start, start_date=start_day)
-        if end:
-            xmax = sc.day(end, start_date=start_day)
-        ax.set_xlim((xmin, xmax))
-
-        # Set the x-axis intervals
-        if interval:
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
-
-        # Set the formatter
-        ax.xaxis.set_major_formatter(mpl_formatter)
-
-    return mpl_formatter
 
 
 def reset_ticks(ax, sim=None, date_args=None, start_day=None):
@@ -303,28 +250,21 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
     if start_day is None and sim is not None:
         start_day = sim['start_day']
 
-    # Handle start and end days
-    xmin,xmax = ax.get_xlim()
-    if date_args.start_day:
-        xmin = float(sc.day(date_args.start_day, start_date=start_day)) # Keep original type (float)
-    if date_args.end_day:
-        xmax = float(sc.day(date_args.end_day, start_date=start_day))
-    ax.set_xlim([xmin, xmax])
-
-    # Set the x-axis intervals
-    if date_args.interval:
-        ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
-
     # Set xticks as dates
-    if date_args.as_dates:
+    if date_args.pop('as_dates'):
+        sc.dateformatter(ax=ax, **date_args) # Actually format the axis with dates, rotation, etc.
+    else:
+        # Handle start and end days
+        xmin,xmax = ax.get_xlim()
+        if date_args.start:
+            xmin = float(sc.day(date_args.start, start_date=start_day)) # Keep original type (float)
+        if date_args.end:
+            xmax = float(sc.day(date_args.end, start_date=start_day))
+        ax.set_xlim([xmin, xmax])
 
-        date_formatter(start_day=start_day, dateformat=date_args.dateformat, ax=ax)
-        if not date_args.interval:
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-
-    # Handle rotation
-    if date_args.rotation:
-        ax.tick_params(axis='x', labelrotation=date_args.rotation)
+        # Set the x-axis intervals
+        if date_args.interval:
+            ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
 
     return
 
@@ -332,20 +272,32 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
 def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     ''' Handle saving, figure showing, and what value to return '''
 
+    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
+
+    # Optionally maximize -- does not work on all systems
+    if args.show['maximize']:
+        for f in figlist:
+            sc.maximize(fig=f)
+        pl.pause(0.01) # Force refresh
+
+    # Use tight layout for all figures
+    if args.show['tight']:
+        for f in figlist:
+            sc.figlayout(fig=f)
+
     # Handle saving
     if do_save:
         if fig_path is not None: # No figpath provided - see whether do_save is a figpath
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(filename=fig_path) # Save the figure
+        if len(figlist) >1:
+            print('Warning: only the last figure was saved')
 
     # Show the figure, or close it
     do_show = cvset.handle_show(do_show)
     if cvset.options.close and not do_show:
-        if sep_figs:
-            for fig in figs:
-                pl.close(fig)
-        else:
-            pl.close(fig)
+        for f in figlist:
+            pl.close(f)
 
     # Reset Matplotlib defaults
     for key,value in args.mpl_orig.items():
@@ -377,7 +329,7 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
-         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True,
+         show_args=None, mpl_args=None, n_cols=None, grid=True, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
          fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
@@ -393,7 +345,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     for pnum,title,keylabels in to_plot.enumitems():
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         for resnum,reskey in enumerate(keylabels):
-            res_t = sim.results['t']
+            res_t = sim.results['date']
             if reskey in variant_keys:
                 res = sim.results['variant'][reskey]
                 ns = sim['n_variants']
@@ -417,8 +369,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['interventions']:
             plot_interventions(sim, ax) # Plot the interventions
-        if args.show['legend']:
-            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+        title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
@@ -441,6 +392,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
         ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
         reskeys = sc.promotetolist(reskeys) # In case it's a string
         for reskey in reskeys:
+            res_t = scens.datevec
             resdata = scens.results[reskey]
             for snum,scenkey,scendata in resdata.enumitems():
                 sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
@@ -452,16 +404,16 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                         res_y = scendata.best[variant,:]
                         color = variant_colors[variant]  # Choose the color
                         label = 'wild type' if variant == 0 else sim['variants'][variant - 1].label
-                        ax.fill_between(scens.tvec, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
-                        ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
+                        ax.fill_between(res_t, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
+                        ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
                 else:
                     res_y = scendata.best
                     color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
                     label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
-                    ax.fill_between(scens.tvec, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
-                    ax.plot(scens.tvec, res_y, label=label, c=color, **args.plot)  # Plot the actual line
+                    ax.fill_between(res_t, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
+                    ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                     if args.show['data']:
                         plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
@@ -470,7 +422,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                 if args.show['ticks']:
                     reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
         if args.show['legend']:
-            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
@@ -509,7 +461,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     ax.plot(res_t, res.values, c=color, label=label, **args.plot)
     plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
     plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend) # Configure the title, grid, and legend
+    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
     reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)

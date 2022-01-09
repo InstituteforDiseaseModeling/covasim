@@ -385,7 +385,8 @@ class Intervention:
                             label_shown = True
                         else:
                             label = None
-                        ax.axvline(day, label=label, **line_args)
+                        date = sc.date(sim.date(day))
+                        ax.axvline(date, label=label, **line_args)
         return
 
 
@@ -1267,7 +1268,6 @@ class BaseVaccination(Intervention):
     Some quantities are tracked during execution for reporting after running the simulation.
     These are:
 
-        - ``vaccinated``:        whether or not a person is vaccinated
         - ``doses``:             the number of vaccine doses per person
         - ``vaccination_dates``: integer; dates of all doses for this vaccine
 
@@ -2009,24 +2009,24 @@ class historical_vaccinate_prob(BaseVaccination):
 
 
 class historical_wave(Intervention):
+    '''
+    Imprint a historical (pre t=0) wave of infections in the population NAbs
+
+    Args:
+        days_prior (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
+        prob       (float/list)   : probability of infection during the wave
+        dist       (dict/list)    : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
+        subtarget  (dict/list)    : subtarget intervention to people with particular indices  (see test_num() for details)
+        variants   (str/list)     : name of variant associated with the wave
+        kwargs     (dict)         : passed to Intervention()
+
+    **Example**::
+        cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
+
+    New in version 3.1.0.
+    '''
 
     def __init__(self, days_prior, prob, dist=None, subtarget=None, variant=None, **kwargs):
-        '''
-        Imprint a historical (pre t=0) wave of infections in the population NAbs
-
-        Args:
-            days_prior (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
-            prob       (float/list)   : probability of infection during the wave
-            dist       (dict/list)    : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
-            subtarget  (dict/list)    : subtarget intervention to people with particular indices  (see test_num() for details)
-            variants   (str/list)     : name of variant associated with the wave
-            kwargs     (dict)         : passed to Intervention()
-
-        **Example**::
-            cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
-
-        New in version 3.1.0.
-        '''
         super().__init__(**kwargs)
         self.days_prior = sc.dcp(days_prior)
         self.dist = {'dist': 'normal', 'par1': 0, 'par2': 5*7/2.355} if dist is None else sc.dcp(dist) # default is FWHM 5 weeks

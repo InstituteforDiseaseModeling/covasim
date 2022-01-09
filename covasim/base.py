@@ -192,11 +192,11 @@ class Result(object):
         return len(self.values)
 
 
-def set_metadata(obj):
+def set_metadata(obj, **kwargs):
     ''' Set standard metadata for an object '''
-    obj.created = sc.now()
-    obj.version = cvv.__version__
-    obj.git_info = cvm.git_info()
+    obj.created = kwargs.get('created', sc.now())
+    obj.version = kwargs.get('version', cvv.__version__)
+    obj.git_info = kwargs.get('git_info', cvm.git_info())
     return
 
 
@@ -288,8 +288,7 @@ class BaseSim(ParsObj):
         ''' Set the metadata for the simulation -- creation time and filename '''
         set_metadata(self)
         if simfile is None:
-            datestr = sc.getdate(obj=self.created, dateformat='%Y-%b-%d_%H.%M.%S')
-            self.simfile = f'covasim_{datestr}.sim'
+            self.simfile = 'covasim.sim'
         return
 
 
@@ -687,7 +686,7 @@ class BaseSim(ParsObj):
 
         **Example**::
 
-            sim.save() # Saves to a .sim file with the date and time of creation by default
+            sim.save() # Saves to a .sim file
         '''
 
         # Set keep_people based on whether or not we're in the middle of a run
@@ -876,11 +875,133 @@ class BasePeople(FlexPretty):
     whereas this class exists to handle the less interesting implementation details.
     '''
 
+    def set_pars(self, pars=None):
+        '''
+        Re-link the parameters stored in the people object to the sim containing it,
+        and perform some basic validation.
+        '''
+        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
+        if pars is None:
+            if orig_pars is not None: # If it has existing parameters, use them
+                pars = orig_pars
+            else:
+                pars = {}
+        elif sc.isnumber(pars): # Interpret as a population size
+            pars = {'pop_size':pars} # Ensure it's a dictionary
+
+        # Copy from old parameters to new parameters
+        if isinstance(orig_pars, dict):
+            for k,v in orig_pars.items():
+                if k not in pars:
+                    pars[k] = v
+
+        # Do minimal validation -- needed here since pop_size should be converted to an int when first set
+        if 'pop_size' not in pars:
+            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
+            raise sc.KeyNotFoundError(errormsg)
+        pars['pop_size'] = int(pars['pop_size'])
+        pars.setdefault('n_variants', 1)
+        pars.setdefault('location', None)
+        self.pars = pars # Actually store the pars
+        return
+
+
+    def validate(self, sim_pars=None, die=True, verbose=False):
+        '''
+        Perform validation on the People object.
+
+        Args:
+            sim_pars (dict): dictionary of parameters from the sim to ensure they match the current People object
+            die (bool): whether to raise an exception if validation fails
+            verbose (bool): detail to print
+        '''
+
+        # Check that parameters match
+        if sim_pars is not None:
+            mismatches = {}
+            keys = ['pop_size', 'pop_type', 'location', 'pop_infected', 'frac_susceptible', 'n_variants'] # These are the keys used in generating the population
+            for key in keys:
+                sim_v = sim_pars.get(key)
+                ppl_v = self.pars.get(key)
+                if sim_v is not None and ppl_v is not None:
+                    if sim_v != ppl_v:
+                        mismatches[key] = sc.objdict(sim=sim_v, people=ppl_v)
+            if len(mismatches):
+                errormsg = 'Validation failed due to the following mismatches between the sim and the people parameters:\n'
+                for k,v in mismatches.items():
+                    errormsg += f'  {k}: sim={v.sim}, people={v.people}'
+                raise ValueError(errormsg)
+
+        # Check that the keys match
+        contact_layer_keys = set(self.contacts.keys())
+        layer_keys    = set(self.layer_keys())
+        if contact_layer_keys != layer_keys:
+            errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
+            raise ValueError(errormsg)
+
+        # Check that the length of each array is consistent
+        expected_len = len(self)
+        expected_variants = self.pars['n_variants']
+        for key in self.keys():
+            if self[key].ndim == 1:
+                actual_len = len(self[key])
+            else: # If it's 2D, variants need to be checked separately
+                actual_variants, actual_len = self[key].shape
+                if actual_variants != expected_variants:
+                    if verbose:
+                        print(f'Resizing "{key}" from {actual_variants} to {expected_variants}')
+                    self._resize_arrays(keys=key, new_size=(expected_variants, expected_len))
+            if actual_len != expected_len: # pragma: no cover
+                if die:
+                    errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
+                    raise IndexError(errormsg)
+                else:
+                    if verbose:
+                        print(f'Resizing "{key}" from {actual_len} to {expected_len}')
+                    self._resize_arrays(keys=key)
+
+        # Check that the layers are valid
+        for layer in self.contacts.values():
+            layer.validate()
+
+        return
+
+
+    def _resize_arrays(self, new_size=None, keys=None):
+        ''' Resize arrays if any mismatches are found '''
+
+        # Handle None or tuple input (representing variants and pop_size)
+        if new_size is None:
+            new_size = len(self)
+        pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
+        self.pars['pop_size'] = pop_size
+
+        # Reset sizes
+        if keys is None:
+            keys = self.keys()
+        keys = sc.promotetolist(keys)
+        for key in keys:
+            self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
+
+        return
+
+
+    def lock(self):
+        ''' Lock the people object to prevent keys from being added '''
+        self._lock = True
+        return
+
+
+    def unlock(self):
+        ''' Unlock the people object to allow keys to be added '''
+        self._lock = False
+        return
+
+
     def __getitem__(self, key):
         ''' Allow people['attr'] instead of getattr(people, 'attr')
             If the key is an integer, alias `people.person()` to return a `Person` instance
         '''
-
         try:
             return self.__dict__[key]
         except: # pragma: no cover
@@ -897,18 +1018,6 @@ class BasePeople(FlexPretty):
             errormsg = f'Key "{key}" is not a current attribute of people, and the people object is locked; see people.unlock()'
             raise AttributeError(errormsg)
         self.__dict__[key] = value
-        return
-
-
-    def lock(self):
-        ''' Lock the people object to prevent keys from being added '''
-        self._lock = True
-        return
-
-
-    def unlock(self):
-        ''' Unlock the people object to allow keys to be added '''
-        self._lock = False
         return
 
 
@@ -1030,30 +1139,6 @@ class BasePeople(FlexPretty):
         return len(self[key]) - self.count(key)
 
 
-    def set_pars(self, pars=None):
-        '''
-        Re-link the parameters stored in the people object to the sim containing it,
-        and perform some basic validation.
-        '''
-        if pars is None:
-            pars = {}
-        elif sc.isnumber(pars): # Interpret as a population size
-            pars = {'pop_size':pars} # Ensure it's a dictionary
-        orig_pars = self.__dict__.get('pars') # Get the current parameters using dict's get method
-        if isinstance(orig_pars, dict):
-            for k,v in orig_pars:
-                if k not in pars:
-                    pars[k] = v
-        if 'pop_size' not in pars:
-            errormsg = f'The parameter "pop_size" must be included in a population; keys supplied were:\n{sc.newlinejoin(pars.keys())}'
-            raise sc.KeyNotFoundError(errormsg)
-        pars['pop_size'] = int(pars['pop_size'])
-        pars.setdefault('n_variants', 1)
-        pars.setdefault('location', None)
-        self.pars = pars # Actually store the pars
-        return
-
-
     def keys(self):
         ''' Returns keys for all properties of the people object '''
         return self.meta.all_states[:]
@@ -1096,62 +1181,6 @@ class BasePeople(FlexPretty):
         return np.arange(len(self))
 
 
-    def validate(self, die=True, verbose=False):
-
-        # Check that the keys match
-        contact_layer_keys = set(self.contacts.keys())
-        layer_keys    = set(self.layer_keys())
-        if contact_layer_keys != layer_keys:
-            errormsg = f'Parameters layers {layer_keys} are not consistent with contact layers {contact_layer_keys}'
-            raise ValueError(errormsg)
-
-        # Check that the length of each array is consistent
-        expected_len = len(self)
-        expected_variants = self.pars['n_variants']
-        for key in self.keys():
-            if self[key].ndim == 1:
-                actual_len = len(self[key])
-            else: # If it's 2D, variants need to be checked separately
-                actual_variants, actual_len = self[key].shape
-                if actual_variants != expected_variants:
-                    if verbose:
-                        print(f'Resizing "{key}" from {actual_variants} to {expected_variants}')
-                    self._resize_arrays(keys=key, new_size=(expected_variants, expected_len))
-            if actual_len != expected_len: # pragma: no cover
-                if die:
-                    errormsg = f'Length of key "{key}" did not match population size ({actual_len} vs. {expected_len})'
-                    raise IndexError(errormsg)
-                else:
-                    if verbose:
-                        print(f'Resizing "{key}" from {actual_len} to {expected_len}')
-                    self._resize_arrays(keys=key)
-
-        # Check that the layers are valid
-        for layer in self.contacts.values():
-            layer.validate()
-
-        return
-
-
-    def _resize_arrays(self, new_size=None, keys=None):
-        ''' Resize arrays if any mismatches are found '''
-
-        # Handle None or tuple input (representing variants and pop_size)
-        if new_size is None:
-            new_size = len(self)
-        pop_size = new_size if not isinstance(new_size, tuple) else new_size[1]
-        self.pars['pop_size'] = pop_size
-
-        # Reset sizes
-        if keys is None:
-            keys = self.keys()
-        keys = sc.promotetolist(keys)
-        for key in keys:
-            self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
-
-        return
-
-
     def to_df(self):
         ''' Convert to a Pandas dataframe '''
         df = pd.DataFrame.from_dict({key:self[key] for key in self.keys()})
@@ -1191,12 +1220,12 @@ class BasePeople(FlexPretty):
         return p
 
 
-    def to_people(self):
+    def to_list(self):
         ''' Return all people as a list '''
         return list(self)
 
 
-    def from_people(self, people, resize=True):
+    def from_list(self, people, resize=True):
         ''' Convert a list of people back into a People object '''
 
         # Handle population size
@@ -1245,6 +1274,78 @@ class BasePeople(FlexPretty):
             edge['beta'] *= self.pars['beta_layer'][edge['layer']]
 
         return G
+
+
+    def save(self, filename=None, force=False, **kwargs):
+        '''
+        Save to disk as a gzipped pickle.
+
+        Note: by default this function raises an exception if trying to save a
+        run or partially run People object, since the changes that happen during
+        a run are usually irreversible.
+
+        Args:
+            filename (str or None): the name or path of the file to save to; if None, uses stored
+            force (bool): whether to allow saving even of a run or partially-run People object
+            kwargs: passed to ``sc.makefilepath()``
+
+        Returns:
+            filename (str): the validated absolute path to the saved file
+
+        **Example**::
+
+            sim = cv.Sim()
+            sim.initialize()
+            sim.people.save() # Saves to a .ppl file
+        '''
+
+        # Check if we're trying to save an already run People object
+        if self.t > 0 and not force:
+            errormsg = f'''
+The People object has already been run (t = {self.t}), which is usually not the
+correct state to save it in since it cannot be re-initialized. If this is intentional,
+use sim.people.save(force=True). Otherwise, the correct approach is:
+
+    sim = cv.Sim(...)
+    sim.initialize() # Create the people object but do not run
+    sim.people.save() # Save people immediately after initialization
+    sim.run() # The People object is
+'''
+            raise RuntimeError(errormsg)
+
+        # Handle the filename
+        if filename is None:
+            filename = 'covasim.ppl'
+        filename = sc.makefilepath(filename=filename, **kwargs)
+        self.filename = filename # Store the actual saved filename
+        cvm.save(filename=filename, obj=self)
+
+        return filename
+
+
+    @staticmethod
+    def load(filename, *args, **kwargs):
+        '''
+        Load from disk from a gzipped pickle.
+
+        Args:
+            filename (str): the name or path of the file to load from
+            args (list): passed to ``cv.load()``
+            kwargs (dict): passed to ``cv.load()``
+
+        Returns:
+            people (People): the loaded people object
+
+        **Example**::
+
+            people = cv.people.load('my-people.ppl')
+        '''
+        people = cvm.load(filename, *args, **kwargs)
+        if not isinstance(people, BasePeople): # pragma: no cover
+            errormsg = f'Cannot load object of {type(people)} as a People object'
+            raise TypeError(errormsg)
+        return people
+
 
 
     def init_contacts(self, reset=False):
@@ -1397,12 +1498,20 @@ class FlexDict(dict):
 class Contacts(FlexDict):
     '''
     A simple (for now) class for storing different contact layers.
+
+    Args:
+        data (dict): a dictionary that looks like a Contacts object
+        layer_keys (list): if provided, create an empty Contacts object with these layers
+        kwargs (dict): additional layer(s), merged with data
+
+    New in version 3.1.2: swapped order of arguments
     '''
-    def __init__(self, layer_keys=None, data=None):
+    def __init__(self, data=None, layer_keys=None, **kwargs):
+        data = sc.mergedicts(data, kwargs)
         if layer_keys is not None:
             for lkey in layer_keys:
                 self[lkey] = Layer(label=lkey)
-        if data is not None:
+        if data:
             for lkey,layer_data in data.items():
                 self[lkey] = Layer(**layer_data)
         return
@@ -1439,6 +1548,13 @@ class Contacts(FlexDict):
             sim.people.contacts.add_layer(hospitals=hospitals_layer)
         '''
         for lkey,layer in kwargs.items():
+            if not isinstance(layer, Layer):
+                try:
+                    layer = Layer(layer, label=lkey)
+                except Exception as E:
+                    exc = type(E)
+                    errormsg = f'Could not parse {type(layer)} as layer: must be Layer or dict'
+                    raise exc(errormsg) from E
             layer.validate()
             self[lkey] = layer
         return
@@ -1511,14 +1627,17 @@ class Layer(FlexDict):
         p2 = np.random.randint(n_people, size=n)
         beta = np.ones(n)
         layer = cv.Layer(p1=p1, p2=p2, beta=beta, label='rand')
+        layer = cv.Layer(dict(p1=p1, p2=p2, beta=beta), label='rand') # Alternate method
 
         # Convert one layer to another with extra columns
         index = np.arange(n)
         self_conn = p1 == p2
         layer2 = cv.Layer(**layer, index=index, self_conn=self_conn, label=layer.label)
+
+    New in version 3.1.2: allow a single dictionary input
     '''
 
-    def __init__(self, label=None, **kwargs):
+    def __init__(self, *args, label=None, **kwargs):
         self.meta = {
             'p1':    cvd.default_int,   # Person 1
             'p2':    cvd.default_int,   # Person 2
@@ -1526,6 +1645,9 @@ class Layer(FlexDict):
         }
         self.basekey = 'p1' # Assign a base key for calculating lengths and performing other operations
         self.label = label
+
+        # Handle args
+        kwargs = sc.mergedicts(*args, kwargs)
 
         # Initialize the keys of the layers
         for key,dtype in self.meta.items():
@@ -1536,8 +1658,9 @@ class Layer(FlexDict):
             self[key] = np.array(value, dtype=self.meta.get(key))
 
         # Set beta if not provided
-        if 'beta' not in self.keys():
-            self['beta'] = np.ones(len(self), dtype=cvd.default_float)
+        key = 'beta'
+        if key not in kwargs.keys():
+            self[key] = np.ones(len(self), dtype=self.meta[key])
 
         return
 
@@ -1584,19 +1707,23 @@ class Layer(FlexDict):
         return self.meta.keys()
 
 
-    def validate(self):
-        ''' Check the integrity of the layer: right types, right lengths '''
+    def validate(self, force=True):
+        '''
+        Check the integrity of the layer: right types, right lengths.
+
+        If dtype is incorrect, try to convert automatically; if length is incorrect,
+        do not.
+        '''
         n = len(self[self.basekey])
         for key,dtype in self.meta.items():
             if dtype:
                 actual = self[key].dtype
                 expected = dtype
                 if actual != expected:
-                    errormsg = f'Expecting dtype "{expected}" for layer key "{key}"; got "{actual}"'
-                    raise TypeError(errormsg)
+                    self[key] = np.array(self[key], dtype=expected) # Probably harmless, so try to convert to correct type
             actual_n = len(self[key])
             if n != actual_n:
-                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}'
+                errormsg = f'Expecting length {n} for layer key "{key}"; got {actual_n}' # We can't fix length mismatches
                 raise TypeError(errormsg)
         return
 
