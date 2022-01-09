@@ -2,13 +2,16 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import re
+import inspect
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
+import collections as co
 from pathlib import Path
-from . import version as cvv
 from distutils.version import LooseVersion
+from . import version as cvv
 
 #%% Convenience imports from Sciris
 
@@ -768,3 +771,117 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
             gofs = np.median(gofs)
 
         return gofs
+
+
+#%% Help -- adapted from Sciris
+
+__all__ += ['help']
+
+def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
+    '''
+    Get help on Covasim in general, or search for a word/expression.
+
+    Args:
+        pattern    (str):  the word, phrase, or regex to search for
+        source     (bool): whether to search source code instead of docstrings for matches
+        ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
+        flags      (list): additional flags to pass to ``re.findall()``
+        context    (bool): whether to show the line(s) of matches
+        output     (bool): whether to return the dictionary of matches
+
+    **Examples**::
+
+        cv.help()
+        cv.help('vaccine')
+        cv.help('contact', ignorecase=False, context=True)
+        cv.help('lognormal', source=True, context=True)
+
+    | New in version 3.1.2.
+    '''
+    defaultmsg = '''
+For general help using Covasim, the best place to start is the docs:
+
+    http://docs.covasim.org
+
+To search for a keyword/phrase/regex in Covasim's docstrings, use e.g.:
+
+    >>> cv.help('vaccine')
+
+See help(cv.help) for more information.
+'''
+    # No pattern is provided, print out default help message
+    if pattern is None:
+        print(defaultmsg)
+
+    else:
+
+        import covasim as cv # Here to avoid circular import
+
+        # Handle inputs
+        flags = sc.promotetolist(flags)
+        if ignorecase:
+            flags.append(re.I)
+
+        def func_ok(fucname, func):
+            ''' Skip certain functions '''
+            excludes = [
+                fucname.startswith('_'),
+                fucname in ['help', 'options', 'default_float', 'default_int'],
+                inspect.ismodule(func),
+            ]
+            ok = not(any(excludes))
+            return ok
+
+        # Get available functions/classes
+        funcs = [funcname for funcname in dir(cv) if func_ok(funcname, getattr(cv, funcname))] # Skip dunder methods and modules
+
+        # Get docstrings or full source code
+        docstrings = dict()
+        for funcname in funcs:
+            f = getattr(cv, funcname)
+            if source: string = inspect.getsource(f)
+            else:      string = f.__doc__
+            docstrings[funcname] = string
+
+        # Find matches
+        matches = co.defaultdict(list)
+        linenos = co.defaultdict(list)
+
+        for k,docstring in docstrings.items():
+            for l,line in enumerate(docstring.splitlines()):
+                if re.findall(pattern, line, *flags):
+                    linenos[k].append(str(l))
+                    matches[k].append(line)
+
+        # Assemble output
+        if not len(matches):
+            string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
+        else:
+            string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'
+            maxkeylen = 0
+            for k in matches.keys(): maxkeylen = max(len(k), maxkeylen)
+            for k,match in matches.items():
+                if not context:
+                    keystr = f'  {k:>{maxkeylen}s}'
+                else:
+                    keystr = k
+                matchstr = f'{keystr}: {len(match):>2d} matches'
+                if context:
+                    matchstr = sc.heading(matchstr, output=True)
+                else:
+                    matchstr += '\n'
+                string += matchstr
+                if context:
+                    lineno = linenos[k]
+                    maxlnolen = max([len(l) for l in lineno])
+                    for l,m in zip(lineno, match):
+                        string += sc.colorize(string=f'  {l:>{maxlnolen}s}: ', fg='cyan', output=True)
+                        string += f'{m}\n'
+                    string += '—'*60 + '\n'
+
+        # Print result and return
+        print(string)
+        if output:
+            return string
+        else:
+            return
