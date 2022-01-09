@@ -332,21 +332,21 @@ def get_default_plots(which='default', kind='sim', sim=None):
 
         if 'sim' in kind:
             plots = sc.odict({
-                    'Total counts': [
-                        'cum_infections',
-                        'n_infectious',
-                        'cum_diagnoses',
-                    ],
-                    'Daily counts': [
-                        'new_infections',
-                        'new_diagnoses',
-                    ],
-                    'Health outcomes': [
-                        'cum_severe',
-                        'cum_critical',
-                        'cum_deaths',
-                        'cum_known_deaths',
-                    ],
+                'Total counts': [
+                    'cum_infections',
+                    'n_infectious',
+                    'cum_diagnoses',
+                ],
+                'Daily counts': [
+                    'new_infections',
+                    'new_diagnoses',
+                ],
+                'Health outcomes': [
+                    'cum_severe',
+                    'cum_critical',
+                    'cum_deaths',
+                    'cum_known_deaths',
+                ],
             })
 
         elif 'scen' in kind: # pragma: no cover
@@ -380,23 +380,40 @@ def get_default_plots(which='default', kind='sim', sim=None):
 
     # Show default but with variants
     elif which.startswith('variant'): # pragma: no cover
-        plots = sc.odict({
+        if 'sim' in kind:
+            plots = sc.odict({
                 'Cumulative infections by variant': [
                     'cum_infections_by_variant',
                 ],
                 'New infections by variant': [
                     'new_infections_by_variant',
                 ],
-                'Diagnoses': [
-                    'cum_diagnoses',
-                    'new_diagnoses',
-                ],
                 'Health outcomes': [
                     'cum_severe',
                     'cum_critical',
                     'cum_deaths',
                 ],
-        })
+            })
+
+        elif 'scen' in kind: # pragma: no cover
+            plots = sc.odict({
+                    'Cumulative infections by variant': [
+                        'cum_infections_by_variant',
+                    ],
+                    'New infections by variant': [
+                        'new_infections_by_variant',
+                    ],
+                    'New diagnoses': [
+                        'new_diagnoses',
+                    ],
+                    'Cumulative deaths': [
+                        'cum_deaths',
+                    ],
+            })
+
+        else:
+            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+            raise ValueError(errormsg)
 
     # Plot SEIR compartments
     elif which == 'seir': # pragma: no cover

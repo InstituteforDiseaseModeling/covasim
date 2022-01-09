@@ -82,6 +82,10 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
 def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
     ''' Handle which quantities to plot '''
 
+    # Allow default kind to be overwritten by to_plot -- used by msim.plot()
+    if isinstance(to_plot, tuple):
+        kind, to_plot = to_plot # Split the tuple
+
     # Check that results are ready
     if check_ready and not sim.results_ready:
         errormsg = 'Cannot plot since results are not ready yet -- did you run the sim?'
@@ -110,7 +114,7 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
             else:
                 invalid += reskey
         if len(invalid):
-            errormsg = f'The following key(s) are invalid: {sc.strjoin(invalid)}\nValid main keys are:\n{sc.strjoin(reskeys)}\n\nValid variant keys are:\n{sc.strjoin(varkeys)}'
+            errormsg = f'The following key(s) are invalid:\n{sc.strjoin(invalid)}\n\nValid main keys are:\n{sc.strjoin(reskeys)}\n\nValid variant keys are:\n{sc.strjoin(varkeys)}'
             raise sc.KeyNotFoundError(errormsg)
 
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
@@ -347,7 +351,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
          show_args=None, mpl_args=None, n_cols=None, grid=True, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
-         variant_label=True, fig=None, ax=None, **kwargs):
+         fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
@@ -367,11 +371,14 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 ns = sim['n_variants']
                 variant_colors = sc.gridcolors(ns)
                 for variant in range(ns):
-                    color = variant_colors[variant]  # Choose the color
-                    if variant_label:
-                        label = 'wild type' if variant == 0 else sim['variants'][variant-1].label
-                    else:
-                        label = None
+                    # Colors and labels
+                    v_color = variant_colors[variant]
+                    v_label = 'wild type' if variant == 0 else sim['variants'][variant-1].label
+                    color = set_line_options(colors, reskey, resnum, v_color)  # Choose the color
+                    label = set_line_options(labels, reskey, resnum, '')  # Choose the label
+                    if label: label += f' - {v_label}'
+                    else:     label = v_label
+                    # Plotting
                     if res.low is not None and res.high is not None:
                         ax.fill_between(res_t, res.low[variant,:], res.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
                     ax.plot(res_t, res.values[variant,:], label=label, **args.plot, c=color)  # Actually plot the sim!
