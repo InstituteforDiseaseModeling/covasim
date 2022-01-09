@@ -7,6 +7,9 @@ be set using set() or directly, e.g.::
 To reset default options, use::
 
     cv.options('default')
+
+Note: "options" is used to refer to the choices available (e.g., DPI), while "settings"
+is used to refer to the choices made (e.g., DPI=150).
 '''
 
 import os
@@ -48,7 +51,7 @@ rc_covasim = sc.mergedicts(rc_simple, {
 
 #%% Define the options class
 
-class Options(dict):
+class Options(sc.objdict):
     '''
     Set options for Covasim. Use ``cv.options.set('defaults')`` to reset all
     values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
@@ -88,22 +91,12 @@ class Options(dict):
 
     def __init__(self):
         super().__init__()
-        self._set_default_options()
-        self.orig_options = sc.dcp(self.options)
-        self.load_custom_fonts() # Load custom fonts on module import
+        optdesc, options = self.get_orig_options() # Get the options
+        self.update(options) # Update this object with them
+        self.setattribute('optdesc', optdesc) # Set the description as an attribute, not a dict entry
+        self.setattribute('orig_options', sc.dcp(options)) # Copy the default options
+        self.load_fonts() # Load custom fonts on module import
         return
-
-    # Overwrite dictionary methods with the options dict rather than the base class
-    def __getitem__( self, *args, **kwargs): return self.options.__getitem__( *args, **kwargs)
-    def __setitem__( self, *args, **kwargs): return self.options.__setitem__( *args, **kwargs)
-    def __contains__(self, *args, **kwargs): return self.options.__contains__(*args, **kwargs)
-    def __len__(     self, *args, **kwargs): return self.options.__len__(     *args, **kwargs)
-    def get(         self, *args, **kwargs): return self.options.get(         *args, **kwargs)
-    def items(       self, *args, **kwargs): return self.options.items(       *args, **kwargs)
-    def keys(        self, *args, **kwargs): return self.options.keys(        *args, **kwargs)
-    def setdefault(  self, *args, **kwargs): return self.options.setdefault(  *args, **kwargs)
-    def update(      self, *args, **kwargs): return self.options.update(      *args, **kwargs)
-    def values(      self, *args, **kwargs): return self.options.values(      *args, **kwargs)
 
 
     def __call__(self, *args, **kwargs):
@@ -111,14 +104,34 @@ class Options(dict):
         return self.set(*args, **kwargs)
 
 
+    def to_dict(self):
+        ''' Pull out only the settings from the options object '''
+        return {k:v for k,v in self.items()}
+
+
     def __repr__(self):
-        output = 'Covasim options (see also cv.options.help()):\n'
-        for k,v in self.items():
-            output += f'  {k:>12s}: {repr(v)}\n'
+        ''' Brief representation '''
+        output = sc.objectid(self)
+        output += 'Covasim options (see also cv.options.disp()):\n'
+        output += sc.pp(self.to_dict(), output=True)
         return output
 
 
-    def _set_default_options(self):
+    def disp(self):
+        ''' Detailed representation '''
+        output = 'Covasim options (see also cv.options.help()):\n'
+        keylen = 14 # Maximum key length  -- "numba_parallel"
+        for k,v in self.items():
+            keystr = sc.colorize(f'  {k:>{keylen}s}: ', fg='cyan', output=True)
+            reprstr = sc.pp(v, output=True)
+            reprstr = sc.indent(n=keylen+4, text=reprstr, width=None)
+            output += f'{keystr}{reprstr}'
+        print(output)
+        return
+
+
+    @staticmethod
+    def get_orig_options():
         '''
         Set the default options for Covasim -- not to be called by the user, use
         ``cv.options.set('defaults')`` instead.
@@ -173,10 +186,7 @@ class Options(dict):
         optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
         options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
 
-        self.optdesc = optdesc
-        self.options = options
-
-        return
+        return optdesc, options
 
 
     def set(self, key=None, value=None, **kwargs):
@@ -206,7 +216,6 @@ class Options(dict):
         elif key is not None:
             kwargs = sc.mergedicts(kwargs, {key:value})
 
-
         # Handle interactivity
         if 'interactive' in kwargs.keys():
             interactive = kwargs['interactive']
@@ -222,7 +231,7 @@ class Options(dict):
 
         # Reset options
         for key,value in kwargs.items():
-            if key not in options:
+            if key not in self:
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)
                 errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(cv.options.set) for more information.'
@@ -230,7 +239,7 @@ class Options(dict):
             else:
                 if value in [None, 'default']:
                     value = self.orig_options[key]
-                options[key] = value
+                self[key] = value
                 if key in numba_keys:
                     reload_required = True
                 if key in matplotlib_keys:
@@ -246,7 +255,7 @@ class Options(dict):
         return self.orig_options[key]
 
 
-    def get_help(self, output=False):
+    def help(self, output=False):
         '''
         Print information about options.
 
@@ -257,24 +266,24 @@ class Options(dict):
 
             cv.options.help()
         '''
-
+        n = 15 # Size of indent
         optdict = sc.objdict()
         for key in self.orig_options.keys():
             entry = sc.objdict()
             entry.key = key
-            entry.current = options[key]
-            entry.default = self.orig_options[key]
+            entry.current = sc.indent(n=n, width=None, text=sc.pp(self[key], output=True)).rstrip()
+            entry.default = sc.indent(n=n, width=None, text=sc.pp(self.orig_options[key], output=True)).rstrip()
             if not key.startswith('rc'):
                 entry.variable = f'COVASIM_{key.upper()}' # NB, hard-coded above!
             else:
                 entry.variable = 'No environment variable'
-            entry.desc = self.optdesc[key]
+            entry.desc = sc.indent(n=n, text=self.optdesc[key])
             optdict[key] = entry
 
         # Convert to a dataframe for nice printing
         print('Covasim global options ("Environment" = name of corresponding environment variable):')
-        for key,entry in optdict.items():
-            sc.heading(f'\n{key}', spaces=1)
+        for k, key,entry in optdict.enumitems():
+            sc.heading(f'{k}. {key}', spaces=0, spacesafter=0)
             changestr = '' if entry.current == entry.default else ' (modified)'
             print(f'          Key: {key}')
             print(f'      Current: {entry.current}{changestr}')
@@ -282,13 +291,49 @@ class Options(dict):
             print(f'  Environment: {entry.variable}')
             print(f'  Description: {entry.desc}')
 
+        sc.heading('Methods', spacesafter=0)
+        print('''
+    cv.options.set() -- set options
+    cv.options.load() -- load settings from file
+    cv.options.save() -- save settings to file
+    cv.options.get_default() -- get default options
+    cv.options.load_fonts() -- add custom fonts
+''')
+
         if output:
             return optdict
         else:
             return
 
 
-    def set_matplotlib_global(self, key, value, available_fonts=None):
+    def load(self, filename, verbose=True, **kwargs):
+        '''
+        Save current settings as a JSON file.
+
+        Args:
+            filename (str): file to load
+            kwargs (dict): passed to ``sc.loadjson()``
+        '''
+        json = sc.loadjson(filename=filename, **kwargs)
+        self.set(**json)
+        if verbose: print(f'Settings loaded from {filename}')
+        return
+
+
+    def save(self, filename, **kwargs):
+        '''
+        Save current settings as a JSON file.
+
+        Args:
+            filename (str): file to save to
+            kwargs (dict): passed to ``sc.savejson()``
+        '''
+        json = self.to_dict()
+        return sc.savejson(filename=filename, obj=json, **kwargs)
+
+
+    @staticmethod
+    def set_matplotlib_global(key, value, available_fonts=None):
         ''' Set a global option for Matplotlib -- not for users '''
         if value: # Don't try to reset any of these to a None value
             if   key == 'font_size':   pl.rcParams['font.size']   = value
@@ -309,7 +354,8 @@ class Options(dict):
         return
 
 
-    def handle_show(self, do_show):
+    @staticmethod
+    def handle_show(do_show):
         ''' Convenience function to handle the slightly complex logic of show -- not for users '''
         backend = pl.get_backend()
         if do_show is None:  # If not supplied, reset to global value
@@ -321,7 +367,8 @@ class Options(dict):
         return do_show
 
 
-    def reload_numba(self):
+    @staticmethod
+    def reload_numba():
         '''
         Apply changes to Numba functions -- reloading modules is necessary for
         changes to propagate. Not necessary to call directly if cv.options.set() is used.
@@ -344,11 +391,13 @@ class Options(dict):
         return
 
 
-    def load_custom_fonts(self):
+    @staticmethod
+    def load_fonts(folder=None):
         '''
-        Load custom fonts for plotting
+        Load custom fonts for plotting -- alias to ``sc.fonts()``
         '''
-        folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
+        if folder is None:
+            folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
         sc.fonts(add=folder)
         return
 
