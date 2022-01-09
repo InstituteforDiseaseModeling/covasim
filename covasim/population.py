@@ -85,7 +85,7 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
         sim['prognoses'] = cvpar.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
 
     # Do minimal validation and create the people
-    validate_popdict(popdict, sim.pars)
+    validate_popdict(popdict, sim.pars, verbose=verbose)
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
 
     sc.printv(f'Created {pop_size} people, average age {people.age.mean():0.2f} years', 2, verbose)
@@ -93,7 +93,7 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
     return people
 
 
-def validate_popdict(popdict, pars):
+def validate_popdict(popdict, pars, verbose=True):
     '''
     Check that the popdict is the correct type, has the correct keys, and has
     the correct length
@@ -108,15 +108,26 @@ def validate_popdict(popdict, pars):
 
     # Check keys and lengths
     required_keys = ['uid', 'age', 'sex']
+    popdict_keys = popdict.keys()
     pop_size = pars['pop_size']
     for key in required_keys:
-        if key not in popdict:
+
+        if key not in popdict_keys:
             errormsg = f'Could not find required key "{key}" in popdict; available keys are: {sc.strjoin(popdict.keys())}'
             sc.KeyNotFoundError(errormsg)
+
         actual_size = len(popdict[key])
         if actual_size != pop_size:
             errormsg = f'Could not use supplied popdict since key {key} has length {actual_size}, but all keys must have length {pop_size}'
             raise ValueError(errormsg)
+
+        isnan = np.isnan(popdict[key]).sum()
+        if isnan:
+            errormsg = f'Population not fully created: {isnan:,} NaNs found in {key}. This can be caused by calling cv.People() instead of cv.make_people().'
+            raise ValueError(errormsg)
+
+    if 'contacts' not in popdict_keys and verbose:
+        print('Warning: no contacts found. Please remember to add contacts before running the simulation.')
 
     return
 
@@ -389,13 +400,15 @@ def make_synthpop(sim=None, popdict=None, layer_mapping=None, community_contacts
             raise ValueError(errormsg)
         people = sp.Pop(n=pop_size, rand_seed=sim['rand_seed'], **kwargs).to_people() # Actually generate it
     else: # Otherwise, convert to a sp.People object (similar to a cv.People object)
-        if isinstance(popdict, sp.Pop):
+        if isinstance(popdict, sp.people.People):
+            people = popdict
+        elif isinstance(popdict, sp.Pop):
             people = popdict.to_people()
         elif isinstance(popdict, dict):
             people = sp.people.make_people(popdict=popdict)
         elif isinstance(popdict, cvb.BasePeople):
             return popdict # Already the right format
-        elif not isinstance(popdict, sp.people.People):
+        else:
             errormsg = f'Cannot understand population of type {type(popdict)}: must be dict, sp.Pop, sp.People, or cv.People'
             raise TypeError(errormsg)
 
