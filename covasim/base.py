@@ -1367,14 +1367,19 @@ use sim.people.save(force=True). Otherwise, the correct approach is:
         Add new contacts to the array. See also contacts.add_layer().
         '''
 
-        # If no layer key is supplied and it can't be worked out from defaults, use the first layer
-        if lkey is None:
-            lkey = self.layer_keys()[0]
-
         # Validate the supplied contacts
         if isinstance(contacts, (Contacts, dict)): # If it's a Contacts object or a dict, we can use it directly
-            new_contacts = contacts
+            if isinstance(contacts, dict) and lkey is not None: # Edge case: a dict for a single layer has been provided
+                new_contacts = {}
+                new_contacts[lkey] = contacts
+            else:
+                if 'p1' in contacts: # Avoid the mistake of passing a single layer
+                    errormsg = 'To supply a single layer as a dict, you must supply an lkey as well'
+                    raise ValueError(errormsg)
+                new_contacts = contacts # Main use case
         elif isinstance(contacts, Layer):
+            if lkey is None: # If no layer key is supplied, use the first layer
+                lkey = self.layer_keys()[0]
             new_contacts = {}
             new_contacts[lkey] = contacts
         elif isinstance(contacts, list): # Assume it's a list of contacts by person, not an edgelist

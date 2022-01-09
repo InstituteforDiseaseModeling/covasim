@@ -233,7 +233,7 @@ def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None, mapping=No
 
     Args:
         pop_size   (int)   : number of agents to create contacts between (N)
-        n          (int)   : the average number of contacts per person for this layer
+        n          (int) : the average number of contacts per person for this layer
         overshoot  (float) : to avoid needing to take multiple Poisson draws
         dispersion (float) : if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
         mapping    (array) : optionally map the generated indices onto new indices
