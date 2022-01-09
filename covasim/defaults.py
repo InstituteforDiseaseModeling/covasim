@@ -327,10 +327,27 @@ def get_default_plots(which='default', kind='sim', sim=None):
     '''
     which = str(which).lower() # To make comparisons easier
 
+    # Check that kind makes sense
+    sim_kind   = 'sim'
+    scens_kind = 'scens'
+    kindmap = {
+        None:      sim_kind,
+        'sim':     sim_kind,
+        'default': sim_kind,
+        'msim':    scens_kind,
+        'scen':    scens_kind,
+        'scens':   scens_kind,
+    }
+    if kind not in kindmap.keys():
+        errormsg = f'Expecting "sim" or "scens", not "{kind}"'
+        raise ValueError(errormsg)
+    else:
+        is_sim = kindmap[kind] == sim_kind
+
     # Default plots -- different for sims and scenarios
     if which in ['none', 'default']:
 
-        if 'sim' in kind:
+        if is_sim:
             plots = sc.odict({
                 'Total counts': [
                     'cum_infections',
@@ -349,7 +366,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                 ],
             })
 
-        elif 'scen' in kind: # pragma: no cover
+        else: # pragma: no cover
             plots = sc.odict({
                 'Cumulative infections': [
                     'cum_infections',
@@ -361,10 +378,6 @@ def get_default_plots(which='default', kind='sim', sim=None):
                     'cum_deaths',
                 ],
             })
-
-        else:
-            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
-            raise ValueError(errormsg)
 
     # Show an overview
     elif which == 'overview': # pragma: no cover
@@ -380,7 +393,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
 
     # Show default but with variants
     elif which.startswith('variant'): # pragma: no cover
-        if 'sim' in kind:
+        if is_sim:
             plots = sc.odict({
                 'Cumulative infections by variant': [
                     'cum_infections_by_variant',
@@ -395,7 +408,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
                 ],
             })
 
-        elif 'scen' in kind: # pragma: no cover
+        else: # pragma: no cover
             plots = sc.odict({
                     'Cumulative infections by variant': [
                         'cum_infections_by_variant',
@@ -410,10 +423,6 @@ def get_default_plots(which='default', kind='sim', sim=None):
                         'cum_deaths',
                     ],
             })
-
-        else:
-            errormsg = f'Expecting "sim" or "scens", not "{kind}"'
-            raise ValueError(errormsg)
 
     # Plot SEIR compartments
     elif which == 'seir': # pragma: no cover
