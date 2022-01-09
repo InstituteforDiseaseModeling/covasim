@@ -36,7 +36,7 @@ class Sim(cvb.BaseSim):
         label    (str):    the name of the simulation (useful to distinguish in batch runs)
         simfile  (str):    the filename for this simulation, if it's saved
         popfile  (str):    if supplied, load the population from this file
-        popdict  (varies): if supplied, use these pre-generated people (as a dict, SynthPop, or People object) instead of loading or generating new ones
+        people   (varies): if supplied, use these pre-generated people (as a dict, SynthPop, or People object) instead of loading or generating new ones
         version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
         kwargs   (dict):   passed to make_pars()
 
@@ -47,7 +47,7 @@ class Sim(cvb.BaseSim):
     '''
 
     def __init__(self, pars=None, datafile=None, label=None, simfile=None,
-                 popfile=None, popdict=None, version=None, **kwargs):
+                 popfile=None, people=None, version=None, **kwargs):
 
         # Set attributes
         self.label         = label    # The label/name of the simulation
@@ -56,7 +56,7 @@ class Sim(cvb.BaseSim):
         self.datafile      = datafile # The name of the data file
         self.popfile       = popfile  # The population file
         self.data          = None     # The actual data
-        self.popdict       = popdict  # The population dictionary
+        self.popdict       = people   # The population dictionary
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
         self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.results       = {}       # For storing results
