@@ -513,8 +513,8 @@ class MultiSim(cvb.FlexPretty):
 
             # Plot
             for s,ind in enumerate(inds):
-                sim = self.sims[ind]
 
+                sim = self.sims[ind]
                 final_plot = (s == n_sims-1) # Check if this is the final plot
 
                 # Handle the legend and labels
@@ -542,7 +542,7 @@ class MultiSim(cvb.FlexPretty):
 
                 # Actually plot
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
-                fig = sim.plot(fig=fig, to_plot=to_plot, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
+                fig = sim.plot(fig=fig, to_plot=('scens', to_plot), colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
 
         return fig
 
