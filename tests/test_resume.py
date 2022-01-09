@@ -106,6 +106,9 @@ def test_reproducibility():
     s5.run()
     r6 = s5.summary[key]
     s5.initialize(reset=False)
+    with pytest.raises(cv.AlreadyRunError):
+        s5.run()
+    s5.people.t = s5.t # Manually reset
     s5.run()
     r7 = s5.summary[key]
     assert r5 == r6

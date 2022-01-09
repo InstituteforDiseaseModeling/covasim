@@ -1,6 +1,8 @@
 '''
 Tests covering all the built-in interventions, mostly taken
 from the intervention's docstrings.
+
+See also test_immunity.py for tests of vaccines.
 '''
 
 #%% Housekeeping
@@ -25,6 +27,7 @@ def test_all_interventions(do_plot=False):
     # Default parameters, using the random layer
     pars = sc.objdict(
         pop_size     = 1e3,
+        scaled_pop   = 10e3,
         pop_infected = 10,
         n_days       = 90,
         verbose      = verbose,
@@ -121,6 +124,10 @@ def test_all_interventions(do_plot=False):
     assert inds == [0,1]
     sim.get_interventions('summary') # Prints a summary
 
+    # Test other intervention methods
+    ce.disp()
+    ce.shrink()
+
     #%% Plotting
     if do_plot:
         for sim in sims.values():
@@ -148,12 +155,14 @@ def test_data_interventions():
         cv.InterventionDict(**{'which': 'invalid', 'pars': {'days': 10, 'changes': 0.5}})
 
     # Test numbers and contact tracing
-    tn1 = cv.test_num(10, start_day=3, end_day=20, ili_prev=0.1, swab_delay={'dist':'uniform', 'par1':1, 'par2':3})
+    swab_dict = {'dist':'uniform', 'par1':1, 'par2':3}
+    tp1 = cv.test_prob(0.05, start_day=5, end_day=15, ili_prev=0.1, swab_delay=swab_dict, subtarget={'inds': lambda sim: cv.true(sim.people.age>50), 'vals': 0.3})
+    tn1 = cv.test_num(10, start_day=3, end_day=20, ili_prev=0.1, swab_delay=swab_dict)
     tn2 = cv.test_num(daily_tests='data', quar_policy=[0,5], subtarget={'inds': lambda sim: cv.true(sim.people.age>50), 'vals': 1.2})
-    ct = cv.contact_tracing()
+    ct = cv.contact_tracing(presumptive=True, capacity=5)
 
     # Create and run
-    sim['interventions'] = [ce, tn1, tn2, ct]
+    sim['interventions'] = [ce, tp1, tn1, tn2, ct]
     sim.run()
 
     return

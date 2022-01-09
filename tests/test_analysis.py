@@ -88,6 +88,18 @@ def test_daily_stats():
     return daily
 
 
+def test_nab_hist():
+    sc.heading('Testing NAb histogram analyzer')
+
+    sim = cv.Sim(pars, analyzers=cv.nab_histogram())
+    sim.run()
+    nab_hist = sim.get_analyzer()
+    if do_plot:
+        nab_hist.plot()
+    return nab_hist
+
+
+
 def test_fit():
     sc.heading('Testing fitting function')
 
@@ -152,8 +164,9 @@ def test_calibration():
         tp.symp_prob = calib_pars['test_prob']
         return sim
 
-    calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=5)
-    calib.plot(to_plot=['cum_deaths', 'cum_diagnoses'])
+    calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=10, n_workers=1)
+    calib.plot_sims(to_plot=['cum_deaths', 'cum_diagnoses'])
+    calib.plot_trend()
 
     assert calib.after.fit.mismatch < calib.before.fit.mismatch
 
@@ -183,6 +196,7 @@ def test_transtree():
     return transtree
 
 
+
 #%% Run as a script
 if __name__ == '__main__':
 
@@ -194,6 +208,7 @@ if __name__ == '__main__':
     agehist   = test_age_hist()
     daily_age = test_daily_age()
     daily     = test_daily_stats()
+    nab_hist  = test_nab_hist()
     fit       = test_fit()
     calib     = test_calibration()
     transtree = test_transtree()

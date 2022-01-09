@@ -95,8 +95,8 @@ def test_basepeople():
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
-    people = ppl.to_people()
-    ppl.from_people(people)
+    people = ppl.to_list()
+    ppl.from_list(people)
     ppl.make_edgelist([{'new_key':[0,1,2]}])
     ppl.brief()
 
@@ -170,9 +170,6 @@ def test_misc():
     with pytest.raises(NotImplementedError):
         cv.load_data('example_data.unsupported_extension')
 
-    with pytest.raises(ValueError):
-        cv.load_data(xlsx_file, columns=['missing_column'])
-
     # Dates
     d1 = cv.date('2020-04-04')
     d2 = cv.date(sc.readdate('2020-04-04'))
@@ -208,17 +205,6 @@ def test_misc():
     cv.git_info(json_path)
     cv.git_info(json_path, check=True)
 
-    # Poisson tests
-    c1 = 5
-    c2 = 8
-    for alternative in ['two-sided', 'larger', 'smaller']:
-        cv.poisson_test(c1, c2, alternative=alternative)
-    for method in ['score', 'wald', 'sqrt', 'exact-cond']:
-        cv.poisson_test(c1, c2, method=method)
-
-    with pytest.raises(ValueError):
-        cv.poisson_test(c1, c2, method='not a method')
-
     # Test locations
     for location in [None, 'viet-nam']:
         cv.data.show_locations(location)
@@ -253,7 +239,7 @@ def test_plotting():
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
-    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], do_save=True, fig_path=fig_path)
     print('↑ May print a warning about zero values')
 
 
@@ -297,11 +283,12 @@ def test_population():
         sim.initialize()
 
     # Save/load
-    sim = cv.Sim(pop_size=100, popfile=pop_path, save_pop=True)
+    sim = cv.Sim(pop_size=100)
     sim.initialize()
-    cv.Sim(pop_size=100, popfile=pop_path, load_pop=True)
+    sim.people.save(pop_path)
+    cv.Sim(pop_size=100, popfile=pop_path)
     with pytest.raises(ValueError):
-        sim = cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)
+        sim = cv.Sim(pop_size=101, popfile=pop_path)
         sim.initialize()
 
     remove_files(pop_path)

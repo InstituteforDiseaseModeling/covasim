@@ -198,7 +198,6 @@ cum_result_flows_by_variant = [f'cum_{key}' for key in result_flows_by_variant.k
 
 # Parameters that can vary by variant
 variant_pars = [
-    'rel_imm_variant',
     'rel_beta',
     'rel_symp_prob',
     'rel_severe_prob',

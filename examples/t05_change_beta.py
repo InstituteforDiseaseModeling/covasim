@@ -20,6 +20,5 @@ sim = cv.Sim(pars, interventions=cb, label='With beta changes')
 if __name__ == '__main__':
 
     # Run and plot
-    msim = cv.MultiSim([orig_sim, sim])
-    msim.run()
+    msim = cv.parallel(orig_sim, sim)
     msim.plot()

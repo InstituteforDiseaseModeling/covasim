@@ -19,22 +19,24 @@ __all__ = ['People']
 
 class People(cvb.BasePeople):
     '''
-    A class to perform all the operations on the people. This class is usually
-    not invoked directly, but instead is created automatically by the sim. The
-    only required input argument is the population size, but typically the full
-    parameters dictionary will get passed instead since it will be needed before
-    the People object is initialized.
+    A class to perform all the operations on the people -- usually not invoked directly.
+
+    This class is usually created automatically by the sim. The only required input
+    argument is the population size, but typically the full parameters dictionary
+    will get passed instead since it will be needed before the People object is
+    initialized. However, ages, contacts, etc. will need to be created separately --
+    see ``cv.make_people()`` instead.
 
     Note that this class handles the mechanics of updating the actual people, while
-    BasePeople takes care of housekeeping (saving, loading, exporting, etc.). Please
-    see the BasePeople class for additional methods.
+    ``cv.BasePeople`` takes care of housekeeping (saving, loading, exporting, etc.).
+    Please see the BasePeople class for additional methods.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
         strict (bool): whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set
         kwargs (dict): the actual data, e.g. from a popdict, being specified
 
-    ::Examples::
+    **Examples**::
 
         ppl1 = cv.People(2000)
 
@@ -125,10 +127,11 @@ class People(cvb.BasePeople):
         return
 
 
-    def initialize(self):
+    def initialize(self, sim_pars=None):
         ''' Perform initializations '''
+        self.validate(sim_pars=sim_pars) # First, check that essential-to-match parameters match
+        self.set_pars(sim_pars) # Replace the saved parameters with this simulation's
         self.set_prognoses()
-        self.validate()
         self.initialized = True
         return
 
@@ -466,7 +469,11 @@ class People(cvb.BasePeople):
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
-        breakthrough_inds = cvu.true(self.peak_nab[inds])
+        breakthrough_inds = inds[cvu.true(self.peak_nab[inds])]
+        if len(breakthrough_inds):
+            no_prior_breakthrough = (self.n_breakthroughs[breakthrough_inds] == 0) # We only adjust transmissibility for the first breakthrough
+            new_breakthrough_inds = breakthrough_inds[no_prior_breakthrough]
+            self.rel_trans[new_breakthrough_inds] *= self.pars['trans_redux']
 
         # Update states, variant info, and flows
         self.susceptible[inds]    = False
@@ -475,7 +482,7 @@ class People(cvb.BasePeople):
         self.diagnosed[inds]      = False
         self.exposed[inds]        = True
         self.n_infections[inds]  += 1
-        self.n_breakthroughs[inds[breakthrough_inds]] += 1
+        self.n_breakthroughs[breakthrough_inds] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
         self.flows['new_infections']   += len(inds)
@@ -557,11 +564,7 @@ class People(cvb.BasePeople):
 
         # Handle immunity aspects
         if self.pars['use_waning']:
-            symp = {
-                'asymp': asymp_inds,
-                'mild': mild_inds,
-                'sev': sev_inds
-            }
+            symp = dict(asymp=asymp_inds, mild=mild_inds, sev=sev_inds)
             cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
         return n_infections # For incrementing counters

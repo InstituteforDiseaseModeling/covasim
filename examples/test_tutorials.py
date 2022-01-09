@@ -4,6 +4,7 @@ Run the tutorial examples
 '''
 
 import os
+import covasim as cv
 import sciris as sc
 import pickle
 import test_examples as tex
@@ -17,8 +18,8 @@ def test_all_tutorials():
             sc.heading(f'Running {filename}...')
             try:
                 tex.run_example(filename)
-            except (pickle.PicklingError, NameError): # Ignore these: issue with how the modules are loaded in the run_example function
-                pass
+            except (pickle.PicklingError, NameError) as E: # Ignore these: issue with how the modules are loaded in the run_example function
+                print(f'Skipping {filename} due to known pickling error: {E}')
         else:
             print(f'[Skipping "{filename}" since does not match pattern]')
 
@@ -41,6 +42,7 @@ def test_all_tutorials():
 #%% Run as a script
 if __name__ == '__main__':
 
+    cv.options.set(verbose=0)
     T = sc.tic()
 
     test_all_tutorials()
