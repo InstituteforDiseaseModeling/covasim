@@ -45,6 +45,20 @@ rc_simple = {
 }
 
 
+class Options(sc.objdict):
+    ''' Small derived class for the options itself '''
+
+    def __call__(self, *args, **kwargs):
+        '''Allow ``cv.options(dpi=150)`` instead of ``cv.options.set(dpi=150)`` '''
+        return self.set(*args, **kwargs)
+
+    def __repr__(self):
+        output = 'Covasim options:\n'
+        for k,v in self.items():
+            output += f'  {k:>12s}: {repr(v)}\n'
+        return output
+
+
 def set_default_options():
     '''
     Set the default options for Covasim -- not to be called by the user, use
@@ -53,7 +67,7 @@ def set_default_options():
 
     # Options acts like a class, but is actually an objdict for simplicity
     optdesc = sc.objdict() # Help for the options
-    options = sc.objdict() # The options
+    options = Options() # The options
 
     optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
     options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
@@ -313,7 +327,6 @@ def reload_numba():
     return
 
 
-
 def load_custom_fonts():
     '''
     Load custom fonts for plotting
@@ -327,8 +340,11 @@ load_custom_fonts()
 
 
 # Add these here to be more accessible to the user
-options.set = set_option
-options.get_default = get_default
-options.help = get_help
+options.setattribute('set', set_option)
+options.setattribute('default', get_default)
+options.setattribute('help', get_help)
+options.setattribute('load', load)
+options.setattribute('save', save)
+
 
 
