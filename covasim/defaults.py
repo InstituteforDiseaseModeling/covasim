@@ -325,9 +325,10 @@ def get_default_plots(which='default', kind='sim', sim=None):
     Args:
         which (str): either 'default' or 'overview'
     '''
+    which = str(which).lower() # To make comparisons easier
 
     # Default plots -- different for sims and scenarios
-    if which in [None, 'default']:
+    if which in ['none', 'default']:
 
         if 'sim' in kind:
             plots = sc.odict({
@@ -358,7 +359,6 @@ def get_default_plots(which='default', kind='sim', sim=None):
                 ],
                 'Cumulative deaths': [
                     'cum_deaths',
-                    'cum_known_deaths',
                 ],
             })
 
@@ -371,7 +371,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         plots = sc.dcp(overview_plots)
 
     # Plot absolutely everything
-    elif which.lower() == 'all': # pragma: no cover
+    elif which == 'all': # pragma: no cover
         plots = sim.result_keys('all')
 
     # Show an overview plus variants
@@ -379,7 +379,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         plots = sc.dcp(overview_plots) + sc.dcp(overview_variant_plots)
 
     # Show default but with variants
-    elif 'variant' in which: # pragma: no cover
+    elif which.startswith('variant'): # pragma: no cover
         plots = sc.odict({
                 'Cumulative infections by variant': [
                     'cum_infections_by_variant',
@@ -399,7 +399,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         })
 
     # Plot SEIR compartments
-    elif which.lower() == 'seir': # pragma: no cover
+    elif which == 'seir': # pragma: no cover
         plots = [
             'n_susceptible',
             'n_preinfectious',
@@ -408,7 +408,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
         ],
 
     else: # pragma: no cover
-        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir"'
+        errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir", along with any result key (see sim.results_keys(\'all\') for options)'
         raise ValueError(errormsg)
 
     return plots

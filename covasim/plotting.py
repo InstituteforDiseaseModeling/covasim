@@ -88,22 +88,30 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
         raise RuntimeError(errormsg)
 
     # If it matches a result key, convert to a list
-    reskeys = sim.result_keys()
-    if to_plot in reskeys:
+    reskeys = sim.result_keys('main')
+    varkeys = sim.result_keys('variant')
+    allkeys = reskeys + varkeys
+    if to_plot in allkeys:
         to_plot = sc.tolist(to_plot)
 
     # If not specified or specified as another string, load defaults
     if to_plot is None or isinstance(to_plot, str):
         to_plot = cvd.get_default_plots(to_plot, kind=kind, sim=sim)
 
-    # If a list of keys has been supplied
+    # If a list of keys has been supplied or constructed
     if isinstance(to_plot, list):
         to_plot_list = to_plot # Store separately
         to_plot = sc.odict() # Create the dict
-
+        invalid = sc.autolist()
         for reskey in to_plot_list:
-            name = sim.results[reskey].name if reskey in reskeys else sim.results['variant'][reskey].name
-            to_plot[name] = [reskey] # Use the result name as the key and the reskey as the value
+            if reskey in allkeys:
+                name = sim.results[reskey].name if reskey in reskeys else sim.results['variant'][reskey].name
+                to_plot[name] = [reskey] # Use the result name as the key and the reskey as the value
+            else:
+                invalid += reskey
+        if len(invalid):
+            errormsg = f'The following key(s) are invalid: {sc.strjoin(invalid)}\nValid main keys are:\n{sc.strjoin(reskeys)}\n\nValid variant keys are:\n{sc.strjoin(varkeys)}'
+            raise sc.KeyNotFoundError(errormsg)
 
     to_plot = sc.odict(sc.dcp(to_plot)) # In case it's supplied as a dict
 
