@@ -213,7 +213,15 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
 
     # Show the legend
     if show_legend and show_args['legend']: # It's pretty ugly, but there are multiple ways of controlling whether the legend shows
-        ax.legend(**legend_args)
+
+        # Remove duplicate entries
+        handles, labels = ax.get_legend_handles_labels()
+        unique_inds = np.sort(np.unique(labels, return_index=True)[1])
+        handles = [handles[u] for u in unique_inds]
+        labels  = [labels[u]  for u in unique_inds]
+
+        # Actually make legend
+        ax.legend(handles=handles, labels=labels, **legend_args)
 
     # If we removed it from the legend_args dict, put it back now
     if popped:
