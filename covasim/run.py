@@ -162,6 +162,11 @@ class MultiSim(cvb.FlexPretty):
         else:
             sims = self.sims
 
+            # Handle missing labels
+            for s,sim in enumerate(sims):
+                if sim.label is None:
+                    sim.label = f'Sim {s}'
+
         # Run
         kwargs = sc.mergedicts(self.run_args, kwargs)
         self.sims = multi_run(sims, **kwargs)
@@ -1354,7 +1359,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         verbose = sim['verbose']
 
     if not sim.label:
-        sim.label = f'Sim {ind:d}'
+        sim.label = f'Sim {ind}'
 
     if reseed:
         sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
@@ -1451,11 +1456,11 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
 
     # Run the sims
     if isinstance(sim, cvs.Sim): # Normal case: one sim
-        iterkwargs = {'ind':np.arange(n_runs)}
+        iterkwargs = dict(ind=np.arange(n_runs))
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     elif isinstance(sim, list): # List of sims
-        iterkwargs = {'sim':sim}
+        iterkwargs = dict(sim=sim, ind=np.arange(len(sim)))
         kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
