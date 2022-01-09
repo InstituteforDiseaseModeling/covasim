@@ -703,7 +703,7 @@ class MultiSim(cvb.FlexPretty):
 
         Args:
             inds (list): a list of lists of indices, with each list turned into a MultiSim
-            chunks (int or list): if an int, split the MultiSim into chunks of that length; if a list return chunks of that many sims
+            chunks (int or list): if an int, split the MultiSim into that many chunks; if a list return chunks of that many sims
 
         Returns:
             A list of MultiSim objects
@@ -720,7 +720,7 @@ class MultiSim(cvb.FlexPretty):
             msim.run()
             m1, m2 = msim.split(inds=[[0,2,4], [1,3,5]])
             mlist1 = msim.split(chunks=[2,4]) # Equivalent to inds=[[0,1], [2,3,4,5]]
-            mlist2 = msim.split(chunks=3) # Equivalent to inds=[[0,1,2], [3,4,5]]
+            mlist2 = msim.split(chunks=2) # Equivalent to inds=[[0,1,2], [3,4,5]]
         '''
 
         # Process indices and chunks
