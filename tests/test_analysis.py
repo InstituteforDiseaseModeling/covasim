@@ -88,6 +88,18 @@ def test_daily_stats():
     return daily
 
 
+def test_nab_hist():
+    sc.heading('Testing NAb histogram analyzer')
+
+    sim = cv.Sim(pars, analyzers=cv.nab_histogram())
+    sim.run()
+    nab_hist = sim.get_analyzer()
+    if do_plot:
+        nab_hist.plot()
+    return nab_hist
+
+
+
 def test_fit():
     sc.heading('Testing fitting function')
 
@@ -184,6 +196,7 @@ def test_transtree():
     return transtree
 
 
+
 #%% Run as a script
 if __name__ == '__main__':
 
@@ -195,6 +208,7 @@ if __name__ == '__main__':
     agehist   = test_age_hist()
     daily_age = test_daily_age()
     daily     = test_daily_stats()
+    nab_hist  = test_nab_hist()
     fit       = test_fit()
     calib     = test_calibration()
     transtree = test_transtree()
