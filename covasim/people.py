@@ -19,15 +19,17 @@ __all__ = ['People']
 
 class People(cvb.BasePeople):
     '''
-    A class to perform all the operations on the people. This class is usually
-    not invoked directly, but instead is created automatically by the sim. The
-    only required input argument is the population size, but typically the full
-    parameters dictionary will get passed instead since it will be needed before
-    the People object is initialized.
+    A class to perform all the operations on the people -- usually not invoked directly.
+
+    This class is usually created automatically by the sim. The only required input
+    argument is the population size, but typically the full parameters dictionary
+    will get passed instead since it will be needed before the People object is
+    initialized. However, ages, contacts, etc. will need to be created separately --
+    see ``cv.make_people()`` instead.
 
     Note that this class handles the mechanics of updating the actual people, while
-    BasePeople takes care of housekeeping (saving, loading, exporting, etc.). Please
-    see the BasePeople class for additional methods.
+    ``cv.BasePeople`` takes care of housekeeping (saving, loading, exporting, etc.).
+    Please see the BasePeople class for additional methods.
 
     Args:
         pars (dict): the sim parameters, e.g. sim.pars -- alternatively, if a number, interpreted as pop_size
