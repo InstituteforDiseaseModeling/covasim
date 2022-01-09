@@ -38,12 +38,12 @@ class Sim(cvb.BaseSim):
         popfile  (str):    if supplied, load the population from this file
         people   (varies): if supplied, use these pre-generated people (as a dict, SynthPop, or People object) instead of loading or generating new ones
         version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
-        kwargs   (dict):   passed to make_pars()
+        kwargs   (dict):   additional parameters; passed to ``cv.make_pars()``
 
     **Examples**::
 
         sim = cv.Sim()
-        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
+        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx', label='Sim with data')
     '''
 
     def __init__(self, pars=None, datafile=None, label=None, simfile=None,
