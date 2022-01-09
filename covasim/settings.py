@@ -95,7 +95,6 @@ class Options(sc.objdict):
         self.update(options) # Update this object with them
         self.setattribute('optdesc', optdesc) # Set the description as an attribute, not a dict entry
         self.setattribute('orig_options', sc.dcp(options)) # Copy the default options
-        self.load_fonts() # Load custom fonts on module import
         return
 
 
@@ -243,10 +242,10 @@ class Options(sc.objdict):
                 if key in numba_keys:
                     reload_required = True
                 if key in matplotlib_keys:
-                    self.set_matplotlib_global(key, value)
+                    set_matplotlib_global(key, value)
 
         if reload_required:
-            self.reload_numba()
+            reload_numba()
         return
 
 
@@ -291,13 +290,15 @@ class Options(sc.objdict):
             print(f'  Environment: {entry.variable}')
             print(f'  Description: {entry.desc}')
 
-        sc.heading('Methods', spacesafter=0)
+        sc.heading('Methods:', spacesafter=0)
         print('''
-    cv.options.set() -- set options
+    cv.options(key=value) -- set key to value
+    cv.options[key] -- get or set key
+    cv.options.set() -- set option(s)
+    cv.options.get_default() -- get default setting(s)
     cv.options.load() -- load settings from file
     cv.options.save() -- save settings to file
-    cv.options.get_default() -- get default options
-    cv.options.load_fonts() -- add custom fonts
+    cv.options.to_dict() -- convert to dictionary
 ''')
 
         if output:
@@ -315,12 +316,14 @@ class Options(sc.objdict):
             kwargs (dict): passed to ``sc.loadjson()``
         '''
         json = sc.loadjson(filename=filename, **kwargs)
-        self.set(**json)
+        current = self.to_dict()
+        new = {k:v for k,v in json.items() if v != current[k]} # Don't reset keys that haven't changed
+        self.set(**new)
         if verbose: print(f'Settings loaded from {filename}')
         return
 
 
-    def save(self, filename, **kwargs):
+    def save(self, filename, verbose=True, **kwargs):
         '''
         Save current settings as a JSON file.
 
@@ -329,81 +332,77 @@ class Options(sc.objdict):
             kwargs (dict): passed to ``sc.savejson()``
         '''
         json = self.to_dict()
-        return sc.savejson(filename=filename, obj=json, **kwargs)
+        output = sc.savejson(filename=filename, obj=json, **kwargs)
+        if verbose: print(f'Settings saved to {filename}')
+        return output
 
 
-    @staticmethod
-    def set_matplotlib_global(key, value, available_fonts=None):
-        ''' Set a global option for Matplotlib -- not for users '''
-        if value: # Don't try to reset any of these to a None value
-            if   key == 'font_size':   pl.rcParams['font.size']   = value
-            elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
-            elif key == 'backend':     pl.switch_backend(value)
-            elif key == 'font_family':
-                if available_fonts is None or value in available_fonts: # If available fonts are supplied, don't set to an invalid value
-                    pl.rcParams['font.family'] = value
-            elif key == 'style':
-                if value is None or value.lower() == 'covasim':
-                    pl.style.use('default')
-                elif value in pl.style.available:
-                    pl.style.use(value)
-                else:
-                    errormsg = f'Style "{value}"; not found; options are "covasim" (default) plus:\n{sc.newlinejoin(pl.style.available)}'
-                    raise ValueError(errormsg)
-            else: raise sc.KeyNotFoundError(f'Key {key} not found')
-        return
+def set_matplotlib_global(key, value, available_fonts=None):
+    ''' Set a global option for Matplotlib -- not for users '''
+    if value: # Don't try to reset any of these to a None value
+        if   key == 'font_size':   pl.rcParams['font.size']   = value
+        elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
+        elif key == 'backend':     pl.switch_backend(value)
+        elif key == 'font_family':
+            if available_fonts is None or value in available_fonts: # If available fonts are supplied, don't set to an invalid value
+                pl.rcParams['font.family'] = value
+        elif key == 'style':
+            if value is None or value.lower() == 'covasim':
+                pl.style.use('default')
+            elif value in pl.style.available:
+                pl.style.use(value)
+            else:
+                errormsg = f'Style "{value}"; not found; options are "covasim" (default) plus:\n{sc.newlinejoin(pl.style.available)}'
+                raise ValueError(errormsg)
+        else: raise sc.KeyNotFoundError(f'Key {key} not found')
+    return
 
 
-    @staticmethod
-    def handle_show(do_show):
-        ''' Convenience function to handle the slightly complex logic of show -- not for users '''
-        backend = pl.get_backend()
-        if do_show is None:  # If not supplied, reset to global value
-            do_show = options.show
-        if backend == 'agg': # Cannot show plots for a non-interactive backend
-            do_show = False
-        if do_show: # Now check whether to show
-            pl.show()
-        return do_show
+def handle_show(do_show):
+    ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    backend = pl.get_backend()
+    if do_show is None:  # If not supplied, reset to global value
+        do_show = options.show
+    if backend == 'agg': # Cannot show plots for a non-interactive backend
+        do_show = False
+    if do_show: # Now check whether to show
+        pl.show()
+    return do_show
 
 
-    @staticmethod
-    def reload_numba():
-        '''
-        Apply changes to Numba functions -- reloading modules is necessary for
-        changes to propagate. Not necessary to call directly if cv.options.set() is used.
+def reload_numba():
+    '''
+    Apply changes to Numba functions -- reloading modules is necessary for
+    changes to propagate. Not necessary to call directly if cv.options.set() is used.
 
-        **Example**::
+    **Example**::
 
-            import covasim as cv
-            cv.options.set(precision=64)
-            sim = cv.Sim()
-            sim.run()
-            assert sim.people.rel_trans.dtype == np.float64
-        '''
-        print('Reloading Covasim so changes take effect...')
-        import importlib
         import covasim as cv
-        importlib.reload(cv.defaults)
-        importlib.reload(cv.utils)
-        importlib.reload(cv)
-        print("Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.")
-        return
+        cv.options.set(precision=64)
+        sim = cv.Sim()
+        sim.run()
+        assert sim.people.rel_trans.dtype == np.float64
+    '''
+    print('Reloading Covasim so changes take effect...')
+    import importlib
+    import covasim as cv
+    importlib.reload(cv.defaults)
+    importlib.reload(cv.utils)
+    importlib.reload(cv)
+    print("Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.")
+    return
 
 
-    @staticmethod
-    def load_fonts(folder=None):
-        '''
-        Load custom fonts for plotting -- alias to ``sc.fonts()``
-        '''
-        if folder is None:
-            folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
-        sc.fonts(add=folder)
-        return
+def load_fonts(folder=None):
+    '''
+    Load custom fonts for plotting -- alias to ``sc.fonts()``
+    '''
+    if folder is None:
+        folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
+    sc.fonts(add=folder)
+    return
 
 
-
-
-# Add these here to be more accessible to the user
+# Create the options on module load, and load the fonts
 options = Options()
-
+load_fonts()
