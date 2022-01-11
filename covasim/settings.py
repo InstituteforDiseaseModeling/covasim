@@ -164,11 +164,11 @@ class Options(sc.objdict):
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
         options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
-        optdesc.font_size = 'Set the default font size'
-        options.font_size = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+        optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
+        options.font = os.getenv('COVASIM_FONT', pl.rcParams['font.family'])
 
-        optdesc.font_family = 'Set the default font family (e.g., Arial)'
-        options.font_family = os.getenv('COVASIM_FONT_FAMILY', 'Rosario')
+        optdesc.fontsize = 'Set the default font size'
+        options.fontsize = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
 
         optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
         options.precision = int(os.getenv('COVASIM_PRECISION', 32))
@@ -243,16 +243,17 @@ class Options(sc.objdict):
         return
 
 
-    def get_default(self, key=None):
+    def get_default(self, key):
         ''' Helper function to get the original default options '''
         return self.orig_options[key]
 
 
-    # def style(self, *args,**kwargs):
-    #     '''
-    #     Apply the current style to
-    #     '''
-    #     return pl.style.context(*args, **kwargs)
+    def changed(self, key):
+        ''' Check if current setting has been changed from default '''
+        if key in self.orig_options:
+            return self[key] != self.orig_options[key]
+        else:
+            return None
 
 
     def help(self, output=False):
@@ -338,28 +339,65 @@ class Options(sc.objdict):
         return output
 
 
-    def style(self, context=True, use=False, **kwargs):
+    def style(self, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
         Args:
-            context (bool): whether to create a context for use with "with" (else, apply style globally)
-            use (bool): whether to set as the global style
+            use (bool): whether to set as the global style; else, treat as context for use with "with" (default)
         '''
         # Handle inputs
-        rc = sc.dcp(self.rc) # Make a local copy of the
+        rc = sc.dcp(self.rc) # Make a local copy of the currently used settings
 
-        if use:
-            pl.style.use(rc)
-
-        if context:
-            return pl.style.context('ggplot')
+        # Handle style, overwiting existing
+        style = kwargs.pop('style')
+        stylestr = str(style).lower()
+        if stylestr in ['none', 'default', 'covasim', 'house']:
+            rc = sc.dcp(rc_covasim)
+        elif stylestr in ['simple', 'covasim_simple']:
+            rc = sc.dcp(rc_simple)
+        elif style in pl.style.library:
+            rc = pl.style.library[style]
         else:
+            errormsg = f'Could not apply style "{style}": please use "covasim", "simple", or one of the styles from pl.styles.available'
+            raise ValueError(errormsg)
+
+
+        def pop_keywords(sourcekeys, rckey):
+            ''' Helper function to handle input arguments '''
+            sourcekeys = sc.tolist(sourcekeys)
+            key = sourcekeys[0] # Main key
+            value = None
+            changed = self.changed(key)
+            if changed:
+                value = self[key]
+            for k in sourcekeys:
+                value = kwargs.pop(k, value)
+            if value is not None:
+                rc[rckey] = value
             return
 
-        # for arg in args.values():
-        #     kwargs.upda
+        # Handle special cases
+        pop_keywords('dpi', rckey='figure.dpi')
+        pop_keywords(['font', 'fontfamily', 'font_family'], rckey='font.family')
+        pop_keywords(['fontsize', 'font_size'], rckey='font.size')
+        pop_keywords('grid', rckey='axes.grid')
+        pop_keywords('facecolor', rckey='axes.facecolor')
+
+        # Handle other keywords
+        for key,value in kwargs.items():
+            if key not in pl.rcParams:
+                errormsg = f'Key "{key}" does not match any value in Covasim options or pl.rcParams'
+                raise sc.KeyNotFoundError(errormsg)
+            elif value is not None:
+                rc[key] = value
+
+        # Tidy up
+        if use:
+            return pl.style.use(rc)
+        else:
+            return pl.style.context(rc)
 
 
 def set_matplotlib_global(key, value, available_fonts=None):

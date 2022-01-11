@@ -54,8 +54,16 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.show    = sc.mergedicts(defaults.show,    show_args)
     args.style   = sc.mergedicts(defaults.style,   style_args)
 
-    # If unused keyword arguments remain, raise an error
+    # If unused keyword arguments remain, parse or raise an error
     if len(kwargs):
+
+        # Handle potential rcParams keys
+        keys = list(kwargs.keys())
+        for key in keys:
+            if key in pl.rcParams:
+                args.style[key] = kwargs.pop(key)
+
+        # Everything remaining is not found
         notfound = sc.strjoin(kwargs.keys())
         valid = sc.strjoin(sorted(set([k for d in defaults.values() for k in d.keys()]))) # Remove duplicates and order
         errormsg = f'The following keywords could not be processed:\n{notfound}\n\n'
