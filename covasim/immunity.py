@@ -312,23 +312,33 @@ def check_immunity(people, variant):
 
     '''
 
-    # Handle parameters and indices
+    # Shorten parameter names
     pars = people.pars
     immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
     nab_eff = pars['nab_eff']
     current_nabs = sc.dcp(people.nab)
-    imm = np.ones(len(people))
     date_rec = people.date_recovered  # Date recovered
-    is_vacc = cvu.true(people.vaccinated)  # Vaccinated
-    vacc_source = people.vaccine_source[is_vacc]
-    was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
-    was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec))  # Had a previous exposure to the same variant, now recovered
+    date_vacc = people.date_vaccinated  # Date vaccinated
+
+    # Initialize immunity -- this will be used to scale NAbs
+    imm = np.ones(len(people))
+
+    # Determine where people's immunity is coming from. We determine the most recent
+    # immune-boosting event and use that to scale their NAbs.
+
+    # Set the immunity scaling for people whose last immune event was an infection
+    was_inf = cvu.true((people.t >= date_rec) & (date_rec >= date_vacc)) # Had a previous exposure more recently than a vaccination; now recovered
+    was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec) & (date_rec >= date_vacc))  # Had a previous exposure to the same variant, now recovered
     was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
     variant_was_inf_diff = people.recovered_variant[was_inf_diff]
     variant_was_inf_diff = variant_was_inf_diff.astype(cvd.default_int)
 
-    imm[was_inf_same] = immunity[variant]
+    imm[was_inf_same] = immunity[variant] # Actually set the immunity scaling
     imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
+
+    # Set the immunity scaling for people whose last immune event was a vaccination
+    is_vacc = cvu.true((people.t >= date_vacc) & (date_vacc >= date_rec)) # Vaccinated more recently than infected
+    vacc_source = people.vaccine_source[is_vacc]
     if len(is_vacc) and len(pars['vaccine_pars']): # if using simple_vaccine, do not apply
         vx_pars = pars['vaccine_pars']
         vx_map = pars['vaccine_map']
