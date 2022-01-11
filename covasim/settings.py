@@ -38,7 +38,7 @@ rc_simple = {
 
 # Define default plotting options -- based on Seaborn
 rc_covasim = sc.mergedicts(rc_simple, {
-    'axes.facecolor': 'efefff',
+    'axes.facecolor': '#f2f2ff',
     'axes.grid': True,
     'grid.color': 'white',
     'grid.linewidth': 1,
@@ -351,7 +351,7 @@ class Options(sc.objdict):
         rc = sc.dcp(self.rc) # Make a local copy of the currently used settings
 
         # Handle style, overwiting existing
-        style = kwargs.pop('style')
+        style = kwargs.pop('style', None)
         stylestr = str(style).lower()
         if stylestr in ['none', 'default', 'covasim', 'house']:
             rc = sc.dcp(rc_covasim)
@@ -362,7 +362,6 @@ class Options(sc.objdict):
         else:
             errormsg = f'Could not apply style "{style}": please use "covasim", "simple", or one of the styles from pl.styles.available'
             raise ValueError(errormsg)
-
 
         def pop_keywords(sourcekeys, rckey):
             ''' Helper function to handle input arguments '''
