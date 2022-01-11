@@ -26,15 +26,13 @@ __all__ = ['options']
 matplotlib_keys = ['backend', 'style', 'dpi', 'font_size', 'font_family']
 numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
-default_fonts = ['Arial', 'Liberation Sans', 'DejaVu Sans', 'sans-serif']
-
 # Define simple plotting options -- similar to Matplotlib default
 rc_simple = {
     'figure.facecolor': 'white',
     'axes.spines.right': False,
     'axes.spines.top': False,
     'font.family': 'sans-serif',
-    'font.sans-serif': ['Muli'] + default_fonts,
+    'font.sans-serif': ['Muli'] + pl.rcParams['font.sans-serif'],
     'legend.frameon': False,
 }
 
@@ -43,9 +41,8 @@ rc_covasim = sc.mergedicts(rc_simple, {
     'axes.facecolor': 'efefff',
     'axes.grid': True,
     'grid.color': 'white',
-    'grid.linestyle': '-',
     'grid.linewidth': 1,
-    'font.sans-serif': ['Rosario', 'Muli'] + default_fonts,
+    'font.serif': ['Rosario', 'Garamond', 'Garamond MT'] + pl.rcParams['font.serif'],
 })
 
 
@@ -161,8 +158,11 @@ class Options(sc.objdict):
         optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
         options.style = os.getenv('COVASIM_STYLE', 'covasim')
 
-        optdesc.rc = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
+        optdesc.rc = 'Matplotlib rc (run control) parameters used during plotting'
         options.rc = sc.dcp(rc_covasim)
+
+        optdesc.rc = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
+        options.rc_covasim = sc.dcp(rc_covasim)
 
         optdesc.rc_simple = 'Simple Matplotlib rc (run control) parameters for Covasim; used with style="simple"'
         options.rc_simple = sc.dcp(rc_simple)
@@ -254,6 +254,13 @@ class Options(sc.objdict):
         return self.orig_options[key]
 
 
+    # def style(self, *args,**kwargs):
+    #     '''
+    #     Apply the current style to
+    #     '''
+    #     return pl.style.context(*args, **kwargs)
+
+
     def help(self, output=False):
         '''
         Print information about options.
@@ -337,6 +344,12 @@ class Options(sc.objdict):
         return output
 
 
+    def context(self, args=None, **kwargs):
+        args = sc.mergedicts(args)
+        for arg in args.values():
+            kwargs.upda
+
+
 def set_matplotlib_global(key, value, available_fonts=None):
     ''' Set a global option for Matplotlib -- not for users '''
     if value: # Don't try to reset any of these to a None value
@@ -356,18 +369,6 @@ def set_matplotlib_global(key, value, available_fonts=None):
                 raise ValueError(errormsg)
         else: raise sc.KeyNotFoundError(f'Key {key} not found')
     return
-
-
-def handle_show(do_show):
-    ''' Convenience function to handle the slightly complex logic of show -- not for users '''
-    backend = pl.get_backend()
-    if do_show is None:  # If not supplied, reset to global value
-        do_show = options.show
-    if backend == 'agg': # Cannot show plots for a non-interactive backend
-        do_show = False
-    if do_show: # Now check whether to show
-        pl.show()
-    return do_show
 
 
 def reload_numba():
