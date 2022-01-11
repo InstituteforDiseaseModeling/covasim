@@ -76,11 +76,11 @@ class Options(sc.objdict):
 
     **Examples**::
 
-        cv.options.set('font_size', 18) # Larger font
-        cv.options.set(font_size=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
-        cv.options.set(interactive=False) # Turn off interactive plots
-        cv.options.set('defaults') # Reset to default options
-        cv.options.set('jupyter') # Defaults for Jupyter
+        cv.options(dpi=150) # Larger size
+        cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
+        cv.options(interactive=False) # Turn off interactive plots
+        cv.options('defaults') # Reset to default options
+        cv.options('jupyter') # Defaults for Jupyter
 
     | New in version 3.1.1: Jupyter defaults
     | New in version 3.1.2: Updated plotting styles; refactored options as a class
@@ -158,7 +158,7 @@ class Options(sc.objdict):
         optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
         options.style = os.getenv('COVASIM_STYLE', 'covasim')
 
-        optdesc.rc = 'Matplotlib rc (run control) parameters used during plotting'
+        optdesc.rc = 'Matplotlib rc (run control) parameters used during plotting -- set by "style" option'
         options.rc = sc.dcp(rc_covasim)
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
@@ -235,8 +235,8 @@ class Options(sc.objdict):
                 self[key] = value
                 if key in numba_keys:
                     reload_required = True
-                if key in matplotlib_keys:
-                    set_matplotlib_global(key, value)
+                if key in 'backend':
+                    pl.switch_backend(value)
 
         if reload_required:
             reload_numba()
@@ -283,7 +283,7 @@ class Options(sc.objdict):
 
         # Convert to a dataframe for nice printing
         print('Covasim global options ("Environment" = name of corresponding environment variable):')
-        for k, key,entry in optdict.enumitems():
+        for k, key, entry in optdict.enumitems():
             sc.heading(f'{k}. {key}', spaces=0, spacesafter=0)
             changestr = '' if entry.current == entry.default else ' (modified)'
             print(f'          Key: {key}')
@@ -301,6 +301,7 @@ class Options(sc.objdict):
     cv.options.load() -- load settings from file
     cv.options.save() -- save settings to file
     cv.options.to_dict() -- convert to dictionary
+    cv.options.style() -- create style context for plotting
 ''')
 
         if output:
@@ -339,7 +340,28 @@ class Options(sc.objdict):
         return output
 
 
-    def style(self, use=False, **kwargs):
+    def _handle_style(self, style=None, reset=False):
+        ''' Helper function to handle logic for different styles '''
+        rc = self.rc # By default, use current
+        if isinstance(style, dict): # If an rc-like object is supplied directly
+            rc = style
+        elif style is not None: # Usual use case
+            stylestr = str(style).lower()
+            if stylestr in ['default', 'covasim', 'house']:
+                rc = sc.dcp(rc_covasim)
+            elif stylestr in ['simple', 'covasim_simple']:
+                rc = sc.dcp(rc_simple)
+            elif style in pl.style.library:
+                rc = pl.style.library[style]
+            else:
+                errormsg = f'Style "{style}"; not found; options are "covasim" (default), "simple", plus:\n{sc.newlinejoin(pl.style.available)}'
+                raise ValueError(errormsg)
+        if reset:
+            self.rc = rc
+        return rc
+
+
+    def set_style(self, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
@@ -352,16 +374,7 @@ class Options(sc.objdict):
 
         # Handle style, overwiting existing
         style = kwargs.pop('style', None)
-        stylestr = str(style).lower()
-        if stylestr in ['none', 'default', 'covasim', 'house']:
-            rc = sc.dcp(rc_covasim)
-        elif stylestr in ['simple', 'covasim_simple']:
-            rc = sc.dcp(rc_simple)
-        elif style in pl.style.library:
-            rc = pl.style.library[style]
-        else:
-            errormsg = f'Could not apply style "{style}": please use "covasim", "simple", or one of the styles from pl.styles.available'
-            raise ValueError(errormsg)
+        rc = self._handle_style(style, reset=False)
 
         def pop_keywords(sourcekeys, rckey):
             ''' Helper function to handle input arguments '''
@@ -372,7 +385,9 @@ class Options(sc.objdict):
             if changed:
                 value = self[key]
             for k in sourcekeys:
-                value = kwargs.pop(k, value)
+                kwvalue = kwargs.pop(k, None)
+                if kwvalue is not None:
+                    value = kwvalue
             if value is not None:
                 rc[rckey] = value
             return
@@ -397,27 +412,6 @@ class Options(sc.objdict):
             return pl.style.use(rc)
         else:
             return pl.style.context(rc)
-
-
-def set_matplotlib_global(key, value, available_fonts=None):
-    ''' Set a global option for Matplotlib -- not for users '''
-    if value: # Don't try to reset any of these to a None value
-        if   key == 'font_size':   pl.rcParams['font.size']   = value
-        elif key == 'dpi':         pl.rcParams['figure.dpi']  = value
-        elif key == 'backend':     pl.switch_backend(value)
-        elif key == 'font_family':
-            if available_fonts is None or value in available_fonts: # If available fonts are supplied, don't set to an invalid value
-                pl.rcParams['font.family'] = value
-        elif key == 'style':
-            if value is None or value.lower() == 'covasim':
-                pl.style.use('default')
-            elif value in pl.style.available:
-                pl.style.use(value)
-            else:
-                errormsg = f'Style "{value}"; not found; options are "covasim" (default) plus:\n{sc.newlinejoin(pl.style.available)}'
-                raise ValueError(errormsg)
-        else: raise sc.KeyNotFoundError(f'Key {key} not found')
-    return
 
 
 def reload_numba():

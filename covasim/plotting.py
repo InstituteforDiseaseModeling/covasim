@@ -369,7 +369,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
-    with cvo.style(**args.style):
+    with cvo.set_style(**args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
         variant_keys = sim.result_keys('variant')
         for pnum,title,keylabels in to_plot.enumitems():
