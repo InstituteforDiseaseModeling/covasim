@@ -33,7 +33,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
     defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
-    defaults.style   = sc.objdict(style=None, dpi=None, fontsize=None, fontfamily=None, grid=None, facecolor=None) # Use Covasim global defaults
+    defaults.style   = sc.objdict(style=None, dpi=None, font=None, fontsize=None, grid=None, facecolor=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
     for dkey,default in defaults.items():
@@ -68,13 +68,6 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     if show_args in [True, False]: # Handle all on or all off
         for k in show_keys:
             args.show[k] = show_args
-
-    # Handle global Matplotlib arguments
-    args.mpl_orig = sc.objdict()
-    for key,value in args.mpl.items():
-        if value is not None:
-            args.mpl_orig[key] = cvo.get(key)
-            cvo.set(key, value)
 
     return args
 
@@ -331,10 +324,6 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
         for f in figlist:
             pl.close(f)
 
-    # Reset Matplotlib defaults
-    for key,value in args.mpl_orig.items():
-        cvo.set(key, value)
-
     # Return the figure or figures
     if sep_figs:
         return figs
@@ -361,18 +350,18 @@ def set_line_options(input_args, reskey, resnum, default):
 
 def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
-         show_args=None, mpl_args=None, n_cols=None, grid=True, commaticks=True,
+         show_args=None, style_args=None, n_cols=None, grid=True, commaticks=True,
          setylim=True, log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False,
          fig=None, ax=None, **kwargs):
     ''' Plot the results of a single simulation -- see Sim.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                       legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
+                       legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
-    with cvo.context():
+    with cvo.style(**args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
         variant_keys = sim.result_keys('variant')
         for pnum,title,keylabels in to_plot.enumitems():
@@ -417,13 +406,13 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
 
 def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=None, plot_args=None,
          scatter_args=None, axis_args=None, fill_args=None, legend_args=None, date_args=None,
-         show_args=None, mpl_args=None, n_cols=None, grid=False, commaticks=True, setylim=True,
+         show_args=None, style_args=None, n_cols=None, grid=False, commaticks=True, setylim=True,
          log_scale=False, colors=None, labels=None, do_show=None, sep_figs=False, fig=None, ax=None, **kwargs):
     ''' Plot the results of a scenario -- see Scenarios.plot() for documentation '''
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                   legend_args=legend_args, show_args=show_args, date_args=date_args, mpl_args=mpl_args, **kwargs)
+                   legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
@@ -469,7 +458,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
 
 
 def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
-                date_args=None, mpl_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
+                date_args=None, style_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
                 do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
     ''' Plot a single result -- see Sim.plot_result() for documentation '''
 
@@ -478,12 +467,12 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
-                       date_args=date_args, mpl_args=mpl_args, **kwargs)
+                       date_args=date_args, style_args=style_args, **kwargs)
     fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
     res = sim.results[key]
-    res_t = sim.results['t']
+    res_t = sim.results['date']
     if color is None:
         color = res.color
 
@@ -508,14 +497,14 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
-def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, mpl_args=None, grid=False,
+def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=None, grid=False,
                  commaticks=True, setylim=True, color=None, label=None, fig=None, **kwargs):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args=fig_args, axis_args=axis_args, mpl_args=mpl_args, **kwargs)
+    args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, **kwargs)
     fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories

@@ -161,12 +161,6 @@ class Options(sc.objdict):
         optdesc.rc = 'Matplotlib rc (run control) parameters used during plotting'
         options.rc = sc.dcp(rc_covasim)
 
-        optdesc.rc = 'Default Matplotlib rc (run control) parameters for Covasim; used with style="covasim"'
-        options.rc_covasim = sc.dcp(rc_covasim)
-
-        optdesc.rc_simple = 'Simple Matplotlib rc (run control) parameters for Covasim; used with style="simple"'
-        options.rc_simple = sc.dcp(rc_simple)
-
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
         options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
 
@@ -344,10 +338,28 @@ class Options(sc.objdict):
         return output
 
 
-    def context(self, args=None, **kwargs):
-        args = sc.mergedicts(args)
-        for arg in args.values():
-            kwargs.upda
+    def style(self, context=True, use=False, **kwargs):
+        '''
+        Combine all Matplotlib style information, and either apply it directly
+        or create a style context.
+
+        Args:
+            context (bool): whether to create a context for use with "with" (else, apply style globally)
+            use (bool): whether to set as the global style
+        '''
+        # Handle inputs
+        rc = sc.dcp(self.rc) # Make a local copy of the
+
+        if use:
+            pl.style.use(rc)
+
+        if context:
+            return pl.style.context('ggplot')
+        else:
+            return
+
+        # for arg in args.values():
+        #     kwargs.upda
 
 
 def set_matplotlib_global(key, value, available_fonts=None):
