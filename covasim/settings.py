@@ -199,31 +199,19 @@ class Options(sc.objdict):
             kwargs = sc.mergedicts(kwargs, {key:value})
 
         # Handle Jupyter
-        if 'jupyter' in kwargs.keys():
-
-            # Turn Jupyter options on
-            if kwargs['jupyter']:
-                jupyter_kw = sc.objdict(
-                    dpi = 100,
-                    show = False,
-                    close = True,
-                )
-                try: # This makes plots much nicer, but isn't available on all systems
-                    if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
-                        try: # First try interactive
-                            from IPython import get_ipython
-                            magic = get_ipython().magic
-                            magic('%matplotlib widget')
-                        except: # Then try retina
-                            import matplotlib_inline
-                            matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
-                finally:
-                    kwargs = sc.mergedicts(jupyter_kw, kwargs)
-
-            # Turn Jupyter options off
-            else:
-                for k in ['dpi', 'show', 'close', 'backend']:
-                    kwargs[k] = self.orig_options[k]
+        if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
+            try: # This makes plots much nicer, but isn't available on all systems
+                if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                    try: # First try interactive
+                        from IPython import get_ipython
+                        magic = get_ipython().magic
+                        magic('%matplotlib wikdget')
+                    except: # Then try retina
+                        import matplotlib_inline
+                        matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+            except:
+                if 'dpi' not in kwargs.keys():
+                    kwargs['dpi'] = 100 # If both backends fail, increase the resolution
 
         # Handle interactivity
         if 'interactive' in kwargs.keys():
@@ -365,7 +353,7 @@ class Options(sc.objdict):
             stylestr = str(style).lower()
             if stylestr in ['default', 'covasim', 'house']:
                 rc = sc.dcp(rc_covasim)
-            elif stylestr in ['simple', 'covasim_simple']:
+            elif stylestr in ['simple', 'covasim_simple', 'plain', 'clean']:
                 rc = sc.dcp(rc_simple)
             elif style in pl.style.library:
                 rc = pl.style.library[style]
@@ -377,16 +365,23 @@ class Options(sc.objdict):
         return rc
 
 
-    def set_style(self, use=False, **kwargs):
+    def set_style(self, style_args=None, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
         Args:
+            style_args (dict): a dictionary of style arguments
             use (bool): whether to set as the global style; else, treat as context for use with "with" (default)
+            kwargs (dict): additional style arguments
+
+        Valid style arguments are:
+
+            -
         '''
         # Handle inputs
         rc = sc.dcp(self.rc) # Make a local copy of the currently used settings
+        kwargs = sc.mergedicts(style_args, kwargs)
 
         # Handle style, overwiting existing
         style = kwargs.pop('style', None)

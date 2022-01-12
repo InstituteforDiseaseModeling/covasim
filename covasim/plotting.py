@@ -54,14 +54,14 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     args.show    = sc.mergedicts(defaults.show,    show_args)
     args.style   = sc.mergedicts(defaults.style,   style_args)
 
+    # Handle potential rcParams keys
+    keys = list(kwargs.keys())
+    for key in keys:
+        if key in pl.rcParams:
+            args.style[key] = kwargs.pop(key)
+
     # If unused keyword arguments remain, parse or raise an error
     if len(kwargs):
-
-        # Handle potential rcParams keys
-        keys = list(kwargs.keys())
-        for key in keys:
-            if key in pl.rcParams:
-                args.style[key] = kwargs.pop(key)
 
         # Everything remaining is not found
         notfound = sc.strjoin(kwargs.keys())
@@ -81,15 +81,36 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
 
 
 def handle_show(do_show):
-    ''' Convenience function to handle the slightly complex logic of show -- not for users '''
+    ''' Helper function to handle the slightly complex logic of show -- not for users '''
     backend = pl.get_backend()
     if do_show is None:  # If not supplied, reset to global value
         do_show = cvo.show
     if backend == 'agg': # Cannot show plots for a non-interactive backend
         do_show = False
-    if do_show: # Now check whether to show
+    if do_show: # Now check whether to show, and atually do it
         pl.show()
     return do_show
+
+
+def handle_show_return(do_show=None, sep_figs=False, fig=None, figs=None):
+    ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
+
+    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
+
+    # Show the figure, or close it
+    do_show = handle_show(do_show)
+    if cvo.close and not do_show:
+        for f in figlist:
+            pl.close(f)
+
+    # Return the figure or figures unless we're in Jupyter
+    if cvo.jupyter:
+        return
+    else:
+        if sep_figs:
+            return figs
+        else:
+            return fig
 
 
 def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
@@ -341,17 +362,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
         if len(figlist) >1:
             print('Warning: only the last figure was saved')
 
-    # Show the figure, or close it
-    do_show = handle_show(do_show)
-    if cvo.close and not do_show:
-        for f in figlist:
-            pl.close(f)
-
-    # Return the figure or figures
-    if sep_figs:
-        return figs
-    else:
-        return fig
+    return handle_show_return(do_show, sep_figs, fig=fig, figs=figs)
 
 
 def set_line_options(input_args, reskey, resnum, default):
@@ -384,7 +395,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
-    with cvo.set_style(**args.style):
+    with cvo.set_style(args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
         variant_keys = sim.result_keys('variant')
         for pnum,title,keylabels in to_plot.enumitems():
@@ -437,45 +448,46 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
                    legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
-    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Do the plotting
-    default_colors = sc.gridcolors(ncolors=len(scens.sims))
-    for pnum,title,reskeys in to_plot.enumitems():
-        ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
-        reskeys = sc.promotetolist(reskeys) # In case it's a string
-        for reskey in reskeys:
-            res_t = scens.datevec
-            resdata = scens.results[reskey]
-            for snum,scenkey,scendata in resdata.enumitems():
-                sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
-                variant_keys = sim.result_keys('variant')
-                if reskey in variant_keys:
-                    ns = sim['n_variants']
-                    variant_colors = sc.gridcolors(ns)
-                    for variant in range(ns):
-                        res_y = scendata.best[variant,:]
-                        color = variant_colors[variant]  # Choose the color
-                        label = 'wild type' if variant == 0 else sim['variants'][variant - 1].label
-                        ax.fill_between(res_t, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
+    with cvo.set_style(args.style):
+        fig, figs = create_figs(args, sep_figs, fig, ax)
+        default_colors = sc.gridcolors(ncolors=len(scens.sims))
+        for pnum,title,reskeys in to_plot.enumitems():
+            ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
+            reskeys = sc.promotetolist(reskeys) # In case it's a string
+            for reskey in reskeys:
+                res_t = scens.datevec
+                resdata = scens.results[reskey]
+                for snum,scenkey,scendata in resdata.enumitems():
+                    sim = scens.sims[scenkey][0] # Pull out the first sim in the list for this scenario
+                    variant_keys = sim.result_keys('variant')
+                    if reskey in variant_keys:
+                        ns = sim['n_variants']
+                        variant_colors = sc.gridcolors(ns)
+                        for variant in range(ns):
+                            res_y = scendata.best[variant,:]
+                            color = variant_colors[variant]  # Choose the color
+                            label = 'wild type' if variant == 0 else sim['variants'][variant - 1].label
+                            ax.fill_between(res_t, scendata.low[variant,:], scendata.high[variant,:], color=color, **args.fill)  # Create the uncertainty bound
+                            ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
+                            if args.show['data']:
+                                plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
+                    else:
+                        res_y = scendata.best
+                        color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
+                        label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
+                        ax.fill_between(res_t, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
                         ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
-                else:
-                    res_y = scendata.best
-                    color = set_line_options(colors, scenkey, snum, default_colors[snum])  # Choose the color
-                    label = set_line_options(labels, scenkey, snum, scendata.name)  # Choose the label
-                    ax.fill_between(res_t, scendata.low, scendata.high, color=color, **args.fill)  # Create the uncertainty bound
-                    ax.plot(res_t, res_y, label=label, c=color, **args.plot)  # Plot the actual line
-                    if args.show['data']:
-                        plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
-                if args.show['interventions']:
-                    plot_interventions(sim, ax) # Plot the interventions
-                if args.show['ticks']:
-                    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-        if args.show['legend']:
-            title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
+                    if args.show['interventions']:
+                        plot_interventions(sim, ax) # Plot the interventions
+                    if args.show['ticks']:
+                        reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+            if args.show['legend']:
+                title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
@@ -483,7 +495,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
 def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
                 date_args=None, style_args=None, grid=False, commaticks=True, setylim=True, color=None, label=None,
                 do_show=None, do_save=False, fig_path=None, fig=None, ax=None, **kwargs):
-    ''' Plot a single result -- see Sim.plot_result() for documentation '''
+    ''' Plot a single result -- see ``cv.Sim.plot_result()`` for documentation '''
 
     # Handle inputs
     sep_figs = False # Only one figure
@@ -491,7 +503,6 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
                        date_args=date_args, style_args=style_args, **kwargs)
-    fig, figs = create_figs(args, sep_figs, fig, ax)
 
     # Gather results
     res = sim.results[key]
@@ -499,36 +510,41 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     if color is None:
         color = res.color
 
-    # Reuse the figure, if available
-    if ax is None: # Otherwise, make a new one
-        try:
-            ax = fig.axes[0]
-        except:
-            ax = fig.add_subplot(111, label='ax1')
-
     # Do the plotting
-    if label is None:
-        label = res.name
-    if res.low is not None and res.high is not None:
-        ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
-    ax.plot(res_t, res.values, c=color, label=label, **args.plot)
-    plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
-    plot_interventions(sim, ax) # Plot the interventions
-    title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
-    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+    with cvo.set_style(args.style):
+        fig, figs = create_figs(args, sep_figs, fig, ax)
+
+        # Reuse the figure, if available
+        if ax is None: # Otherwise, make a new one
+            try:
+                ax = fig.axes[0]
+            except:
+                ax = fig.add_subplot(111, label='ax1')
+
+        if label is None:
+            label = res.name
+        if res.low is not None and res.high is not None:
+            ax.fill_between(res_t, res.low, res.high, color=color, **args.fill) # Create the uncertainty bound
+
+        ax.plot(res_t, res.values, c=color, label=label, **args.plot)
+        plot_data(sim, ax, key, args.scatter, color=color) # Plot the data
+        plot_interventions(sim, ax) # Plot the interventions
+        title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
+        reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
     return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=None, grid=False,
-                 commaticks=True, setylim=True, color=None, label=None, fig=None, **kwargs):
+                 commaticks=True, setylim=True, color=None, label=None, fig=None,
+                 do_save=None, do_show=None, fig_path=None, **kwargs):
     ''' Plot a MultiSim comparison -- see MultiSim.plot_compare() for documentation '''
 
     # Handle inputs
+    sep_figs = False
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
     args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, **kwargs)
-    fig, figs = create_figs(args, sep_figs=False, fig=fig)
 
     # Map from results into different categories
     mapping = {
@@ -547,20 +563,22 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
     df['category'] = category
 
     # Plot
-    for i,m in enumerate(mapping):
-        not_r_eff = m != 'r'
-        if not_r_eff:
-            ax = fig.add_subplot(2, 2, i+1)
-        else:
-            ax = fig.add_subplot(8, 2, 10)
-        dfm = df[df['category'] == m]
-        logx = not_r_eff and log_scale
-        dfm.plot(ax=ax, kind='barh', logx=logx, legend=False)
-        if not(not_r_eff):
-            ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
-        ax.grid(True)
+    with cvo.set_style(args.style):
+        fig, figs = create_figs(args, sep_figs=False, fig=fig)
+        for i,m in enumerate(mapping):
+            not_r_eff = m != 'r'
+            if not_r_eff:
+                ax = fig.add_subplot(2, 2, i+1)
+            else:
+                ax = fig.add_subplot(8, 2, 10)
+            dfm = df[df['category'] == m]
+            logx = not_r_eff and log_scale
+            dfm.plot(ax=ax, kind='barh', logx=logx, legend=False)
+            if not(not_r_eff):
+                ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
+            ax.grid(True)
 
-    return fig
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
 
 
 #%% Other plotting functions
@@ -667,9 +685,9 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
             if w_type == 'weighted':
                 share_ax = ax # Update shared axis
 
-    handle_show(do_show)
 
-    return fig
+
+    return handle_show_return(fig=fig, do_show=do_show)
 
 
 #%% Plotly functions

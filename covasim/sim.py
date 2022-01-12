@@ -1289,11 +1289,15 @@ class Sim(cvb.BaseSim):
 
         The ``show_args`` dictionary allows several other formatting options, such as:
 
-            - ``tight``:    use tight layout for the figure (default true)
+            - ``tight``:    use tight layout for the figure (default false)
             - ``maximize``: try to make the figure full screen (default false)
             - ``outer``:    only show outermost (bottom) date labels (default false)
 
-        Date, show, and other arguments can also be passed directly to ``sim.plot()``.
+        Date, show, and other arguments can also be passed directly, e.g. ``sim.plot(tight=True)``.
+
+        For additional style options, see ``cv.options.set_style()``, which is the
+        final refuge of arguments that are not picked up by any of the other parsers,
+        e.g. ``sim.plot(**{'ytick.direction':'in'})``.
 
         Returns:
             fig: Figure handle
@@ -1304,6 +1308,8 @@ class Sim(cvb.BaseSim):
             sim.plot() # Default plotting
             sim.plot('overview') # Show overview
             sim.plot('overview', maximize=True, outer=True, rotation=15) # Make some modifications to make plots easier to see
+            sim.plot(style='seaborn-whitegrid') # Use a built-in Matplotlib style
+            sim.plot(style='simple', font='Rosario', dpi=200) # Use the other house style with several customizations
 
         | New in version 2.1.0: argument passing, date_args, and mpl_args
         | New in version 3.1.2: updated date arguments; mpl_args renamed style_args

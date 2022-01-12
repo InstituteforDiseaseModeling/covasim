@@ -11,7 +11,7 @@ from . import misc as cvm
 from . import defaults as cvd
 from . import base as cvb
 from . import sim as cvs
-from . import plotting as cvplt
+from . import plotting as cvpl
 from .settings import options as cvo
 
 
@@ -549,7 +549,7 @@ class MultiSim(cvb.FlexPretty):
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
                 fig = sim.plot(fig=fig, to_plot=('scens', to_plot), colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
 
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_result(self, key, colors=None, labels=None, *args, **kwargs):
@@ -569,7 +569,7 @@ class MultiSim(cvb.FlexPretty):
                 else:
                     kwargs['setylim'] = False
                 fig = sim.plot_result(key=key, fig=fig, color=colors[s], label=labels[s], *args, **kwargs)
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
@@ -587,7 +587,7 @@ class MultiSim(cvb.FlexPretty):
             fig: Figure handle
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
-        cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
+        return cvpl.plot_compare(df, log_scale=log_scale, **kwargs)
 
 
     def save(self, filename=None, keep_people=False, **kwargs):
@@ -1103,8 +1103,7 @@ class Scenarios(cvb.ParsObj):
             scens.run()
             scens.plot()
         '''
-        fig = cvplt.plot_scens(scens=self, *args, **kwargs)
-        return fig
+        return cvpl.plot_scens(scens=self, *args, **kwargs)
 
 
     def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
