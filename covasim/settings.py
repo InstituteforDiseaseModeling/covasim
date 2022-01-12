@@ -33,6 +33,7 @@ rc_simple = {
     'axes.spines.top': False,
     'font.family': 'sans-serif',
     'font.sans-serif': ['Muli'] + pl.rcParams['font.sans-serif'],
+    'font.serif': ['Rosario', 'Garamond', 'Garamond MT'] + pl.rcParams['font.serif'],
     'legend.frameon': False,
 }
 
@@ -42,7 +43,6 @@ rc_covasim = sc.mergedicts(rc_simple, {
     'axes.grid': True,
     'grid.color': 'white',
     'grid.linewidth': 1,
-    'font.serif': ['Rosario', 'Garamond', 'Garamond MT'] + pl.rcParams['font.serif'],
 })
 
 
@@ -70,6 +70,7 @@ class Options(sc.objdict):
         - close:          whether to close the figures
         - backend:        which Matplotlib backend to use
         - interactive:    convenience method to set show, close, and backend
+        - jupyter:        defaults for Jupyter (also sets show, close, and backend)
         - precision:      the arithmetic to use in calculations
         - numba_parallel: whether to parallelize Numba functions
         - numba_cache:    whether to cache (precompile) Numba functions
@@ -80,7 +81,7 @@ class Options(sc.objdict):
         cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
         cv.options(interactive=False) # Turn off interactive plots
         cv.options('defaults') # Reset to default options
-        cv.options('jupyter') # Defaults for Jupyter
+        cv.options(jupyter=True) # Defaults for Jupyter
 
     | New in version 3.1.1: Jupyter defaults
     | New in version 3.1.2: Updated plotting styles; refactored options as a class
@@ -155,6 +156,9 @@ class Options(sc.objdict):
         optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
         options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
+        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks'
+        options.jupyter = os.getenv('COVASIM_JUPYTER', False)
+
         optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
         options.style = os.getenv('COVASIM_STYLE', 'covasim')
 
@@ -190,24 +194,36 @@ class Options(sc.objdict):
         if key in ['default', 'defaults']:
             kwargs = self.orig_options # Reset everything to default
 
-        # Handle Jupyter
-        elif sc.isstring(key) and 'jupyter' in key.lower():
-            jupyter_kwargs = dict(
-                dpi = 100,
-                show = False,
-                close = True,
-            )
-            kwargs = sc.mergedicts(jupyter_kwargs, kwargs)
-            try: # This makes plots much nicer, but isn't available on all systems
-                if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
-                    import matplotlib_inline
-                    matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
-            except:
-                pass
-
         # Handle other keys
         elif key is not None:
             kwargs = sc.mergedicts(kwargs, {key:value})
+
+        # Handle Jupyter
+        if 'jupyter' in kwargs.keys():
+
+            # Turn Jupyter options on
+            if kwargs['jupyter']:
+                jupyter_kw = sc.objdict(
+                    dpi = 100,
+                    show = False,
+                    close = True,
+                )
+                try: # This makes plots much nicer, but isn't available on all systems
+                    if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                        try: # First try interactive
+                            from IPython import get_ipython
+                            magic = get_ipython().magic
+                            magic('%matplotlib widget')
+                        except: # Then try retina
+                            import matplotlib_inline
+                            matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+                finally:
+                    kwargs = sc.mergedicts(jupyter_kw, kwargs)
+
+            # Turn Jupyter options off
+            else:
+                for k in ['dpi', 'show', 'close', 'backend']:
+                    kwargs[k] = self.orig_options[k]
 
         # Handle interactivity
         if 'interactive' in kwargs.keys():

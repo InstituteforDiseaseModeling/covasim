@@ -135,7 +135,7 @@ def handle_to_plot(kind, to_plot, n_cols, sim, check_ready=True):
     # Handle rows and columns -- assume 5 is the most rows we would want
     n_plots = len(to_plot)
     if n_cols is None:
-        max_rows = 4 # Assumption -- if desired, the user can override this by setting n_cols manually
+        max_rows = 5 # Assumption -- if desired, the user can override this by setting n_cols manually
         n_cols = int((n_plots-1)//max_rows + 1) # This gives 1 column for 1-4, 2 for 5-8, etc.
     n_rows,n_cols = sc.get_rows_cols(n_plots, ncols=n_cols) # Inconsistent naming due to Covasim/Matplotlib conventions
 
@@ -292,8 +292,9 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None, n_cols=1):
     if d_args['as_dates']:
         if d_args['dateformat'] is None and n_cols >= 3: # Change default date format if more than 2 columns are shown
             d_args['dateformat'] = 'concise'
-        if d_args['dateformat'] in ['sciris', 'auto', 'matplotlib', 'concise', 'brief']: # Handle date formatter rather than date format
+        if d_args['dateformat'] in ['covasim', 'sciris', 'auto', 'matplotlib', 'concise', 'brief']: # Handle date formatter rather than date format
             style, dateformat = d_args['dateformat'], None # Swap argument order
+            style = style.replace('covasim', 'sciris') # In case any users are confused about what "default" is
         else:
             dateformat, style = d_args['dateformat'], 'sciris' # Otherwise, treat dateformat as a date format
         sc.dateformatter(ax=ax, style=style, dateformat=dateformat, **date_args) # Actually format the axis with dates, rotation, etc.
