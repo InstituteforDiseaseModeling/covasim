@@ -92,7 +92,7 @@ def handle_show(do_show):
     return do_show
 
 
-def handle_show_return(do_show=None, sep_figs=False, fig=None, figs=None):
+def handle_show_return(do_show=None, fig=None, figs=None):
     ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
 
     figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
@@ -107,8 +107,8 @@ def handle_show_return(do_show=None, sep_figs=False, fig=None, figs=None):
     if cvo.jupyter:
         return
     else:
-        if sep_figs:
-            return figs
+        if figs is not None:
+            return figlist
         else:
             return fig
 
@@ -362,7 +362,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
         if len(figlist) >1:
             print('Warning: only the last figure was saved')
 
-    return handle_show_return(do_show, sep_figs, fig=fig, figs=figs)
+    return handle_show_return(do_show, fig=fig, figs=figs)
 
 
 def set_line_options(input_args, reskey, resnum, default):
