@@ -1254,14 +1254,14 @@ class Sim(cvb.BaseSim):
             to_plot      (dict): Dict of results to plot; see get_default_plots() for structure
             do_save      (bool): Whether or not to save the figure
             fig_path     (str):  Path to save the figure
-            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            fig_args     (dict): Dictionary of kwargs to be passed to ``pl.figure()``
+            plot_args    (dict): Dictionary of kwargs to be passed to ``pl.plot()``
+            scatter_args (dict): Dictionary of kwargs to be passed to ``pl.scatter()``
+            axis_args    (dict): Dictionary of kwargs to be passed to ``pl.subplots_adjust()``
+            legend_args  (dict): Dictionary of kwargs to be passed to ``pl.legend()``; if show_legend=False, do not show
             date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
             show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, the legend; additionally, "outer" will show the axes only on the outer plots
-            mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
+            style_args   (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, font, fontsize, plus any valid key in ``pl.rcParams``
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
             font_family  (str):  Font face
@@ -1306,7 +1306,7 @@ class Sim(cvb.BaseSim):
             sim.plot('overview', maximize=True, outer=True, rotation=15) # Make some modifications to make plots easier to see
 
         | New in version 2.1.0: argument passing, date_args, and mpl_args
-        | New in version 3.1.2: updated date arguments
+        | New in version 3.1.2: updated date arguments; mpl_args renamed style_args
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig
