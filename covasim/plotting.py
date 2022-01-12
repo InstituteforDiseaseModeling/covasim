@@ -279,7 +279,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
     return
 
 
-def reset_ticks(ax, sim=None, date_args=None, start_day=None):
+def reset_ticks(ax, sim=None, date_args=None, start_day=None, n_cols=1):
     ''' Set the tick marks, using dates by default '''
 
     # Handle options
@@ -288,8 +288,15 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
         start_day = sim['start_day']
 
     # Set xticks as dates
-    if date_args.pop('as_dates'):
-        sc.dateformatter(ax=ax, **date_args) # Actually format the axis with dates, rotation, etc.
+    d_args = {k:date_args.pop(k) for k in ['as_dates', 'dateformat']} # Pop these to handle separately
+    if d_args['as_dates']:
+        if d_args['dateformat'] is None and n_cols >= 3: # Change default date format if more than 2 columns are shown
+            d_args['dateformat'] = 'concise'
+        if d_args['dateformat'] in ['sciris', 'auto', 'matplotlib', 'concise', 'brief']: # Handle date formatter rather than date format
+            style, dateformat = d_args['dateformat'], None # Swap argument order
+        else:
+            dateformat, style = d_args['dateformat'], 'sciris' # Otherwise, treat dateformat as a date format
+        sc.dateformatter(ax=ax, style=style, dateformat=dateformat, **date_args) # Actually format the axis with dates, rotation, etc.
     else:
         # Handle start and end days
         xmin,xmax = ax.get_xlim()
@@ -302,6 +309,9 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None):
         # Set the x-axis intervals
         if date_args.interval:
             ax.set_xticks(np.arange(xmin, xmax+1, date_args.interval))
+
+    # Restore date args
+    date_args.update(d_args)
 
     return
 
@@ -406,7 +416,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 if args.show['data']:
                     plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
                 if args.show['ticks']:
-                    reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
+                    reset_ticks(ax, sim, args.date, n_cols=n_cols) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
             if args.show['interventions']:
                 plot_interventions(sim, ax) # Plot the interventions
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
