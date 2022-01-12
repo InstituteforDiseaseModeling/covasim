@@ -27,7 +27,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults = sc.objdict()
     defaults.fig     = sc.objdict(figsize=(10, 8))
     defaults.plot    = sc.objdict(lw=1.5, alpha= 0.7)
-    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=0)
+    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=0, datastride=1)
     defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
@@ -203,7 +203,11 @@ def plot_data(sim, ax, key, scatter_args, color=None):
     if sim.data is not None and key in sim.data and len(sim.data[key]):
         if color is None:
             color = sim.results[key].color
-        ax.scatter(sim.data.index, sim.data[key], c=[color], label='Data', **scatter_args)
+        datastride = scatter_args.pop('datastride', 1) # Temporarily pop so other arguments pass correctly to ax.scatter()
+        x = np.array(sim.data.index)[::datastride]
+        y = np.array(sim.data[key])[::datastride]
+        ax.scatter(x, y, c=[color], label='Data', **scatter_args)
+        scatter_args['datastride'] = datastride # Restore
     return
 
 
