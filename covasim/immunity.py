@@ -317,7 +317,6 @@ def check_immunity(people):
     for variant in range(pars['n_variants']):
         immunity = pars['immunity'][variant, :]  # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
         nab_eff = pars['nab_eff']
-        current_nabs = sc.dcp(people.nab)
         imm = np.ones(len(people))
         date_rec = people.date_recovered  # Date recovered
         is_vacc = cvu.true(people.vaccinated)  # Vaccinated
@@ -339,10 +338,10 @@ def check_immunity(people):
                 imm_arr[num] = vx_pars[key][var_key]
             imm[is_vacc] = imm_arr[vacc_source]
 
-        current_nabs *= imm
-        people.sus_imm[variant, :] = calc_VE(current_nabs, 'sus', nab_eff)
-        people.symp_imm[variant, :] = calc_VE(current_nabs, 'symp', nab_eff)
-        people.sev_imm[variant, :] = calc_VE(current_nabs, 'sev', nab_eff)
+        effective_nabs = people.nab * imm
+        people.sus_imm[variant, :] = calc_VE(effective_nabs, 'sus', nab_eff)
+        people.symp_imm[variant, :] = calc_VE(effective_nabs, 'symp', nab_eff)
+        people.sev_imm[variant, :] = calc_VE(effective_nabs, 'sev', nab_eff)
 
     return
 
