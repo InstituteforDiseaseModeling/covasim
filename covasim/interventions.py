@@ -1909,8 +1909,7 @@ class historical_vaccinate_prob(BaseVaccination):
 
         # Re-compute immunity so that seed infection prognoses will reflect the NAb level
         sim.people.t = 0
-        for variant in range(len(sim['variants'])):
-            cvi.check_immunity(sim.people, variant)
+        cvi.check_immunity(sim.people)
 
         # Re-infect the seed cases so they get updated prognoses
         sim.people.infect(seed_inds, layer='seed_infection')
