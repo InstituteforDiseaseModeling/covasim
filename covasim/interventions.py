@@ -1885,7 +1885,6 @@ class historical_vaccinate_prob(BaseVaccination):
         self.vaccinated       = [None]*new_nab_length # Keep track of inds of people vaccinated on each day
 
         # find the seed infections (set during sim.init_people()) and blank them out
-        # This ensures NAb levels prior to the start of the simulation reflect vaccination only
         seed_inds = cvu.true(sim.people.date_exposed == 0)
         sim.people.make_naive(seed_inds)
 
