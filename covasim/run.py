@@ -1403,7 +1403,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -1411,7 +1411,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     Args:
         sim         (Sim)   : the sim instance to be run, or a list of sims.
         n_runs      (int)   : the number of parallel runs
-        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        reseed      (bool)  : whether or not to generate a fresh seed for each run (default: true for single, false for list of sims)
         noise       (float) : the amount of noise to add to each run
         noisepar    (str)   : the name of the parameter to add noise to
         iterpars    (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
@@ -1454,13 +1454,15 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
                 n_runs = new_n
 
     # Run the sims
-    if isinstance(sim, cvs.Sim): # Normal case: one sim
+    if isinstance(sim, cvs.Sim): # One sim
+        if reseed is None: reseed = True
         iterkwargs = dict(ind=np.arange(n_runs))
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     elif isinstance(sim, list): # List of sims
+        if reseed is None: reseed = False
         iterkwargs = dict(sim=sim, ind=np.arange(len(sim)))
-        kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
+        kwargs = dict(reseed=reseed, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
         raise TypeError(errormsg)
