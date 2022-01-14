@@ -32,7 +32,7 @@ rc_simple = {
     'axes.spines.right': False,
     'axes.spines.top': False,
     'font.family': 'sans-serif',
-    'font.sans-serif': ['Muli'] + pl.rcParams['font.sans-serif'],
+    'font.sans-serif': ['Mulish'] + pl.rcParams['font.sans-serif'],
     'font.serif': ['Rosario', 'Garamond', 'Garamond MT'] + pl.rcParams['font.serif'],
     'legend.frameon': False,
 }
@@ -205,7 +205,7 @@ class Options(sc.objdict):
                     try: # First try interactive
                         from IPython import get_ipython
                         magic = get_ipython().magic
-                        magic('%matplotlib wikdget')
+                        magic('%matplotlib widget')
                     except: # Then try retina
                         import matplotlib_inline
                         matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
@@ -448,13 +448,16 @@ def reload_numba():
     return
 
 
-def load_fonts(folder=None):
+def load_fonts(folder=None, rebuild=False, **kwargs):
     '''
-    Load custom fonts for plotting -- alias to ``sc.fonts()``
+    Load custom fonts for plotting -- alias to ``sc.fonts()``.
+
+    Note: if fonts don't load, try running ``cv.settings.load_fonts(rebuild=True)``,
+    and/or rebooting the system.
     '''
     if folder is None:
         folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
-    sc.fonts(add=folder)
+    sc.fonts(add=folder, rebuild=rebuild, **kwargs)
     return
 
 
