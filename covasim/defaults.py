@@ -324,7 +324,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
     Specify which quantities to plot; used in sim.py.
 
     Args:
-        which (str): either 'default' or 'overview'
+        which (str):  'default' or 'overview' or 'all' or 'seir'
     '''
 
     # Default plots -- different for sims and scenarios
@@ -406,7 +406,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
             'n_preinfectious',
             'n_infectious',
             'n_removed',
-        ],
+        ]
 
     else: # pragma: no cover
         errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir"'
