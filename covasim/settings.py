@@ -28,6 +28,7 @@ numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
 # Define simple plotting options -- similar to Matplotlib default
 rc_simple = {
+    'axes.axisbelow': True, # So grids show up behind
     'figure.facecolor': 'white',
     'axes.spines.right': False,
     'axes.spines.top': False,
@@ -372,6 +373,9 @@ class Options(sc.objdict):
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
+        To set globally, use ``cv.options.use_style()``. Otherwise, use ``cv.options.set_style()``
+        as part of a ``with`` block to set the style just for that block.
+
         Args:
             style_args (dict): a dictionary of style arguments
             use (bool): whether to set as the global style; else, treat as context for use with "with" (default)
@@ -379,7 +383,17 @@ class Options(sc.objdict):
 
         Valid style arguments are:
 
-            -
+            - ``dpi``:       the figure DPI
+            - ``font``:      font (typeface)
+            - ``fontsize``:  font size
+            - ``grid``:      whether or not to plot gridlines
+            - ``facecolor``: color of the axes behind the plot
+            - any of the entries in ``pl.rParams``
+
+        **Examples**::
+
+            with cv.options.set_style(dpi=300): # Use default options, but higher DPI
+                pl.plot([1,3,6])
         '''
         # Handle inputs
         rc = sc.dcp(self.rc) # Make a local copy of the currently used settings
@@ -425,6 +439,23 @@ class Options(sc.objdict):
             return pl.style.use(rc)
         else:
             return pl.style.context(rc)
+
+
+    def use_style(self, **kwargs):
+        '''
+        Shortcut to set Covasim's current style as the global default.
+
+        **Example**::
+
+            cv.options.use_style() # Set Covasim options as default
+            pl.figure()
+            pl.plot([1,3,7])
+
+            pl.style.use('seaborn-whitegrid') # to something else
+            pl.figure()
+            pl.plot([3,1,4])
+        '''
+        return self.set_style(use=True, **kwargs)
 
 
 def reload_numba():
