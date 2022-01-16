@@ -521,7 +521,7 @@ class daily_age_stats(Analyzer):
 
 
     def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None,
-             dateformat='%b-%d', width=0.8, color='#F8A493', **kwargs):
+             dateformat=None, width=0.8, color='#F8A493', **kwargs):
         '''
         Plot the results.
 
@@ -570,7 +570,7 @@ class daily_age_stats(Analyzer):
                         ax.legend()
                         ax.set_xlabel('Date')
                         ax.set_ylabel('Count')
-                        sc.dateformatter(start_date=self.start_day, dateformat=dateformat, ax=ax)
+                        sc.dateformatter(dateformat=dateformat, ax=ax)
 
                 # Plot total histograms
                 else:
@@ -1255,7 +1255,7 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None), date_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -2064,7 +2064,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            sc.dateformatter(start_date=self.sim_start, ax=ax)
+            sc.datenumformatter(start_date=self.sim_start, ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(

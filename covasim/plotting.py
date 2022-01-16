@@ -31,7 +31,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
-    defaults.date    = sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start=None, end=None)
+    defaults.date    = sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None)
     defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
     defaults.style   = sc.objdict(style=None, dpi=None, font=None, fontsize=None, grid=None, facecolor=None) # Use Covasim global defaults
 

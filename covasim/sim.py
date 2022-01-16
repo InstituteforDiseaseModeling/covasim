@@ -1280,8 +1280,7 @@ class Sim(cvb.BaseSim):
         how the x-axis of plots are shown, if this axis is dates. These options are:
 
             - ``as_dates``:   whether to format them as dates (else, format them as days since the start)
-            - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
-            - ``interval``:   the number of days between tick marks
+            - ``dateformat``: string format for the date (if not provided, choose based on timeframe)
             - ``rotation``:   whether to rotate labels
             - ``start``:      the first day to plot
             - ``end``:        the last day to plot
