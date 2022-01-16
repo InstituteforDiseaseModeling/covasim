@@ -11,7 +11,8 @@ import numpy as np
 import pytest
 
 do_plot = 1
-cv.options.set(interactive=False) # Assume not running interactively
+cv.options(interactive=False) # Assume not running interactively
+cv.options(warnings='error')
 
 # Shared parameters across simulations
 base_pars = sc.objdict(
@@ -220,7 +221,11 @@ def test_two_vaccines(do_plot=False):
     vac2 = cv.vaccinate_num(vaccine='jj', sequence=[1], num_doses=1)
 
     sim  = cv.Sim(base_pars, n_days=1000, pop_size=2, pop_infected=0, variants=p1, interventions=[vac1, vac2], analyzers=lambda sim: nabs.append(sim.people.nab.copy()))
-    sim.run()
+
+    # No infections, so suppress warnings
+    with cv.options.context(warnings='print'):
+        sim.run()
+        print('↑↑↑ Should print warning about no infections')
 
     if do_plot:
         nabs = np.array(nabs).sum(axis=1)

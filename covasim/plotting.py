@@ -282,7 +282,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
     # ax_style(ax, grid=grid)
 
     # Set the y axis style
-    if setylim:
+    if setylim and ax.yaxis.get_scale() != 'log':
         ax.set_ylim(bottom=0)
     if commaticks:
         ylims = ax.get_ylim()

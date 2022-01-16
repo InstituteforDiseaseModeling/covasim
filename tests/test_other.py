@@ -15,7 +15,8 @@ verbose = -1
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
-cv.options.set(interactive=False) # Assume not running interactively
+cv.options(interactive=False) # Assume not running interactively
+cv.options(warnings='error')
 
 
 def remove_files(*args):
@@ -231,7 +232,7 @@ def test_misc():
 def test_plotting():
     sc.heading('Testing plotting')
 
-    fig_path = 'plotting_test.png'
+    fig_paths = ['plotting_test1.png', 'plotting_test2.png']
 
     # Create sim with data and interventions
     ce = cv.clip_edges(**{'days': 10, 'changes': 0.5})
@@ -239,9 +240,7 @@ def test_plotting():
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
-    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], do_save=True, fig_path=fig_path)
-    print('↑ May print a warning about zero values')
-
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], do_save=True, fig_path=fig_paths)
 
     # Handle Plotly functions
     try:
@@ -252,7 +251,7 @@ def test_plotting():
         print(f'Plotly plotting failed ({str(E)}), but not essential so continuing')
 
     # Tidy up
-    remove_files(fig_path)
+    remove_files(*fig_paths)
 
     return
 
@@ -264,10 +263,12 @@ def test_population():
 
     # Test locations, including ones that don't work
     cv.Sim(pop_size=100, pop_type='hybrid', location='nigeria').initialize()
-    cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
-    print('↑ Should complain about location not found')
-    cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
-    print('↑ Should complain about missing h layer')
+    with pytest.raises(RuntimeWarning):
+        cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
+        print('↑ Should complain about location not found')
+    with pytest.raises(RuntimeWarning):
+        cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
+        print('↑ Should complain about missing h layer')
 
     # Test synthpops
     try:
@@ -442,7 +443,7 @@ def test_settings():
 if __name__ == '__main__':
 
     # Start timing and optionally enable interactive plotting
-    cv.options.set(interactive=do_plot)
+    cv.options(interactive=do_plot)
     T = sc.tic()
 
     test_base()

@@ -115,6 +115,24 @@ class Options(sc.objdict):
         return output
 
 
+    def __enter__(self):
+        ''' Allow to be used in a with block '''
+        return self
+
+
+    def __exit__(self, *args, **kwargs):
+        ''' Allow to be used in a with block '''
+        try:
+            for k,v in self.on_entry.items():
+                if self.changed(k):
+                    self.set(key=k, value=v)
+            self.delattribute('on_entry')
+        except AttributeError as E:
+            errormsg = 'Please use cv.options.context() with a with...as block'
+            raise AttributeError(errormsg) from E
+        return
+
+
     def disp(self):
         ''' Detailed representation '''
         output = 'Covasim options (see also cv.options.help()):\n'
@@ -260,7 +278,20 @@ class Options(sc.objdict):
 
         if reload_required:
             reload_numba()
+
         return
+
+
+    def context(self, *args, **kwargs):
+        ''' Alias to set(), for use in a with block '''
+
+        # Store current settings
+        on_entry = {k:v for k,v in self.items()}
+        self.setattribute('on_entry', on_entry)
+
+        # Make changes
+        self.set(*args, **kwargs)
+        return self
 
 
     def get_default(self, key):

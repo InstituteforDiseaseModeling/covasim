@@ -917,7 +917,7 @@ def warn(msg, category=None, verbose=None, die=None):
         verbose = cvo.verbose
 
     # Handle the different options
-    if warnopt == 'error':
+    if warnopt in ['error', 'errors']: # Include alias since hard to remember
         raise category(msg)
     elif warnopt == 'warn':
         msg = '\n' + msg
@@ -926,7 +926,7 @@ def warn(msg, category=None, verbose=None, die=None):
         if verbose:
             msg = 'Warning: ' + msg
             print(msg)
-    elif 'ignore':
+    elif warnopt == 'ignore':
         pass
     else:
         options = ['error', 'warn', 'print', 'ignore']

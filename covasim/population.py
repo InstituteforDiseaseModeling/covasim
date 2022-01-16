@@ -171,7 +171,8 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
             try:
                 age_data = cvdata.get_age_distribution(location)
             except ValueError as E:
-                print(f'Could not load age data for requested location "{location}" ({str(E)}), using default')
+                warnmsg = f'Could not load age data for requested location "{location}" ({str(E)}), using default'
+                cvm.warn(warnmsg)
         if use_household_data:
             try:
                 household_size = cvdata.get_household_size(location)
