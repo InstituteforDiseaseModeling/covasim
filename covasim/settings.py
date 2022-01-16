@@ -288,15 +288,22 @@ class Options(sc.objdict):
         '''
         Alias to set() for non-plotting options, for use in a "with" block.
 
-        Note: for plotting options, use ``cv.options.set_style()``, which is linked
-        to Matplotlib's context manager.
+        Note: for plotting options, use ``cv.options.with_style()``, which is linked
+        to Matplotlib's context manager. If you set plotting options with this,
+        they won't have any effect.
 
         **Examples**::
 
-            with cv.options.context(warnings='error'): # Not a style, so use context()
+            # Silence all output
+            with cv.options.context(verbose=0):
+                cv.Sim().run()
+
+            # Convert warnings to errors
+            with cv.options.context(warnings='error'):
                 cv.Sim(location='not a location').initialize()
 
-            with cv.options.set_style(dpi=300): # Use set_style(), not context(), for this
+            # Use with_style(), not context(), for plotting options
+            with cv.options.with_style(dpi=50):
                 cv.Sim().run().plot()
 
         New in version 3.1.2.
@@ -431,14 +438,16 @@ class Options(sc.objdict):
         return rc
 
 
-    def set_style(self, style_args=None, use=False, **kwargs):
+    def with_style(self, style_args=None, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
-        To set globally, use ``cv.options.use_style()``. Otherwise, use ``cv.options.set_style()``
-        as part of a ``with`` block to set the style just for that block. To set
-        non-style options as a context, see ``cv.options.context()``.
+        To set globally, use ``cv.options.use_style()``. Otherwise, use ``cv.options.with_style()``
+        as part of a ``with`` block to set the style just for that block (using
+        this function outsde of a with block and with ``use=False`` has no effect, so
+        don't do that!). To set non-style options (e.g. warnings, verbosity) as
+        a context, see ``cv.options.context()``.
 
         Args:
             style_args (dict): a dictionary of style arguments
@@ -456,7 +465,7 @@ class Options(sc.objdict):
 
         **Examples**::
 
-            with cv.options.set_style(dpi=300): # Use default options, but higher DPI
+            with cv.options.with_style(dpi=300): # Use default options, but higher DPI
                 pl.plot([1,3,6])
         '''
         # Handle inputs
@@ -519,7 +528,7 @@ class Options(sc.objdict):
             pl.figure()
             pl.plot([3,1,4])
         '''
-        return self.set_style(use=True, **kwargs)
+        return self.with_style(use=True, **kwargs)
 
 
 def reload_numba():

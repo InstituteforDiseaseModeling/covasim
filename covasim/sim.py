@@ -1295,7 +1295,7 @@ class Sim(cvb.BaseSim):
 
         Date, show, and other arguments can also be passed directly, e.g. ``sim.plot(tight=True)``.
 
-        For additional style options, see ``cv.options.set_style()``, which is the
+        For additional style options, see ``cv.options.with_style()``, which is the
         final refuge of arguments that are not picked up by any of the other parsers,
         e.g. ``sim.plot(**{'ytick.direction':'in'})``.
 

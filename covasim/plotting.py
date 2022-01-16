@@ -393,7 +393,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
-    with cvo.set_style(args.style):
+    with cvo.with_style(args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
         variant_keys = sim.result_keys('variant')
         for pnum,title,keylabels in to_plot.enumitems():
@@ -448,7 +448,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
 
     # Do the plotting
-    with cvo.set_style(args.style):
+    with cvo.with_style(args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
         default_colors = sc.gridcolors(ncolors=len(scens.sims))
         for pnum,title,reskeys in to_plot.enumitems():
@@ -509,7 +509,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
         color = res.color
 
     # Do the plotting
-    with cvo.set_style(args.style):
+    with cvo.with_style(args.style):
         fig, figs = create_figs(args, sep_figs, fig, ax)
 
         # Reuse the figure, if available
@@ -561,7 +561,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
     df['category'] = category
 
     # Plot
-    with cvo.set_style(args.style):
+    with cvo.with_style(args.style):
         fig, figs = create_figs(args, sep_figs=False, fig=fig)
         for i,m in enumerate(mapping):
             not_r_eff = m != 'r'

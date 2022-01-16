@@ -378,7 +378,7 @@ class age_histogram(Analyzer):
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             data_args (dict): 'width', 'color', and 'offset' arguments for the data
-            kwargs (dict): passed to ``cv.options.set_style()``; see that function for choices
+            kwargs (dict): passed to ``cv.options.with_style()``; see that function for choices
         '''
 
         # Handle inputs
@@ -403,7 +403,7 @@ class age_histogram(Analyzer):
             raise ValueError(errormsg)
 
         # Make the figure(s)
-        with cvo.set_style(**kwargs):
+        with cvo.with_style(**kwargs):
             for date,hists in histsdict.items():
                 figs += [pl.figure(**fig_args)]
                 pl.subplots_adjust(**axis_args)
@@ -534,7 +534,7 @@ class daily_age_stats(Analyzer):
             dateformat (str): the format to use for the x-axes (only used for time series)
             width    (float): width of bars (only used for histograms)
             color  (hex/rgb): the color of the bars (only used for histograms)
-            kwargs    (dict): passed to ``cv.options.set_style()``
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
         if self.df is None:
             self.to_df()
@@ -545,7 +545,7 @@ class daily_age_stats(Analyzer):
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
 
-        with cvo.set_style(**kwargs):
+        with cvo.with_style(**kwargs):
             nplots = len(self.states)
             nrows, ncols = sc.get_rows_cols(nplots)
             fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
@@ -869,7 +869,7 @@ class daily_stats(Analyzer):
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
             do_show   (bool): whether to show the plot
-            kwargs    (dict): passed to ``cv.options.set_style()``
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
@@ -880,7 +880,7 @@ class daily_stats(Analyzer):
         data = self.transpose()
 
         # Do the plotting
-        with cvo.set_style(**kwargs):
+        with cvo.with_style(**kwargs):
             nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
             nrows,ncols = sc.get_rows_cols(nplots)
             fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
@@ -969,14 +969,14 @@ class nab_histogram(Analyzer):
             axis_args (dict): passed to pl.subplots_adjust()
             plot_args (dict): passed to pl.plot()
             do_show   (bool): whether to show the plot
-            kwargs    (dict): passed to ``cv.options.set_style()``
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(9,5)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.10, right=0.95, bottom=0.10, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=2), plot_args)
 
-        with cvo.set_style(**kwargs):
+        with cvo.with_style(**kwargs):
             fig, axs = pl.subplots(nrows=1, ncols=1, **fig_args)
             pl.subplots_adjust(**axis_args)
             for date, hist in self.hists.items():
@@ -1238,7 +1238,7 @@ class Fit(Analyzer):
             date_args (dict):  passed to ``cv.plotting.reset_ticks()`` (handle date format, rotation, etc.)
             do_show   (bool):  whether to show the plot
             fig       (fig):   if supplied, use this figure to plot in
-            kwargs    (dict):  passed to ``cv.options.set_style()``
+            kwargs    (dict):  passed to ``cv.options.with_style()``
 
         Returns:
             Figure object
@@ -1258,7 +1258,7 @@ class Fit(Analyzer):
         n_rows = 4
 
         # Plot
-        with cvo.set_style(**kwargs):
+        with cvo.with_style(**kwargs):
             if fig is None:
                 fig = pl.figure(**fig_args)
             pl.subplots_adjust(**axis_args)
