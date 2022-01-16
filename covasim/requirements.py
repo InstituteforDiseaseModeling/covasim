@@ -7,7 +7,7 @@ or errors if not.
 
 __all__ = ['min_versions', 'check_sciris', 'check_synthpops']
 
-min_versions = {'sciris':'1.3.1'} # Should match requirements.txt
+min_versions = {'sciris':'1.3.3'} # Should match requirements.txt
 
 
 #%% Check dependencies
