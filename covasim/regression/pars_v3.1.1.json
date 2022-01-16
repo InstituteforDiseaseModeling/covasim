@@ -71,6 +71,7 @@
   "immunity": null,
   "trans_redux": 0.59,
   "rel_beta": 1.0,
+  "rel_imm_variant": 1.0,
   "dur": {
     "exp2inf": {
       "dist": "lognormal_int",
@@ -244,6 +245,7 @@
   },
   "variant_pars": {
     "wild": {
+      "rel_imm_variant": 1.0,
       "rel_beta": 1.0,
       "rel_symp_prob": 1.0,
       "rel_severe_prob": 1.0,

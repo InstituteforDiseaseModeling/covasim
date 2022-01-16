@@ -79,7 +79,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant'] = 1.0 # Relative own-immunity varies by variant
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
