@@ -123,9 +123,11 @@ class Options(sc.objdict):
     def __exit__(self, *args, **kwargs):
         ''' Allow to be used in a with block '''
         try:
+            reset = {}
             for k,v in self.on_entry.items():
-                if self[k] != v:
-                    self.set(key=k, value=v)
+                if self[k] != v: # Only reset settings that have changed
+                    reset[k] = v
+            self.set(**reset)
             self.delattribute('on_entry')
         except AttributeError as E:
             errormsg = 'Please use cv.options.context() if using a with block'
@@ -284,12 +286,18 @@ class Options(sc.objdict):
 
     def context(self, **kwargs):
         '''
-        Alias to set(), for use in a with block.
+        Alias to set() for non-plotting options, for use in a "with" block.
 
-        **Example**::
+        Note: for plotting options, use ``cv.options.set_style()``, which is linked
+        to Matplotlib's context manager.
 
-            with cv.options.context(warnings='error'):
+        **Examples**::
+
+            with cv.options.context(warnings='error'): # Not a style, so use context()
                 cv.Sim(location='not a location').initialize()
+
+            with cv.options.set_style(dpi=300): # Use set_style(), not context(), for this
+                cv.Sim().run().plot()
 
         New in version 3.1.2.
         '''
@@ -400,11 +408,11 @@ class Options(sc.objdict):
         return output
 
 
-    def _handle_style(self, style=None, reset=False):
+    def _handle_style(self, style=None, reset=False, copy=True):
         ''' Helper function to handle logic for different styles '''
         rc = self.rc # By default, use current
         if isinstance(style, dict): # If an rc-like object is supplied directly
-            rc = style
+            rc = sc.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
             if stylestr in ['default', 'covasim', 'house']:
@@ -412,12 +420,14 @@ class Options(sc.objdict):
             elif stylestr in ['simple', 'covasim_simple', 'plain', 'clean']:
                 rc = sc.dcp(rc_simple)
             elif style in pl.style.library:
-                rc = pl.style.library[style]
+                rc = sc.dcp(pl.style.library[style])
             else:
                 errormsg = f'Style "{style}"; not found; options are "covasim" (default), "simple", plus:\n{sc.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
         if reset:
             self.rc = rc
+        if copy:
+            rc = sc.dcp(rc)
         return rc
 
 
@@ -427,7 +437,8 @@ class Options(sc.objdict):
         or create a style context.
 
         To set globally, use ``cv.options.use_style()``. Otherwise, use ``cv.options.set_style()``
-        as part of a ``with`` block to set the style just for that block.
+        as part of a ``with`` block to set the style just for that block. To set
+        non-style options as a context, see ``cv.options.context()``.
 
         Args:
             style_args (dict): a dictionary of style arguments

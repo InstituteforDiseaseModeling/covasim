@@ -827,6 +827,8 @@ To search for a keyword/phrase/regex in Covasim's docstrings, use e.g.:
     >>> cv.help('vaccine')
 
 See help(cv.help) for more information.
+
+For help on Covasim options, see cv.options.help().
 '''
     # No pattern is provided, print out default help message
     if pattern is None:

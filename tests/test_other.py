@@ -262,12 +262,13 @@ def test_population():
 
     # Test locations, including ones that don't work
     cv.Sim(pop_size=100, pop_type='hybrid', location='nigeria').initialize()
-    with pytest.raises(RuntimeWarning):
-        cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
-        print('↑ Should complain about location not found')
-    with pytest.raises(RuntimeWarning):
-        cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
-        print('↑ Should complain about missing h layer')
+    with cv.options.context(warnings='error'):
+        with pytest.raises(RuntimeWarning):
+            cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
+            print('↑ Should complain about location not found')
+        with pytest.raises(RuntimeWarning):
+            cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
+            print('↑ Should complain about missing h layer')
 
     # Test synthpops
     try:
