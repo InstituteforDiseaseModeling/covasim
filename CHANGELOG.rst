@@ -32,17 +32,36 @@ Version 3.1.2 (2021-01-16)
 
 Plotting
 ^^^^^^^^
-- style etc
+- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts ([Mulish](https://fonts.google.com/specimen/Mulish) and [Rosario](https://fonts.google.com/specimen/Rosario)), finer control of style options, and better defaults for Jupyter.
+- Changing styles is now much easier, e.g. ``sim.plot(style='seaborn-whitegrid')`` will use the named Matplotlib style. See ``cv.options.help()`` for more information.
+- Covasim now uses Sciris' default date formatter, which is similar to Plotly's. You can change this using the ``dateformat`` argument, e.g. ``sim.plot(dateformat='sciris')`` vs. ``sim.plot(dateformat='concise')``.
+- ``cv.savefig()`` can now save multiple figures simultaneously via the (new) ``fig`` argument.
+- Figure window names can now be passed to plot. This is called ``num`` by Matplotlib, so ``sim.plot(num='My plot')`` or ``sim.plot(fig_args={'num':'My plot'})`` will work.
+- You can plot every nth data point by passing the ``datastride`` argument to ``sim.plot()``. 
+- You can do automatic figure layout using the ``tight`` and ``maximize`` arguments, e.g. ``sim.plot('overview', tight=True, maximize=True)``. (Note: maximize may not work on all systems.)
+
+People and population
+^^^^^^^^^^^^^^^^^^^^^
+- ``People`` objects now have ``save()`` and ``load()`` methods that do validation. It is now an error by default to save a partially-run ``People`` object.
+- Contacts can be added more easily and flexibly. For example, contacts created with ``cv.make_random_contacts()`` can now be added directly with ``people.add_contacts()``.
+- The methods ``people.to_people()`` and ``people.from_people()`` have been renamed ``people.to_list()`` and ``people.from_list()``.
+- Parameter validation for ``People`` objects has been improved.
 
 Other changes
 ^^^^^^^^^^^^^
-- 
 - Fixed a bug preventing SynthPops populations from being loaded.
 - Added ``cv.help()``, which will search docstrings (or full source code) for matches to search phrases.
 - Printed warning messages have been converted to actual warnings: use ``cv.options(warnings='print')`` to restore previous behavior.
 - Parameters for individual variants can now be retrieved more easily, e.g. ``cv.get_variant_pars(variant='delta')``.
-- Validation for ``People`` objects has been improved.
 - When old objects are loaded, their versions numbers are no longer changed, allowing for multiple migrations to occur.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- Calls to ``people.to_people()`` and ``people.from_people()`` should be replaced with ``people.to_list()`` and ``people.from_list()``, respectively.
+- Arguments ``font_family``, ``font_size``, and ``mpl_args`` to plots should be replaced with ``font``, ``fontsize``, and ``style_args`` respectively.
+- ``cv.date_formatter()`` has been removed; please use ``sc.dateformatter()`` (for a date x-axis) or ``sc.datenumformatter()`` (for a numeric axis that you want to format as dates) instead.
+- The ``columns`` argument has been removed from ``cv.load_data()``. If needed, load the data as a dataframe, filter the columns, then pass it to the sim.
+- *GitHub info*: PR `1295 <https://github.com/amath-idm/covasim/pull/1295>`_
 
 
 Version 3.1.1 (2021-12-06)

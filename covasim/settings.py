@@ -15,6 +15,7 @@ is used to refer to the choices made (e.g., DPI=150).
 import os
 import pylab as pl
 import sciris as sc
+import matplotlib.font_manager as fm
 
 # Only the class instance is public
 __all__ = ['options']
@@ -26,12 +27,10 @@ __all__ = ['options']
 # Define simple plotting options -- similar to Matplotlib default
 rc_simple = {
     'axes.axisbelow':    True, # So grids show up behind
-    'figure.facecolor':  'white',
     'axes.spines.right': False,
     'axes.spines.top':   False,
-    'font.family':       'sans-serif',
-    'font.sans-serif':   ['Mulish', 'DejaVu Sans', 'Bitstream Vera Sans', 'Helvetica', 'Arial', 'sans-serif'],
-    'font.serif':        ['Rosario', 'Garamond', 'Garamond MT', 'DejaVu Serif', 'Bitstream Vera Serif', 'Palatino', 'Times New Roman', 'Times', 'serif'],
+    'figure.facecolor':  'white',
+    'font.family':       'sans-serif', # Replaced with Mulish in load_fonts() if import succeeds
     'legend.frameon':    False,
 }
 
@@ -528,9 +527,9 @@ class Options(sc.objdict):
 
         # Tidy up
         if use:
-            return pl.style.use(rc)
+            return pl.style.use(sc.dcp(rc))
         else:
-            return pl.style.context(rc)
+            return pl.style.context(sc.dcp(rc))
 
 
     def use_style(self, **kwargs):
@@ -573,19 +572,36 @@ def reload_numba():
     return
 
 
-def load_fonts(folder=None, rebuild=False, **kwargs):
+def load_fonts(folder=None, rebuild=False, verbose=False, **kwargs):
     '''
-    Load custom fonts for plotting -- alias to ``sc.fonts()``.
+    Helper function to load custom fonts for plotting -- (usually) not for the user.
 
     Note: if fonts don't load, try running ``cv.settings.load_fonts(rebuild=True)``,
     and/or rebooting the system.
+
+    Args:
+        folder (str): the folder to add fonts from
+        rebuild (bool): whether to rebuild the font cache
+        verbose (bool): whether to print out progress/errors
     '''
+
     if folder is None:
         folder = str(sc.thisdir(__file__, aspath=True) / 'data' / 'assets')
-    sc.fonts(add=folder, rebuild=rebuild, **kwargs)
+    sc.fonts(add=folder, rebuild=rebuild, verbose=verbose, **kwargs)
+
+    # Try to find the font, and if it succeeds, update the styles
+    try:
+        name = 'Mulish'
+        fm.findfont(name, fallback_to_default=False) # Raise an exception if the font isn't found
+        rc_simple['font.family']  = name # Need to set both
+        rc_covasim['font.family'] = name
+        if verbose: print(f'Default Covasim font reset to "{name}"')
+    except Exception as E:
+        if verbose: print(f'Could not find font {name}: {str(E)}')
+
     return
 
 
 # Create the options on module load, and load the fonts
-options = Options()
 load_fonts()
+options = Options()
