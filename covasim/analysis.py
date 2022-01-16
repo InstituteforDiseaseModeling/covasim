@@ -211,7 +211,7 @@ class snapshot(Analyzer):
         ''' Retrieve a snapshot from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = sc.day(key, start_day=self.start_day)
+        day  = sc.day(key, start_date=self.start_day)
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.snapshots:
             snapshot = self.snapshots[date]
@@ -334,7 +334,7 @@ class age_histogram(Analyzer):
         ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = sc.day(key, start_day=self.start_day)
+        day  = sc.day(key, start_date=self.start_day)
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.hists:
             hists = self.hists[date]
@@ -1859,7 +1859,7 @@ class TransTree(Analyzer):
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
-            day = sc.day(day, start_day=self.sim_start)
+            day = sc.day(day, start_date=self.sim_start)
         elif which == 'start':
             day = 0
         elif which == 'end':

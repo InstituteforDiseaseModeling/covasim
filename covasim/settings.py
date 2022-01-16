@@ -156,7 +156,7 @@ class Options(sc.objdict):
         optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
         options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
 
-        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks'
+        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
         options.jupyter = os.getenv('COVASIM_JUPYTER', False)
 
         optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
@@ -200,18 +200,20 @@ class Options(sc.objdict):
 
         # Handle Jupyter
         if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
+            jupyter = kwargs['jupyter']
             try: # This makes plots much nicer, but isn't available on all systems
                 if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
                     try: # First try interactive
+                        assert jupyter not in ['default', 'retina'] # Hack to intentionally go to the other part of the loop
                         from IPython import get_ipython
                         magic = get_ipython().magic
                         magic('%matplotlib widget')
                     except: # Then try retina
+                        assert jupyter != 'default'
                         import matplotlib_inline
                         matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
             except:
-                if 'dpi' not in kwargs.keys():
-                    kwargs['dpi'] = 100 # If both backends fail, increase the resolution
+                pass
 
         # Handle interactivity
         if 'interactive' in kwargs.keys():
