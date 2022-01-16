@@ -22,27 +22,24 @@ __all__ = ['options']
 
 #%% General settings
 
-# Specify which keys require a reload
-matplotlib_keys = ['backend', 'style', 'dpi', 'font_size', 'font_family']
-numba_keys      = ['precision', 'numba_parallel', 'numba_cache']
 
 # Define simple plotting options -- similar to Matplotlib default
 rc_simple = {
-    'axes.axisbelow': True, # So grids show up behind
-    'figure.facecolor': 'white',
+    'axes.axisbelow':    True, # So grids show up behind
+    'figure.facecolor':  'white',
     'axes.spines.right': False,
-    'axes.spines.top': False,
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Mulish'] + pl.rcParams['font.sans-serif'],
-    'font.serif': ['Rosario', 'Garamond', 'Garamond MT'] + pl.rcParams['font.serif'],
-    'legend.frameon': False,
+    'axes.spines.top':   False,
+    'font.family':       'sans-serif',
+    'font.sans-serif':   ['Mulish', 'DejaVu Sans', 'Bitstream Vera Sans', 'Helvetica', 'Arial', 'sans-serif'],
+    'font.serif':        ['Rosario', 'Garamond', 'Garamond MT', 'DejaVu Serif', 'Bitstream Vera Serif', 'Palatino', 'Times New Roman', 'Times', 'serif'],
+    'legend.frameon':    False,
 }
 
 # Define default plotting options -- based on Seaborn
 rc_covasim = sc.mergedicts(rc_simple, {
     'axes.facecolor': '#f2f2ff',
-    'axes.grid': True,
-    'grid.color': 'white',
+    'axes.grid':      True,
+    'grid.color':     'white',
     'grid.linewidth': 1,
 })
 
@@ -273,6 +270,7 @@ class Options(sc.objdict):
                 if value in [None, 'default']:
                     value = self.orig_options[key]
                 self[key] = value
+                numba_keys = ['precision', 'numba_parallel', 'numba_cache'] # Specify which keys require a reload
                 if key in numba_keys:
                     reload_required = True
                 if key in 'backend':
