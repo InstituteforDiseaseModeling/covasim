@@ -21,6 +21,11 @@ pars = dict(
 
 #%% Define tests
 
+def fname(label):
+    ''' Name a figure -- complicated because needs a doubly nested dictionary '''
+    return dict(fig_args=dict(num=label))
+
+
 def test_snapshot():
     sc.heading('Testing snapshot analyzer')
     sim = cv.Sim(pars, analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
@@ -55,7 +60,7 @@ def test_age_hist():
 
     # Check plot()
     if do_plot:
-        plots = agehist.plot(windows=True)
+        plots = agehist.plot(windows=True, **fname('Age histogram'))
         assert len(plots) == len(day_list), "Number of plots generated should equal number of days"
 
     # Check daily age histogram
@@ -72,8 +77,8 @@ def test_daily_age():
     sim.run()
     daily_age = sim.get_analyzer()
     if do_plot:
-        daily_age.plot()
-        daily_age.plot(total=True)
+        daily_age.plot(**fname('Daily age 1'))
+        daily_age.plot(total=True, **fname('Daily age 2'))
     return daily_age
 
 
@@ -84,7 +89,7 @@ def test_daily_stats():
     sim.run()
     daily = sim.get_analyzer()
     if do_plot:
-        daily.plot()
+        daily.plot(**fname('Daily stats'))
     return daily
 
 
@@ -95,7 +100,7 @@ def test_nab_hist():
     sim.run()
     nab_hist = sim.get_analyzer()
     if do_plot:
-        nab_hist.plot()
+        nab_hist.plot(**fname('NAb histogram'))
     return nab_hist
 
 
@@ -136,7 +141,7 @@ def test_fit():
         cv.compute_gof(actual, predicted, estimator='not an estimator')
 
     if do_plot:
-        fit1.plot()
+        fit1.plot(**fname('Fit'))
 
     return fit1
 
@@ -165,7 +170,7 @@ def test_calibration():
         return sim
 
     calib = sim.calibrate(calib_pars=calib_pars, custom_fn=set_test_prob, n_trials=10, n_workers=1)
-    calib.plot_sims(to_plot=['cum_deaths', 'cum_diagnoses'])
+    calib.plot_sims(to_plot=['cum_deaths', 'cum_diagnoses'], **fname('Calibration sims'))
     calib.plot_trend()
 
     assert calib.after.fit.mismatch < calib.before.fit.mismatch
@@ -182,9 +187,9 @@ def test_transtree():
     transtree = sim.make_transtree()
     print(len(transtree))
     if do_plot:
-        transtree.plot()
+        transtree.plot(**fname('Transmission tree'))
         transtree.animate(animate=False)
-        transtree.plot_histograms()
+        transtree.plot_histograms(**fname('Transmission histograms'))
 
     # Try networkx, but don't worry about failures
     try:
