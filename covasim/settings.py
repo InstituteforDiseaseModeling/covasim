@@ -241,9 +241,8 @@ class Options(sc.objdict):
                 from . import misc as cvm # Here to avoid circular import
                 oldkey = key
                 key = rename[oldkey]
-                warnmsg = f'Warning: key "{oldkey}" is deprecated, please use "{key}" instead'
+                warnmsg = f'Key "{oldkey}" is deprecated, please use "{key}" instead'
                 cvm.warn(warnmsg, FutureWarning)
-
 
             if key not in self:
                 keylist = self.orig_options.keys()

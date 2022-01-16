@@ -890,42 +890,31 @@ See help(cv.help) for more information.
             return
 
 
-def warn(msg, category=None, stacklevel=2, verbose=None, die=None):
+def warn(msg, category=None, verbose=None, die=None):
     ''' Handle warnings '''
 
-    # Handle verbose and die
+    # Handle inputs
+    warnopt = cvo.warnings if not die else 'error'
+    if category is None:
+        category = UserWarning
     if verbose is None:
         verbose = cvo.verbose
 
-    # Handle error and warning type
-    if category is None:
-        category = UserWarning
-
-    # Convert the options to a list
-    warnopt = sc.promotetolist(sc.dcp(cvo.warnings))
-    warnopt = [str(w).lower() for w in warnopt]
-    if verbose: warnopt.append('verbose')
-    if die:     warnopt = ['die']
-
-    # Find matching
-    def match(*labels):
-        # print('TEMP i am', labels, warnopt)
-        return any([l in warnopt for l in labels])
-
-    # Don't show warnings and stop checking
-    if match('false', 'silent', 'suppress'):
-        return
-
-    # Print warnings
-    if match('none', 'print', 'stdout', 'verbose'):
-        print(msg)
-
-    # Raise warnings as warnings
-    if match('true', 'warn', 'warning', 'stderr'):
-        warnings.warn('\n'+msg, category=category)
-
-    # Raise internal warnings as exceptions
-    if match('except', 'exception', 'exceptions', 'die'):
+    # Handle the different options
+    if warnopt == 'error':
         raise category(msg)
+    elif warnopt == 'warn':
+        msg = '\n' + msg
+        warnings.warn(msg, category=category, stacklevel=2)
+    elif warnopt == 'print':
+        if verbose:
+            msg = 'Warning: ' + msg
+            print(msg)
+    elif 'ignore':
+        pass
+    else:
+        options = ['error', 'warn', 'print', 'ignore']
+        errormsg = f'Could not understand "{warnopt}": should be one of {options}'
+        raise ValueError(errormsg)
 
     return
