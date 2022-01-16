@@ -36,11 +36,13 @@ Plotting
 
 Other changes
 ^^^^^^^^^^^^^
-- parameters getting
-- help?
-- people validation
-- migration with unknkown version
-- population
+- 
+- Fixed a bug preventing SynthPops populations from being loaded.
+- Added ``cv.help()``, which will search docstrings (or full source code) for matches to search phrases.
+- Printed warning messages have been converted to actual warnings: use ``cv.options(warnings='print')`` to restore previous behavior.
+- Parameters for individual variants can now be retrieved more easily, e.g. ``cv.get_variant_pars(variant='delta')``.
+- Validation for ``People`` objects has been improved.
+- When old objects are loaded, their versions numbers are no longer changed, allowing for multiple migrations to occur.
 
 
 Version 3.1.1 (2021-12-06)

@@ -104,7 +104,7 @@ def handle_show_return(do_show=None, fig=None, figs=None):
             pl.close(f)
 
     # Return the figure or figures unless we're in Jupyter
-    if cvo.jupyter:
+    if not cvo.returnfig:
         return
     else:
         if figs is not None:

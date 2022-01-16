@@ -50,36 +50,34 @@ class Options(sc.objdict):
     '''
     Set options for Covasim. Use ``cv.options.set('defaults')`` to reset all
     values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
-    to default. See ``cv.options.help()`` for more information.
+    to default. See ``cv.options.help(detailed=True)`` for more information.
 
-    Args:
-        key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
-        value  (varies): the value to specify; use None or 'default' to reset to default
-        kwargs (dict):   if supplied, set multiple key-value pairs
+    Options can also be saved and loaded using ``cv.options.save()`` and ``cv.options.load()``.
+    See ``cv.options.context()`` and ``cv.options.with_style()`` to set options
+    temporarily.
 
-    Options are (see also ``cv.options.help()``):
+    Common options are (see also ``cv.options.help(detailed=True)``):
 
         - verbose:        default verbosity for simulations to use
         - style:          the plotting style to use
-        - font_size:      the font size used for the plots
-        - font_family:    the font family/face used for the plots
-        - dpi:            the overall DPI for the figure
+        - dpi:            the overall DPI (i.e. size) of the figures
+        - font:           the font family/face used for the plots
+        - fontsize:       the font size used for the plots
+        - interactive:    convenience method to set show, close, and backend
+        - jupyter:        defaults for Jupyter (change backend and figure close/return)
         - show:           whether to show figures
         - close:          whether to close the figures
         - backend:        which Matplotlib backend to use
-        - interactive:    convenience method to set show, close, and backend
-        - jupyter:        defaults for Jupyter (also sets show, close, and backend)
-        - precision:      the arithmetic to use in calculations
-        - numba_parallel: whether to parallelize Numba functions
-        - numba_cache:    whether to cache (precompile) Numba functions
+        - warnings:       how to handle warnings (e.g. print, raise as errors, ignore)
 
     **Examples**::
 
         cv.options(dpi=150) # Larger size
+        cv.options(style='simple', font='Rosario') # Change to the "simple" Covasim style with a custom font
         cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
         cv.options(interactive=False) # Turn off interactive plots
-        cv.options('defaults') # Reset to default options
         cv.options(jupyter=True) # Defaults for Jupyter
+        cv.options('defaults') # Reset to default options
 
     | New in version 3.1.1: Jupyter defaults
     | New in version 3.1.2: Updated plotting styles; refactored options as a class
@@ -183,6 +181,9 @@ class Options(sc.objdict):
         optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
         options.close = int(os.getenv('COVASIM_CLOSE', False))
 
+        optdesc.returnfig = 'Set whether or not to return figures from plotting functions'
+        options.returnfig = int(os.getenv('COVASIM_RETURNFIG', True))
+
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
         options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
 
@@ -208,6 +209,18 @@ class Options(sc.objdict):
 
 
     def set(self, key=None, value=None, **kwargs):
+        '''
+        Actually change the style. See ``cv.options.help()`` for more information.
+
+        Args:
+            key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
+            value  (varies): the value to specify; use None or 'default' to reset to default
+            kwargs (dict):   if supplied, set multiple key-value pairs
+
+        **Example**::
+
+            cv.options.set(dpi=50) # Equivalent to cv.options(dpi=50)
+        '''
 
         reload_required = False
 
@@ -222,6 +235,7 @@ class Options(sc.objdict):
         # Handle Jupyter
         if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
             jupyter = kwargs['jupyter']
+            kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
             try: # This makes plots much nicer, but isn't available on all systems
                 if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
                     try: # First try interactive
@@ -329,17 +343,24 @@ class Options(sc.objdict):
             return None
 
 
-    def help(self, output=False):
+    def help(self, detailed=False, output=False):
         '''
         Print information about options.
 
         Args:
+            detailed (bool): whether to print out full help
             output (bool): whether to return a list of the options
 
         **Example**::
 
-            cv.options.help()
+            cv.options.help(detailed=True)
         '''
+
+        # If not detailed, just print the docstring for cv.options
+        if not detailed:
+            print(self.__doc__)
+            return
+
         n = 15 # Size of indent
         optdict = sc.objdict()
         for key in self.orig_options.keys():
@@ -385,7 +406,7 @@ class Options(sc.objdict):
 
     def load(self, filename, verbose=True, **kwargs):
         '''
-        Save current settings as a JSON file.
+        Load current settings from a JSON file.
 
         Args:
             filename (str): file to load
