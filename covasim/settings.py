@@ -231,6 +231,15 @@ class Options(sc.objdict):
 
         # Reset options
         for key,value in kwargs.items():
+
+            # Handle deprecations
+            rename = {'font_size': 'fontsize', 'font_family':'font'}
+            if key in rename.keys():
+                oldkey = key
+                key = rename[oldkey]
+
+
+
             if key not in self:
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)

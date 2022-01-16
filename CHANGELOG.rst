@@ -32,7 +32,15 @@ Version 3.1.2 (2021-01-16)
 
 Plotting
 ^^^^^^^^
+- style etc
 
+Other changes
+^^^^^^^^^^^^^
+- parameters getting
+- help?
+- people validation
+- migration with unknkown version
+- population
 
 
 Version 3.1.1 (2021-12-06)

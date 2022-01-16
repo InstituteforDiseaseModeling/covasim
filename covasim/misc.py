@@ -4,6 +4,7 @@ Miscellaneous functions that do not belong anywhere else
 
 import re
 import inspect
+import warnings
 import numpy as np
 import pandas as pd
 import pylab as pl
@@ -12,6 +13,7 @@ import collections as co
 from pathlib import Path
 from distutils.version import LooseVersion
 from . import version as cvv
+from .settings import options as cvo
 
 #%% Convenience imports from Sciris
 
@@ -275,7 +277,7 @@ def migrate(obj, update=True, verbose=True, die=False):
     from . import run as cvr
     from . import interventions as cvi
 
-    unknown_version = '1.9.9' # For objects without version information, store the "last" version before 20
+    unknown_version = '1.9.9' # For objects without version information, store the "last" version before 2.0.0
 
     # Migrations for simulations
     if isinstance(obj, cvb.BaseSim):
@@ -361,6 +363,7 @@ def migrate(obj, update=True, verbose=True, die=False):
     # Unreconized object type
     else:
         errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
+        warn(errormsg, errtype=TypeError, verbose=verbose, die=die)
         if die:
             raise TypeError(errormsg)
         elif verbose: # pragma: no cover
@@ -773,9 +776,9 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
         return gofs
 
 
-#%% Help -- adapted from Sciris
+#%% Help and warnings
 
-__all__ += ['help']
+__all__ += ['help', 'warn']
 
 def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
     '''
@@ -885,3 +888,57 @@ See help(cv.help) for more information.
             return string
         else:
             return
+
+
+def error_warn(msg, errtype=None, warntype=None, stacklevel=2, verbose=None, die=None):
+    ''' Handle warnings '''
+
+    # Handle verbose and die
+    if verbose is None:
+        verbose = cvo.verbose
+    if die is None:
+        die = cvo.die
+
+    # Handle error and warning type
+    if errtype is None:
+        if warntype is None:
+            errtype = Exception
+        else:
+            errtype = warntype
+    if warntype is None:
+        warntype = UserWarning
+
+    # Convert the options to a list
+    warnopt = sc.promotetolist(sc.dcp(cvo.warnings))
+    warnopt = [str(w).lowercase() for w in warnopt]
+    if verbose: warnopt.append('verbose')
+    if die:     warnopt.append('die')
+
+    # Find matching
+    def match(*labels):
+        return any([l in warnopt for l in labels])
+
+    # Don't show warnings and stop checking
+    if match('false', 'silent', 'suppress'):
+        return
+
+    # Print warnings
+    if match('none', 'print', 'stdout', 'both', 'verbose'):
+        print(msg)
+
+    # Raise warnings as warnings
+    if match('true', 'warn', 'warning', 'stderr', 'both'):
+        warnings.warn(msg, category=warntype, stacklevel=stacklevel)
+
+    # Raise internal warnings as exceptions
+    if match('except', 'exception', 'exceptions', 'die'):
+        raise errtype(msg)
+
+    return
+
+
+def error(msg, errtype=Exception, verbose=None, die=None):
+    return error_warn(msg=msg, errtype=errtype, verbose=verbose, die=die)
+
+def warn(msg, warntype=UserWarning, verbose=None, die=None):
+    return error_warn(msg=msg, warntype=warntype, verbose=verbose, die=die)
