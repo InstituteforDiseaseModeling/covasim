@@ -12,7 +12,6 @@ import pytest
 
 do_plot = 1
 cv.options(interactive=False) # Assume not running interactively
-cv.options(warnings='error')
 
 # Shared parameters across simulations
 base_pars = sc.objdict(

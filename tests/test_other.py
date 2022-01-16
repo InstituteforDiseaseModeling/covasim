@@ -16,7 +16,6 @@ debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
 cv.options(interactive=False) # Assume not running interactively
-cv.options(warnings='error')
 
 
 def remove_files(*args):

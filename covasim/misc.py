@@ -794,7 +794,7 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
 
 #%% Help and warnings
 
-__all__ += ['help', 'warn']
+__all__ += ['help']
 
 def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
     '''
@@ -907,7 +907,7 @@ See help(cv.help) for more information.
 
 
 def warn(msg, category=None, verbose=None, die=None):
-    ''' Handle warnings '''
+    ''' Helper function to handle warnings -- not for the user '''
 
     # Handle inputs
     warnopt = cvo.warnings if not die else 'error'

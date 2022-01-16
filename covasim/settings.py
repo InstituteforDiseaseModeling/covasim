@@ -124,11 +124,11 @@ class Options(sc.objdict):
         ''' Allow to be used in a with block '''
         try:
             for k,v in self.on_entry.items():
-                if self.changed(k):
+                if self[k] != v:
                     self.set(key=k, value=v)
             self.delattribute('on_entry')
         except AttributeError as E:
-            errormsg = 'Please use cv.options.context() with a with...as block'
+            errormsg = 'Please use cv.options.context() if using a with block'
             raise AttributeError(errormsg) from E
         return
 
@@ -282,15 +282,24 @@ class Options(sc.objdict):
         return
 
 
-    def context(self, *args, **kwargs):
-        ''' Alias to set(), for use in a with block '''
+    def context(self, **kwargs):
+        '''
+        Alias to set(), for use in a with block.
+
+        **Example**::
+
+            with cv.options.context(warnings='error'):
+                cv.Sim(location='not a location').initialize()
+
+        New in version 3.1.2.
+        '''
 
         # Store current settings
-        on_entry = {k:v for k,v in self.items()}
+        on_entry = {k:self[k] for k in kwargs.keys()}
         self.setattribute('on_entry', on_entry)
 
         # Make changes
-        self.set(*args, **kwargs)
+        self.set(**kwargs)
         return self
 
 
