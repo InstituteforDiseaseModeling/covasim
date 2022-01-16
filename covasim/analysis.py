@@ -1037,17 +1037,15 @@ class Fit(Analyzer):
             if self.die:
                 raise RuntimeError(errormsg)
             else:
-                print('Warning: ', errormsg)
+                cvm.warn(errormsg)
                 sim.data = pd.DataFrame() # Use an empty dataframe
         self.data = sim.data
 
         # Copy sim results
         if not sim.results_ready: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
-            if self.die:
-                raise RuntimeError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise RuntimeError(errormsg)
+            else:        cvm.warn(errormsg)
         self.sim_results = sc.objdict()
         for key in sim.result_keys() + ['t', 'date']:
             self.sim_results[key] = sim.results[key]
@@ -1094,18 +1092,14 @@ class Fit(Analyzer):
             self.keys = [key for key in sim_keys if key in intersection] # Maintain key order
             if not len(self.keys): # pragma: no cover
                 errormsg = f'No matches found between simulation result keys:\n{sc.strjoin(sim_keys)}\n\nand data columns:\n{sc.strjoin(data_cols)}'
-                if self.die:
-                    raise sc.KeyNotFoundError(errormsg)
-                else:
-                    print('Warning: ', errormsg)
+                if self.die: raise sc.KeyNotFoundError(errormsg)
+                else:        cvm.warn(errormsg)
         mismatches = [key for key in self.keys if key not in data_cols]
         if len(mismatches): # pragma: no cover
             mismatchstr = ', '.join(mismatches)
             errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
-            if self.die:
-                raise sc.KeyNotFoundError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise sc.KeyNotFoundError(errormsg)
+            else:        cvm.warn(errormsg)
 
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
@@ -1170,10 +1164,8 @@ class Fit(Analyzer):
 
         if matches == 0:
             errormsg = 'No paired data points were found between the supplied data and the simulation; please check the dates for each'
-            if self.die:
-                raise ValueError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise ValueError(errormsg)
+            else:        cvm.warn(errormsg)
 
         return
 
@@ -1421,7 +1413,8 @@ class Calibration(Analyzer):
 
         # Handle if the sim has already been run
         if self.sim.complete:
-            print('Warning: sim has already been run; re-initializing, but in future, use a sim that has not been run')
+            warnmsg = 'Sim has already been run; re-initializing, but in future, use a sim that has not been run'
+            cvm.warn(warnmsg)
             self.sim = self.sim.copy()
             self.sim.initialize()
 
@@ -1452,7 +1445,8 @@ class Calibration(Analyzer):
             if self.die:
                 raise E
             else:
-                print(f'Warning, encountered error running sim!\nParameters:\n{valid_pars}\nTraceback:\n{sc.traceback()}')
+                warnmsg = f'Encountered error running sim!\nParameters:\n{valid_pars}\nTraceback:\n{sc.traceback()}'
+                cvm.warn(warnmsg)
                 output = None if return_sim else np.inf
                 return output
 
@@ -1603,7 +1597,8 @@ class Calibration(Analyzer):
         for i,r in enumerate(results):
             for key in keys:
                 if key not in r:
-                    print(f'Warning! Key {key} is missing from trial {i}, replacing with default')
+                    warnmsg = f'Key {key} is missing from trial {i}, replacing with default'
+                    cvm.warn(warnmsg)
                     r[key] = best[key]
                 data[key].append(r[key])
         self.data = data
@@ -1795,7 +1790,7 @@ class TransTree(Analyzer):
             warningmsg = 'Warning: transmission tree results are unreliable when' \
                          'dynamic rescaling is on, since agents are reused! Please '\
                          'rerun with rescale=False and pop_scale=1 for reliable results.'
-            print(warningmsg)
+            cvm.warn(warningmsg)
 
         # Include the basic line list -- copying directly is slow, so we'll make a copy later
         self.infection_log = people.infection_log

@@ -356,11 +356,9 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
 
     # Handle saving
     if do_save:
-        if fig_path is not None: # No figpath provided - see whether do_save is a figpath
+        if isinstance(fig_path, str): # No figpath provided - see whether do_save is a figpath
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
-        cvm.savefig(filename=fig_path) # Save the figure
-        if len(figlist) >1:
-            print('Warning: only the last figure was saved')
+        cvm.savefig(fig=figlist, filename=fig_path) # Save the figure
 
     return handle_show_return(do_show, fig=fig, figs=figs)
 

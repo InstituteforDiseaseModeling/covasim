@@ -147,32 +147,44 @@ def save(*args, **kwargs):
     return filepath
 
 
-def savefig(filename=None, comments=None, **kwargs):
+def savefig(filename=None, comments=None, fig=None, **kwargs):
     '''
-    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-    metadata in the figure. By default, saves (git) information from both the Covasim
-    version and the calling function. Additional comments can be added to the saved
-    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
-    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
+    Wrapper for Matplotlib's ``pl.savefig()`` function which automatically stores
+    Covasim metadata in the figure.
+
+    By default, saves (git) information from both the Covasim version and the calling
+    function. Additional comments can be added to the saved file as well. These can
+    be retrieved via ``cv.get_png_metadata()`` (or ``sc.loadmetadata``). Metadata can
+    also be stored for PDF, but cannot be automatically retrieved.
 
     Args:
-        filename (str): name of the file to save to (default, timestamp)
-        comments (str): additional metadata to save to the figure
-        kwargs (dict): passed to savefig()
+        filename (str/list): name of the file to save to (default, timestamp); can also be a list of names
+        comments (str/dict): additional metadata to save to the figure
+        fig      (fig/list): figure to save (by default, current one); can also be a list of figures
+        kwargs   (dict):     passed to ``fig.savefig()``
 
     **Example**::
 
-        cv.Sim().run(do_plot=True)
-        filename = cv.savefig()
+        cv.Sim().run().plot()
+        cv.savefig()
     '''
 
     # Handle inputs
     dpi = kwargs.pop('dpi', 150)
     metadata = kwargs.pop('metadata', {})
 
+    if fig is None:
+        fig = pl.gcf()
+    figlist = sc.tolist(fig)
+
     if filename is None: # pragma: no cover
         now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
         filename = f'covasim_{now}.png'
+    filenamelist = sc.tolist(filename)
+
+    if len(figlist) != len(filenamelist):
+        errormsg = f'You have supplied {len(figlist)} figures and {len(filenamelist)} filenames: these must be the same length'
+        raise ValueError(errormsg)
 
     metadata = {}
     metadata['Covasim version'] = cvv.__version__
@@ -186,13 +198,17 @@ def savefig(filename=None, comments=None, **kwargs):
     if comments:
         metadata['Covasim comments'] = comments
 
-    # Handle different formats
-    lcfn = filename.lower() # Lowercase filename
-    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
-        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+    # Loop over the figures (usually just one)
+    for thisfig, thisfilename in zip(figlist, filenamelist):
 
-    # Save the figure
-    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+        # Handle different formats
+        lcfn = thisfilename.lower() # Lowercase filename
+        if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+            metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
+        # Save the figure
+        thisfig.savefig(thisfilename, dpi=dpi, metadata=metadata, **kwargs)
+
     return filename
 
 
@@ -896,7 +912,7 @@ def warn(msg, category=None, verbose=None, die=None):
     # Handle inputs
     warnopt = cvo.warnings if not die else 'error'
     if category is None:
-        category = UserWarning
+        category = RuntimeWarning
     if verbose is None:
         verbose = cvo.verbose
 

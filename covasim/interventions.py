@@ -10,9 +10,10 @@ import pylab as pl
 import sciris as sc
 import inspect
 import datetime as dt
+from . import misc as cvm
 from . import utils as cvu
-from . import defaults as cvd
 from . import base as cvb
+from . import defaults as cvd
 from . import parameters as cvpar
 from . import immunity as cvi
 from collections import defaultdict
@@ -663,7 +664,8 @@ class clip_edges(Intervention):
                         to_move = i_layer.pop_inds(inds)
                         s_layer.append(to_move)
                 else: # pragma: no cover
-                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
+                    warnmsg = f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]'
+                    cvm.warn(warnmsg)
         return
 
 
@@ -2102,8 +2104,8 @@ class historical_wave(Intervention):
             # require that all offsets are before the start of the sim
             filtered_wave_inds = cvu.true(this_inf_offset_days <= 0)
             if len(filtered_wave_inds) == 0: # pragma: no cover
-                warnmsg = f'WARNING: Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
-                print(warnmsg)
+                warnmsg = f'Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
+                cvm.warn(warnmsg)
                 continue
 
             wave_inds = wave_inds + this_wave_inds[filtered_wave_inds].tolist()
@@ -2111,8 +2113,8 @@ class historical_wave(Intervention):
             wave_id += len(filtered_wave_inds)*[wave]
 
         if len(wave_id) == 0: # pragma: no cover
-            warnmsg = 'WARNING: No waves resulted in any infections prior to the start of the simulation'
-            print(warnmsg)
+            warnmsg = 'No waves resulted in any infections prior to the start of the simulation'
+            cvm.warn(warnmsg)
             return
 
         wave_id = np.array(wave_id)
