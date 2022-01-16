@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 from collections import defaultdict
-from . import misc as cvm
 from . import defaults as cvd
+from . import misc as cvm
 from . import base as cvb
 from . import sim as cvs
 from . import plotting as cvpl
@@ -1194,8 +1194,8 @@ class Scenarios(cvb.ParsObj):
         if keep_sims or keep_people:
             if keep_people:
                 if not obj._kept_people:
-                    print('Warning: there are no people because they were not saved during the run. '
-                          'If you want people, please rerun with keep_people=True.')
+                    warnmsg = 'Warning: there are no people because they were not saved during the run. If you want people, please rerun with keep_people=True.'
+                    cvm.warn(warnmsg)
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:

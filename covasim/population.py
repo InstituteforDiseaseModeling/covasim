@@ -7,6 +7,7 @@ import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
 from . import requirements as cvreq
 from . import utils as cvu
+from . import misc as cvm
 from . import base as cvb
 from . import data as cvdata
 from . import defaults as cvd
@@ -57,7 +58,8 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
 
         location = sim['location']
         if location and verbose: # pragma: no cover
-            print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
+            warnmsg = f'Not setting ages or contacts for "{location}" since synthpops contacts are pre-generated'
+            cvm.warn(warnmsg)
 
     # If a people object or popdict is supplied, use it
     if sim.people and not reset:
@@ -127,7 +129,8 @@ def validate_popdict(popdict, pars, verbose=True):
             raise ValueError(errormsg)
 
     if 'contacts' not in popdict_keys and verbose:
-        print('Warning: no contacts found. Please remember to add contacts before running the simulation.')
+        warnmsg = 'No contacts found. Please remember to add contacts before running the simulation.'
+        cvm.warn(warnmsg)
 
     return
 
@@ -176,10 +179,12 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
                     pars['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
                 elif pars['verbose']:
                     keystr = ', '.join(list(pars['contacts'].keys()))
-                    print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
+                    warnmsg = f'Not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?'
+                    cvm.warn(warnmsg)
             except ValueError as E:
-                if pars['verbose']>=2: # These don't exist for many locations, so skip the warning by default
-                    print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
+                if pars['verbose']>1: # These don't exist for many locations, so skip the warning by default
+                    warnmsg = f'Could not load household size data for requested location "{location}" ({str(E)}), using default'
+                    cvm.warn(warnmsg)
 
     # Handle sexes and ages
     uids           = np.arange(pop_size, dtype=cvd.default_int)

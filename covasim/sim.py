@@ -458,13 +458,13 @@ class Sim(cvb.BaseSim):
                 test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
 
         if not np.isnan(trace_ind): # pragma: no cover
-            warningmsg = ''
+            warnmsg = ''
             if np.isnan(test_ind):
-                warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
+                warnmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
             elif trace_ind < test_ind:
-                warningmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
-            if self['verbose'] and warningmsg:
-                print(warningmsg)
+                warnmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
+            if warnmsg:
+                cvm.warn(warnmsg)
 
         return
 
@@ -913,7 +913,8 @@ class Sim(cvb.BaseSim):
             if len(date_outcome):
                 mean_inf     = date_outcome.mean() - date_inf.mean()
             else:
-                if self['verbose']: print('Warning: there were no infections during the simulation')
+                warnmsg ='There were no infections during the simulation'
+                cvm.warn(warnmsg)
                 mean_inf = 0 # Doesn't matter since r_eff is 0
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
