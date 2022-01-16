@@ -139,11 +139,26 @@ class Options(sc.objdict):
         optdesc = sc.objdict() # Help for the options
         options = sc.objdict() # The options
 
-        optdesc.verbose = 'Set default level of verbosity (i.e. logging detail)'
+        optdesc.verbose = 'Set default level of verbosity (i.e. logging detail): e.g., 0.1 is an update every 10 simulated days'
         options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
 
-        optdesc.sep = 'Set thousands seperator for text output'
-        options.sep = str(os.getenv('COVASIM_SEP', ','))
+        optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
+        options.style = os.getenv('COVASIM_STYLE', 'covasim')
+
+        optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
+        options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
+
+        optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
+        options.font = os.getenv('COVASIM_FONT', pl.rcParams['font.family'])
+
+        optdesc.fontsize = 'Set the default font size'
+        options.fontsize = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+
+        optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
+        options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
+
+        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
+        options.jupyter = os.getenv('COVASIM_JUPYTER', False)
 
         optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
         options.show = int(os.getenv('COVASIM_SHOW', True))
@@ -154,26 +169,14 @@ class Options(sc.objdict):
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
         options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
 
-        optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
-        options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
-
-        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
-        options.jupyter = os.getenv('COVASIM_JUPYTER', False)
-
-        optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
-        options.style = os.getenv('COVASIM_STYLE', 'covasim')
-
-        optdesc.rc = 'Matplotlib rc (run control) parameters used during plotting -- set by "style" option'
+        optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = sc.dcp(rc_covasim)
 
-        optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
+        optdesc.warnings = 'How warnings are handled: options are "warn" (default), "print", and "error"'
+        options.warnings = str(os.getenv('COVASIM_WARNINGS', 'warn'))
 
-        optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = os.getenv('COVASIM_FONT', pl.rcParams['font.family'])
-
-        optdesc.fontsize = 'Set the default font size'
-        options.fontsize = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+        optdesc.sep = 'Set thousands seperator for text output'
+        options.sep = str(os.getenv('COVASIM_SEP', ','))
 
         optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
         options.precision = int(os.getenv('COVASIM_PRECISION', 32))
@@ -235,9 +238,11 @@ class Options(sc.objdict):
             # Handle deprecations
             rename = {'font_size': 'fontsize', 'font_family':'font'}
             if key in rename.keys():
+                from . import misc as cvm # Here to avoid circular import
                 oldkey = key
                 key = rename[oldkey]
-
+                warnmsg = f'Warning: key "{oldkey}" is deprecated, please use "{key}" instead'
+                cvm.warn(warnmsg, FutureWarning)
 
 
             if key not in self:

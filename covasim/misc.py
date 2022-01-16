@@ -890,32 +890,26 @@ See help(cv.help) for more information.
             return
 
 
-def error_warn(msg, errtype=None, warntype=None, stacklevel=2, verbose=None, die=None):
+def warn(msg, category=None, stacklevel=2, verbose=None, die=None):
     ''' Handle warnings '''
 
     # Handle verbose and die
     if verbose is None:
         verbose = cvo.verbose
-    if die is None:
-        die = cvo.die
 
     # Handle error and warning type
-    if errtype is None:
-        if warntype is None:
-            errtype = Exception
-        else:
-            errtype = warntype
-    if warntype is None:
-        warntype = UserWarning
+    if category is None:
+        category = UserWarning
 
     # Convert the options to a list
     warnopt = sc.promotetolist(sc.dcp(cvo.warnings))
-    warnopt = [str(w).lowercase() for w in warnopt]
+    warnopt = [str(w).lower() for w in warnopt]
     if verbose: warnopt.append('verbose')
-    if die:     warnopt.append('die')
+    if die:     warnopt = ['die']
 
     # Find matching
     def match(*labels):
+        # print('TEMP i am', labels, warnopt)
         return any([l in warnopt for l in labels])
 
     # Don't show warnings and stop checking
@@ -923,22 +917,15 @@ def error_warn(msg, errtype=None, warntype=None, stacklevel=2, verbose=None, die
         return
 
     # Print warnings
-    if match('none', 'print', 'stdout', 'both', 'verbose'):
+    if match('none', 'print', 'stdout', 'verbose'):
         print(msg)
 
     # Raise warnings as warnings
-    if match('true', 'warn', 'warning', 'stderr', 'both'):
-        warnings.warn(msg, category=warntype, stacklevel=stacklevel)
+    if match('true', 'warn', 'warning', 'stderr'):
+        warnings.warn('\n'+msg, category=category)
 
     # Raise internal warnings as exceptions
     if match('except', 'exception', 'exceptions', 'die'):
-        raise errtype(msg)
+        raise category(msg)
 
     return
-
-
-def error(msg, errtype=Exception, verbose=None, die=None):
-    return error_warn(msg=msg, errtype=errtype, verbose=verbose, die=die)
-
-def warn(msg, warntype=UserWarning, verbose=None, die=None):
-    return error_warn(msg=msg, warntype=warntype, verbose=verbose, die=die)
