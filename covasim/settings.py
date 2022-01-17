@@ -47,9 +47,11 @@ rc_covasim = sc.mergedicts(rc_simple, {
 
 class Options(sc.objdict):
     '''
-    Set options for Covasim. Use ``cv.options.set('defaults')`` to reset all
-    values to default, or ``cv.options.set(dpi='default')`` to reset one parameter
-    to default. See ``cv.options.help(detailed=True)`` for more information.
+    Set options for Covasim.
+
+    Use ``cv.options.set('defaults')`` to reset all values to default, or ``cv.options.set(dpi='default')``
+    to reset one parameter to default. See ``cv.options.help(detailed=True)`` for
+    more information.
 
     Options can also be saved and loaded using ``cv.options.save()`` and ``cv.options.load()``.
     See ``cv.options.context()`` and ``cv.options.with_style()`` to set options
@@ -73,7 +75,7 @@ class Options(sc.objdict):
 
         cv.options(dpi=150) # Larger size
         cv.options(style='simple', font='Rosario') # Change to the "simple" Covasim style with a custom font
-        cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
+        cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
         cv.options(interactive=False) # Turn off interactive plots
         cv.options(jupyter=True) # Defaults for Jupyter
         cv.options('defaults') # Reset to default options

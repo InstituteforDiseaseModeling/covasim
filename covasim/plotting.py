@@ -569,7 +569,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
 
 #%% Other plotting functions
 def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_args=None,
-                plot_args=None, do_show=None, fig=None):
+                plot_args=None, style_args=None, do_show=None, fig=None):
     ''' Plot statistics of a population -- see People.plot() for documentation '''
 
     # Handle inputs
@@ -584,9 +584,10 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
     zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
-    fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
-    axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.35), axis_args)
-    plot_args = sc.mergedicts(dict(lw=1.5, alpha=0.6, c=color, zorder=10), plot_args)
+    fig_args   = sc.mergedicts(dict(figsize=(18,11)), fig_args)
+    axis_args  = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.35), axis_args)
+    plot_args  = sc.mergedicts(dict(lw=1.5, alpha=0.6, c=color, zorder=10), plot_args)
+    style_args = sc.mergedicts(style_args)
 
     # Compute statistics
     min_age = min(bins)
@@ -594,82 +595,81 @@ def plot_people(people, bins=None, width=1.0, alpha=0.6, fig_args=None, axis_arg
     edges = np.append(bins, np.inf) # Add an extra bin to end to turn them into edges
     age_counts = np.histogram(people.age, edges)[0]
 
-    # Create the figure
-    if fig is None:
-        fig = pl.figure(**fig_args)
-    pl.subplots_adjust(**axis_args)
+    with cvo.with_style(style_args):
 
-    # Plot age histogram
-    pl.subplot(n_rows,2,1)
-    pl.bar(bins, age_counts, color=color, alpha=alpha, width=width, zorder=zorder)
-    pl.xlim([min_age-offset,max_age+offset])
-    pl.xticks(np.arange(0, max_age+1, gridspace))
-    pl.grid(True)
-    pl.xlabel('Age')
-    pl.ylabel('Number of people')
-    pl.title(f'Age distribution ({len(people):n} people total)')
+        # Create the figure
+        if fig is None:
+            fig = pl.figure(**fig_args)
+        pl.subplots_adjust(**axis_args)
 
-    # Plot cumulative distribution
-    pl.subplot(n_rows,2,2)
-    age_sorted = sorted(people.age)
-    y = np.linspace(0, 100, len(age_sorted)) # Percentage, not hard-coded!
-    pl.plot(age_sorted, y, '-', **plot_args)
-    pl.xlim([0,max_age])
-    pl.ylim([0,100]) # Percentage
-    pl.xticks(np.arange(0, max_age+1, gridspace))
-    pl.yticks(np.arange(0, 101, gridspace)) # Percentage
-    pl.grid(True)
-    pl.xlabel('Age')
-    pl.ylabel('Cumulative proportion (%)')
-    pl.title(f'Cumulative age distribution (mean age: {people.age.mean():0.2f} years)')
+        # Plot age histogram
+        pl.subplot(n_rows,2,1)
+        pl.bar(bins, age_counts, color=color, alpha=alpha, width=width, zorder=zorder)
+        pl.xlim([min_age-offset,max_age+offset])
+        pl.xticks(np.arange(0, max_age+1, gridspace))
+        pl.xlabel('Age')
+        pl.ylabel('Number of people')
+        pl.title(f'Age distribution ({len(people):n} people total)')
 
-    # Calculate contacts
-    lkeys = people.layer_keys()
-    n_layers = len(lkeys)
-    contact_counts = sc.objdict()
-    for lk in lkeys:
-        layer = people.contacts[lk]
-        p1ages = people.age[layer['p1']]
-        p2ages = people.age[layer['p2']]
-        contact_counts[lk] = np.histogram(p1ages, edges)[0] + np.histogram(p2ages, edges)[0]
+        # Plot cumulative distribution
+        pl.subplot(n_rows,2,2)
+        age_sorted = sorted(people.age)
+        y = np.linspace(0, 100, len(age_sorted)) # Percentage, not hard-coded!
+        pl.plot(age_sorted, y, '-', **plot_args)
+        pl.xlim([0,max_age])
+        pl.ylim([0,100]) # Percentage
+        pl.xticks(np.arange(0, max_age+1, gridspace))
+        pl.yticks(np.arange(0, 101, gridspace)) # Percentage
+        pl.xlabel('Age')
+        pl.ylabel('Cumulative proportion (%)')
+        pl.title(f'Cumulative age distribution (mean age: {people.age.mean():0.2f} years)')
 
-    # Plot contacts
-    layer_colors = sc.gridcolors(n_layers)
-    share_ax = None
-    for w,w_type in enumerate(['total', 'percapita', 'weighted']): # Plot contacts in different ways
-        for i,lk in enumerate(lkeys):
-            contacts_lk = people.contacts[lk]
-            members_lk = contacts_lk.members
-            n_contacts = len(contacts_lk)
-            n_members = len(members_lk)
-            if w_type == 'total':
-                weight = 1
-                total_contacts = 2*n_contacts # x2 since each contact is undirected
-                ylabel = 'Number of contacts'
-                participation = n_members/len(people) # Proportion of people that have contacts in this layer
-                title = f'Total contacts for layer "{lk}": {total_contacts:n}\n({participation*100:.0f}% participation)'
-            elif w_type == 'percapita':
-                age_counts_within_layer = np.histogram(people.age[members_lk], edges)[0]
-                weight = np.divide(1.0, age_counts_within_layer, where=age_counts_within_layer>0)
-                mean_contacts_within_layer = 2*n_contacts/n_members if n_members else 0  # Factor of 2 since edges are bi-directional
-                ylabel = 'Per capita number of contacts'
-                title = f'Mean contacts for layer "{lk}": {mean_contacts_within_layer:0.2f}'
-            elif w_type == 'weighted':
-                weight = people.pars['beta_layer'][lk]*people.pars['beta']
-                total_weight = np.round(weight*2*n_contacts)
-                ylabel = 'Weighted number of contacts'
-                title = f'Total weight for layer "{lk}": {total_weight:n}'
+        # Calculate contacts
+        lkeys = people.layer_keys()
+        n_layers = len(lkeys)
+        contact_counts = sc.objdict()
+        for lk in lkeys:
+            layer = people.contacts[lk]
+            p1ages = people.age[layer['p1']]
+            p2ages = people.age[layer['p2']]
+            contact_counts[lk] = np.histogram(p1ages, edges)[0] + np.histogram(p2ages, edges)[0]
 
-            ax = pl.subplot(n_rows, n_layers, n_layers*(w+1)+i+1, sharey=share_ax)
-            pl.bar(bins, contact_counts[lk]*weight, color=layer_colors[i], width=width, zorder=zorder, alpha=alpha)
-            pl.xlim([min_age-offset,max_age+offset])
-            pl.xticks(np.arange(0, max_age+1, gridspace))
-            pl.grid(True)
-            pl.xlabel('Age')
-            pl.ylabel(ylabel)
-            pl.title(title)
-            if w_type == 'weighted':
-                share_ax = ax # Update shared axis
+        # Plot contacts
+        layer_colors = sc.gridcolors(n_layers)
+        share_ax = None
+        for w,w_type in enumerate(['total', 'percapita', 'weighted']): # Plot contacts in different ways
+            for i,lk in enumerate(lkeys):
+                contacts_lk = people.contacts[lk]
+                members_lk = contacts_lk.members
+                n_contacts = len(contacts_lk)
+                n_members = len(members_lk)
+                if w_type == 'total':
+                    weight = 1
+                    total_contacts = 2*n_contacts # x2 since each contact is undirected
+                    ylabel = 'Number of contacts'
+                    participation = n_members/len(people) # Proportion of people that have contacts in this layer
+                    title = f'Total contacts for layer "{lk}": {total_contacts:n}\n({participation*100:.0f}% participation)'
+                elif w_type == 'percapita':
+                    age_counts_within_layer = np.histogram(people.age[members_lk], edges)[0]
+                    weight = np.divide(1.0, age_counts_within_layer, where=age_counts_within_layer>0)
+                    mean_contacts_within_layer = 2*n_contacts/n_members if n_members else 0  # Factor of 2 since edges are bi-directional
+                    ylabel = 'Per capita number of contacts'
+                    title = f'Mean contacts for layer "{lk}": {mean_contacts_within_layer:0.2f}'
+                elif w_type == 'weighted':
+                    weight = people.pars['beta_layer'][lk]*people.pars['beta']
+                    total_weight = np.round(weight*2*n_contacts)
+                    ylabel = 'Weighted number of contacts'
+                    title = f'Total weight for layer "{lk}": {total_weight:n}'
+
+                ax = pl.subplot(n_rows, n_layers, n_layers*(w+1)+i+1, sharey=share_ax)
+                pl.bar(bins, contact_counts[lk]*weight, color=layer_colors[i], width=width, zorder=zorder, alpha=alpha)
+                pl.xlim([min_age-offset,max_age+offset])
+                pl.xticks(np.arange(0, max_age+1, gridspace))
+                pl.xlabel('Age')
+                pl.ylabel(ylabel)
+                pl.title(title)
+                if w_type == 'weighted':
+                    share_ax = ax # Update shared axis
 
 
 
