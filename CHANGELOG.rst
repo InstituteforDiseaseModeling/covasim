@@ -14,7 +14,7 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Coming soon
 ~~~~~~~~~~~
 
-These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
+These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
 
 - Default Omicron parameters (planned for v3.1.3)
 - Additional nuance in how immunity is modeled (planned for v3.1.4)
@@ -39,7 +39,7 @@ Highlights
 
 Plotting
 ^^^^^^^^
-- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts ([Mulish](https://fonts.google.com/specimen/Mulish) and [Rosario](https://fonts.google.com/specimen/Rosario)), finer control of style options, and better defaults for Jupyter.
+- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts (`Mulish <https://fonts.google.com/specimen/Mulish>`_) and `Rosario <https://fonts.google.com/specimen/Rosario>`_), finer control of style options, and better defaults for Jupyter.
 - Changing styles is now much easier, e.g. ``sim.plot(style='seaborn-whitegrid')`` will use the named Matplotlib style. See ``cv.options.help()`` for more information.
 - Covasim now uses Sciris' default date formatter, which is similar to Plotly's. You can change this using the ``dateformat`` argument, e.g. ``sim.plot(dateformat='sciris')`` vs. ``sim.plot(dateformat='concise')``.
 - ``cv.savefig()`` can now save multiple figures simultaneously via the (new) ``fig`` argument.
@@ -169,7 +169,7 @@ Regression information
 - Results for simulations with ``use_waning=True`` will be substantially different due to the update in parameters and functional form.
 - ``r_eff`` results will not match previous versions due to the change in calculation method (but differences should be slight).
 - Simulations that have been saved to disk which include variants may not work correctly. If this is an issue, please email us and we can help write a migration script.
-- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`__
+- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`_
 
 
 
@@ -181,7 +181,7 @@ Versions 3.0.x (3.0.0 – 3.0.7)
 Version 3.0.7 (2021-06-29)
 --------------------------
 - Added parameters for the Delta variant.
-- Refactored the NAb decay function to match the published version of `Khoury et al. <https://www.nature.com/articles/s41591-021-01377-8>`__ (the previous implementation matched the preprint).
+- Refactored the NAb decay function to match the published version of `Khoury et al <https://www.nature.com/articles/s41591-021-01377-8>`_ (the previous implementation matched the preprint).
 - Added optional ``capacity`` limit for ``cv.contact_tracing`` to cap the maximum number of people that can be traced each day.
 - When loading a population from file, this is now done during sim initialization (``sim.initialize()``); previously this was done as part of sim creation (``cv.Sim()``). This fixed a bug with immunity characteristics not being initialized correctly. (Thanks to Paula Sanz-Leon for identifying and proposing a fix.)
 - Fixed a log of 0 warning with NAbs.
@@ -206,7 +206,7 @@ Version 3.0.6 (2021-06-21)
 
 Version 3.0.5 (2021-05-26)
 --------------------------
-- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`__ for the rationale behind the change.
+- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`_ for the rationale behind the change.
 - Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
 - Changed the parameters provided to ``nab_to_efficacy`` function.
 - Updated some strain parameters to be based on studies and not modeled inferences.
