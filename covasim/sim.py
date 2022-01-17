@@ -34,21 +34,20 @@ class Sim(cvb.BaseSim):
         datafile (str/df): filename of (Excel, CSV) data file to load, or a pandas dataframe of the data
         datacols (list):   list of column names of the data to load
         label    (str):    the name of the simulation (useful to distinguish in batch runs)
-        simfile  (str):    the filename for this simulation, if it's saved (default: creation date)
-        popfile  (str):    the filename to load/save the population for this simulation
-        load_pop (bool):   whether to load the population from the named file
-        save_pop (bool):   whether to save the population to the named file
+        simfile  (str):    the filename for this simulation, if it's saved
+        popfile  (str):    if supplied, load the population from this file
+        people   (varies): if supplied, use these pre-generated people (as a dict, SynthPop, or People object) instead of loading or generating new ones
         version  (str):    if supplied, use default parameters from this version of Covasim instead of the latest
-        kwargs   (dict):   passed to make_pars()
+        kwargs   (dict):   additional parameters; passed to ``cv.make_pars()``
 
     **Examples**::
 
         sim = cv.Sim()
-        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx')
+        sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx', label='Sim with data')
     '''
 
-    def __init__(self, pars=None, datafile=None, datacols=None, label=None, simfile=None,
-                 popfile=None, load_pop=False, save_pop=False, version=None, **kwargs):
+    def __init__(self, pars=None, datafile=None, label=None, simfile=None,
+                 popfile=None, people=None, version=None, **kwargs):
 
         # Set attributes
         self.label         = label    # The label/name of the simulation
@@ -56,12 +55,10 @@ class Sim(cvb.BaseSim):
         self.simfile       = simfile  # The filename of the sim
         self.datafile      = datafile # The name of the data file
         self.popfile       = popfile  # The population file
-        self.load_pop      = load_pop # Whether to load the population
-        self.save_pop      = save_pop # Whether to save the population
         self.data          = None     # The actual data
-        self.popdict       = None     # The population dictionary
-        self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
+        self.popdict       = people   # The population dictionary
         self.people        = None     # Initialize these here so methods that check their length can see they're empty
+        self.t             = None     # The current time in the simulation (during execution); outside of sim.step(), its value corresponds to next timestep to be computed
         self.results       = {}       # For storing results
         self.summary       = None     # For storing a summary of the results
         self.initialized   = False    # Whether or not initialization is complete
@@ -78,31 +75,37 @@ class Sim(cvb.BaseSim):
         # Now update everything
         self.set_metadata(simfile)  # Set the simulation date and filename
         self.update_pars(pars, **kwargs)   # Update the parameters, if provided
-        self.load_data(datafile, datacols) # Load the data, if provided
+        self.load_data(datafile) # Load the data, if provided
 
         return
 
 
-    def load_data(self, datafile=None, datacols=None, verbose=None, **kwargs):
+    def load_data(self, datafile=None, verbose=None, **kwargs):
         ''' Load the data to calibrate against, if provided '''
         if verbose is None:
             verbose = self['verbose']
         self.datafile = datafile # Store this
         if datafile is not None: # If a data file is provided, load it
-            self.data = cvm.load_data(datafile=datafile, columns=datacols, verbose=verbose, start_day=self['start_day'], **kwargs)
+            self.data = cvm.load_data(datafile=datafile, verbose=verbose, start_day=self['start_day'], **kwargs)
 
         return
 
 
-    def initialize(self, reset=False, **kwargs):
+    def initialize(self, reset=False, init_infections=True, **kwargs):
         '''
-        Perform all initializations, including validating the parameters, setting
-        the random number seed, creating the results structure, initializing the
-        people, validating the layer parameters (which requires the people),
-        and initializing the interventions.
+        Perform all initializations on the sim.
+
+        This includes validating the parameters, setting the random number seed,
+        creating the results structure, initializing the people, validating the
+        layer parameters (which requires the people), and initializing the interventions.
+
+        Note: to create a population to save for later use, use ``init_infections=False``.
+        This will then create a fresh People object which other sims can finish
+        initializing.
 
         Args:
             reset (bool): whether or not to reset people even if they already exist
+            init_infections (bool): whether to initialize infections (default true so sim is ready, but can't reuse people then)
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
@@ -111,7 +114,7 @@ class Sim(cvb.BaseSim):
         self.init_variants() # Initialize the variants
         self.init_immunity() # initialize information about immunity (if use_waning=True)
         self.init_results() # After initializing the variant, create the results structure
-        self.init_people(save_pop=self.save_pop, load_pop=self.load_pop, popfile=self.popfile, reset=reset, **kwargs) # Create all the people (slow)
+        self.init_people(reset=reset, init_infections=init_infections, **kwargs) # Create all the people (the heaviest step)
         self.init_interventions()  # Initialize the interventions...
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
@@ -348,104 +351,72 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def load_population(self, popfile=None, **kwargs):
+    def load_population(self, popfile=None, init_people=True, **kwargs):
         '''
         Load the population dictionary from file -- typically done automatically
-        as part of sim.initialize(). Supports loading either saved population
-        dictionaries (popdicts, file ending .pop by convention), or ready-to-go
-        People objects (file ending .ppl by convention). Either object an also be
-        supplied directly. Once a population file is loaded, it is removed from
-        the Sim object.
+        as part of ``sim.initialize()``.
+
+        Supports loading either saved population dictionaries (popdicts, file ending
+        .pop by convention), or ready-to-go People objects (file ending .ppl by
+        convention). Either object an also be supplied directly. Once a population
+        file is loaded, it is removed from the Sim object.
 
         Args:
             popfile (str or obj): if a string, name of the file; otherwise, the popdict or People object to load
-            kwargs (dict): passed to sc.makefilepath()
+            init_people (bool): whether to immediately convert the loaded popdict into an initialized People object
+            kwargs (dict): passed to ``sim.init_people()``
         '''
         # Set the file path if not is provided
         if popfile is None and self.popfile is not None:
             popfile = self.popfile
 
-        # Handle the population (if it exists)
-        if popfile is not None:
+        # Load the population into the popdict
+        self.popdict = cvm.load(popfile)
+        if self['verbose']:
+            print(f'Loading population from {popfile}')
 
-            # Load from disk or use directly
-            if isinstance(popfile, str): # It's a string, assume it's a filename
-                filepath = sc.makefilepath(filename=popfile, **kwargs)
-                obj = cvm.load(filepath)
-                if self['verbose']:
-                    print(f'Loading population from {filepath}')
-            else:
-                obj = popfile # Use it directly
-
-            # Process the input
-            if isinstance(obj, dict):
-                self.popdict = obj
-                n_actual     = len(self.popdict['uid'])
-                layer_keys   = self.popdict['layer_keys']
-
-            elif isinstance(obj, cvb.BasePeople):
-                n_actual = len(obj)
-                self.people = obj
-                self.people.set_pars(self.pars) # Replace the saved parameters with this simulation's
-                layer_keys  = self.people.layer_keys()
-
-                # Perform validation
-                n_expected = self['pop_size']
-                if n_actual != n_expected: # External consistency check
-                    errormsg = f'Wrong number of people ({n_expected:n} requested, {n_actual:n} actual) -- please change "pop_size" to match or regenerate the file'
-                    raise ValueError(errormsg)
-                self.people.validate() # Internal consistency check
-
-            else: # pragma: no cover
-                errormsg = f'Cound not interpret input of {type(obj)} as a population file: must be a dict or People object'
-                raise ValueError(errormsg)
-
-
-            self.reset_layer_pars(force=False, layer_keys=layer_keys) # Ensure that layer keys match the loaded population
-            self.popfile = None # Once loaded, remove to save memory
+        if init_people:
+            self.init_people(**kwargs)
 
         return
 
 
-    def init_people(self, save_pop=False, load_pop=False, popfile=None, reset=False, verbose=None, **kwargs):
+    def init_people(self, popdict=None, init_infections=False, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
+        Use ``init_infections=False`` for creating a fresh People object for use
+        in future simulations
+
         Args:
-            save_pop (bool): if true, save the population dictionary to popfile
-            load_pop (bool): if true, load the population dictionary from popfile
-            popfile   (str): filename to load/save the population
-            reset    (bool): whether to regenerate the people even if they already exist
-            verbose   (int): detail to print
-            kwargs   (dict): passed to cv.make_people()
+            popdict         (any):  pre-generated people of various formats
+            init_infections (bool): whether to initialize infections (default false when called directly)
+            reset           (bool): whether to regenerate the people even if they already exist
+            verbose         (int):  detail to print
+            kwargs          (dict): passed to cv.make_people()
         '''
 
         # Handle inputs
         if verbose is None:
             verbose = self['verbose']
+        if popdict is not None:
+            self.popdict = popdict
         if verbose > 0:
             resetstr= ''
             if self.people:
                 resetstr = ' (resetting people)' if reset else ' (warning: not resetting sim.people)'
             print(f'Initializing sim{resetstr} with {self["pop_size"]:0n} people for {self["n_days"]} days')
-        if load_pop and self.popdict is None: # If there's a popdict, we initialize it via cvpop.make_people()
-            self.load_population(popfile=popfile)
+        if self.popfile and self.popdict is None: # If there's a popdict, we initialize it via cvpop.make_people()
+            self.load_population(init_people=False)
 
         # Actually make the people
-        self.people = cvpop.make_people(self, save_pop=save_pop, popfile=popfile, reset=reset, verbose=verbose, **kwargs)
-        self.people.initialize() # Fully initialize the people
+        self.people = cvpop.make_people(self, reset=reset, verbose=verbose, **kwargs)
+        self.people.initialize(sim_pars=self.pars) # Fully initialize the people
+        self.reset_layer_pars(force=False) # Ensure that layer keys match the loaded population
+        if init_infections:
+            self.init_infections(verbose=verbose)
 
-        # Handle anyone who isn't susceptible
-        if self['frac_susceptible'] < 1:
-            inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
-            self.people.make_nonnaive(inds=inds)
-
-        # Create the seed infections
-        if self['pop_infected']:
-            inds = cvu.choose(self['pop_size'], self['pop_infected'])
-            self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
-
-        return
+        return self
 
 
     def init_interventions(self):
@@ -469,13 +440,13 @@ class Sim(cvb.BaseSim):
                 test_ind = np.fmax(test_ind, i) # Find the latest-scheduled testing intervention
 
         if not np.isnan(trace_ind): # pragma: no cover
-            warningmsg = ''
+            warnmsg = ''
             if np.isnan(test_ind):
-                warningmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
+                warnmsg = 'Note: you have defined a contact tracing intervention but no testing intervention was found. Unless this is intentional, please define at least one testing intervention.'
             elif trace_ind < test_ind:
-                warningmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
-            if self['verbose'] and warningmsg:
-                print(warningmsg)
+                warnmsg = f'Note: contact tracing (index {trace_ind:.0f}) is scheduled before testing ({test_ind:.0f}); this creates a 1-day delay. Unless this is intentional, please reorder the interentions.'
+            if warnmsg:
+                cvm.warn(warnmsg)
 
         return
 
@@ -531,6 +502,36 @@ class Sim(cvb.BaseSim):
         return
 
 
+    def init_infections(self, force=False, verbose=None):
+        '''
+        Initialize prior immunity and seed infections.
+
+        Args:
+            force (bool): initialize prior infections even if already initialized
+        '''
+
+        if verbose is None:
+            verbose = self['verbose']
+
+        # If anyone is non-naive, don't re-initialize
+        if self.people.count_not('naive') == 0 or force: # Everyone is naive
+
+            # Handle anyone who isn't susceptible
+            if self['frac_susceptible'] < 1:
+                inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+                self.people.make_nonnaive(inds=inds)
+
+            # Create the seed infections
+            if self['pop_infected']:
+                inds = cvu.choose(self['pop_size'], self['pop_infected'])
+                self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
+
+        elif verbose:
+            print(f'People already initialized with {self.people.count_not("naive")} people non-naive and {self.people.count("exposed")} exposed; not reinitializing')
+
+        return
+
+
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
@@ -565,6 +566,10 @@ class Sim(cvb.BaseSim):
             raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
 
         t = self.t
+
+        # If it's the first timestep, infect people
+        if t == 0:
+            self.init_infections(verbose=False)
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
@@ -698,7 +703,7 @@ class Sim(cvb.BaseSim):
         '''
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
-        T = sc.tic()
+        T = sc.timer()
 
         if not self.initialized:
             self.initialize()
@@ -712,21 +717,25 @@ class Sim(cvb.BaseSim):
             # for resetting the seed here is if the simulation has been partially run, and changing the seed is required
             self.set_seed()
 
+        # Check for AlreadyRun errors
+        errormsg = None
         until = self.npts if until is None else self.day(until)
         if until > self.npts:
-            raise AlreadyRunError(f'Requested to run until t={until} but the simulation end is t={self.npts}')
-
-        if self.complete:
-            raise AlreadyRunError('Simulation is already complete (call sim.initialize() to re-run)')
-
+            errormsg = f'Requested to run until t={until} but the simulation end is t={self.npts}'
         if self.t >= until: # NB. At the start, self.t is None so this check must occur after initialization
-            raise AlreadyRunError(f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached')
+            errormsg = f'Simulation is currently at t={self.t}, requested to run until t={until} which has already been reached'
+        if self.complete:
+            errormsg = 'Simulation is already complete (call sim.initialize() to re-run)'
+        if self.people.t not in [self.t, self.t-1]: # Depending on how the sim stopped, either of these states are possible
+            errormsg = f'The simulation has been run independently from the people (t={self.t}, people.t={self.people.t}): if this is intentional, manually set sim.people.t = sim.t. Remember to save the people object before running the sim.'
+        if errormsg:
+            raise AlreadyRunError(errormsg)
 
         # Main simulation loop
         while self.t < until:
 
             # Check if we were asked to stop
-            elapsed = sc.toc(T, output=True)
+            elapsed = T.toc(output=True)
             if self['timelimit'] and elapsed > self['timelimit']:
                 sc.printv(f"Time limit ({self['timelimit']} s) exceeded; call sim.finalize() to compute results if desired", 1, verbose)
                 return
@@ -920,7 +929,8 @@ class Sim(cvb.BaseSim):
             if len(date_outcome):
                 mean_inf     = date_outcome.mean() - date_inf.mean()
             else:
-                if self['verbose']: print('Warning: there were no infections during the simulation')
+                warnmsg ='There were no infections during the simulation'
+                cvm.warn(warnmsg)
                 mean_inf = 0 # Doesn't matter since r_eff is 0
 
             # Calculate R_eff as the mean infectious duration times the number of new infectious divided by the number of infectious people on a given day
@@ -1261,17 +1271,14 @@ class Sim(cvb.BaseSim):
             to_plot      (dict): Dict of results to plot; see get_default_plots() for structure
             do_save      (bool): Whether or not to save the figure
             fig_path     (str):  Path to save the figure
-            fig_args     (dict): Dictionary of kwargs to be passed to pl.figure()
-            plot_args    (dict): Dictionary of kwargs to be passed to pl.plot()
-            scatter_args (dict): Dictionary of kwargs to be passed to pl.scatter()
-            axis_args    (dict): Dictionary of kwargs to be passed to pl.subplots_adjust()
-            legend_args  (dict): Dictionary of kwargs to be passed to pl.legend(); if show_legend=False, do not show
+            fig_args     (dict): Dictionary of kwargs to be passed to ``pl.figure()``
+            plot_args    (dict): Dictionary of kwargs to be passed to ``pl.plot()``
+            scatter_args (dict): Dictionary of kwargs to be passed to ``pl.scatter()``
+            axis_args    (dict): Dictionary of kwargs to be passed to ``pl.subplots_adjust()``
+            legend_args  (dict): Dictionary of kwargs to be passed to ``pl.legend()``; if show_legend=False, do not show
             date_args    (dict): Control how the x-axis (dates) are shown (see below for explanation)
-            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, and the legend
-            mpl_args     (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, fontsize, and fontfamily
-            as_dates     (bool): Whether to plot the x-axis as dates or time points
-            dateformat   (str):  Date string format, e.g. '%B %d'
-            interval     (int):  Interval between tick marks
+            show_args    (dict): Control which "extras" get shown: uncertainty bounds, data, interventions, ticks, the legend; additionally, "outer" will show the axes only on the outer plots
+            style_args   (dict): Dictionary of kwargs to be passed to Matplotlib; options are dpi, font, fontsize, plus any valid key in ``pl.rcParams``
             n_cols       (int):  Number of columns of subpanels to use for subplot
             font_size    (int):  Size of the font
             font_family  (str):  Font face
@@ -1290,22 +1297,38 @@ class Sim(cvb.BaseSim):
         how the x-axis of plots are shown, if this axis is dates. These options are:
 
             - ``as_dates``:   whether to format them as dates (else, format them as days since the start)
-            - ``dateformat``: string format for the date (default %b-%d, e.g. Apr-04)
-            - ``interval``:   the number of days between tick marks
+            - ``dateformat``: string format for the date (if not provided, choose based on timeframe)
             - ``rotation``:   whether to rotate labels
-            - ``start_day``:  the first day to plot
-            - ``end_day``:    the last day to plot
+            - ``start``:      the first day to plot
+            - ``end``:        the last day to plot
+            - ``outer``:      only show the date labels on the outer (bottom) plots
+
+        The ``show_args`` dictionary allows several other formatting options, such as:
+
+            - ``tight``:    use tight layout for the figure (default false)
+            - ``maximize``: try to make the figure full screen (default false)
+            - ``outer``:    only show outermost (bottom) date labels (default false)
+
+        Date, show, and other arguments can also be passed directly, e.g. ``sim.plot(tight=True)``.
+
+        For additional style options, see ``cv.options.with_style()``, which is the
+        final refuge of arguments that are not picked up by any of the other parsers,
+        e.g. ``sim.plot(**{'ytick.direction':'in'})``.
 
         Returns:
             fig: Figure handle
 
-        **Example**::
+        **Examples**::
 
-            sim = cv.Sim()
-            sim.run()
-            sim.plot()
+            sim = cv.Sim().run()
+            sim.plot() # Default plotting
+            sim.plot('overview') # Show overview
+            sim.plot('overview', maximize=True, outer=True, rotation=15) # Make some modifications to make plots easier to see
+            sim.plot(style='seaborn-whitegrid') # Use a built-in Matplotlib style
+            sim.plot(style='simple', font='Rosario', dpi=200) # Use the other house style with several customizations
 
-        New in version 2.1.0: argument passing, date_args, and mpl_args
+        | New in version 2.1.0: argument passing, date_args, and mpl_args
+        | New in version 3.1.2: updated date arguments; mpl_args renamed style_args
         '''
         fig = cvplt.plot_sim(sim=self, *args, **kwargs)
         return fig

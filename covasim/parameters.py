@@ -8,7 +8,8 @@ from .settings import options as cvo # For setting global options
 from . import misc as cvm
 from . import defaults as cvd
 
-__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices']
+__all__ = ['make_pars', 'reset_layer_pars', 'get_prognoses', 'get_variant_choices', 'get_vaccine_choices',
+           'get_variant_pars', 'get_cross_immunity', 'get_vaccine_variant_pars', 'get_vaccine_dose_pars']
 
 
 def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
@@ -78,7 +79,6 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
 
     # Variant-specific disease transmission parameters. By default, these are set up for a single variant, but can all be modified for multiple variants
     pars['rel_beta']        = 1.0 # Relative transmissibility varies by variant
-    pars['rel_imm_variant'] = 1.0 # Relative own-immunity varies by variant
 
     # Duration parameters: time for disease progression
     pars['dur'] = {}
@@ -349,7 +349,27 @@ def get_vaccine_choices():
     return choices, mapping
 
 
-def get_variant_pars(default=False):
+def _get_from_pars(pars, default=False, key=None, defaultkey='default'):
+    ''' Helper function to get the right output from vaccine and variant functions '''
+
+    # If a string was provided, interpret it as a key and swap
+    if isinstance(default, str):
+        key, default = default, key
+
+    # Handle output
+    if key is not None:
+        try:
+            return pars[key]
+        except Exception as E:
+            errormsg = f'Key "{key}" not found; choices are: {sc.strjoin(pars.keys())}'
+            raise sc.KeyNotFoundError(errormsg) from E
+    elif default:
+        return pars[defaultkey]
+    else:
+        return pars
+
+
+def get_variant_pars(default=False, variant=None):
     '''
     Define the default parameters for the different variants
     '''
@@ -396,13 +416,10 @@ def get_variant_pars(default=False):
         )
     )
 
-    if default:
-        return pars['wild']
-    else:
-        return pars
+    return _get_from_pars(pars, default, key=variant, defaultkey='wild')
 
 
-def get_cross_immunity(default=False):
+def get_cross_immunity(default=False, variant=None):
     '''
     Get the cross immunity between each variant in a sim
     '''
@@ -449,13 +466,10 @@ def get_cross_immunity(default=False):
         ),
     )
 
-    if default:
-        return pars['wild']
-    else:
-        return pars
+    return _get_from_pars(pars, default, key=variant, defaultkey='wild')
 
 
-def get_vaccine_variant_pars(default=False):
+def get_vaccine_variant_pars(default=False, vaccine=None):
     '''
     Define the effectiveness of each vaccine against each variant
     '''
@@ -526,13 +540,10 @@ def get_vaccine_variant_pars(default=False):
         )
     )
 
-    if default:
-        return pars['default']
-    else:
-        return pars
+    return _get_from_pars(pars, default=default, key=vaccine)
 
 
-def get_vaccine_dose_pars(default=False):
+def get_vaccine_dose_pars(default=False, vaccine=None):
     '''
     Define the parameters for each vaccine
     '''
@@ -596,9 +607,4 @@ def get_vaccine_dose_pars(default=False):
         )
     )
 
-    if default:
-        return pars['default']
-    else:
-        return pars
-
-
+    return _get_from_pars(pars, default, key=vaccine)
