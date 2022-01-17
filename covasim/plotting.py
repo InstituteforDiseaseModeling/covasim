@@ -27,7 +27,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults = sc.objdict()
     defaults.fig     = sc.objdict(figsize=(10, 8), num=None)
     defaults.plot    = sc.objdict(lw=1.5, alpha= 0.7)
-    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=0, datastride=1)
+    defaults.scatter = sc.objdict(s=20, marker='s', alpha=0.7, zorder=1.75, datastride=1) # NB: 1.75 is above grid lines but below plots
     defaults.axis    = sc.objdict(left=0.10, bottom=0.08, right=0.95, top=0.95, wspace=0.30, hspace=0.30)
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
