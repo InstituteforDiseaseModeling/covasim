@@ -50,6 +50,7 @@ People and population
 ^^^^^^^^^^^^^^^^^^^^^
 - The ``cv.Sim()`` now has arguments ``popfile`` and ``people``, rather than ``popfile``, ``loadpop``, and ``savepop``. Populations are now automatically loaded if ``popfile`` is provided. You can now also pass a ``People`` object directly in.
 - ``People`` objects now have ``save()`` and ``load()`` methods to replace doing this from within the sim. It is now an error by default to save a partially-run ``People`` object.
+- To create a population inside a sim for later use, create it with ``sim = cv.Sim().init_people()``, then save it with ``sim.people.save('people.ppl')``, then load with ``cv.Sim(popfile='people.ppl')``.
 - Fixed a bug preventing SynthPops populations from being loaded.
 - Contacts can be added more easily and flexibly. For example, contacts created with ``cv.make_random_contacts()`` can now be added directly with ``people.add_contacts()``.
 - The methods ``people.to_people()`` and ``people.from_people()`` have been renamed ``people.to_list()`` and ``people.from_list()``.

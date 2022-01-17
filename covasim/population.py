@@ -128,7 +128,7 @@ def validate_popdict(popdict, pars, verbose=True):
             errormsg = f'Population not fully created: {isnan:,} NaNs found in {key}. This can be caused by calling cv.People() instead of cv.make_people().'
             raise ValueError(errormsg)
 
-    if 'contacts' not in popdict_keys and verbose:
+    if ('contacts' not in popdict_keys) and (not hasattr(popdict, 'contacts')) and verbose:
         warnmsg = 'No contacts found. Please remember to add contacts before running the simulation.'
         cvm.warn(warnmsg)
 

@@ -91,7 +91,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def initialize(self, reset=False, **kwargs):
+    def initialize(self, reset=False, init_infections=True, **kwargs):
         '''
         Perform all initializations on the sim.
 
@@ -105,6 +105,7 @@ class Sim(cvb.BaseSim):
 
         Args:
             reset (bool): whether or not to reset people even if they already exist
+            init_infections (bool): whether to initialize infections (default true so sim is ready, but can't reuse people then)
             kwargs (dict): passed to init_people
         '''
         self.t = 0  # The current time index
@@ -113,7 +114,7 @@ class Sim(cvb.BaseSim):
         self.init_variants() # Initialize the variants
         self.init_immunity() # initialize information about immunity (if use_waning=True)
         self.init_results() # After initializing the variant, create the results structure
-        self.init_people(reset=reset, init_infections=True, **kwargs) # Create all the people (the heaviest step)
+        self.init_people(reset=reset, init_infections=init_infections, **kwargs) # Create all the people (the heaviest step)
         self.init_interventions()  # Initialize the interventions...
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
@@ -384,9 +385,12 @@ class Sim(cvb.BaseSim):
         '''
         Create the people.
 
+        Use ``init_infections=False`` for creating a fresh People object for use
+        in future simulations
+
         Args:
             popdict         (any):  pre-generated people of various formats
-            init_infections (bool): whether to initialize infections
+            init_infections (bool): whether to initialize infections (default false when called directly)
             reset           (bool): whether to regenerate the people even if they already exist
             verbose         (int):  detail to print
             kwargs          (dict): passed to cv.make_people()
@@ -412,7 +416,7 @@ class Sim(cvb.BaseSim):
         if init_infections:
             self.init_infections(verbose=verbose)
 
-        return
+        return self
 
 
     def init_interventions(self):
