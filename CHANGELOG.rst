@@ -16,9 +16,10 @@ Coming soon
 
 These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
 
-- Additional nuance in how immunity is modeled (planned for v3.2)
-- Multi-region and geographical support (planned for v3.3)
-- Economics and costing analysis (planned for v3.4)
+- Default Omicron parameters (planned for v3.1.3)
+- Additional nuance in how immunity is modeled (planned for v3.1.4)
+- Multi-region and geographical support
+- Economics and costing analysis
 
 
 
@@ -46,16 +47,15 @@ Plotting
 - You can plot every nth data point by passing the ``datastride`` argument to ``sim.plot()``. 
 - You can do automatic figure layout using the ``tight`` and ``maximize`` arguments, e.g. ``sim.plot('overview', tight=True, maximize=True)``. (Note: maximize may not work on all systems.)
 
-People and population
-^^^^^^^^^^^^^^^^^^^^^
+People and populations
+^^^^^^^^^^^^^^^^^^^^^^
 - The ``cv.Sim()`` now has arguments ``popfile`` and ``people``, rather than ``popfile``, ``loadpop``, and ``savepop``. Populations are now automatically loaded if ``popfile`` is provided. You can now also pass a ``People`` object directly in.
 - ``People`` objects now have ``save()`` and ``load()`` methods to replace doing this from within the sim. It is now an error by default to save a partially-run ``People`` object.
 - To create a population inside a sim for later use, create it with ``sim = cv.Sim().init_people()``, then save it with ``sim.people.save('people.ppl')``, then load with ``cv.Sim(popfile='people.ppl')``.
-- Fixed a bug preventing SynthPops populations from being loaded.
 - Contacts can be added more easily and flexibly. For example, contacts created with ``cv.make_random_contacts()`` can now be added directly with ``people.add_contacts()``.
+- Previously, infections were always initialized as part of ``sim.init_people()``, but now it is a separate method (``sim.init_infections()``).
 - The methods ``people.to_people()`` and ``people.from_people()`` have been renamed ``people.to_list()`` and ``people.from_list()``.
-- There are several additional
-- Parameter validation for ``People`` objects has been improved.
+- Fixed a bug preventing SynthPops populations from being loaded. (Thanks to Carter Merenstein for finding this bug.)
 
 Other changes
 ^^^^^^^^^^^^^
