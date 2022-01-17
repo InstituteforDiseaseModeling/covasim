@@ -30,6 +30,12 @@ Latest versions (3.1.x)
 Version 3.1.2 (2021-01-16)
 --------------------------
 
+Highlights
+^^^^^^^^^^
+- **New styles**: Plots have gotten a complete revamp.
+- **More options**: There is now many more options to control plot styles, warnings, etc.
+- **Populations**: It is now easier to work with pre-generated populations and contacts.
+
 Plotting
 ^^^^^^^^
 - Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts ([Mulish](https://fonts.google.com/specimen/Mulish) and [Rosario](https://fonts.google.com/specimen/Rosario)), finer control of style options, and better defaults for Jupyter.
@@ -42,21 +48,26 @@ Plotting
 
 People and population
 ^^^^^^^^^^^^^^^^^^^^^
-- ``People`` objects now have ``save()`` and ``load()`` methods that do validation. It is now an error by default to save a partially-run ``People`` object.
+- The ``cv.Sim()`` now has arguments ``popfile`` and ``people``, rather than ``popfile``, ``loadpop``, and ``savepop``. Populations are now automatically loaded if ``popfile`` is provided. You can now also pass a ``People`` object directly in.
+- ``People`` objects now have ``save()`` and ``load()`` methods to replace doing this from within the sim. It is now an error by default to save a partially-run ``People`` object.
+- Fixed a bug preventing SynthPops populations from being loaded.
 - Contacts can be added more easily and flexibly. For example, contacts created with ``cv.make_random_contacts()`` can now be added directly with ``people.add_contacts()``.
 - The methods ``people.to_people()`` and ``people.from_people()`` have been renamed ``people.to_list()`` and ``people.from_list()``.
+- There are several additional
 - Parameter validation for ``People`` objects has been improved.
 
 Other changes
 ^^^^^^^^^^^^^
-- Fixed a bug preventing SynthPops populations from being loaded.
 - Added ``cv.help()``, which will search docstrings (or full source code) for matches to search phrases.
 - Printed warning messages have been converted to actual warnings: use ``cv.options(warnings='print')`` to restore previous behavior.
 - Parameters for individual variants can now be retrieved more easily, e.g. ``cv.get_variant_pars(variant='delta')``.
+- MultiSim objects now automatically add labels to any sims that are missing labels.
 - When old objects are loaded, their versions numbers are no longer changed, allowing for multiple migrations to occur.
 
 Regression information
 ^^^^^^^^^^^^^^^^^^^^^^
+- In ``cv.make_people()``, the arguments ``save_pop`` and ``popfile`` have been removed; call ``people.save()`` on the generated population instead.
+- In ``cv.make_synthpop()``, the argument ``population`` has been renamed ``popdict``, and will accept any SynthPops output (``popdict``, ``Pop``, or ``People``).
 - Calls to ``people.to_people()`` and ``people.from_people()`` should be replaced with ``people.to_list()`` and ``people.from_list()``, respectively.
 - Arguments ``font_family``, ``font_size``, and ``mpl_args`` to plots should be replaced with ``font``, ``fontsize``, and ``style_args`` respectively.
 - ``cv.date_formatter()`` has been removed; please use ``sc.dateformatter()`` (for a date x-axis) or ``sc.datenumformatter()`` (for a numeric axis that you want to format as dates) instead.

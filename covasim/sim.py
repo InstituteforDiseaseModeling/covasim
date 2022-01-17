@@ -93,10 +93,15 @@ class Sim(cvb.BaseSim):
 
     def initialize(self, reset=False, **kwargs):
         '''
-        Perform all initializations, including validating the parameters, setting
-        the random number seed, creating the results structure, initializing the
-        people, validating the layer parameters (which requires the people),
-        and initializing the interventions.
+        Perform all initializations on the sim.
+
+        This includes validating the parameters, setting the random number seed,
+        creating the results structure, initializing the people, validating the
+        layer parameters (which requires the people), and initializing the interventions.
+
+        Note: to create a population to save for later use, use ``init_infections=False``.
+        This will then create a fresh People object which other sims can finish
+        initializing.
 
         Args:
             reset (bool): whether or not to reset people even if they already exist
@@ -375,7 +380,7 @@ class Sim(cvb.BaseSim):
         return
 
 
-    def init_people(self, popdict=None, init_infections=True, reset=False, verbose=None, **kwargs):
+    def init_people(self, popdict=None, reset=False, verbose=None, **kwargs):
         '''
         Create the people.
 
@@ -404,35 +409,6 @@ class Sim(cvb.BaseSim):
         self.people = cvpop.make_people(self, reset=reset, verbose=verbose, **kwargs)
         self.people.initialize(sim_pars=self.pars) # Fully initialize the people
         self.reset_layer_pars(force=False) # Ensure that layer keys match the loaded population
-        if init_infections:
-            self.init_infections()
-
-        return
-
-
-    def init_infections(self, force=False):
-        '''
-        Initialize prior immunity and seed infections.
-
-        Args:
-            force (bool): initialize prior infections even if already initialized
-        '''
-
-        # If anyone is non-naive, don't re-initialize
-        if self.people.count_not('naive') == 0 or force: # Everyone is naive
-
-            # Handle anyone who isn't susceptible
-            if self['frac_susceptible'] < 1:
-                inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
-                self.people.make_nonnaive(inds=inds)
-
-            # Create the seed infections
-            if self['pop_infected']:
-                inds = cvu.choose(self['pop_size'], self['pop_infected'])
-                self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
-
-        elif self['verbose']:
-            print(f'People already initialized with {self.people.count_not("naive")} people non-naive and {self.people.count("exposed")} exposed; not reinitializing')
 
         return
 
@@ -520,6 +496,33 @@ class Sim(cvb.BaseSim):
         return
 
 
+    def init_infections(self, force=False):
+        '''
+        Initialize prior immunity and seed infections.
+
+        Args:
+            force (bool): initialize prior infections even if already initialized
+        '''
+
+        # If anyone is non-naive, don't re-initialize
+        if self.people.count_not('naive') == 0 or force: # Everyone is naive
+
+            # Handle anyone who isn't susceptible
+            if self['frac_susceptible'] < 1:
+                inds = cvu.choose(self['pop_size'], np.round((1-self['frac_susceptible'])*self['pop_size']))
+                self.people.make_nonnaive(inds=inds)
+
+            # Create the seed infections
+            if self['pop_infected']:
+                inds = cvu.choose(self['pop_size'], self['pop_infected'])
+                self.people.infect(inds=inds, layer='seed_infection') # Not counted by results since flows are re-initialized during the step
+
+        elif self['verbose']:
+            print(f'People already initialized with {self.people.count_not("naive")} people non-naive and {self.people.count("exposed")} exposed; not reinitializing')
+
+        return
+
+
     def rescale(self):
         ''' Dynamically rescale the population -- used during step() '''
         if self['rescale']:
@@ -554,6 +557,10 @@ class Sim(cvb.BaseSim):
             raise AlreadyRunError('Simulation already complete (call sim.initialize() to re-run)')
 
         t = self.t
+
+        # If it's the first timestep, infect people
+        if t == 0:
+            self.init_infections()
 
         # Perform initial operations
         self.rescale() # Check if we need to rescale
