@@ -34,12 +34,12 @@ Version 3.1.2 (2021-01-16)
 Highlights
 ^^^^^^^^^^
 - **New styles**: Plots have gotten a complete revamp.
-- **More options**: There is now many more options to control plot styles, warnings, etc.
+- **More options**: There are now many more options to control plot styles, warnings, etc.
 - **Populations**: It is now easier to work with pre-generated populations and contacts.
 
 Plotting
 ^^^^^^^^
-- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts (`Mulish <https://fonts.google.com/specimen/Mulish>`_) and `Rosario <https://fonts.google.com/specimen/Rosario>`_), finer control of style options, and better defaults for Jupyter.
+- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts (`Mulish <https://fonts.google.com/specimen/Mulish>`_ and `Rosario <https://fonts.google.com/specimen/Rosario>`_), finer control of style options, and better defaults for Jupyter.
 - Changing styles is now much easier, e.g. ``sim.plot(style='seaborn-whitegrid')`` will use the named Matplotlib style. See ``cv.options.help()`` for more information.
 - Covasim now uses Sciris' default date formatter, which is similar to Plotly's. You can change this using the ``dateformat`` argument, e.g. ``sim.plot(dateformat='sciris')`` vs. ``sim.plot(dateformat='concise')``.
 - ``cv.savefig()`` can now save multiple figures simultaneously via the (new) ``fig`` argument.
