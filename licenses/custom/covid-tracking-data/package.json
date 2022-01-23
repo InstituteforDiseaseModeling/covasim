@@ -1,7 +1,0 @@
-{
-  "name": "covid-tracking-data",
-  "version": "1.0.0",
-  "url": "https://covidtracking.com",
-  "repository": "https://github.com/COVID19Tracking/covid-tracking-data",
-  "license": "Apache-2.0"
-}

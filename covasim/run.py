@@ -7,11 +7,11 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 from collections import defaultdict
-from . import misc as cvm
 from . import defaults as cvd
+from . import misc as cvm
 from . import base as cvb
 from . import sim as cvs
-from . import plotting as cvplt
+from . import plotting as cvpl
 from .settings import options as cvo
 
 
@@ -161,6 +161,11 @@ class MultiSim(cvb.FlexPretty):
             sims = self.base_sim
         else:
             sims = self.sims
+
+            # Handle missing labels
+            for s,sim in enumerate(sims):
+                if sim.label is None:
+                    sim.label = f'Sim {s}'
 
         # Run
         kwargs = sc.mergedicts(self.run_args, kwargs)
@@ -513,8 +518,8 @@ class MultiSim(cvb.FlexPretty):
 
             # Plot
             for s,ind in enumerate(inds):
-                sim = self.sims[ind]
 
+                sim = self.sims[ind]
                 final_plot = (s == n_sims-1) # Check if this is the final plot
 
                 # Handle the legend and labels
@@ -542,9 +547,9 @@ class MultiSim(cvb.FlexPretty):
 
                 # Actually plot
                 merged_plot_args = sc.mergedicts({'alpha':alphas[s]}, plot_args) # Need a new variable to avoid overwriting
-                fig = sim.plot(fig=fig, to_plot=to_plot, colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
+                fig = sim.plot(fig=fig, to_plot=('scens', to_plot), colors=colors[s], labels=merged_labels, plot_args=merged_plot_args, show_args=merged_show_args, **kwargs)
 
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_result(self, key, colors=None, labels=None, *args, **kwargs):
@@ -564,7 +569,7 @@ class MultiSim(cvb.FlexPretty):
                 else:
                     kwargs['setylim'] = False
                 fig = sim.plot_result(key=key, fig=fig, color=colors[s], label=labels[s], *args, **kwargs)
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_compare(self, t=-1, sim_inds=None, log_scale=True, **kwargs):
@@ -582,7 +587,7 @@ class MultiSim(cvb.FlexPretty):
             fig: Figure handle
         '''
         df = self.compare(t=t, sim_inds=sim_inds, output=True)
-        cvplt.plot_compare(df, log_scale=log_scale, **kwargs)
+        return cvpl.plot_compare(df, log_scale=log_scale, **kwargs)
 
 
     def save(self, filename=None, keep_people=False, **kwargs):
@@ -703,7 +708,7 @@ class MultiSim(cvb.FlexPretty):
 
         Args:
             inds (list): a list of lists of indices, with each list turned into a MultiSim
-            chunks (int or list): if an int, split the MultiSim into chunks of that length; if a list return chunks of that many sims
+            chunks (int or list): if an int, split the MultiSim into that many chunks; if a list return chunks of that many sims
 
         Returns:
             A list of MultiSim objects
@@ -720,7 +725,7 @@ class MultiSim(cvb.FlexPretty):
             msim.run()
             m1, m2 = msim.split(inds=[[0,2,4], [1,3,5]])
             mlist1 = msim.split(chunks=[2,4]) # Equivalent to inds=[[0,1], [2,3,4,5]]
-            mlist2 = msim.split(chunks=3) # Equivalent to inds=[[0,1,2], [3,4,5]]
+            mlist2 = msim.split(chunks=2) # Equivalent to inds=[[0,1,2], [3,4,5]]
         '''
 
         # Process indices and chunks
@@ -912,8 +917,9 @@ class Scenarios(cvb.ParsObj):
             self.base_sim.init_results()
 
         # Copy quantities from the base sim to the main object
-        self.npts = self.base_sim.npts
-        self.tvec = self.base_sim.tvec
+        self.npts       = self.base_sim.npts
+        self.tvec       = self.base_sim.tvec
+        self.datevec    = self.base_sim.datevec
         self['verbose'] = self.base_sim['verbose']
 
         # Create the results object; order is: results key, scenario, best/low/high
@@ -1097,8 +1103,7 @@ class Scenarios(cvb.ParsObj):
             scens.run()
             scens.plot()
         '''
-        fig = cvplt.plot_scens(scens=self, *args, **kwargs)
-        return fig
+        return cvpl.plot_scens(scens=self, *args, **kwargs)
 
 
     def to_json(self, filename=None, tostring=True, indent=2, verbose=False, *args, **kwargs):
@@ -1189,8 +1194,8 @@ class Scenarios(cvb.ParsObj):
         if keep_sims or keep_people:
             if keep_people:
                 if not obj._kept_people:
-                    print('Warning: there are no people because they were not saved during the run. '
-                          'If you want people, please rerun with keep_people=True.')
+                    warnmsg = 'Warning: there are no people because they were not saved during the run. If you want people, please rerun with keep_people=True.'
+                    cvm.warn(warnmsg)
                 obj.sims = sims # Just restore the object in full
                 print('Note: saving people, which may produce a large file!')
             else:
@@ -1353,7 +1358,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
         verbose = sim['verbose']
 
     if not sim.label:
-        sim.label = f'Sim {ind:d}'
+        sim.label = f'Sim {ind}'
 
     if reseed:
         sim['rand_seed'] += ind # Reset the seed, otherwise no point of parallel runs
@@ -1398,7 +1403,7 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -1406,7 +1411,7 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
     Args:
         sim         (Sim)   : the sim instance to be run, or a list of sims.
         n_runs      (int)   : the number of parallel runs
-        reseed      (bool)  : whether or not to generate a fresh seed for each run
+        reseed      (bool)  : whether or not to generate a fresh seed for each run (default: true for single, false for list of sims)
         noise       (float) : the amount of noise to add to each run
         noisepar    (str)   : the name of the parameter to add noise to
         iterpars    (dict)  : any other parameters to iterate over the runs; see sc.parallelize() for syntax
@@ -1449,13 +1454,15 @@ def multi_run(sim, n_runs=4, reseed=True, noise=0.0, noisepar=None, iterpars=Non
                 n_runs = new_n
 
     # Run the sims
-    if isinstance(sim, cvs.Sim): # Normal case: one sim
-        iterkwargs = {'ind':np.arange(n_runs)}
+    if isinstance(sim, cvs.Sim): # One sim
+        if reseed is None: reseed = True
+        iterkwargs = dict(ind=np.arange(n_runs))
         iterkwargs.update(iterpars)
         kwargs = dict(sim=sim, reseed=reseed, noise=noise, noisepar=noisepar, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     elif isinstance(sim, list): # List of sims
-        iterkwargs = {'sim':sim}
-        kwargs = dict(verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
+        if reseed is None: reseed = False
+        iterkwargs = dict(sim=sim, ind=np.arange(len(sim)))
+        kwargs = dict(reseed=reseed, verbose=verbose, keep_people=keep_people, sim_args=sim_args, run_args=run_args, do_run=do_run)
     else:
         errormsg = f'Must be Sim object or list, not {type(sim)}'
         raise TypeError(errormsg)

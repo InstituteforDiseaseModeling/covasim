@@ -10,9 +10,10 @@ import pylab as pl
 import sciris as sc
 import inspect
 import datetime as dt
+from . import misc as cvm
 from . import utils as cvu
-from . import defaults as cvd
 from . import base as cvb
+from . import defaults as cvd
 from . import parameters as cvpar
 from . import immunity as cvi
 from collections import defaultdict
@@ -385,7 +386,8 @@ class Intervention:
                             label_shown = True
                         else:
                             label = None
-                        ax.axvline(day, label=label, **line_args)
+                        date = sc.date(sim.date(day))
+                        ax.axvline(date, label=label, **line_args)
         return
 
 
@@ -662,7 +664,8 @@ class clip_edges(Intervention):
                         to_move = i_layer.pop_inds(inds)
                         s_layer.append(to_move)
                 else: # pragma: no cover
-                    print(f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]')
+                    warnmsg = f'Warning: clip_edges() was applied to layer "{lkey}", but no edges were found; please check sim.people.contacts["{lkey}"]'
+                    cvm.warn(warnmsg)
         return
 
 
@@ -1267,7 +1270,6 @@ class BaseVaccination(Intervention):
     Some quantities are tracked during execution for reporting after running the simulation.
     These are:
 
-        - ``vaccinated``:        whether or not a person is vaccinated
         - ``doses``:             the number of vaccine doses per person
         - ``vaccination_dates``: integer; dates of all doses for this vaccine
 
@@ -1625,6 +1627,7 @@ class vaccinate_prob(BaseVaccination):
 
             # Vaccinate people with their first dose
             for _ in find_day(self.days, sim.t, interv=self, sim=sim):
+
                 vacc_probs = np.zeros(sim['pop_size'])
 
                 # Find eligible people
@@ -2008,24 +2011,24 @@ class historical_vaccinate_prob(BaseVaccination):
 
 
 class historical_wave(Intervention):
+    '''
+    Imprint a historical (pre t=0) wave of infections in the population NAbs
+
+    Args:
+        days_prior (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
+        prob       (float/list)   : probability of infection during the wave
+        dist       (dict/list)    : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
+        subtarget  (dict/list)    : subtarget intervention to people with particular indices  (see test_num() for details)
+        variants   (str/list)     : name of variant associated with the wave
+        kwargs     (dict)         : passed to Intervention()
+
+    **Example**::
+        cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
+
+    New in version 3.1.0.
+    '''
 
     def __init__(self, days_prior, prob, dist=None, subtarget=None, variant=None, **kwargs):
-        '''
-        Imprint a historical (pre t=0) wave of infections in the population NAbs
-
-        Args:
-            days_prior (int/str/list) : offset relative to t=0 for the wave (median/par1 value) or median date if a string like "2021-11-15"
-            prob       (float/list)   : probability of infection during the wave
-            dist       (dict/list)    : passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)
-            subtarget  (dict/list)    : subtarget intervention to people with particular indices  (see test_num() for details)
-            variants   (str/list)     : name of variant associated with the wave
-            kwargs     (dict)         : passed to Intervention()
-
-        **Example**::
-            cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
-
-        New in version 3.1.0.
-        '''
         super().__init__(**kwargs)
         self.days_prior = sc.dcp(days_prior)
         self.dist = {'dist': 'normal', 'par1': 0, 'par2': 5*7/2.355} if dist is None else sc.dcp(dist) # default is FWHM 5 weeks
@@ -2101,8 +2104,8 @@ class historical_wave(Intervention):
             # require that all offsets are before the start of the sim
             filtered_wave_inds = cvu.true(this_inf_offset_days <= 0)
             if len(filtered_wave_inds) == 0: # pragma: no cover
-                warnmsg = f'WARNING: Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
-                print(warnmsg)
+                warnmsg = f'Wave with days_prior of {days_prior} and prob of {self.prob} did not result in any historical infections - skipping this wave'
+                cvm.warn(warnmsg)
                 continue
 
             wave_inds = wave_inds + this_wave_inds[filtered_wave_inds].tolist()
@@ -2110,8 +2113,8 @@ class historical_wave(Intervention):
             wave_id += len(filtered_wave_inds)*[wave]
 
         if len(wave_id) == 0: # pragma: no cover
-            warnmsg = 'WARNING: No waves resulted in any infections prior to the start of the simulation'
-            print(warnmsg)
+            warnmsg = 'No waves resulted in any infections prior to the start of the simulation'
+            cvm.warn(warnmsg)
             return
 
         wave_id = np.array(wave_id)

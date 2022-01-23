@@ -11,9 +11,9 @@ import sciris as sc
 from . import utils as cvu
 from . import misc as cvm
 from . import interventions as cvi
-from . import settings as cvset
 from . import plotting as cvpl
 from . import run as cvr
+from .settings import options as cvo # For setting global options
 
 
 __all__ = ['Analyzer', 'snapshot', 'age_histogram', 'daily_age_stats', 'daily_stats', 'nab_histogram',
@@ -211,7 +211,7 @@ class snapshot(Analyzer):
         ''' Retrieve a snapshot from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = sc.day(key, start_day=self.start_day)
+        day  = sc.day(key, start_date=self.start_day)
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.snapshots:
             snapshot = self.snapshots[date]
@@ -334,7 +334,7 @@ class age_histogram(Analyzer):
         ''' Retrieve a specific histogram from the given key (int, str, or date) '''
         if key is None:
             key = self.days[0]
-        day  = sc.day(key, start_day=self.start_day)
+        day  = sc.day(key, start_date=self.start_day)
         date = sc.date(day, start_date=self.start_day, as_date=False)
         if date in self.hists:
             hists = self.hists[date]
@@ -367,7 +367,7 @@ class age_histogram(Analyzer):
         return
 
 
-    def plot(self, windows=False, width=0.8, color='#F8A493', fig_args=None, axis_args=None, data_args=None):
+    def plot(self, windows=False, width=0.8, color='#F8A493', fig_args=None, axis_args=None, data_args=None, **kwargs):
         '''
         Simple method for plotting the histograms.
 
@@ -378,6 +378,7 @@ class age_histogram(Analyzer):
             fig_args (dict): passed to pl.figure()
             axis_args (dict): passed to pl.subplots_adjust()
             data_args (dict): 'width', 'color', and 'offset' arguments for the data
+            kwargs (dict): passed to ``cv.options.with_style()``; see that function for choices
         '''
 
         # Handle inputs
@@ -402,25 +403,26 @@ class age_histogram(Analyzer):
             raise ValueError(errormsg)
 
         # Make the figure(s)
-        for date,hists in histsdict.items():
-            figs += [pl.figure(**fig_args)]
-            pl.subplots_adjust(**axis_args)
-            bins = hists['bins']
-            barwidth = width*(bins[1] - bins[0]) # Assume uniform width
-            for s,state in enumerate(self.states):
-                ax = pl.subplot(n_rows, n_cols, s+1)
-                ax.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
-                if self.data and state in self.data:
-                    data = self.data[state]
-                    ax.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
-                ax.set_xlabel('Age')
-                ax.set_ylabel('Count')
-                ax.set_xticks(ticks=bins)
-                ax.legend()
-                preposition = 'from' if windows else 'by'
-                ax.set_title(f'Number of people {state} {preposition} {date}')
+        with cvo.with_style(**kwargs):
+            for date,hists in histsdict.items():
+                figs += [pl.figure(**fig_args)]
+                pl.subplots_adjust(**axis_args)
+                bins = hists['bins']
+                barwidth = width*(bins[1] - bins[0]) # Assume uniform width
+                for s,state in enumerate(self.states):
+                    ax = pl.subplot(n_rows, n_cols, s+1)
+                    ax.bar(bins, hists[state], width=barwidth, facecolor=color, label=f'Number {state}')
+                    if self.data and state in self.data:
+                        data = self.data[state]
+                        ax.bar(bins+d_args.offset, data, width=barwidth*d_args.width, facecolor=d_args.color, label='Data')
+                    ax.set_xlabel('Age')
+                    ax.set_ylabel('Count')
+                    ax.set_xticks(ticks=bins)
+                    ax.legend()
+                    preposition = 'from' if windows else 'by'
+                    ax.set_title(f'Number of people {state} {preposition} {date}')
 
-        return figs
+        return cvpl.handle_show_return(figs=figs)
 
 
 class daily_age_stats(Analyzer):
@@ -518,19 +520,21 @@ class daily_age_stats(Analyzer):
         return df
 
 
-    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None, dateformat='%b-%d', width=0.8, color='#F8A493', data_args=None):
+    def plot(self, total=False, do_show=None, fig_args=None, axis_args=None, plot_args=None,
+             dateformat=None, width=0.8, color='#F8A493', **kwargs):
         '''
         Plot the results.
 
         Args:
-            total     (bool):  whether to plot the total histograms rather than time series
-            do_show   (bool):  whether to show the plot
-            fig_args  (dict):  passed to pl.figure()
-            axis_args (dict):  passed to pl.subplots_adjust()
-            plot_args (dict):  passed to pl.plot()
-            dateformat (str):  the format to use for the x-axes (only used for time series)
+            total     (bool): whether to plot the total histograms rather than time series
+            do_show   (bool): whether to show the plot
+            fig_args  (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
+            plot_args (dict): passed to pl.plot()
+            dateformat (str): the format to use for the x-axes (only used for time series)
             width    (float): width of bars (only used for histograms)
             color  (hex/rgb): the color of the bars (only used for histograms)
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
         if self.df is None:
             self.to_df()
@@ -541,44 +545,43 @@ class daily_age_stats(Analyzer):
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
 
-        nplots = len(self.states)
-        nrows, ncols = sc.get_rows_cols(nplots)
-        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
-        pl.subplots_adjust(**axis_args)
+        with cvo.with_style(**kwargs):
+            nplots = len(self.states)
+            nrows, ncols = sc.get_rows_cols(nplots)
+            fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
+            pl.subplots_adjust(**axis_args)
 
-        for count,state in enumerate(self.states):
-            row,col = np.unravel_index(count, (nrows,ncols))
-            ax = axs[row,col]
-            ax.set_title(state.title())
-            ages = self.df.age.unique()
+            for count,state in enumerate(self.states):
+                row,col = np.unravel_index(count, (nrows,ncols))
+                ax = axs[row,col]
+                ax.set_title(state.title())
+                ages = self.df.age.unique()
 
-            # Plot time series
-            if not total:
-                colors = sc.vectocolor(len(ages))
-                has_data = False
-                for a,age in enumerate(ages):
-                    label = f'Age {age}'
-                    df = self.df[self.df.age==age]
-                    ax.plot(df.day, df[f'new_{state}'], c=colors[a], label=label)
-                    has_data = has_data or len(df)
-                if has_data:
-                    ax.legend()
-                    ax.set_xlabel('Day')
+                # Plot time series
+                if not total:
+                    colors = sc.vectocolor(len(ages))
+                    has_data = False
+                    for a,age in enumerate(ages):
+                        label = f'Age {age}'
+                        df = self.df[self.df.age==age]
+                        ax.plot(df.date, df[f'new_{state}'], c=colors[a], label=label)
+                        has_data = has_data or len(df)
+                    if has_data:
+                        ax.legend()
+                        ax.set_xlabel('Date')
+                        ax.set_ylabel('Count')
+                        sc.dateformatter(dateformat=dateformat, ax=ax)
+
+                # Plot total histograms
+                else:
+                    df = self.total_df
+                    barwidth = width*(df.age[1] - df.age[0]) # Assume uniform width
+                    ax.bar(df.age, df[f'cum_{state}'], width=barwidth, facecolor=color)
+                    ax.set_xlabel('Age')
                     ax.set_ylabel('Count')
-                    cvpl.date_formatter(start_day=self.start_day, dateformat=dateformat, ax=ax)
+                    ax.set_xticks(ticks=df.age)
 
-            # Plot total histograms
-            else:
-                df = self.total_df
-                barwidth = width*(df.age[1] - df.age[0]) # Assume uniform width
-                ax.bar(df.age, df[f'cum_{state}'], width=barwidth, facecolor=color)
-                ax.set_xlabel('Age')
-                ax.set_ylabel('Count')
-                ax.set_xticks(ticks=df.age)
-
-        cvset.handle_show(do_show) # Whether or not to call pl.show()
-
-        return fig
+        return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
 
 class daily_stats(Analyzer):
@@ -857,15 +860,16 @@ class daily_stats(Analyzer):
         return data
 
 
-    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None, **kwargs):
         '''
         Plot the daily statistics recorded. Some overlap with e.g. ``sim.plot(to_plot='overview')``.
 
         Args:
-            fig_args  (dict):  passed to pl.figure()
-            axis_args (dict):  passed to pl.subplots_adjust()
-            plot_args (dict):  passed to pl.plot()
-            do_show   (bool):  whether to show the plot
+            fig_args  (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
+            plot_args (dict): passed to pl.plot()
+            do_show   (bool): whether to show the plot
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
@@ -876,24 +880,23 @@ class daily_stats(Analyzer):
         data = self.transpose()
 
         # Do the plotting
-        nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
-        nrows,ncols = sc.get_rows_cols(nplots)
-        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
-        pl.subplots_adjust(**axis_args)
+        with cvo.with_style(**kwargs):
+            nplots = sum([len(data[k].keys()) for k in data.keys()]) # Figure out how many plots there are
+            nrows,ncols = sc.get_rows_cols(nplots)
+            fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **fig_args)
+            pl.subplots_adjust(**axis_args)
 
-        count = -1
-        for k1 in data.keys():
-            for k2 in data[k1].keys():
-                count += 1
-                row,col = np.unravel_index(count, (nrows,ncols))
-                ax = axs[row,col]
-                y = data[k1][k2]
-                ax.plot(y, **plot_args)
-                ax.set_title(f'{k1}: {k2}')
+            count = -1
+            for k1 in data.keys():
+                for k2 in data[k1].keys():
+                    count += 1
+                    row,col = np.unravel_index(count, (nrows,ncols))
+                    ax = axs[row,col]
+                    y = data[k1][k2]
+                    ax.plot(y, **plot_args)
+                    ax.set_title(f'{k1}: {k2}')
 
-        cvset.handle_show(do_show) # Whether or not to call pl.show()
-
-        return fig
+        return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
 
 class nab_histogram(Analyzer):
@@ -957,25 +960,32 @@ class nab_histogram(Analyzer):
             self.hists[date]['m'] = np.mean(log_nabs)   # keep the mean
 
 
-    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None):
+    def plot(self, fig_args=None, axis_args=None, plot_args=None, do_show=None, **kwargs):
         '''
         Plot the results
+
+        Args:
+            fig_args  (dict): passed to pl.figure()
+            axis_args (dict): passed to pl.subplots_adjust()
+            plot_args (dict): passed to pl.plot()
+            do_show   (bool): whether to show the plot
+            kwargs    (dict): passed to ``cv.options.with_style()``
         '''
 
         fig_args  = sc.mergedicts(dict(figsize=(9,5)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.10, right=0.95, bottom=0.10, top=0.95, wspace=0.25, hspace=0.4), axis_args)
         plot_args = sc.mergedicts(dict(lw=2), plot_args)
 
-        fig, axs = pl.subplots(nrows=1, ncols=1, **fig_args)
-        pl.subplots_adjust(**axis_args)
-        for date, hist in self.hists.items():
-            axs.stairs(hist['n'], edges=self.edges, label=date, **plot_args)
-        axs.set_xlabel('Log10(NAb)')
-        axs.set_ylabel('Count')
-        axs.legend()
-        cvset.handle_show(do_show) # Whether or not to call pl.show()
+        with cvo.with_style(**kwargs):
+            fig, axs = pl.subplots(nrows=1, ncols=1, **fig_args)
+            pl.subplots_adjust(**axis_args)
+            for date, hist in self.hists.items():
+                axs.stairs(hist['n'], edges=self.edges, label=date, **plot_args)
+            axs.set_xlabel('Log10(NAb)')
+            axs.set_ylabel('Count')
+            axs.legend()
 
-        return fig
+        return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
 
 class Fit(Analyzer):
@@ -1027,17 +1037,15 @@ class Fit(Analyzer):
             if self.die:
                 raise RuntimeError(errormsg)
             else:
-                print('Warning: ', errormsg)
+                cvm.warn(errormsg)
                 sim.data = pd.DataFrame() # Use an empty dataframe
         self.data = sim.data
 
         # Copy sim results
         if not sim.results_ready: # pragma: no cover
             errormsg = 'Model fit cannot be calculated until results are run'
-            if self.die:
-                raise RuntimeError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise RuntimeError(errormsg)
+            else:        cvm.warn(errormsg)
         self.sim_results = sc.objdict()
         for key in sim.result_keys() + ['t', 'date']:
             self.sim_results[key] = sim.results[key]
@@ -1084,18 +1092,14 @@ class Fit(Analyzer):
             self.keys = [key for key in sim_keys if key in intersection] # Maintain key order
             if not len(self.keys): # pragma: no cover
                 errormsg = f'No matches found between simulation result keys:\n{sc.strjoin(sim_keys)}\n\nand data columns:\n{sc.strjoin(data_cols)}'
-                if self.die:
-                    raise sc.KeyNotFoundError(errormsg)
-                else:
-                    print('Warning: ', errormsg)
+                if self.die: raise sc.KeyNotFoundError(errormsg)
+                else:        cvm.warn(errormsg)
         mismatches = [key for key in self.keys if key not in data_cols]
         if len(mismatches): # pragma: no cover
             mismatchstr = ', '.join(mismatches)
             errormsg = f'The following requested key(s) were not found in the data: {mismatchstr}'
-            if self.die:
-                raise sc.KeyNotFoundError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise sc.KeyNotFoundError(errormsg)
+            else:        cvm.warn(errormsg)
 
         for key in self.keys: # For keys present in both the results and in the data
             self.inds.sim[key]  = []
@@ -1160,10 +1164,8 @@ class Fit(Analyzer):
 
         if matches == 0:
             errormsg = 'No paired data points were found between the supplied data and the simulation; please check the dates for each'
-            if self.die:
-                raise ValueError(errormsg)
-            else:
-                print('Warning: ', errormsg)
+            if self.die: raise ValueError(errormsg)
+            else:        cvm.warn(errormsg)
 
         return
 
@@ -1220,7 +1222,8 @@ class Fit(Analyzer):
         return self.mismatch
 
 
-    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None, date_args=None, do_show=None, fig=None):
+    def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None,
+             date_args=None, do_show=None, fig=None, **kwargs):
         '''
         Plot the fit of the model to the data. For each result, plot the data
         and the model; the difference; and the loss (weighted difference). Also
@@ -1229,12 +1232,13 @@ class Fit(Analyzer):
         Args:
             keys      (list):  which keys to plot (default, all)
             width     (float): bar width
-            fig_args  (dict):  passed to pl.figure()
-            axis_args (dict):  passed to pl.subplots_adjust()
-            plot_args (dict):  passed to pl.plot()
-            date_args (dict):  passed to cv.plotting.reset_ticks() (handle date format, rotation, etc.)
+            fig_args  (dict):  passed to ``pl.figure()``
+            axis_args (dict):  passed to ``pl.subplots_adjust()``
+            plot_args (dict):  passed to ``pl.plot()``
+            date_args (dict):  passed to ``cv.plotting.reset_ticks()`` (handle date format, rotation, etc.)
             do_show   (bool):  whether to show the plot
             fig       (fig):   if supplied, use this figure to plot in
+            kwargs    (dict):  passed to ``cv.options.with_style()``
 
         Returns:
             Figure object
@@ -1243,7 +1247,7 @@ class Fit(Analyzer):
         fig_args  = sc.mergedicts(dict(figsize=(18,11)), fig_args)
         axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
         plot_args = sc.mergedicts(dict(lw=2, alpha=0.5, marker='o'), plot_args)
-        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, interval=None, rotation=None, start_day=None, end_day=None), date_args)
+        date_args = sc.mergedicts(sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None), date_args)
 
         if keys is None:
             keys = self.keys + self.custom_keys
@@ -1253,80 +1257,80 @@ class Fit(Analyzer):
         colors = sc.gridcolors(n_keys)
         n_rows = 4
 
-        if fig is None:
-            fig = pl.figure(**fig_args)
-        pl.subplots_adjust(**axis_args)
-        main_ax1 = pl.subplot(n_rows, 2, 1)
-        main_ax2 = pl.subplot(n_rows, 2, 2)
-        bottom = sc.objdict() # Keep track of the bottoms for plotting cumulative
-        bottom.daily = np.zeros(self.sim_npts)
-        bottom.cumul = np.zeros(self.sim_npts)
-        for k,key in enumerate(keys):
-            if key in self.keys: # It's a time series, plot with days and dates
-                days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
-                daylabel  = 'Date'
-            else: #It's custom, we don't know what it is
-                days      = np.arange(len(self.losses[key])) # Just use indices
-                daylabel  = 'Index'
+        # Plot
+        with cvo.with_style(**kwargs):
+            if fig is None:
+                fig = pl.figure(**fig_args)
+            pl.subplots_adjust(**axis_args)
+            main_ax1 = pl.subplot(n_rows, 2, 1)
+            main_ax2 = pl.subplot(n_rows, 2, 2)
+            bottom = sc.objdict() # Keep track of the bottoms for plotting cumulative
+            bottom.daily = np.zeros(self.sim_npts)
+            bottom.cumul = np.zeros(self.sim_npts)
+            for k,key in enumerate(keys):
+                if key in self.keys: # It's a time series, plot with days and dates
+                    days      = self.inds.sim[key] # The "days" axis (or not, for custom keys)
+                    daylabel  = 'Date'
+                else: #It's custom, we don't know what it is
+                    days      = np.arange(len(self.losses[key])) # Just use indices
+                    daylabel  = 'Index'
 
-            # Cumulative totals can't mix daily and non-daily inputs, so skip custom keys
-            if key in self.keys:
-                for i,ax in enumerate([main_ax1, main_ax2]):
+                # Cumulative totals can't mix daily and non-daily inputs, so skip custom keys
+                if key in self.keys:
+                    for i,ax in enumerate([main_ax1, main_ax2]):
 
-                    if i == 0:
-                        data = self.losses[key]
-                        ylabel = 'Daily mismatch'
-                        title = 'Daily total mismatch'
-                    else:
-                        data = np.cumsum(self.losses[key])
-                        ylabel = 'Cumulative mismatch'
-                        title = f'Cumulative mismatch: {self.mismatch:0.3f}'
+                        if i == 0:
+                            data = self.losses[key]
+                            ylabel = 'Daily mismatch'
+                            title = 'Daily total mismatch'
+                        else:
+                            data = np.cumsum(self.losses[key])
+                            ylabel = 'Cumulative mismatch'
+                            title = f'Cumulative mismatch: {self.mismatch:0.3f}'
 
-                    dates = self.sim_results['date'][days] # Show these with dates, rather than days, as a reference point
-                    ax.bar(dates, data, width=width, bottom=bottom[i][self.inds.sim[key]], color=colors[k], label=f'{key}')
+                        dates = self.sim_results['date'][days] # Show these with dates, rather than days, as a reference point
+                        ax.bar(dates, data, width=width, bottom=bottom[i][self.inds.sim[key]], color=colors[k], label=f'{key}')
 
-                    if i == 0:
-                        bottom.daily[self.inds.sim[key]] += self.losses[key]
-                    else:
-                        bottom.cumul = np.cumsum(bottom.daily)
+                        if i == 0:
+                            bottom.daily[self.inds.sim[key]] += self.losses[key]
+                        else:
+                            bottom.cumul = np.cumsum(bottom.daily)
 
-                    if k == len(self.keys)-1:
-                        ax.set_xlabel('Date')
-                        ax.set_ylabel(ylabel)
-                        ax.set_title(title)
+                        if k == len(self.keys)-1:
+                            ax.set_xlabel('Date')
+                            ax.set_ylabel(ylabel)
+                            ax.set_title(title)
+                            cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
+                            ax.legend()
+
+                ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
+                ts_ax.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
+                ts_ax.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
+                ts_ax.set_title(key)
+                if k == 0:
+                    ts_ax.set_ylabel('Time series (counts)')
+                    ts_ax.legend()
+
+                diff_ax = pl.subplot(n_rows, n_keys, k+2*n_keys+1)
+                diff_ax.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
+                diff_ax.axhline(0, c='k')
+                if k == 0:
+                    diff_ax.set_ylabel('Differences (counts)')
+                    diff_ax.legend()
+
+                loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
+                loss_ax.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
+                loss_ax.set_xlabel(daylabel)
+                loss_ax.set_title(f'Total loss: {self.losses[key].sum():0.3f}')
+                if k == 0:
+                    loss_ax.set_ylabel('Losses')
+                    loss_ax.legend()
+
+                if daylabel == 'Date':
+                    for ax in [ts_ax, diff_ax, loss_ax]:
                         cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
-                        ax.legend()
 
-            ts_ax = pl.subplot(n_rows, n_keys, k+1*n_keys+1)
-            ts_ax.plot(days, self.pair[key].data, c='k', label='Data', **plot_args)
-            ts_ax.plot(days, self.pair[key].sim, c=colors[k], label='Simulation', **plot_args)
-            ts_ax.set_title(key)
-            if k == 0:
-                ts_ax.set_ylabel('Time series (counts)')
-                ts_ax.legend()
-
-            diff_ax = pl.subplot(n_rows, n_keys, k+2*n_keys+1)
-            diff_ax.bar(days, self.diffs[key], width=width, color=colors[k], label='Difference')
-            diff_ax.axhline(0, c='k')
-            if k == 0:
-                diff_ax.set_ylabel('Differences (counts)')
-                diff_ax.legend()
-
-            loss_ax = pl.subplot(n_rows, n_keys, k+3*n_keys+1, sharey=loss_ax)
-            loss_ax.bar(days, self.losses[key], width=width, color=colors[k], label='Losses')
-            loss_ax.set_xlabel(daylabel)
-            loss_ax.set_title(f'Total loss: {self.losses[key].sum():0.3f}')
-            if k == 0:
-                loss_ax.set_ylabel('Losses')
-                loss_ax.legend()
-
-            if daylabel == 'Date':
-                for ax in [ts_ax, diff_ax, loss_ax]:
-                    cvpl.reset_ticks(ax=ax, date_args=date_args, start_day=self.sim_results['date'][0])
-
-        cvset.handle_show(do_show) # Whether or not to call pl.show()
-
-        return fig
+        return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
 def import_optuna():
     ''' A helper function to import Optuna, which is an optional dependency '''
@@ -1409,7 +1413,8 @@ class Calibration(Analyzer):
 
         # Handle if the sim has already been run
         if self.sim.complete:
-            print('Warning: sim has already been run; re-initializing, but in future, use a sim that has not been run')
+            warnmsg = 'Sim has already been run; re-initializing, but in future, use a sim that has not been run'
+            cvm.warn(warnmsg)
             self.sim = self.sim.copy()
             self.sim.initialize()
 
@@ -1440,7 +1445,8 @@ class Calibration(Analyzer):
             if self.die:
                 raise E
             else:
-                print(f'Warning, encountered error running sim!\nParameters:\n{valid_pars}\nTraceback:\n{sc.traceback()}')
+                warnmsg = f'Encountered error running sim!\nParameters:\n{valid_pars}\nTraceback:\n{sc.traceback()}'
+                cvm.warn(warnmsg)
                 output = None if return_sim else np.inf
                 return output
 
@@ -1591,7 +1597,8 @@ class Calibration(Analyzer):
         for i,r in enumerate(results):
             for key in keys:
                 if key not in r:
-                    print(f'Warning! Key {key} is missing from trial {i}, replacing with default')
+                    warnmsg = f'Key {key} is missing from trial {i}, replacing with default'
+                    cvm.warn(warnmsg)
                     r[key] = best[key]
                 data[key].append(r[key])
         self.data = data
@@ -1628,7 +1635,7 @@ class Calibration(Analyzer):
         '''
         msim = cvr.MultiSim([self.before, self.after])
         fig = msim.plot(**kwargs)
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_trend(self, best_thresh=2):
@@ -1662,7 +1669,7 @@ class Calibration(Analyzer):
             sc.setxlim()
             pl.xlabel('Trial number')
             pl.ylabel('Mismatch')
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_all(self): # pragma: no cover
@@ -1783,7 +1790,7 @@ class TransTree(Analyzer):
             warningmsg = 'Warning: transmission tree results are unreliable when' \
                          'dynamic rescaling is on, since agents are reused! Please '\
                          'rerun with rescale=False and pop_scale=1 for reliable results.'
-            print(warningmsg)
+            cvm.warn(warningmsg)
 
         # Include the basic line list -- copying directly is slow, so we'll make a copy later
         self.infection_log = people.infection_log
@@ -1847,7 +1854,7 @@ class TransTree(Analyzer):
     def day(self, day=None, which=None):
         ''' Convenience function for converting an input to an integer day '''
         if day is not None:
-            day = sc.day(day, start_day=self.sim_start)
+            day = sc.day(day, start_date=self.sim_start)
         elif which == 'start':
             day = 0
         elif which == 'end':
@@ -2052,7 +2059,7 @@ class TransTree(Analyzer):
             dat.plot(ax=ax, legend=None, **plot_args)
             pl.legend(title=None)
             ax.set_title(title)
-            cvpl.date_formatter(start_day=self.sim_start, ax=ax)
+            sc.datenumformatter(start_date=self.sim_start, ax=ax)
             ax.set_ylabel('Count')
 
         to_plot = dict(
@@ -2066,9 +2073,7 @@ class TransTree(Analyzer):
         for i, (key, title) in enumerate(to_plot.items()):
             plot_quantity(key, title, i + 1)
 
-        cvset.handle_show(do_show) # Whether or not to call pl.show()
-
-        return fig
+        return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
 
     def animate(self, *args, **kwargs):
@@ -2311,6 +2316,5 @@ class TransTree(Analyzer):
         pl.xlabel('Day')
         pl.ylabel('Cumulative infections')
 
-
-        return fig
+        return cvpl.handle_show_return(fig=fig)
 
