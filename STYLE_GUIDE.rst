@@ -49,8 +49,8 @@ Implications of this include:
 
 - Common mistakes are to overemphasize *p* = 0 (you) over *p* > 0, and *e* (edit time) over *u* (ramp-up time) and *r* (read time). 
 - Assume people of different backgrounds and skill levels will be using/interacting with this code. You might be comfortable with lambda functions and overriding dunder methods, but assume others are not. Use these "advanced features" only as a last resort.
-- Similarly, try to avoid complex dependencies (e.g. nested class inheritance) as they increase ramp-up time, and make it more likely something will break. (But equally, don't repeat yourself -- it's a tradeoff).
-- Err on the side of more comments, including line comments. Logic that is clear to you now might not be clear to anyone else (or yourself 3 months ago). If you use a number that came from a scientific paper, please for the love of all that is precious put a link to that paper in a comment.
+- Similarly, try to avoid complex dependencies (e.g. nested class inheritance) as they increase ramp-up time, and make it more likely something will break. (But equally, don't repeat yourself -- it's a tradeoff.)
+- Err on the side of more comments, including line comments. Logic that is clear to you now might not be clear to anyone else (or yourself 3 months from now). If you use a number that came from a scientific paper, please for the love of all that is precious put a link to that paper in a comment.
 
 
 
@@ -79,8 +79,15 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 For example, in Covasim, dates can be specified as numbers (``22``), strings (``'2022-02-02'``), or date objects (``datetime.date(2022, 2, 2)``), etc. Likewise, many quantities can be specified as a scalar, list, or array. If a function *usually* only needs a single input but can optionally operate on more than one, it adds burden on the user to require them to provide e.g. ``np.array([0.3])`` rather than just ``0.3``. In addition, most functions have default arguments of ``None``, in which case Covasim will use "sensible" defaults.
 
-Attempting to apply type annotations to the flexibility Covasim gives to the user would result in monstrosities like ``start_day: typing.Union[None, str, int, dt.date, dt.datetime]``.
+Attempting to apply type annotations to the flexibility Covasim gives to the user would result in monstrosities like:
 
+.. code-block:: python
+
+    def count_days(start_day: typing.Union[None, str, int, dt.date, dt.datetime],
+                   end_day: typing.Union[None, str, int, dt.date, dt.datetime]) -> int:
+        return sim.day(end_day) - sim.day(start_day)
+
+If your function is written in such a way that type definitions would be helpful, consider if there is a way to rewrite it such that (a) it can accept a wider range of inputs, and/or (b) you can make it clearer what is allowed. For example, ``values`` should likely accept a list or array of any numeric type; ``label`` should be a single string; ``labels`` should be a list of strings.
 
 
 3.2 Line length (`GSG32 <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
