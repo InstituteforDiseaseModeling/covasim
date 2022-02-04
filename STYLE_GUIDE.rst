@@ -75,7 +75,7 @@ Attempting to apply type annotations to the flexibility Covasim gives to the use
 
 **Reason**: Line lengths of 80 characters are due to `historical limitations <https://en.wikipedia.org/wiki/Characters_per_line>`_. Think of lines >80 characters as bad, but breaking a line as being equally bad. Decide whether a long line would be better implemented some other way -- for example, rather than breaking a >80 character list comprehension over multiple lines, use a ``for`` loop instead. Always keep literal strings together (do not use implicit string concatenation).
 
-Line comments are encouraged in Covasim, and these can be as long as needed; they should not be broken over multiple lines to avoid breaking the flow of the code. A 50-character line with a 150 character line comment after it is completely fine.
+Line comments are encouraged in Covasim, and these can be as long as needed; they should not be broken over multiple lines to avoid breaking the flow of the code. A 50-character line with a 150 character line comment after it is completely fine. The rationale is that long line comments only need to be read very occasionally; if they are broken up over multiple lines, then they have to be scrolled past *every single time*. Since scrolling vertically is such a common task, it is important to minimize the amount of effort required (i.e., minimizing lines) while not sacrificing clarity. Vertically compact code also means more will fit on your screen (and thence your brain).
 
 Examples:
 
@@ -88,10 +88,13 @@ Examples:
     foo_bar(self, width, height, color='black', design=None, x='foo',
             emphasis=None)
 
-    # No: line is needlessly long, rename variables to be more concise
+    # No: line is needlessly long, rename variables to be more concise to avoid the need to break
     foo_bar(self, object_width, object_height, text_color='black', text_design=None, x='foo', text_emphasis=None)
 
-    # Yes: if you do need to break a line, make the break at a semantically meaningful point
+    # No: line is too long
+    foo_bar(self, width, height, design=None, x='foo', emphasis=None, fg_color='black', bg_color='white', frame_color='orange')
+
+    # Yes: if you do need to break a line, try to break at a semantically meaningful point
     foo_bar(self, width, height, design=None, x='foo', emphasis=None,
             fg_color='black', bg_color='white', frame_color='orange')
 
