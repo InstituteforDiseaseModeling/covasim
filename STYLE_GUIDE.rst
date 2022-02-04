@@ -48,11 +48,11 @@ Examples:
 
 .. code-block:: python
 
-Yes: foo_bar(self, width, height, color='black', design=None, x='foo',
-             emphasis=None, highlight=0)
+    Yes: foo_bar(self, width, height, color='black', design=None, x='foo',
+                 emphasis=None, highlight=0)
 
-     if (width == 0 and height == 0 and
-         color == 'red' and emphasis == 'strong'):
+         if (width == 0 and height == 0 and
+             color == 'red' and emphasis == 'strong'):
 
 
 
