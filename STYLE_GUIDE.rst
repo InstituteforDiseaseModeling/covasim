@@ -17,4 +17,6 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 2.8 Default Iterators and Operators (`GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
 ----------------------------------------------------
 
-Test
+**Difference**: It's fine to use ``for key in obj.keys(): ...`` instead of ``for key in obj: ...``.
+
+**Reason**: In larger functions with complex data types, it's not immediately obvious what type an object is. While ``for key in obj: ...`` is fine, especially if it's clear that ``obj`` is a dict, ``for key in obj.keys(): ...`` is also acceptable if it improves clarity.
