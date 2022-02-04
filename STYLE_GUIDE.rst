@@ -73,7 +73,7 @@ Examples:
 
 **Reason**: This convention, which is a type of `semantic indenting <https://gist.github.com/androidfred/66873faf9f0b76f595b5e3ea3537a97c>`_, can greatly increase readability of the code by drawing attention to the differences between consecutive lines.
 
-Consider how easy it is to debug this code:
+Consider how hard it is to debug this code:
 
 .. code-block:: python
 
