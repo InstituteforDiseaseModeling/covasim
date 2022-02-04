@@ -83,11 +83,31 @@ Attempting to apply type annotations to the flexibility Covasim gives to the use
 
 .. code-block:: python
 
-    def count_days(start_day: typing.Union[None, str, int, dt.date, dt.datetime],
+    def count_days(self, start_day: typing.Union[None, str, int, dt.date, dt.datetime],
                    end_day: typing.Union[None, str, int, dt.date, dt.datetime]) -> int:
-        return sim.day(end_day) - sim.day(start_day)
+        return self.day(end_day) - self.day(start_day)
 
 If your function is written in such a way that type definitions would be helpful, consider if there is a way to rewrite it such that (a) it can accept a wider range of inputs, and/or (b) you can make it clearer what is allowed. For example, ``values`` should likely accept a list or array of any numeric type; ``label`` should be a single string; ``labels`` should be a list of strings.
+
+Note that you *can* (and should) use type annotations in your docstrings. For example, the above method could be written as:
+
+.. code-block:: python
+
+    def count_days(self, start_day, end_day, **kwargs):
+        """ Count days between start and end relative to "sim time"
+
+        Args:
+            start_day (int/str/date): The day to start counting
+            end_day   (int/str/date): The day to stop counting
+
+        Returns:
+            Number of days elapsed
+
+        Example:
+            sim.count_days(45, '2022-02-02')
+        """
+        return self.day(end_day) - self.day(start_day)
+
 
 
 3.2 Line length (`GSG32 <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
