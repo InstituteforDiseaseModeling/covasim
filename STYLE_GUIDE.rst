@@ -99,6 +99,23 @@ vs. this:
 
 In the second case, the typo (repeated ``check_symptomatic()``  immediately jumps out, whereas in the first case, it requires careful scanning of each line.
 
+Vertically aligned code blocks also make it easier to edit code using editors that allow multiline editing (e.g., `Sublime <https://www.sublimetext.com/>`_). However, use your judgement -- there are cases where it does more harm than good, especially if the block is small, or egregious amounts of whitespace would need to be used to achieve alignment:
+
+.. code-block:: python
+
+    # Yes
+    test_prob = 0.1  # Per-day testing probability
+    vax_prob  = 0.05 # Per-day vaccination probability
+
+    # Yes
+    t = 0 # Start day
+    omicron_vax_prob = dict(low=0.05, high=0.1) # Per-day probability of receiving Omicron vaccine
+
+    # Hell no
+    t                = 0                        # Start day
+    omicron_vax_prob = dict(low=0.05, high=0.1) # Per-day probability of receiving Omicron vaccine
+
+
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
 ----------------------------------------------------
 
