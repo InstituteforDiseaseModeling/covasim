@@ -21,6 +21,7 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 **Reason**: In larger functions with complex data types, it's not immediately obvious what type an object is. While ``for key in obj: ...`` is fine, especially if it's clear that ``obj`` is a dict, ``for key in obj.keys(): ...`` is also acceptable if it improves clarity.
 
+
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
 ----------------------------------------------------
 
@@ -33,6 +34,25 @@ For example, in Covasim, dates can be specified as numbers (``22``), strings (``
 Attempting to apply type annotations to the flexibility Covasim gives to the user would result in monstrosities like ``start_day: typing.Union[None, str, int, dt.date, dt.datetime]``.
 
 
+
+3.2 Line length (`GSG <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
+----------------------------------------------------
+
+**Difference**: Long lines are not *great*, but are justified in some circumstances.
+
+**Reason**: Line lengths of 80 characters are due to `historical limitations <https://en.wikipedia.org/wiki/Characters_per_line>`_. Think of lines >80 characters as bad, but breaking a line as being equally bad. Decide whether a long line would be better implemented some other way -- for example, rather than breaking a >80 character list comprehension over multiple lines, use a ``for`` loop instead. Always keep literal strings together (do not use implicit string concatenation).
+
+Line comments are encouraged in Covasim, and these can be as long as needed; they should not be broken over multiple lines to avoid breaking the flow of the code. A 50-character line with a 150 character line comment after it is completely fine.
+
+Examples:
+
+.. code-block:: python
+
+Yes: foo_bar(self, width, height, color='black', design=None, x='foo',
+             emphasis=None, highlight=0)
+
+     if (width == 0 and height == 0 and
+         color == 'red' and emphasis == 'strong'):
 
 
 
