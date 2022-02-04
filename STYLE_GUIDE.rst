@@ -103,7 +103,8 @@ Note that you *can* (and should) use type annotations in your docstrings. For ex
         Returns:
             Number of days elapsed
 
-        Example:
+        **Example**::
+        
             sim.count_days(45, '2022-02-02')
         """
         return self.day(end_day) - self.day(start_day)
