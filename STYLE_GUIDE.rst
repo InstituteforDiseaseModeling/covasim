@@ -2,9 +2,15 @@
 Style guide 
 ===========
 
+
+
+Introduction
+============
+
 In general, Covasim follows Google's `style guide <https://google.github.io/styleguide/pyguide.html>`_. If you simply follow that, you can't go too wrong. However, there are a few "house style" differences, which are described here.
 
 Covasim uses ``pylint`` to ensure style conventions. To check if your styles are compliant, run ``./tests/check_style``.
+
 
 
 Design philosophy
@@ -12,13 +18,21 @@ Design philosophy
 
 Covasim's overall design philosophy is "**Common tasks should be simple**, while uncommon tasks can't always be simple, but still should be possible".
 
+
+Writing for the right audience
+------------------------------
+
 The audience for Covasim is *scientists*, not software developers. Assume that the average Covasim user dislikes coding and wants something that *just works*. Implications of this include:
 
 - Commands should be short, simple, and obvious, e.g. ``cv.Sim().run().plot()``.
 - Be as flexible as possible with user inputs. If a user could only mean one thing, do that. If the user provides ``[0, 7, 14]`` but the function needs an array instead of a list, convert the list to an array automatically (``sc.toarray()`` exists for exactly this reason).
 - If there's a "sensible" default value for something, use it. Users shouldn't *have* to think about false positivity rate or influenza-like illness prevalence if they just want to quickly add testing to their simulation via ``cv.test_prob(0.1)``.
-- However, hard-code as little as possible. For example, rather than defining a variable at the top of the function, make it a keyword argument with a default value so the user can modify it if needed. As another example, pass keyword arguments where possible -- e.g., ``to_json(filename, **kwargs)`` method should pass any extra arguments to ``json.dump()``.
-- Ensure the logic, especially the scientific logic, of the code is as clear as possible. If something is bad coding style but good science, you should probably do it anyway. 
+- However, hard-code as little as possible. For example, rather than defining a variable at the top of the function, make it a keyword argument with a default value so the user can modify it if needed. As another example, pass keyword arguments where possible -- e.g., ``to_json(..., **kwargs)`` can pass arbitrary extra arguments via ``json.dump(**kwargs)``.
+- Ensure the logic, especially the scientific logic, of the code is as clear as possible. If something is "bad" coding style but good science, you should probably do it anyway. 
+
+
+Workload considerations
+-----------------------
 
 The total work your code creates is:
 
@@ -36,7 +50,13 @@ where:
 - *m* is the number of edits
 - *e* is the time per edit
 
-Common mistakes are to overemphasize *p* = 0 (you) over *p* > 0, and *e* (edit time) over *u* (ramp-up time) and *r* (read time).
+Implications of this include:
+
+- Common mistakes are to overemphasize *p* = 0 (you) over *p* > 0, and *e* (edit time) over *u* (ramp-up time) and *r* (read time). 
+- Assume people of different backgrounds and skill levels will be using/interacting with this code. You might be comfortable with lambda functions and overriding dunder methods, but assume others are not. Use these "advanced features" only as a last resort.
+- Similarly, try to avoid complex dependencies (e.g. nested class inheritance) as they increase ramp-up time, and make it more likely something will break. (But equally, don't repeat yourself -- it's a tradeoff).
+- Err on the side of more comments, including line comments. Logic that is clear to you now might not be clear to anyone else (or yourself 3 months ago). If you use a number that came from a scientific paper, please for the love of all that is precious put a link to that paper in a comment.
+
 
 
 House style
@@ -160,7 +180,7 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 
 **Difference**: Always use f-strings or addition.
 
-**Reason**: It's just nicer. Compared to ``'{}, {}'.format(first, second)`` or ``'%s, %s' % (first, second)``, ``f'{first}, {second}`` is both shorter and clearer to read. However, use concatenation if it's simpler, e.g. ``third = first + second`` rather than ``third = f'{first}{second}`` (because again, it's shorter and clearer).
+**Reason**: It's just nicer. Compared to ``'{}, {}'.format(first, second)`` or ``'%s, %s' % (first, second)``, ``f'{first}, {second}'`` is both shorter and clearer to read. However, use concatenation if it's simpler, e.g. ``third = first + second`` rather than ``third = f'{first}{second}'`` (because again, it's shorter and clearer).
 
 
 
@@ -252,10 +272,27 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
 
 **Difference**: Names should be consistent with other libraries and with how the user interacts with the code.
 
-**Reason**: Covasim interacts with other libraries, especially Numpy and Matplotlib, and should not redefine these libraries' names. For example, Google naming convention would prefer ``fig_size`` to ``figsize``, but Matplotlib uses ``figsize``, so this should also be the name preferred by Covasim. 
+**Reason**: Covasim interacts with other libraries, especially Numpy and Matplotlib, and should not redefine these libraries' names. For example, Google naming convention would prefer ``fig_size`` to ``figsize``, but Matplotlib uses ``figsize``, so this should also be the name preferred by Covasim. (This applies if the variable name is *only* used by source libraries. If it's used by both, e.g. ``start_day`` used both directly by Covasim and by ``sc.date()``, it's OK to use the Google style convention.)
 
 If an object is technically a class but is used more like a function (e.g. ``cv.change_beta()``), it should be named as if it were a function. A class is "used like a function" if the user is not expected to interact with it after creation, as is the case with most interventions. Thus ``cv.BaseVaccinate`` is a class that is intended to be used *as a class* (primarily for subclassing). ``cv.vaccinate_prob()`` is also a class, but intended to be used like a function; ``cv.vaccinate()`` is a function which returns an instance of ``cv.vaccinate_prob`` or ``cv.vaccinate_num``. Because ``cv.vaccinate()`` and ``cv.vaccinate_prob()`` can be used interchangeably, they are named according to the same convention.
 
+Names should be as short as they can be while being *memorable*. This is slightly less strict than being unambiguous. Think of it as: the meaning might not be clear solely from the variable name, but should be clear from the docstring and/or line comment, and from *that* point should be unambiguous. For example:
+
+.. code-block:: python
+
+    # Yes
+    vax_prob = 0.3 # Per-campaign vaccination probability
+
+    # Also OK (but be consistent!)
+    vx_prob = 0.3 # Per-campaign vaccination probability
+
+    # No, too verbose; many more characters but not much more information
+    vaccination_probability = 0.3
+
+    # No, not enough information to figure out what this is
+    vp = 0.3
+
+Underscores in variable names are generally preferred, but there are exceptions (e.g. ``figsize`` mentioned above). Always ask whether part of a multi-part name is providing necessary clarity (and if it's not, omit it). For example, if the intervention is called ``antigen_test()`` uses a single variable for probability, call that variable ``prob`` rather than ``test_prob``.
 
 
 Parting words
