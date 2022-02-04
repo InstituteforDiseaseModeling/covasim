@@ -14,6 +14,7 @@ House style
 As noted above, Covasim follows Google's style guide (GSG), with these exceptions (numbers refer to Google's style guide):
 
 
-2.8 Default Iterators and Operators
------------------------------------
-(cf. `GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
+2.8 Default Iterators and Operators (`GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
+----------------------------------------------------
+
+Test
