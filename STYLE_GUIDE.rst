@@ -93,7 +93,7 @@ Note that you *can* (and should) use type annotations in your docstrings. For ex
 
 .. code-block:: python
 
-    def count_days(self, start_day, end_day, **kwargs):
+    def count_days(self, start_day, end_day):
         """ Count days between start and end relative to "sim time"
 
         Args:
@@ -314,7 +314,7 @@ Names should be as short as they can be while being *memorable*. This is slightl
     # No, not enough information to figure out what this is
     vp = 0.3
 
-Underscores in variable names are generally preferred, but there are exceptions (e.g. ``figsize`` mentioned above). Always ask whether part of a multi-part name is providing necessary clarity (and if it's not, omit it). For example, if the intervention is called ``antigen_test()`` uses a single variable for probability, call that variable ``prob`` rather than ``test_prob``.
+Underscores in variable names are generally preferred, but there are exceptions (e.g. ``figsize`` mentioned above). Always ask whether part of a multi-part name is providing necessary clarity (and if it's not, omit it). For example, if an intervention called ``antigen_test()`` uses a single variable for probability, call that variable ``prob`` rather than ``test_prob``.
 
 
 Parting words
