@@ -104,8 +104,9 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 .. code-block:: python
 
     # Yes
-    test_prob = 0.1  # Per-day testing probability
-    vax_prob  = 0.05 # Per-day vaccination probability
+    test_prob  = 0.1 # Per-day testing probability
+    vax_prob   = 0.3 # Per-campaign vaccination probability
+    trace_prob = 0.8 # Per-contact probability of being traced
 
     # Yes
     t = 0 # Start day
