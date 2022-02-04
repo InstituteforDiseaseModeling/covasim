@@ -244,9 +244,18 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
 
 
 
-2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
-------------------------------------------------------------------------------------------------------------
+3.16 Naming (`GSG <https://google.github.io/styleguide/pyguide.html#316-naming>`_)
+----------------------------------------------------------------------------------
 
-**Difference**: 
+**Difference**: Names should be consistent with other libraries and with how the user interacts with the code.
 
-**Reason**: 
+**Reason**: Covasim interacts with other libraries, especially Numpy and Matplotlib, and should not redefine these libraries' names. For example, Google naming convention would prefer ``fig_size`` to ``figsize``, but Matplotlib uses ``figsize``, so this should also be the name preferred by Covasim. 
+
+If an object is technically a class but is used more like a function (e.g. ``cv.change_beta()``), it should be named as if it were a function. A class is "used like a function" if the user is not expected to interact with it after creation, as is the case with most interventions. Thus ``cv.BaseVaccinate`` is a class that is intended to be used *as a class* (primarily for subclassing). ``cv.vaccinate_prob()`` is also a class, but intended to be used like a function; ``cv.vaccinate()`` is a function which returns an instance of ``cv.vaccinate_prob`` or ``cv.vaccinate_num``. Because ``cv.vaccinate()`` and ``cv.vaccinate_prob()`` can be used interchangeably, they are named according to the same convention.
+
+
+
+Parting words
+-------------
+
+If in doubt, ask! Slack, Teams, email, GitHub -- all work. And don't worry about getting it perfect; any differences in style will be reconciled during code review and merge.
