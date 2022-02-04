@@ -26,4 +26,5 @@ Full contents
    glossary
    conduct
    contributing
+   style
    modules

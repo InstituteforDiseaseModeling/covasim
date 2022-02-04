@@ -26,6 +26,7 @@ The total work your code creates is:
     W = \sum_p \left( u_p + n_p \times r_p + m_p \times e_p \right)
 
 where:
+
 - *W* is the total work
 - *p* is each person
 - *u* is the ramp-up time
@@ -44,7 +45,7 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 
 2.8 Default Iterators and Operators (`GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
-----------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------
 
 **Difference**: It's fine to use ``for key in obj.keys(): ...`` instead of ``for key in obj: ...``.
 
@@ -52,7 +53,7 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
-----------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
 **Difference**: Do *not* use type annotations.
 
@@ -65,7 +66,7 @@ Attempting to apply type annotations to the flexibility Covasim gives to the use
 
 
 3.2 Line length (`GSG <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
-----------------------------------------------------
+------------------------------------------------------------------------------------------
 
 **Difference**: Long lines are not *great*, but are justified in some circumstances.
 
@@ -96,7 +97,7 @@ Examples:
 
 
 3.6 Whitespace (`GSG <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
-----------------------------------------------------
+----------------------------------------------------------------------------------------
 
 **Difference**: You *should* use spaces to vertically align tokens.
 

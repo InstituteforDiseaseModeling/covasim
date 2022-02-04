@@ -1,0 +1,1 @@
+.. include:: ../STYLE_GUIDE.rst
