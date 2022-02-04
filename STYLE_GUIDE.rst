@@ -15,8 +15,9 @@ Covasim's overall design philosophy is "**Common tasks should be simple**, while
 The audience for Covasim is *scientists*, not software developers. Assume that the average Covasim user dislikes coding and wants something that *just works*. Implications of this include:
 
 - Commands should be short, simple, and obvious, e.g. ``cv.Sim().run().plot()``.
-- If there's a "sensible" default value for something, use it. Users shouldn't *have* to think about false positivity rate or influenza-like illness prevalence if they just want to quickly add testing to their simulation via ``cv.test_prob(0.1)``.
 - Be as flexible as possible with user inputs. If a user could only mean one thing, do that. If the user provides ``[0, 7, 14]`` but the function needs an array instead of a list, convert the list to an array automatically (``sc.toarray()`` exists for exactly this reason).
+- If there's a "sensible" default value for something, use it. Users shouldn't *have* to think about false positivity rate or influenza-like illness prevalence if they just want to quickly add testing to their simulation via ``cv.test_prob(0.1)``.
+- However, hard-code as little as possible. For example, rather than defining a variable at the top of the function, make it a keyword argument with a default value so the user can modify it if needed. As another example, pass keyword arguments where possible -- e.g., ``to_json(filename, **kwargs)`` method should pass any extra arguments to ``json.dump()``.
 - Ensure the logic, especially the scientific logic, of the code is as clear as possible. If something is bad coding style but good science, you should probably do it anyway. 
 
 The total work your code creates is:
@@ -44,12 +45,14 @@ House style
 As noted above, Covasim follows Google's style guide (GSG), with these exceptions (numbers refer to Google's style guide):
 
 
+
 2.8 Default Iterators and Operators (`GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
 ----------------------------------------------------------------------------------------------------------------------------------
 
 **Difference**: It's fine to use ``for key in obj.keys(): ...`` instead of ``for key in obj: ...``.
 
 **Reason**: In larger functions with complex data types, it's not immediately obvious what type an object is. While ``for key in obj: ...`` is fine, especially if it's clear that ``obj`` is a dict, ``for key in obj.keys(): ...`` is also acceptable if it improves clarity.
+
 
 
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
@@ -94,6 +97,7 @@ Examples:
 
     # Yes: long line comments are ok
     foo_bar(self, width, height, color='black', design=None, x='foo') # Note the difference with bar_foo(), which does not perform the opposite operation
+
 
 
 3.6 Whitespace (`GSG <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
@@ -156,6 +160,7 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 **Reason**: It's just nicer. Compared to ``'{}, {}'.format(first, second)`` or ``'%s, %s' % (first, second)``, ``f'{first}, {second}`` is both shorter and clearer to read. However, use concatenation if it's simpler, e.g. ``third = first + second`` rather than ``third = f'{first}{second}`` (because again, it's shorter and clearer).
 
 
+
 3.13 Imports formatting (`GSG <https://google.github.io/styleguide/pyguide.html#313-imports-formatting>`_)
 ------------------------------------------------------------------------------------------------------------
 
@@ -177,6 +182,66 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 Note the logical groupings -- standard library imports first, then numeric libraries, with Numpy coming before pandas since it's lower level; then external plotting libraries; and finally internal imports.
 
 Note also the use of ``import pylab as pl`` instead of the more common ``import matplotlib.pyplot as plt``. These are functionally identical; the former is used simply because it is easier to type, but this convention may change to the more standard Matplotlib import in future.
+
+
+3.14 Statements (`GSG <https://google.github.io/styleguide/pyguide.html#314-statements>`_)
+------------------------------------------------------------------------------------------------------------
+
+**Difference**: Multiline statements are *sometimes* OK.
+
+**Reason**: Like with semantic indenting, sometimes it causes additional work to break up a simple block of logic vertically. However, use your judgement, and err on the side of Google's style guide. For example:
+
+.. code-block:: python
+
+    # Yes
+    if foo: bar(foo)
+
+    # Yes
+    if foo:
+        bar(foo)
+    else:
+        baz(foo)
+
+    # Borderline
+    if foo: bar(foo)
+    else:   baz(foo)
+
+    # Yes, but maybe rethink your life choices
+    if   foo == 0: bar(foo)
+    elif foo == 1: baz(foo)
+    elif foo == 2: bat(foo)
+    elif foo == 3: bam(foo)
+    elif foo == 4: bak(foo)
+    else:          zzz(foo)
+
+    # No: definitely rethink your life choices
+    if foo == 0:
+        bar(foo)
+    elif foo == 1:
+        baz(foo)
+    elif foo == 2:
+        bat(foo)
+    elif foo == 3:
+        bam(foo)
+    elif foo == 4:
+        bak(foo)
+    else:
+        zzz(foo)
+
+    # OK
+    try:
+        bar(foo)
+    except:
+        pass
+
+    # Also OK
+    try:    bar(foo)
+    except: pass
+
+    # No: too much whitespace and logic too hidden
+    try:               bar(foo)
+    except ValueError: baz(foo)
+
 
 
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
