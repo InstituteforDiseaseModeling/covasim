@@ -97,9 +97,9 @@ vs. this:
     self.flows['new_critical']    += self.check_critical()
     self.flows['new_recoveries']  += self.check_recovery()
 
-In the second case, the typo (repeated ``check_symptomatic()``  immediately jumps out, whereas in the first case, it requires careful scanning of each line.
+In the second case, the typo (repeated ``check_symptomatic()``)  immediately jumps out, whereas in the first case, it requires careful scanning of each line.
 
-Vertically aligned code blocks also make it easier to edit code using editors that allow multiline editing (e.g., `Sublime <https://www.sublimetext.com/>`_). However, use your judgement -- there are cases where it does more harm than good, especially if the block is small, or egregious amounts of whitespace would need to be used to achieve alignment:
+Vertically aligned code blocks also make it easier to edit code using editors that allow multiline editing (e.g., `Sublime <https://www.sublimetext.com/>`_). However, use your judgement -- there are cases where it does more harm than good, especially if the block is small, or if egregious amounts of whitespace would need to be used to achieve alignment:
 
 .. code-block:: python
 
