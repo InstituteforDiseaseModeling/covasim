@@ -46,8 +46,8 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 
 
-2.8 Default Iterators and Operators (`GSG <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
-----------------------------------------------------------------------------------------------------------------------------------
+2.8 Default Iterators and Operators (`GSG28 <https://google.github.io/styleguide/pyguide.html#28-default-iterators-and-operators>`_)
+------------------------------------------------------------------------------------------------------------------------------------
 
 **Difference**: It's fine to use ``for key in obj.keys(): ...`` instead of ``for key in obj: ...``.
 
@@ -55,8 +55,8 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 
 
 
-2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
-------------------------------------------------------------------------------------------------------------
+2.21 Type Annotated Code (`GSG221 <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
+---------------------------------------------------------------------------------------------------------------
 
 **Difference**: Do *not* use type annotations.
 
@@ -68,8 +68,8 @@ Attempting to apply type annotations to the flexibility Covasim gives to the use
 
 
 
-3.2 Line length (`GSG <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
-------------------------------------------------------------------------------------------
+3.2 Line length (`GSG32 <https://google.github.io/styleguide/pyguide.html#32-line-length>`_)
+--------------------------------------------------------------------------------------------
 
 **Difference**: Long lines are not *great*, but are justified in some circumstances.
 
@@ -103,8 +103,8 @@ Examples:
 
 
 
-3.6 Whitespace (`GSG <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
-----------------------------------------------------------------------------------------
+3.6 Whitespace (`GSG36 <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
+------------------------------------------------------------------------------------------
 
 **Difference**: You *should* use spaces to vertically align tokens.
 
@@ -155,8 +155,8 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 
 
 
-3.10 Strings (`GSG <https://google.github.io/styleguide/pyguide.html#310-strings>`_)
-------------------------------------------------------------------------------------------------------------
+3.10 Strings (`GSG310 <https://google.github.io/styleguide/pyguide.html#310-strings>`_)
+---------------------------------------------------------------------------------------
 
 **Difference**: Always use f-strings or addition.
 
@@ -164,8 +164,8 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 
 
 
-3.13 Imports formatting (`GSG <https://google.github.io/styleguide/pyguide.html#313-imports-formatting>`_)
-------------------------------------------------------------------------------------------------------------
+3.13 Imports formatting (`GSG313 <https://google.github.io/styleguide/pyguide.html#313-imports-formatting>`_)
+-------------------------------------------------------------------------------------------------------------
 
 **Difference**: Group imports logically rather than alphabetically.
 
@@ -187,8 +187,8 @@ Note the logical groupings -- standard library imports first, then numeric libra
 Note also the use of ``import pylab as pl`` instead of the more common ``import matplotlib.pyplot as plt``. These are functionally identical; the former is used simply because it is easier to type, but this convention may change to the more standard Matplotlib import in future.
 
 
-3.14 Statements (`GSG <https://google.github.io/styleguide/pyguide.html#314-statements>`_)
-------------------------------------------------------------------------------------------------------------
+3.14 Statements (`GSG314 <https://google.github.io/styleguide/pyguide.html#314-statements>`_)
+---------------------------------------------------------------------------------------------
 
 **Difference**: Multiline statements are *sometimes* OK.
 
@@ -247,8 +247,8 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
 
 
 
-3.16 Naming (`GSG <https://google.github.io/styleguide/pyguide.html#316-naming>`_)
-----------------------------------------------------------------------------------
+3.16 Naming (`GSG316 <https://google.github.io/styleguide/pyguide.html#316-naming>`_)
+-------------------------------------------------------------------------------------
 
 **Difference**: Names should be consistent with other libraries and with how the user interacts with the code.
 
