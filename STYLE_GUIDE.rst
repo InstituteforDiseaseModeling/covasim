@@ -7,6 +7,35 @@ In general, Covasim follows Google's `style guide <https://google.github.io/styl
 Covasim uses ``pylint`` to ensure style conventions. To check if your styles are compliant, run ``./tests/check_style``.
 
 
+Design philosophy
+=================
+
+Covasim's overall design philosophy is "**Common tasks should be simple**, while uncommon tasks can't always be simple, but still should be possible".
+
+The audience for Covasim is *scientists*, not software developers. Assume that the average Covasim user dislikes coding and wants something that *just works*. Implications of this include:
+
+- Commands should be short, simple, and obvious, e.g. ``cv.Sim().run().plot()``.
+- If there's a "sensible" default value for something, use it. Users shouldn't *have* to think about false positivity rate or influenza-like illness prevalence if they just want to quickly add testing to their simulation via ``cv.test_prob(0.1)``.
+- Be as flexible as possible with user inputs. If a user could only mean one thing, do that. If the user provides ``[0, 7, 14]`` but the function needs an array instead of a list, convert the list to an array automatically (``sc.toarray()`` exists for exactly this reason).
+- Ensure the logic, especially the scientific logic, of the code is as clear as possible. If something is bad coding style but good science, you should probably do it anyway. 
+
+The total work your code creates is:
+
+.. math::
+
+    W = \sum_p \left( u_p + n_p \times r_p + m_p \times e_p \right)
+
+where:
+- *W* is the total work
+- *p* is each person
+- *u* is the ramp-up time
+- *n* is the number of reads
+- *r* is the time per read
+- *m* is the number of edits
+- *e* is the time per edit
+
+Common mistakes are to overemphasize *p* = 0 (you) over *p* > 0, and *e* (edit time) over *u* (ramp-up time) and *r* (read time).
+
 
 House style
 ===========
@@ -71,7 +100,7 @@ Examples:
 
 **Difference**: You *should* use spaces to vertically align tokens.
 
-**Reason**: This convention, which is a type of `semantic indenting <https://gist.github.com/androidfred/66873faf9f0b76f595b5e3ea3537a97c>`_, can greatly increase readability of the code by drawing attention to the differences between consecutive lines.
+**Reason**: This convention, which is a type of `semantic indenting <https://gist.github.com/androidfred/66873faf9f0b76f595b5e3ea3537a97c>`_, can greatly increase readability of the code by drawing attention to the semantic similarities and differences between consecutive lines.
 
 Consider how hard it is to debug this code:
 
