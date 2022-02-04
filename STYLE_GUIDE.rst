@@ -25,7 +25,7 @@ As noted above, Covasim follows Google's style guide (GSG), with these exception
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
 ----------------------------------------------------
 
-**Difference**: Do **not** use type annotations.
+**Difference**: Do *not* use type annotations.
 
 **Reason**: Type annotations are useful for ensuring that simple functions do exactly what they're supposed to as part of a complex whole. They prioritize consistency over convenience, which is the correct priority for low-level library functions, but not for functions and classes that aim to make it as easy as possible for the user. 
 
@@ -66,6 +66,38 @@ Examples:
     foo_bar(self, width, height, color='black', design=None, x='foo') # Note the difference with bar_foo(), which does not perform the opposite operation
 
 
+3.6 Whitespace (`GSG <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
+----------------------------------------------------
+
+**Difference**: You *should* use spaces to vertically align tokens.
+
+**Reason**: This convention, which is a type of `semantic indenting <https://gist.github.com/androidfred/66873faf9f0b76f595b5e3ea3537a97c>`_, can greatly increase readability of the code by drawing attention to the differences between consecutive lines.
+
+Consider how easy it is to debug this code:
+
+.. code-block:: python
+
+    # Perform updates
+    self.init_flows()
+    self.flows['new_infectious'] += self.check_infectious()
+    self.flows['new_symptomatic'] += self.check_symptomatic()
+    self.flows['new_severe'] += self.check_symptomatic()
+    self.flows['new_critical'] += self.check_critical()
+    self.flows['new_recoveries'] += self.check_recovery()
+
+vs. this:
+
+.. code-block:: python
+
+    # Perform updates
+    self.init_flows()
+    self.flows['new_infectious']  += self.check_infectious()
+    self.flows['new_symptomatic'] += self.check_symptomatic()
+    self.flows['new_severe']      += self.check_symptomatic()
+    self.flows['new_critical']    += self.check_critical()
+    self.flows['new_recoveries']  += self.check_recovery()
+
+In the second case, the typo (repeated ``check_symptomatic()``  immediately jumps out, whereas in the first case, it requires careful scanning of each line.
 
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
 ----------------------------------------------------
