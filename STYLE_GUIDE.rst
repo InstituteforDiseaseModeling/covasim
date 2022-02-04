@@ -147,8 +147,40 @@ Vertically aligned code blocks also make it easier to edit code using editors th
     omicron_vax_prob = dict(low=0.05, high=0.1) # Per-day probability of receiving Omicron vaccine
 
 
+
+3.10 Strings (`GSG <https://google.github.io/styleguide/pyguide.html#310-strings>`_)
+------------------------------------------------------------------------------------------------------------
+
+**Difference**: Always use f-strings or addition.
+
+**Reason**: It's just nicer. Compared to ``'{}, {}'.format(first, second)`` or ``'%s, %s' % (first, second)``, ``f'{first}, {second}`` is both shorter and clearer to read. However, use concatenation if it's simpler, e.g. ``third = first + second`` rather than ``third = f'{first}{second}`` (because again, it's shorter and clearer).
+
+
+3.13 Imports formatting (`GSG <https://google.github.io/styleguide/pyguide.html#313-imports-formatting>`_)
+------------------------------------------------------------------------------------------------------------
+
+**Difference**: Group imports logically rather than alphabetically.
+
+**Reason**: Covasim modules shouldn't need a long list of imports. Sort imports as in Google's style guide, but second-order sorting should be grouped by "level", e.g. low-level libraries first (e.g. file I/O), then high-level libraries last (e.g., plotting). For example:
+
+.. code-block:: python
+
+    import os
+    import shutil
+    import numpy as np
+    import pandas as pd
+    import pylab as pl
+    import seaborn as sns
+    from .covasim import defaults as cvd
+    from .covasim import plotting as cvpl
+
+Note the logical groupings -- standard library imports first, then numeric libraries, with Numpy coming before pandas since it's lower level; then external plotting libraries; and finally internal imports.
+
+Note also the use of ``import pylab as pl`` instead of the more common ``import matplotlib.pyplot as plt``. These are functionally identical; the former is used simply because it is easier to type, but this convention may change to the more standard Matplotlib import in future.
+
+
 2.21 Type Annotated Code (`GSG <https://google.github.io/styleguide/pyguide.html#221-type-annotated-code>`_)
-----------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
 **Difference**: 
 
