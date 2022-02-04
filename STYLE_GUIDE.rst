@@ -48,11 +48,22 @@ Examples:
 
 .. code-block:: python
 
-    Yes: foo_bar(self, width, height, color='black', design=None, x='foo',
-                 emphasis=None, highlight=0)
+    # Yes: it's a bit longer than 80 chars but not too bad
+    foo_bar(self, width, height, color='black', design=None, x='foo', emphasis=None)
 
-         if (width == 0 and height == 0 and
-             color == 'red' and emphasis == 'strong'):
+    # No: the cost of breaking the line is too high
+    foo_bar(self, width, height, color='black', design=None, x='foo',
+            emphasis=None)
+
+    # No: line is needlessly long, rename variables to be more concise
+    foo_bar(self, object_width, object_height, text_color='black', text_design=None, x='foo', text_emphasis=None)
+
+    # Yes: if you do need to break a line, make the break at a semantically meaningful point
+    foo_bar(self, width, height, design=None, x='foo', emphasis=None,
+            fg_color='black', bg_color='white', frame_color='orange')
+
+    # Yes: long line comments are ok
+    foo_bar(self, width, height, color='black', design=None, x='foo') # Note the difference with bar_foo(), which does not perform the opposite operation
 
 
 
