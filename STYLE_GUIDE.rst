@@ -146,6 +146,17 @@ Examples:
 
 
 
+3.5 Blank Lines (`GSG35 <https://google.github.io/styleguide/pyguide.html#35-blank-lines>`_)
+--------------------------------------------------------------------------------------------
+
+**Difference**: Always use (at least) one extra blank line between levels as within a level.
+
+**Reason**: Google's recommendation (two blank lines between functions or classes, one blank line between methods) is appropriate for small-to-medium classes and methods. However, for large methods (e.g. >50 lines) with multiple blank lines within them, using only a single blank line can mark it hard to tell where one method stops and the next one starts. Thus, for a method that contains blank lines within itself, use *two* blank lines between methods (and then do that consistently for the rest of the class). For separating large classes/functions (>500 lines), or classes whose methods are separated by two blank lines, separating them by three blank lines is preferable.
+
+While not explicitly covered by the Google style guide, **return** statements should be used at the end of each function and method, even if that block returns ``None`` (in which case use ``return``, not ``return None``). This helps delimit larger methods/functions. However, always ask whether a function/method *should* return ``None``. Following the pandas convention, many Covasim methods return ``self``, which is what enables "chaining" patterns such as ``cv.Sim().run().plot()``.
+
+
+
 3.6 Whitespace (`GSG36 <https://google.github.io/styleguide/pyguide.html#36-whitespace>`_)
 ------------------------------------------------------------------------------------------
 
