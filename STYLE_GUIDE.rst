@@ -209,6 +209,15 @@ Vertically aligned code blocks also make it easier to edit code using editors th
 
 
 
+3.8.5 Block and Inline Comments (`GSG385 <https://google.github.io/styleguide/pyguide.html#385-block-and-inline-comments>`_)
+----------------------------------------------------------------------------------------------------------------------------
+
+**Difference**: Use either one or two spaces between code and a line comment.
+
+**Reason**: The advice "Use two spaces to improve readability" dates back to the era when most code was viewed as plain text. Now that virtually all editors have syntax highlighting, it's no longer really necessary. There's nothing *wrong* with two spaces, but if it's easier to type one space, do it.
+
+
+
 3.10 Strings (`GSG310 <https://google.github.io/styleguide/pyguide.html#310-strings>`_)
 ---------------------------------------------------------------------------------------
 
