@@ -1640,15 +1640,16 @@ class Calibration(Analyzer):
             return json
 
 
-    def plot_sims(self, **kwargs):
+    def plot_sims(self, color_before=[[0.21, 0.49, 0.72]], color_after=[[0.90, 0.11, 0.11]], **kwargs):
         '''
         Plot sims, before and after calibration.
 
         New in version 3.1.1: renamed from plot() to plot_sims().
         '''
         msim = cvr.MultiSim([self.before, self.after])
-        fig = msim.plot(**kwargs)
-        return cvpl.handle_show_return(fig=fig)
+        fig_before = msim.plot(inds=[0,], colors=color_before)
+        fig_after = msim.plot(inds=[1,], colors=color_after)
+        return cvpl.handle_show_return(figs=[fig_before, fig_after])
 
 
     def plot_trend(self, best_thresh=2):
