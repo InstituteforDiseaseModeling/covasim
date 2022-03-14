@@ -9,7 +9,7 @@ et-xmlfile==1.0.1
 gitdb==4.0.5
 GitPython==3.1.14
 idna==2.10
-ipython==7.21.0
+ipython==7.31.1
 ipython-genutils==0.2.0
 jdcal==1.4.1
 jedi==0.18.0
