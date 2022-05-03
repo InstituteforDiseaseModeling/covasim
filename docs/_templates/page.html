@@ -14,5 +14,54 @@
 {% block extrahead %}
 
 <link href="https://fonts.googleapis.com/css?family=Lato|Montserrat|Open+Sans" rel="stylesheet">
+<script type="application/javascript">
+  /**
+   * fixupSearchForm v0.0.1
+   * Modifies the search form for subprojects to point to the top-level search
+   * (c) 2022 Institute for Disease Modeling
+   * Contact: bryan.ressler@gatesfoundation.org
+   */
+  function fixupSearchForm() {
+    // Find the form
+    let form = document.querySelector("#rtd-search-form");
+    if (!form) return;
+
+    // Obtain the original "action" attribute
+    let origAction = form.getAttribute("action");
+    if (!origAction) return;
+
+    // Get our current URL. It will be in one of the following formats:
+    // <host>/<lang>/<version>/<page.html>                        # top page
+    // <host>/projects/<projectName>/<lang>/<version>/<page.html> # subpage
+    //
+    // If we're on localhost, we don't rewrite the URL so search continues to
+    // work on development builds.
+    let loc = location.href;
+    let lc = loc.toLowerCase();
+    if (lc.indexOf("localhost") !== -1 || lc.indexOf("127.0.0.1") !== -1) return;
+
+    // Example:
+    //   https://institute-for-disease-modeling-test-idm-docs.readthedocs-hosted.com/projects/test-calibra/en/latest/index.html#
+    // becomes
+    //   https://institute-for-disease-modeling-test-idm-docs.readthedocs-hosted.com/en/latest/search.html
+    // Match gives you:
+    //   [1]: https://institute-for-disease-modeling-test-idm-docs.readthedocs-hosted.com
+    //   [2]: test-calibra (discard)
+    //   [3]: /en/latest/
+    let mtch = loc.match(new RegExp(/(.*)\/projects\/([^\/]*)(\/.*\/).*/));
+    if (!mtch || !(1 in mtch && 3 in mtch)) return;
+
+    // If the current URL matches the subpage format, then we are a subproject
+    // page. In that case, modify the form's 'action' attribute to point to
+    // the parent's search page. This will still (thankfully) rank the current
+    // project's search result first.
+    let url = mtch[1] + mtch[3] + origAction;
+    form.setAttribute("action", url);
+    //console.log(`Monkey-patched project ${mtch[2]} search action to ${url}`);
+  }
+
+  // After the DOM's populated, run our monkey-patch.
+  document.addEventListener("DOMContentLoaded", fixupSearchForm);
+</script>
 
 {% endblock %}
