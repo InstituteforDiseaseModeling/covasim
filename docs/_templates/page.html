@@ -14,41 +14,5 @@
 {% block extrahead %}
 
 <link href="https://fonts.googleapis.com/css?family=Lato|Montserrat|Open+Sans" rel="stylesheet">
-<script type="application/javascript">
-  /**
-   * fixupSearchForm v0.0.1
-   * Modifies the search form for subprojects to point to the top-level search
-   * (c) 2022 Institute for Disease Modeling
-   * Contact: bryan.ressler@gatesfoundation.org
-   */
-  function fixupSearchForm() {
-    // Find the form
-    let form = document.querySelector("#rtd-search-form");
-    if (!form) return;
-
-    // Obtain the original "action" attribute
-    let origAction = form.getAttribute("action");
-    if (!origAction) return;
-
-    // If we're on localhost, we don't rewrite the URL so search continues to
-    // work on development builds.
-    let loc = location.href;
-    let lc = loc.toLowerCase();
-    if (lc.indexOf("localhost") !== -1 || lc.indexOf("127.0.0.1") !== -1) return;
-
-    // If we're a subproject page, do the monkey patch
-    let mtch = loc.match(new RegExp(/(.*)\/projects/));
-    if (mtch) {
-      // The presence of projects/ in our URL indicates we're a subproject.
-      // So modify the form action to point to the parent search page.
-      let url = `${mtch[1]}/${origAction}`;
-      form.setAttribute("action", url);
-      //console.log(`Monkey-patched subproject search action to ${url}`);
-    }
-  }
-
-  // After the DOM's populated, run our monkey-patch.
-  document.addEventListener("DOMContentLoaded", fixupSearchForm);
-</script>
 
 {% endblock %}
