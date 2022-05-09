@@ -64,7 +64,7 @@ autodoc_default_options = {
 
 autodoc_mock_imports = []
 
-rtd_sphinx_search_file_type = "un-minified"    # FIXME
+rtd_sphinx_search_file_type = "minified"
 
 napoleon_google_docstring = True
 
