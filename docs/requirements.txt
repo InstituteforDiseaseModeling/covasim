@@ -9,4 +9,4 @@ pandoc
 pypandoc
 optuna
 seaborn
-readthedocs-sphinx-search~=0.1.1
+readthedocs-sphinx-search
