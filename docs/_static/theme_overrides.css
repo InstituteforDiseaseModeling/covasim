@@ -74,3 +74,12 @@ code.literal {
     color: #e01e5a !important;
     background-color: #f6f6f6 !important;
 }
+
+/* BKR: These overrides customize advanced search */
+.search__outer:focus-within::after {
+  content: "See covasim results as you type; press Enter to search all IDM projects.";
+  font-size: 9.5pt;
+  color: #757575;
+  position: relative;
+  top: -17px;
+}

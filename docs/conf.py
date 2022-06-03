@@ -53,6 +53,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
+    'sphinx_search.extension',
     'nbsphinx',
 ]
 
@@ -63,6 +64,7 @@ autodoc_default_options = {
 
 autodoc_mock_imports = []
 
+rtd_sphinx_search_file_type = 'un-minified'
 
 napoleon_google_docstring = True
 

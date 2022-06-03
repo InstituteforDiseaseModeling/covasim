@@ -1,6 +1,7 @@
 pytest
 sphinx-rtd-theme
 sphinxcontrib-napoleon
+readthedocs-sphinx-search
 sphinx
 plantweb
 ipykernel
