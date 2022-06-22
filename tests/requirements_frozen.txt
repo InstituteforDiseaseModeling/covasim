@@ -22,7 +22,7 @@ matplotlib==3.3.4
 memory-profiler==0.58.0
 multiprocess==0.70.11.1
 numba==0.52.0
-numpy==1.21.0
+numpy==1.22.0
 openpyexcel==2.5.14
 pandas==1.2.3
 parso==0.8.1
