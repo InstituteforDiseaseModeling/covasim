@@ -301,7 +301,7 @@ def init_immunity(sim, create=False):
 
 def check_immunity(people):
     '''
-    Calculate self's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
+    Calculate people's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
     weighting individuals NAbs by source and then calculating efficacy.
 
     There are two fundamental sources of immunity:
