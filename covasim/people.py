@@ -412,7 +412,7 @@ class People(cvb.BasePeople):
 
         if set_recovered:
             self.date_recovered[inds] = date_recovered # Reset date recovered
-            self.check_recovered(inds=inds, filter_inds=None) # Set recovered
+            self.check_recovery(inds=inds, filter_inds=None) # Set recovered
 
         return
 
