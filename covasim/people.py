@@ -144,19 +144,10 @@ class People(cvb.BasePeople):
             errormsg = 'This people object does not have the required parameters ("prognoses" and "rand_seed"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
             raise sc.KeyNotFoundError(errormsg)
 
-        def find_cutoff(age_cutoffs, age):
-            '''
-            Find which age bin each person belongs to -- e.g. with standard
-            age bins 0, 10, 20, etc., ages [5, 12, 4, 58] would be mapped to
-            indices [0, 1, 0, 5]. Age bins are not guaranteed to be uniform
-            width, which is why this can't be done as an array operation.
-            '''
-            return np.nonzero(age_cutoffs <= age)[0][-1]  # Index of the age bin to use
-
         cvu.set_seed(pars['rand_seed'])
 
         progs = pars['prognoses'] # Shorten the name
-        inds = np.fromiter((find_cutoff(progs['age_cutoffs'], this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self)) # Convert ages to indices
+        inds = np.digitize(self.age, progs['age_cutoffs'])-1
         self.symp_prob[:]   = progs['symp_probs'][inds] # Probability of developing symptoms
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
