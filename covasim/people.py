@@ -176,12 +176,12 @@ class People(cvb.BasePeople):
 
         # Perform updates
         self.init_flows()
-        self.flows['new_infectious']    += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        self.flows['new_symptomatic']   += self.check_symptomatic()
-        self.flows['new_severe']        += self.check_severe()
-        self.flows['new_critical']      += self.check_critical()
-        self.flows['new_recoveries']    += self.check_recovery()
-        new_deaths, new_known_deaths    = self.check_death()
+        self.flows['new_infectious']    += len(self.check_infectious()) # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic']   += len(self.check_symptomatic())
+        self.flows['new_severe']        += len(self.check_severe())
+        self.flows['new_critical']      += len(self.check_critical())
+        self.flows['new_recoveries']    += len(self.check_recovery())
+        _, new_deaths, new_known_deaths    = self.check_death()
         self.flows['new_deaths']        += new_deaths
         self.flows['new_known_deaths']  += new_known_deaths
 
@@ -193,7 +193,7 @@ class People(cvb.BasePeople):
 
     def update_states_post(self):
         ''' Perform post-timestep updates '''
-        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_diagnoses']   += len(self.check_diagnosed())
         self.flows['new_quarantined'] += self.check_quar()
         del self.is_exp  # Tidy up
 
@@ -233,28 +233,28 @@ class People(cvb.BasePeople):
             n_this_variant_inds = len(this_variant_inds)
             self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
             self.infectious_by_variant[variant, this_variant_inds] = True
-        return len(inds)
+        return inds
 
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
         inds = self.check_inds(self.symptomatic, self.date_symptomatic, filter_inds=self.is_exp)
         self.symptomatic[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_severe(self):
         ''' Check for new progressions to severe '''
         inds = self.check_inds(self.severe, self.date_severe, filter_inds=self.is_exp)
         self.severe[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_critical(self):
         ''' Check for new progressions to critical '''
         inds = self.check_inds(self.critical, self.date_critical, filter_inds=self.is_exp)
         self.critical[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_recovery(self, inds=None, filter_inds='is_exp'):
@@ -292,7 +292,7 @@ class People(cvb.BasePeople):
             self.susceptible[inds] = True
             self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
 
-        return len(inds)
+        return inds
 
 
     def check_death(self):
@@ -313,7 +313,7 @@ class People(cvb.BasePeople):
         self.infectious_variant[inds] = np.nan
         self.exposed_variant[inds]    = np.nan
         self.recovered_variant[inds]  = np.nan
-        return len(inds), len(diag_inds)
+        return inds, len(inds), len(diag_inds)
 
 
     def check_diagnosed(self):
@@ -336,7 +336,7 @@ class People(cvb.BasePeople):
         self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
 
-        return len(test_pos_inds)
+        return test_pos_inds
 
 
     def check_quar(self):
