@@ -456,7 +456,6 @@ class People(cvb.BasePeople):
             for k in variant_keys:
                 infect_pars[k] *= self.pars['variant_pars'][variant_label][k]
 
-        n_infections = len(inds)
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
@@ -486,7 +485,7 @@ class People(cvb.BasePeople):
             self.infection_log.append(entry)
 
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
+        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=len(inds))
         self.date_exposed[inds]   = self.t
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
@@ -558,7 +557,7 @@ class People(cvb.BasePeople):
             symp = dict(asymp=asymp_inds, mild=mild_inds, sev=sev_inds)
             cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
-        return n_infections # For incrementing counters
+        return inds # For incrementing counters
 
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):
