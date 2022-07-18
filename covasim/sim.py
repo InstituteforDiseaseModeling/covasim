@@ -622,13 +622,16 @@ class Sim(cvb.BaseSim):
                 rel_beta *= self['variant_pars'][variant_label]['rel_beta']
             beta = cvd.default_float(self['beta'] * rel_beta)
 
+            inf_variant = people.infectious * (people.infectious_variant == variant)
+            if ~inf_variant.any():
+                continue
+
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
                 p2 = layer['p2']
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                inf_variant = people.infectious * (people.infectious_variant == variant) # TODO: move out of loop?
                 sus_imm = people.sus_imm[variant,:]
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
