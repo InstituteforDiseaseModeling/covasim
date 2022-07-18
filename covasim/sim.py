@@ -615,12 +615,9 @@ class Sim(cvb.BaseSim):
         for variant in range(nv):
 
             # Deal with variant parameters
-            rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
-            if variant:
-                variant_label = self.pars['variant_map'][variant]
-                rel_beta *= self['variant_pars'][variant_label]['rel_beta']
-            beta = cvd.default_float(self['beta'] * rel_beta)
+            variant_label = self.pars['variant_map'][variant]
+            beta = cvd.default_float(self['beta'] * self['rel_beta'] * self['variant_pars'][variant_label]['rel_beta'])
 
             inf_variant = people.infectious * (people.infectious_variant == variant)
             if ~inf_variant.any():
