@@ -264,7 +264,7 @@ def calc_VE_symp(nab, pars):
 
 
 
-# %% Immunity methods
+#%% Immunity methods
 
 def init_immunity(sim, create=False):
     ''' Initialize immunity matrices with all variants that will eventually be in the sim'''
@@ -299,6 +299,7 @@ def init_immunity(sim, create=False):
 
     return
 
+
 def check_immunity(people, variants=None):
     '''
     Calculate people's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
@@ -312,44 +313,39 @@ def check_immunity(people, variants=None):
 
     # Handle parameters and indices
     pars = people.pars
+    nab_eff = pars['nab_eff']
     if variants is None:
         variants = range(pars['n_variants'])
 
+    # Update immunity for each variant
     for variant in variants:
-
         natural_imm = np.zeros(len(people))
         vaccine_imm = np.zeros(len(people))
 
-        # NATURAL IMMUNITY WEIGHTING
+        # Natural immunity weighting
         was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
         recovered_variant = people.recovered_variant[was_inf]
-        immunity = pars["immunity"][variant, :]  # retrieve cross immunity factors for natural infection
+        immunity = pars['immunity'][variant, :]  # retrieve cross immunity factors for natural infection
         natural_imm[was_inf] = immunity[recovered_variant.astype(int)]
 
-        # VACCINE IMMUNITY WEIGHTING
+        # Vaccine immunity weighting
         is_vacc = cvu.true(people.vaccinated)  # Vaccinated
         vacc_source = people.vaccine_source[is_vacc]
-        if len(is_vacc) and len(pars["vaccine_pars"]):  # if using simple_vaccine, do not apply
-            vx_pars = pars["vaccine_pars"]
-            vx_map = pars["vaccine_map"]
-            var_key = pars["variant_map"][variant]
+        if len(is_vacc) and len(pars['vaccine_pars']):  # if using simple_vaccine, do not apply
+            vx_pars = pars['vaccine_pars']
+            vx_map = pars['vaccine_map']
+            var_key = pars['variant_map'][variant]
             imm_arr = np.zeros(max(vx_map.keys()) + 1)
             for num, key in vx_map.items():
                 imm_arr[num] = vx_pars[key][var_key]
             vaccine_imm[is_vacc] = imm_arr[vacc_source]
 
-        # CALCULATE OVERALL IMMUNITY
+        # Calculate overall immunity
         imm = np.maximum(natural_imm, vaccine_imm)  # Use the larger of natural immunity or vaccine immunity
-
-        # Retain previous assumption - uncommenting this should produce the same results as Covasim (immunity-updating, 4aec22a1)
-        # imm = natural_imm
-        # imm[vaccine_imm>0] = vaccine_imm[vaccine_imm>0]
-
         effective_nabs = people.nab * imm
-        nab_eff = pars["nab_eff"]
-        people.sus_imm[variant, :] = cvimm.calc_VE(effective_nabs, "sus", nab_eff)
-        people.symp_imm[variant, :] = cvimm.calc_VE(effective_nabs, "symp", nab_eff)
-        people.sev_imm[variant, :] = cvimm.calc_VE(effective_nabs, "sev", nab_eff)
+        people.sus_imm[variant, :]  = calc_VE(effective_nabs, 'sus', nab_eff)
+        people.symp_imm[variant, :] = calc_VE(effective_nabs, 'symp', nab_eff)
+        people.sev_imm[variant, :]  = calc_VE(effective_nabs, 'sev', nab_eff)
 
     return
 
