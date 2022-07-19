@@ -437,8 +437,9 @@ class People(cvb.BasePeople):
             count (int): number of people infected
         '''
 
+        # If no infections, short-circuit
         if len(inds) == 0:
-            return np.array([], dtype=cvd.default_int)
+            return inds
 
         # Remove duplicates
         inds, unique = np.unique(inds, return_index=True)
