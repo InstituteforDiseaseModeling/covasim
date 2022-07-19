@@ -188,6 +188,9 @@ class People(cvb.BasePeople):
         self.flows['new_deaths']        += new_deaths
         self.flows['new_known_deaths']  += new_known_deaths
 
+        if self.pars['use_waning']:
+            cvi.check_immunity(self)
+
         return
 
 
