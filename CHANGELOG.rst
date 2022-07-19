@@ -34,7 +34,7 @@ Version 3.1.3 (2022-07-19)
 - Updated immunity calculations to address edge cases in historical vaccination and multiple sources of immunity. Immunity calculations were also updated to skip variants with no infections for a small performance gain.
 - Previously, when a ``People`` object was passed into a sim, it was recreated using a new instance. Now, the existing instance is preserved. To restore the previous behavior, use the new ``recreate`` keyword argument to ``cv.make_people()``, e.g. ``sim = cv.Sim(people=people); sim.people = cv.make_people(sim, sim.people, recreate=True)``.
 - ``People`` methods (e.g. ``check_infectious()`` now return the indices of the people whose state changed, rather than just the total number.
-- *Regression information*: Simulations that use historical immunity (vaccination or waves) or multiple circulating variants will produce different results. ``People`` objects are no longer recreated by default.
+- *Regression information*: Immunity calculations have changed, so all simulations will produce stochastically different results. Simulations that use historical immunity (vaccination or waves) or multiple circulating variants may produce significantly different (not just stochastically different) results.
 - *GitHub info*: PR `1374 <https://github.com/amath-idm/covasim/pull/1374>`_
 
 
