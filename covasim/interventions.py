@@ -2198,4 +2198,3 @@ class historical_wave(Intervention):
         sim.people.infect(seed_inds, layer='seed_infection')
 
         return
-
