@@ -300,8 +300,8 @@ def init_immunity(sim, create=False):
     return
 
 
-def check_immunity(people, variant):
-    '''
+def check_immunity(people):
+    """
     Calculate people's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
     weighting individuals NAbs by source and then calculating efficacy.
 
@@ -310,48 +310,46 @@ def check_immunity(people, variant):
            (1) prior exposure: degree of protection depends on variant, prior symptoms, and time since recovery
            (2) vaccination: degree of protection depends on variant, vaccine, and time since vaccination
 
-    '''
+    """
 
-    # Shorten parameter names
+    # Handle parameters and indices
     pars = people.pars
-    immunity = pars['immunity'][variant,:] # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
-    nab_eff = pars['nab_eff']
-    current_nabs = sc.dcp(people.nab)
-    date_rec = people.date_recovered  # Date recovered
-    date_vacc = people.date_vaccinated  # Date vaccinated
 
-    # Initialize immunity -- this will be used to scale NAbs
-    imm = np.ones(len(people))
+    for variant in range(pars["n_variants"]):
 
-    # Determine where people's immunity is coming from. We determine the most recent
-    # immune-boosting event and use that to scale their NAbs.
+        natural_imm = np.zeros(len(people))
+        vaccine_imm = np.zeros(len(people))
 
-    # Set the immunity scaling for people whose last immune event was an infection
-    was_inf = cvu.true((people.t >= date_rec) & (date_rec >= date_vacc)) # Had a previous exposure more recently than a vaccination; now recovered
-    was_inf_same = cvu.true((people.recovered_variant == variant) & (people.t >= date_rec) & (date_rec >= date_vacc))  # Had a previous exposure to the same variant, now recovered
-    was_inf_diff = np.setdiff1d(was_inf, was_inf_same)  # Had a previous exposure to a different variant, now recovered
-    variant_was_inf_diff = people.recovered_variant[was_inf_diff]
-    variant_was_inf_diff = variant_was_inf_diff.astype(cvd.default_int)
+        # NATURAL IMMUNITY WEIGHTING
+        was_inf = cvu.true(people.t >= people.date_recovered)  # Had a previous exposure, now recovered
+        recovered_variant = people.recovered_variant[was_inf]
+        immunity = pars["immunity"][variant, :]  # retrieve cross immunity factors for natural infection
+        natural_imm[was_inf] = immunity[recovered_variant.astype(int)]
 
-    imm[was_inf_same] = immunity[variant] # Actually set the immunity scaling
-    imm[was_inf_diff] = [immunity[i] for i in variant_was_inf_diff]
+        # VACCINE IMMUNITY WEIGHTING
+        is_vacc = cvu.true(people.vaccinated)  # Vaccinated
+        vacc_source = people.vaccine_source[is_vacc]
+        if len(is_vacc) and len(pars["vaccine_pars"]):  # if using simple_vaccine, do not apply
+            vx_pars = pars["vaccine_pars"]
+            vx_map = pars["vaccine_map"]
+            var_key = pars["variant_map"][variant]
+            imm_arr = np.zeros(max(vx_map.keys()) + 1)
+            for num, key in vx_map.items():
+                imm_arr[num] = vx_pars[key][var_key]
+            vaccine_imm[is_vacc] = imm_arr[vacc_source]
 
-    # Set the immunity scaling for people whose last immune event was a vaccination
-    is_vacc = cvu.true((people.t >= date_vacc) & (date_vacc >= date_rec)) # Vaccinated more recently than infected
-    vacc_source = people.vaccine_source[is_vacc]
-    if len(is_vacc) and len(pars['vaccine_pars']): # if using simple_vaccine, do not apply
-        vx_pars = pars['vaccine_pars']
-        vx_map = pars['vaccine_map']
-        var_key = pars['variant_map'][variant]
-        imm_arr = np.zeros(max(vx_map.keys())+1)
-        for num,key in vx_map.items():
-            imm_arr[num] = vx_pars[key][var_key]
-        imm[is_vacc] = imm_arr[vacc_source]
+        # CALCULATE OVERALL IMMUNITY
+        imm = np.maximum(natural_imm, vaccine_imm)  # Use the larger of natural immunity or vaccine immunity
 
-    current_nabs *= imm
-    people.sus_imm[variant,:]  = calc_VE(current_nabs, 'sus',  nab_eff)
-    people.symp_imm[variant,:] = calc_VE(current_nabs, 'symp', nab_eff)
-    people.sev_imm[variant,:]  = calc_VE(current_nabs, 'sev',  nab_eff)
+        # Retain previous assumption - uncommenting this should produce the same results as Covasim (immunity-updating, 4aec22a1)
+        # imm = natural_imm
+        # imm[vaccine_imm>0] = vaccine_imm[vaccine_imm>0]
+
+        effective_nabs = people.nab * imm
+        nab_eff = pars["nab_eff"]
+        people.sus_imm[variant, :] = cvimm.calc_VE(effective_nabs, "sus", nab_eff)
+        people.symp_imm[variant, :] = cvimm.calc_VE(effective_nabs, "symp", nab_eff)
+        people.sev_imm[variant, :] = cvimm.calc_VE(effective_nabs, "sev", nab_eff)
 
     return
 
