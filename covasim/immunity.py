@@ -299,22 +299,23 @@ def init_immunity(sim, create=False):
 
     return
 
-def check_immunity(people):
+def check_immunity(people, variants=None):
     '''
-    Calculate self's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
+    Calculate people's immunity on this timestep from prior infections + vaccination. Calculates effective NAbs by
     weighting individuals NAbs by source and then calculating efficacy.
 
     There are two fundamental sources of immunity:
 
-           (1) prior exposure: degree of protection depends on variant, prior symptoms, and time since recovery
-           (2) vaccination: degree of protection depends on variant, vaccine, and time since vaccination
-
+        (1) prior exposure: degree of protection depends on variant, prior symptoms, and time since recovery
+        (2) vaccination: degree of protection depends on variant, vaccine, and time since vaccination
     '''
 
     # Handle parameters and indices
     pars = people.pars
+    if variants is None:
+        variants = range(pars['n_variants'])
 
-    for variant in range(pars['n_variants']):
+    for variant in variants:
         immunity = pars['immunity'][variant, :]  # cross-immunity/own-immunity scalars to be applied to NAb level before computing efficacy
         nab_eff = pars['nab_eff']
         imm = np.ones(len(people))
