@@ -368,7 +368,7 @@ class BaseSim(ParsObj):
 
             sim.day('2020-04-05') # Returns 35
         '''
-        return sc.day(day, *args, start_day=self['start_day'])
+        return sc.day(day, *args, start_date=self['start_day'])
 
 
     def date(self, ind, *args, dateformat=None, as_date=False):
