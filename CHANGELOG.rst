@@ -14,17 +14,66 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Coming soon
 ~~~~~~~~~~~
 
-These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`__.
+These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
 
-- Additional nuance in how immunity is modeled (planned for v3.2)
-- Multi-region and geographical support (planned for v3.3)
-- Economics and costing analysis (planned for v3.4)
+- Default Omicron parameters (planned for v3.1.3)
+- Additional nuance in how immunity is modeled (planned for v3.1.4)
+- Multi-region and geographical support
+- Economics and costing analysis
 
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 3.1.2 (2021-01-16)
+--------------------------
+
+Highlights
+^^^^^^^^^^
+- **New styles**: Plots have gotten a complete revamp.
+- **More options**: There are now many more options to control plot styles, warnings, etc.
+- **Populations**: It is now easier to work with pre-generated populations and contacts.
+
+Plotting
+^^^^^^^^
+- Default plotting styles have been updated. Run e.g. ``cv.Sim(n_days=365).run().plot()`` to see most of the changes. Major changes include: a new date formatter, grid lines à la Seaborn, new bundled fonts (`Mulish <https://fonts.google.com/specimen/Mulish>`_ and `Rosario <https://fonts.google.com/specimen/Rosario>`_), finer control of style options, and better defaults for Jupyter.
+- Changing styles is now much easier, e.g. ``sim.plot(style='seaborn-whitegrid')`` will use the named Matplotlib style. See ``cv.options.help()`` for more information.
+- Covasim now uses Sciris' default date formatter, which is similar to Plotly's. You can change this using the ``dateformat`` argument, e.g. ``sim.plot(dateformat='sciris')`` vs. ``sim.plot(dateformat='concise')``.
+- ``cv.savefig()`` can now save multiple figures simultaneously via the (new) ``fig`` argument.
+- Figure window names can now be passed to plot. This is called ``num`` by Matplotlib, so ``sim.plot(num='My plot')`` or ``sim.plot(fig_args={'num':'My plot'})`` will work.
+- You can plot every nth data point by passing the ``datastride`` argument to ``sim.plot()``. 
+- You can do automatic figure layout using the ``tight`` and ``maximize`` arguments, e.g. ``sim.plot('overview', tight=True, maximize=True)``. (Note: maximize may not work on all systems.)
+
+People and populations
+^^^^^^^^^^^^^^^^^^^^^^
+- The ``cv.Sim()`` now has arguments ``popfile`` and ``people``, rather than ``popfile``, ``loadpop``, and ``savepop``. Populations are now automatically loaded if ``popfile`` is provided. You can now also pass a ``People`` object directly in.
+- ``People`` objects now have ``save()`` and ``load()`` methods to replace doing this from within the sim. It is now an error by default to save a partially-run ``People`` object.
+- To create a population inside a sim for later use, create it with ``sim = cv.Sim().init_people()``, then save it with ``sim.people.save('people.ppl')``, then load with ``cv.Sim(popfile='people.ppl')``.
+- Contacts can be added more easily and flexibly. For example, contacts created with ``cv.make_random_contacts()`` can now be added directly with ``people.add_contacts()``.
+- Previously, infections were always initialized as part of ``sim.init_people()``, but now it is a separate method (``sim.init_infections()``).
+- The methods ``people.to_people()`` and ``people.from_people()`` have been renamed ``people.to_list()`` and ``people.from_list()``.
+- Fixed a bug preventing SynthPops populations from being loaded. (Thanks to Carter Merenstein for finding this bug.)
+
+Other changes
+^^^^^^^^^^^^^
+- Added ``cv.help()``, which will search docstrings (or full source code) for matches to search phrases.
+- Printed warning messages have been converted to actual warnings: use ``cv.options(warnings='print')`` to restore previous behavior.
+- Parameters for individual variants can now be retrieved more easily, e.g. ``cv.get_variant_pars(variant='delta')``.
+- MultiSim objects now automatically add labels to any sims that are missing labels.
+- When old objects are loaded, their versions numbers are no longer changed, allowing for multiple migrations to occur.
+
+Regression information
+^^^^^^^^^^^^^^^^^^^^^^
+- In ``cv.make_people()``, the arguments ``save_pop`` and ``popfile`` have been removed; call ``people.save()`` on the generated population instead.
+- In ``cv.make_synthpop()``, the argument ``population`` has been renamed ``popdict``, and will accept any SynthPops output (``popdict``, ``Pop``, or ``People``).
+- Calls to ``people.to_people()`` and ``people.from_people()`` should be replaced with ``people.to_list()`` and ``people.from_list()``, respectively.
+- Arguments ``font_family``, ``font_size``, and ``mpl_args`` to plots should be replaced with ``font``, ``fontsize``, and ``style_args`` respectively.
+- ``cv.date_formatter()`` has been removed; please use ``sc.dateformatter()`` (for a date x-axis) or ``sc.datenumformatter()`` (for a numeric axis that you want to format as dates) instead.
+- The ``columns`` argument has been removed from ``cv.load_data()``. If needed, load the data as a dataframe, filter the columns, then pass it to the sim.
+- *GitHub info*: PR `1295 <https://github.com/amath-idm/covasim/pull/1295>`_
 
 
 Version 3.1.1 (2021-12-06)
@@ -120,7 +169,7 @@ Regression information
 - Results for simulations with ``use_waning=True`` will be substantially different due to the update in parameters and functional form.
 - ``r_eff`` results will not match previous versions due to the change in calculation method (but differences should be slight).
 - Simulations that have been saved to disk which include variants may not work correctly. If this is an issue, please email us and we can help write a migration script.
-- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`__
+- *GitHub info*: PR `1130 <https://github.com/amath-idm/covasim/pull/1130>`_
 
 
 
@@ -132,7 +181,7 @@ Versions 3.0.x (3.0.0 – 3.0.7)
 Version 3.0.7 (2021-06-29)
 --------------------------
 - Added parameters for the Delta variant.
-- Refactored the NAb decay function to match the published version of `Khoury et al. <https://www.nature.com/articles/s41591-021-01377-8>`__ (the previous implementation matched the preprint).
+- Refactored the NAb decay function to match the published version of `Khoury et al <https://www.nature.com/articles/s41591-021-01377-8>`_ (the previous implementation matched the preprint).
 - Added optional ``capacity`` limit for ``cv.contact_tracing`` to cap the maximum number of people that can be traced each day.
 - When loading a population from file, this is now done during sim initialization (``sim.initialize()``); previously this was done as part of sim creation (``cv.Sim()``). This fixed a bug with immunity characteristics not being initialized correctly. (Thanks to Paula Sanz-Leon for identifying and proposing a fix.)
 - Fixed a log of 0 warning with NAbs.
@@ -157,7 +206,7 @@ Version 3.0.6 (2021-06-21)
 
 Version 3.0.5 (2021-05-26)
 --------------------------
-- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`__ for the rationale behind the change.
+- Changed all reference to variants from ``strain`` to ``variant``. For example, ``cv.strain()`` is now ``cv.variant()``, ``cv.Sim(strains=...)`` is now ``cv.Sim(variants=...)``, etc. See `this article <https://www.forbes.com/sites/jvchamary/2021/02/28/coronavirus-covid-variant-mutant-strain/?sh=4459cbc82241>`_ for the rationale behind the change.
 - Changed the ``nab_to_efficacy`` function based on a joint estimation of the marginal vaccine efficacies and inferred conditional efficacies.
 - Changed the parameters provided to ``nab_to_efficacy`` function.
 - Updated some strain parameters to be based on studies and not modeled inferences.
@@ -217,7 +266,7 @@ Version 3.0.1 (2021-04-16)
 
 Version 3.0.0 (2021-04-13)
 --------------------------
-This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at covasim@idmod.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
+This version introduces fully featured vaccines, variants, and immunity. **Note:** These new features are still under development; please use with caution and email us at info@covasim.org if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.
 
 Highlights
 ^^^^^^^^^^
@@ -347,7 +396,7 @@ Bugfixes
 ^^^^^^^^
 - Previously, the lognormal distributions were unintentionally using the variance of the distribution, instead of the standard deviation, as the second parameter. This makes a small difference to the results (slightly higher transmission due to the increased variance). Old simulations that are loaded will automatically have their parameters updated so they give the same results; however, new simulations will now give slightly different results than they did previously. (Thanks to Ace Thompson for identifying this.)
 - If a results object has low and high values, these are now exported to JSON (and also to Excel).
-- MultiSim and Scenarios ``run.()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
+- MultiSim and Scenarios ``.run()`` methods now return themselves, as Sim does. This means that just as you can do ``sim.run().plot()``, you can also now do ``msim.run().plot()``.
 
 Plotting and options
 ^^^^^^^^^^^^^^^^^^^^

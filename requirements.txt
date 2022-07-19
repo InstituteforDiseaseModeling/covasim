@@ -4,5 +4,4 @@ pandas
 scipy
 statsmodels
 matplotlib
-xlrd==1.2.0
-sciris>=1.2.2
+sciris>=1.3.3

@@ -39,7 +39,7 @@ setup(
     name="covasim",
     version=version,
     author="Cliff Kerr, Robyn Stuart, Romesh Abeysuriya, Dina Mistry, Lauren George, and Daniel Klein, on behalf of the IDM COVID-19 Response Team",
-    author_email="covasim@idmod.org",
+    author_email="info@covasim.org",
     description="COVID-19 Agent-based Simulator",
     long_description=long_description,
     long_description_content_type="text/x-rst",

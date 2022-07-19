@@ -2,13 +2,18 @@
 Miscellaneous functions that do not belong anywhere else
 '''
 
+import re
+import inspect
+import warnings
 import numpy as np
 import pandas as pd
 import pylab as pl
 import sciris as sc
+import collections as co
 from pathlib import Path
-from . import version as cvv
 from distutils.version import LooseVersion
+from . import version as cvv
+from .settings import options as cvo
 
 #%% Convenience imports from Sciris
 
@@ -25,13 +30,12 @@ date_range = sc.daterange
 __all__ += ['load_data', 'load', 'save', 'savefig']
 
 
-def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
+def load_data(datafile, calculate=True, check_date=True, verbose=True, start_day=None, **kwargs):
     '''
     Load data for comparing to the model output, either from file or from a dataframe.
 
     Args:
         datafile (str or df): if a string, the name of the file to load (either Excel or CSV); if a dataframe, use directly
-        columns (list): list of column names (otherwise, load all)
         calculate (bool): whether to calculate cumulative values from daily counts
         check_date (bool): whether to check that a 'date' column is present
         start_day (date): if the 'date' column is provided as integer number of days, consider them relative to this
@@ -47,29 +51,19 @@ def load_data(datafile, columns=None, calculate=True, check_date=True, verbose=T
     if isinstance(datafile, str):
         df_lower = datafile.lower()
         if df_lower.endswith('csv'):
-            raw_data = pd.read_csv(datafile, **kwargs)
+            data = pd.read_csv(datafile, **kwargs)
         elif df_lower.endswith('xlsx') or df_lower.endswith('xls'):
-            raw_data = pd.read_excel(datafile, **kwargs)
+            data = pd.read_excel(datafile, **kwargs)
         elif df_lower.endswith('json'):
-            raw_data = pd.read_json(datafile, **kwargs)
+            data = pd.read_json(datafile, **kwargs)
         else:
             errormsg = f'Currently loading is only supported from .csv, .xls/.xlsx, and .json files, not "{datafile}"'
             raise NotImplementedError(errormsg)
     elif isinstance(datafile, pd.DataFrame):
-        raw_data = datafile
+        data = datafile
     else: # pragma: no cover
         errormsg = f'Could not interpret data {type(datafile)}: must be a string or a dataframe'
         raise TypeError(errormsg)
-
-    # Confirm data integrity and simplify
-    if columns is not None:
-        for col in columns:
-            if col not in raw_data.columns: # pragma: no cover
-                errormsg = f'Column "{col}" is missing from the loaded data'
-                raise ValueError(errormsg)
-        data = raw_data[columns]
-    else:
-        data = raw_data
 
     # Calculate any cumulative columns that are missing
     if calculate:
@@ -153,32 +147,44 @@ def save(*args, **kwargs):
     return filepath
 
 
-def savefig(filename=None, comments=None, **kwargs):
+def savefig(filename=None, comments=None, fig=None, **kwargs):
     '''
-    Wrapper for Matplotlib's savefig() function which automatically stores Covasim
-    metadata in the figure. By default, saves (git) information from both the Covasim
-    version and the calling function. Additional comments can be added to the saved
-    file as well. These can be retrieved via cv.get_png_metadata(). Metadata can
-    also be stored for SVG and PDF formats, but cannot be automatically retrieved.
+    Wrapper for Matplotlib's ``pl.savefig()`` function which automatically stores
+    Covasim metadata in the figure.
+
+    By default, saves (git) information from both the Covasim version and the calling
+    function. Additional comments can be added to the saved file as well. These can
+    be retrieved via ``cv.get_png_metadata()`` (or ``sc.loadmetadata``). Metadata can
+    also be stored for PDF, but cannot be automatically retrieved.
 
     Args:
-        filename (str): name of the file to save to (default, timestamp)
-        comments (str): additional metadata to save to the figure
-        kwargs (dict): passed to savefig()
+        filename (str/list): name of the file to save to (default, timestamp); can also be a list of names
+        comments (str/dict): additional metadata to save to the figure
+        fig      (fig/list): figure to save (by default, current one); can also be a list of figures
+        kwargs   (dict):     passed to ``fig.savefig()``
 
     **Example**::
 
-        cv.Sim().run(do_plot=True)
-        filename = cv.savefig()
+        cv.Sim().run().plot()
+        cv.savefig()
     '''
 
     # Handle inputs
     dpi = kwargs.pop('dpi', 150)
     metadata = kwargs.pop('metadata', {})
 
+    if fig is None:
+        fig = pl.gcf()
+    figlist = sc.tolist(fig)
+
     if filename is None: # pragma: no cover
         now = sc.getdate(dateformat='%Y-%b-%d_%H.%M.%S')
         filename = f'covasim_{now}.png'
+    filenamelist = sc.tolist(filename)
+
+    if len(figlist) != len(filenamelist):
+        errormsg = f'You have supplied {len(figlist)} figures and {len(filenamelist)} filenames: these must be the same length'
+        raise ValueError(errormsg)
 
     metadata = {}
     metadata['Covasim version'] = cvv.__version__
@@ -192,13 +198,17 @@ def savefig(filename=None, comments=None, **kwargs):
     if comments:
         metadata['Covasim comments'] = comments
 
-    # Handle different formats
-    lcfn = filename.lower() # Lowercase filename
-    if lcfn.endswith('pdf') or lcfn.endswith('svg'):
-        metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+    # Loop over the figures (usually just one)
+    for thisfig, thisfilename in zip(figlist, filenamelist):
 
-    # Save the figure
-    pl.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+        # Handle different formats
+        lcfn = thisfilename.lower() # Lowercase filename
+        if lcfn.endswith('pdf') or lcfn.endswith('svg'):
+            metadata = {'Keywords':str(metadata)} # PDF and SVG doesn't support storing a dict
+
+        # Save the figure
+        thisfig.savefig(thisfilename, dpi=dpi, metadata=metadata, **kwargs)
+
     return filename
 
 
@@ -283,9 +293,15 @@ def migrate(obj, update=True, verbose=True, die=False):
     from . import run as cvr
     from . import interventions as cvi
 
+    unknown_version = '1.9.9' # For objects without version information, store the "last" version before 2.0.0
+
     # Migrations for simulations
     if isinstance(obj, cvb.BaseSim):
         sim = obj
+
+        # Recursively migrate people if needed
+        if sim.people:
+            sim.people = migrate(sim.people, update=update)
 
         # Migration from <2.0.0 to 2.0.0
         if sc.compareversions(sim.version, '<2.0.0'): # Migrate from <2.0 to 2.0
@@ -294,10 +310,6 @@ def migrate(obj, update=True, verbose=True, die=False):
             # Add missing attribute
             if not hasattr(sim, '_default_ver'):
                 sim._default_ver = None
-
-            # Recursively migrate people if needed
-            if sim.people:
-                sim.people = migrate(sim.people, update=update)
 
             # Rename intervention attribute
             tps = sim.get_interventions(cvi.test_prob)
@@ -329,9 +341,19 @@ def migrate(obj, update=True, verbose=True, die=False):
     # Migrations for People
     elif isinstance(obj, cvb.BasePeople): # pragma: no cover
         ppl = obj
+
+        # Migration from <2.0.0 to 2.0
         if not hasattr(ppl, 'version'): # For people prior to 2.0
-            if verbose: print(f'Migrating people from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(ppl) # Set all metadata
+            if verbose: print(f'Migrating people from version <2.0 to "unknown version" ({unknown_version})')
+            cvb.set_metadata(ppl, version=unknown_version) # Set all metadata
+
+        # # Migration from <3.1.2 to 3.1.2
+        if sc.compareversions(ppl.version, '<3.1.2'):
+            if verbose:
+                print(f'Migrating people from version {ppl.version} to version {cvv.__version__}')
+                print('Adding infected_initialized')
+            if not hasattr(ppl, 'infected_initialized'):
+                ppl.infected_initialized = True
 
     # Migrations for MultiSims -- use recursion
     elif isinstance(obj, cvr.MultiSim):
@@ -339,8 +361,8 @@ def migrate(obj, update=True, verbose=True, die=False):
         msim.base_sim = migrate(msim.base_sim, update=update)
         msim.sims = [migrate(sim, update=update) for sim in msim.sims]
         if not hasattr(msim, 'version'): # For msims prior to 2.0
-            if verbose: print(f'Migrating multisim from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(msim) # Set all metadata
+            if verbose: print(f'Migrating multisim from version <2.0 to "unknown version" ({unknown_version})')
+            cvb.set_metadata(msim, version=unknown_version) # Set all metadata
             msim.label = None
 
     # Migrations for Scenarios
@@ -350,13 +372,14 @@ def migrate(obj, update=True, verbose=True, die=False):
         for key,simlist in scens.sims.items():
             scens.sims[key] = [migrate(sim, update=update) for sim in simlist] # Nested loop
         if not hasattr(scens, 'version'): # For scenarios prior to 2.0
-            if verbose: print(f'Migrating scenarios from version <2.0 to version {cvv.__version__}')
-            cvb.set_metadata(scens) # Set all metadata
+            if verbose: print(f'Migrating scenarios from version <2.0 to "unknown version" ({unknown_version})')
+            cvb.set_metadata(scens, version=unknown_version) # Set all metadata
             scens.label = None
 
     # Unreconized object type
     else:
         errormsg = f'Object {obj} of type {type(obj)} is not understood and cannot be migrated: must be a sim, multisim, scenario, or people object'
+        warn(errormsg, errtype=TypeError, verbose=verbose, die=die)
         if die:
             raise TypeError(errormsg)
         elif verbose: # pragma: no cover
@@ -767,3 +790,149 @@ def compute_gof(actual, predicted, normalize=True, use_frac=False, use_squared=F
             gofs = np.median(gofs)
 
         return gofs
+
+
+#%% Help and warnings
+
+__all__ += ['help']
+
+def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
+    '''
+    Get help on Covasim in general, or search for a word/expression.
+
+    Args:
+        pattern    (str):  the word, phrase, or regex to search for
+        source     (bool): whether to search source code instead of docstrings for matches
+        ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
+        flags      (list): additional flags to pass to ``re.findall()``
+        context    (bool): whether to show the line(s) of matches
+        output     (bool): whether to return the dictionary of matches
+
+    **Examples**::
+
+        cv.help()
+        cv.help('vaccine')
+        cv.help('contact', ignorecase=False, context=True)
+        cv.help('lognormal', source=True, context=True)
+
+    | New in version 3.1.2.
+    '''
+    defaultmsg = '''
+For general help using Covasim, the best place to start is the docs:
+
+    http://docs.covasim.org
+
+To search for a keyword/phrase/regex in Covasim's docstrings, use e.g.:
+
+    >>> cv.help('vaccine')
+
+See help(cv.help) for more information.
+
+For help on Covasim options, see cv.options.help().
+'''
+    # No pattern is provided, print out default help message
+    if pattern is None:
+        print(defaultmsg)
+
+    else:
+
+        import covasim as cv # Here to avoid circular import
+
+        # Handle inputs
+        flags = sc.promotetolist(flags)
+        if ignorecase:
+            flags.append(re.I)
+
+        def func_ok(fucname, func):
+            ''' Skip certain functions '''
+            excludes = [
+                fucname.startswith('_'),
+                fucname in ['help', 'options', 'default_float', 'default_int'],
+                inspect.ismodule(func),
+            ]
+            ok = not(any(excludes))
+            return ok
+
+        # Get available functions/classes
+        funcs = [funcname for funcname in dir(cv) if func_ok(funcname, getattr(cv, funcname))] # Skip dunder methods and modules
+
+        # Get docstrings or full source code
+        docstrings = dict()
+        for funcname in funcs:
+            f = getattr(cv, funcname)
+            if source: string = inspect.getsource(f)
+            else:      string = f.__doc__
+            docstrings[funcname] = string
+
+        # Find matches
+        matches = co.defaultdict(list)
+        linenos = co.defaultdict(list)
+
+        for k,docstring in docstrings.items():
+            for l,line in enumerate(docstring.splitlines()):
+                if re.findall(pattern, line, *flags):
+                    linenos[k].append(str(l))
+                    matches[k].append(line)
+
+        # Assemble output
+        if not len(matches):
+            string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
+        else:
+            string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'
+            maxkeylen = 0
+            for k in matches.keys(): maxkeylen = max(len(k), maxkeylen)
+            for k,match in matches.items():
+                if not context:
+                    keystr = f'  {k:>{maxkeylen}s}'
+                else:
+                    keystr = k
+                matchstr = f'{keystr}: {len(match):>2d} matches'
+                if context:
+                    matchstr = sc.heading(matchstr, output=True)
+                else:
+                    matchstr += '\n'
+                string += matchstr
+                if context:
+                    lineno = linenos[k]
+                    maxlnolen = max([len(l) for l in lineno])
+                    for l,m in zip(lineno, match):
+                        string += sc.colorize(string=f'  {l:>{maxlnolen}s}: ', fg='cyan', output=True)
+                        string += f'{m}\n'
+                    string += '—'*60 + '\n'
+
+        # Print result and return
+        print(string)
+        if output:
+            return string
+        else:
+            return
+
+
+def warn(msg, category=None, verbose=None, die=None):
+    ''' Helper function to handle warnings -- not for the user '''
+
+    # Handle inputs
+    warnopt = cvo.warnings if not die else 'error'
+    if category is None:
+        category = RuntimeWarning
+    if verbose is None:
+        verbose = cvo.verbose
+
+    # Handle the different options
+    if warnopt in ['error', 'errors']: # Include alias since hard to remember
+        raise category(msg)
+    elif warnopt == 'warn':
+        msg = '\n' + msg
+        warnings.warn(msg, category=category, stacklevel=2)
+    elif warnopt == 'print':
+        if verbose:
+            msg = 'Warning: ' + msg
+            print(msg)
+    elif warnopt == 'ignore':
+        pass
+    else:
+        options = ['error', 'warn', 'print', 'ignore']
+        errormsg = f'Could not understand "{warnopt}": should be one of {options}'
+        raise ValueError(errormsg)
+
+    return

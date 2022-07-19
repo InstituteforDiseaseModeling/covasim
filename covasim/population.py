@@ -5,10 +5,10 @@ Defines functions for making the population.
 #%% Imports
 import numpy as np # Needed for a few things not provided by pl
 import sciris as sc
-from collections import defaultdict
 from . import requirements as cvreq
 from . import utils as cvu
 from . import misc as cvm
+from . import base as cvb
 from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpar
@@ -21,16 +21,16 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset=False, verbose=None, **kwargs):
+def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs):
     '''
-    Make the actual people for the simulation. Usually called via sim.initialize(),
-    but can be called directly by the user.
+    Make the actual people for the simulation.
+
+    Usually called via ``sim.initialize()``. While in theory this function can be
+    called directly by the user, usually it's better to call ``cv.People()`` directly.
 
     Args:
         sim      (Sim)  : the simulation object; population parameters are taken from the sim object
-        popdict  (dict) : if supplied, use this population dictionary instead of generating a new one
-        save_pop (bool) : whether to save the population to disk
-        popfile  (bool) : if so, the filename to save to
+        popdict  (any)  : if supplied, use this population dictionary instead of generating a new one; can be a dict, SynthPop, or People object
         die      (bool) : whether or not to fail if synthetic populations are requested but not available
         reset    (bool) : whether to force population creation even if self.popdict/self.people exists
         verbose  (bool) : level of detail to print
@@ -45,8 +45,6 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
     pop_type = sim['pop_type'] # Shorten
     if verbose is None:
         verbose = sim['verbose']
-    if popfile is None:
-        popfile = sim.popfile
 
     # Check which type of population to produce
     if pop_type == 'synthpops':
@@ -56,52 +54,85 @@ def make_people(sim, popdict=None, save_pop=False, popfile=None, die=True, reset
                 raise ValueError(errormsg)
             else:
                 print(errormsg)
-                pop_type = 'random'
+                pop_type = 'hybrid'
 
         location = sim['location']
         if location and verbose: # pragma: no cover
-            print(f'Warning: not setting ages or contacts for "{location}" since synthpops contacts are pre-generated')
+            warnmsg = f'Not setting ages or contacts for "{location}" since synthpops contacts are pre-generated'
+            cvm.warn(warnmsg)
 
-    # Actually create the population
+    # If a people object or popdict is supplied, use it
     if sim.people and not reset:
+        sim.people.initialize(sim_pars=sim.pars)
         return sim.people # If it's already there, just return
-    elif sim.popdict and not reset:
+    elif sim.popdict and popdict is None:
         popdict = sim.popdict # Use stored one
         sim.popdict = None # Once loaded, remove
-    elif popdict is None: # Main use case: no popdict is supplied
-        # Create the population
-        if pop_type in ['random', 'clustered', 'hybrid']:
-            popdict = make_randpop(sim, microstructure=pop_type, **kwargs)
-        elif pop_type == 'synthpops':
-            popdict = make_synthpop(sim, **kwargs)
-        elif pop_type is None: # pragma: no cover
-            errormsg = 'You have set pop_type=None. This is fine, but you must ensure sim.popdict exists before calling make_people().'
-            raise ValueError(errormsg)
-        else: # pragma: no cover
-            errormsg = f'Population type "{pop_type}" not found; choices are random, clustered, hybrid, or synthpops'
-            raise ValueError(errormsg)
+
+    # Handle SynthPops separately: run the popdict through the function even if it already exists
+    if pop_type == 'synthpops':
+        popdict = make_synthpop(sim, popdict=popdict, **kwargs)
+
+    # Main use case: no popdict is supplied, so create one
+    else:
+        if popdict is None:
+            if pop_type in ['random', 'hybrid']:
+                popdict = make_randpop(sim, microstructure=pop_type, **kwargs) # Main use case: create a random or hybrid population
+            else: # pragma: no cover
+                errormsg = f'Population type "{pop_type}" not found; choices are random, hybrid, or synthpops'
+                raise ValueError(errormsg)
 
     # Ensure prognoses are set
     if sim['prognoses'] is None:
         sim['prognoses'] = cvpar.get_prognoses(sim['prog_by_age'], version=sim._default_ver)
 
-    # Actually create the people
+    # Do minimal validation and create the people
+    validate_popdict(popdict, sim.pars, verbose=verbose)
     people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
 
-    average_age = sum(popdict['age']/pop_size)
-    sc.printv(f'Created {pop_size} people, average age {average_age:0.2f} years', 2, verbose)
-
-    if save_pop:
-        if popfile is None: # pragma: no cover
-            errormsg = 'Please specify a file to save to using the popfile kwarg'
-            raise FileNotFoundError(errormsg)
-        else:
-            filepath = sc.makefilepath(filename=popfile)
-            cvm.save(filepath, people)
-            if verbose:
-                print(f'Saved population of type "{pop_type}" with {pop_size:n} people to {filepath}')
+    sc.printv(f'Created {pop_size} people, average age {people.age.mean():0.2f} years', 2, verbose)
 
     return people
+
+
+def validate_popdict(popdict, pars, verbose=True):
+    '''
+    Check that the popdict is the correct type, has the correct keys, and has
+    the correct length
+    '''
+
+    # Check it's the right type
+    try:
+        popdict.keys() # Although not used directly, this is used in the error message below, and is a good proxy for a dict-like object
+    except Exception as E:
+        errormsg = f'The popdict should be a dictionary or cv.People object, but instead is {type(popdict)}'
+        raise TypeError(errormsg) from E
+
+    # Check keys and lengths
+    required_keys = ['uid', 'age', 'sex']
+    popdict_keys = popdict.keys()
+    pop_size = pars['pop_size']
+    for key in required_keys:
+
+        if key not in popdict_keys:
+            errormsg = f'Could not find required key "{key}" in popdict; available keys are: {sc.strjoin(popdict.keys())}'
+            sc.KeyNotFoundError(errormsg)
+
+        actual_size = len(popdict[key])
+        if actual_size != pop_size:
+            errormsg = f'Could not use supplied popdict since key {key} has length {actual_size}, but all keys must have length {pop_size}'
+            raise ValueError(errormsg)
+
+        isnan = np.isnan(popdict[key]).sum()
+        if isnan:
+            errormsg = f'Population not fully created: {isnan:,} NaNs found in {key}. This can be caused by calling cv.People() instead of cv.make_people().'
+            raise ValueError(errormsg)
+
+    if ('contacts' not in popdict_keys) and (not hasattr(popdict, 'contacts')) and verbose:
+        warnmsg = 'No contacts found. Please remember to add contacts before running the simulation.'
+        cvm.warn(warnmsg)
+
+    return
 
 
 def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5, microstructure='random', **kwargs):
@@ -140,7 +171,8 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
             try:
                 age_data = cvdata.get_age_distribution(location)
             except ValueError as E:
-                print(f'Could not load age data for requested location "{location}" ({str(E)}), using default')
+                warnmsg = f'Could not load age data for requested location "{location}" ({str(E)}), using default'
+                cvm.warn(warnmsg)
         if use_household_data:
             try:
                 household_size = cvdata.get_household_size(location)
@@ -148,10 +180,12 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
                     pars['contacts']['h'] = household_size - 1 # Subtract 1 because e.g. each person in a 3-person household has 2 contacts
                 elif pars['verbose']:
                     keystr = ', '.join(list(pars['contacts'].keys()))
-                    print(f'Warning; not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?')
+                    warnmsg = f'Not loading household size for "{location}" since no "h" key; keys are "{keystr}". Try "hybrid" population type?'
+                    cvm.warn(warnmsg)
             except ValueError as E:
-                if pars['verbose']>=2: # These don't exist for many locations, so skip the warning by default
-                    print(f'Could not load household size data for requested location "{location}" ({str(E)}), using default')
+                if pars['verbose']>1: # These don't exist for many locations, so skip the warning by default
+                    warnmsg = f'Could not load household size data for requested location "{location}" ({str(E)}), using default'
+                    cvm.warn(warnmsg)
 
     # Handle sexes and ages
     uids           = np.arange(pop_size, dtype=cvd.default_int)
@@ -205,7 +239,7 @@ def make_random_contacts(pop_size, n, overshoot=1.2, dispersion=None, mapping=No
 
     Args:
         pop_size   (int)   : number of agents to create contacts between (N)
-        n          (int)   : the average number of contacts per person for this layer
+        n          (int) : the average number of contacts per person for this layer
         overshoot  (float) : to avoid needing to take multiple Poisson draws
         dispersion (float) : if not None, use a negative binomial distribution with this dispersion parameter instead of Poisson to make the contacts
         mapping    (array) : optionally map the generated indices onto new indices
@@ -325,16 +359,17 @@ def make_hybrid_contacts(pop_size, ages, contacts, school_ages=None, work_ages=N
     return contacts_dict
 
 
-def make_synthpop(sim=None, population=None, layer_mapping=None, community_contacts=None, **kwargs): # pragma: no cover
+def make_synthpop(sim=None, popdict=None, layer_mapping=None, community_contacts=None, **kwargs): # pragma: no cover
     '''
-    Make a population using SynthPops, including contacts. Usually called automatically,
-    but can also be called manually. Either a simulation object or a population must
-    be supplied; if a population is supplied, transform it into the correct format;
-    otherwise, create the population and then transform it.
+    Make a population using SynthPops, including contacts.
+
+    Usually called automatically, but can also be called manually. Either a simulation
+    object or a population must be supplied; if a population is supplied, transform
+    it into the correct format; otherwise, create the population and then transform it.
 
     Args:
         sim (Sim): a Covasim simulation object
-        population (list): a pre-generated SynthPops population (otherwise, create a new one)
+        popdict (dict/Pop/People): a pre-generated SynthPops population (otherwise, create a new one)
         layer_mapping (dict): a custom mapping from SynthPops layers to Covasim layers
         community_contacts (int): if a simulation is not supplied, create this many community contacts on average
         kwargs (dict): passed to sp.make_population()
@@ -355,14 +390,7 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
     default_layer_mapping = {'H':'h', 'S':'s', 'W':'w', 'C':'c', 'LTCF':'l'} # Remap keys from old names to new names
     layer_mapping = sc.mergedicts(default_layer_mapping, layer_mapping)
 
-    # Handle other input arguments
-    if population is None:
-        if sim is None: # pragma: no cover
-            errormsg = 'Either a simulation or a population must be supplied'
-            raise ValueError(errormsg)
-        pop_size = sim['pop_size']
-        population = sp.make_population(n=pop_size, rand_seed=sim['rand_seed'], **kwargs)
-
+    # Handle community contacts
     if community_contacts is None:
         if sim is not None:
             community_contacts = sim['contacts']['c']
@@ -370,46 +398,32 @@ def make_synthpop(sim=None, population=None, layer_mapping=None, community_conta
             errormsg = 'If a simulation is not supplied, the number of community contacts must be specified'
             raise ValueError(errormsg)
 
-    # Create the basic lists
-    pop_size = len(population)
-    uids, ages, sexes, contacts = [], [], [], []
-    for uid,person in population.items():
-        uids.append(uid)
-        ages.append(person['age'])
-        sexes.append(person['sex'])
+    # Main use case -- generate a new population
+    pop_size = sim['pop_size']
+    if popdict is None:
+        if sim is None: # pragma: no cover
+            errormsg = 'Either a simulation or a population must be supplied'
+            raise ValueError(errormsg)
+        people = sp.Pop(n=pop_size, rand_seed=sim['rand_seed'], **kwargs).to_people() # Actually generate it
+    else: # Otherwise, convert to a sp.People object (similar to a cv.People object)
+        if isinstance(popdict, sp.people.People):
+            people = popdict
+        elif isinstance(popdict, sp.Pop):
+            people = popdict.to_people()
+        elif isinstance(popdict, dict):
+            people = sp.people.make_people(popdict=popdict)
+        elif isinstance(popdict, cvb.BasePeople):
+            return popdict # Already the right format
+        else:
+            errormsg = f'Cannot understand population of type {type(popdict)}: must be dict, sp.Pop, sp.People, or cv.People'
+            raise TypeError(errormsg)
 
-    # Replace contact UIDs with ints
-    uid_mapping = {uid:u for u,uid in enumerate(uids)}
-    for uid in uids:
-        iid = uid_mapping[uid] # Integer UID
-        person = population.pop(uid)
-        uid_contacts = sc.dcp(person['contacts'])
-        int_contacts = {}
-        for spkey in uid_contacts.keys():
-            try:
-                lkey = layer_mapping[spkey] # Map the SynthPops key into a Covasim layer key
-            except KeyError: # pragma: no cover
-                errormsg = f'Could not find key "{spkey}" in layer mapping "{layer_mapping}"'
-                raise sc.KeyNotFoundError(errormsg)
-            int_contacts[lkey] = []
-            for cid in uid_contacts[spkey]: # Contact ID
-                icid = uid_mapping[cid] # Integer contact ID
-                if icid>iid: # Don't add duplicate contacts
-                    int_contacts[lkey].append(icid)
-            int_contacts[lkey] = np.array(int_contacts[lkey], dtype=cvd.default_int)
-        contacts.append(int_contacts)
+    # Convert contacts from SynthPops to Covasim
+    people.contacts = cvb.Contacts(**people.contacts)
 
-    # Add community contacts
-    c_contacts, _ = make_random_contacts(pop_size, {'c':community_contacts})
-    for i in range(int(pop_size)):
-        contacts[i]['c'] = c_contacts[i]['c'] # Copy over community contacts -- present for everyone
+    # Add community contacts and layer keys
+    c_contacts = make_random_contacts(pop_size, community_contacts)
+    people.contacts.add_layer(c=c_contacts)
+    people['layer_keys'] = list(layer_mapping.values())
 
-    # Finalize
-    popdict = {}
-    popdict['uid']        = np.array(list(uid_mapping.values()), dtype=cvd.default_int)
-    popdict['age']        = np.array(ages)
-    popdict['sex']        = np.array(sexes)
-    popdict['contacts']   = sc.dcp(contacts)
-    popdict['layer_keys'] = list(layer_mapping.values())
-
-    return popdict
+    return people
