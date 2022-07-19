@@ -2,6 +2,8 @@
 Example for running custom calibration with Optuna
 '''
 
+import covasim as cv
+
 pars = dict(
     verbose = 0,
     start_day = '2020-02-05',

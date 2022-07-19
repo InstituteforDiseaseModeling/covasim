@@ -619,17 +619,14 @@ class Sim(cvb.BaseSim):
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
-            # Check immunity
-            if self['use_waning']:
-                cvimm.check_immunity(people, variant)
-
             # Deal with variant parameters
-            rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
-            if variant:
-                variant_label = self.pars['variant_map'][variant]
-                rel_beta *= self['variant_pars'][variant_label]['rel_beta']
-            beta = cvd.default_float(self['beta'] * rel_beta)
+            variant_label = self.pars['variant_map'][variant]
+            beta = cvd.default_float(self['beta'] * self['rel_beta'] * self['variant_pars'][variant_label]['rel_beta'])
+
+            inf_variant = people.infectious * (people.infectious_variant == variant)
+            if ~inf_variant.any():
+                continue
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -637,7 +634,6 @@ class Sim(cvb.BaseSim):
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                inf_variant = people.infectious * (people.infectious_variant == variant) # TODO: move out of loop?
                 sus_imm = people.sus_imm[variant,:]
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
