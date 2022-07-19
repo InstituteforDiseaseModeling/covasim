@@ -29,8 +29,9 @@ Latest versions (3.1.x)
 
 Version 3.1.3 (2022-07-19)
 --------------------------
-- 
-- *Regression information*: 
+- Fixed a bug with using `'seir'` as a default plot option. (Thanks Rik Belew for finding and fixing.)
+- Updated immunity calculations to address edge cases in historical vaccination and multiple sources of immunity. Immunity calculations were also updated to skip variants with no infections for a small performance gain.
+- *Regression information*: Simulations that use historical immunity (vaccination or waves) or multiple circulating variants will produce different results.
 - *GitHub info*: PR `1374 <https://github.com/amath-idm/covasim/pull/1374>`_
 
 
