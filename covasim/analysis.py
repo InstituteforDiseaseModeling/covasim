@@ -1495,10 +1495,11 @@ class Calibration(Analyzer):
 
         New in version 3.1.0.
         '''
-        if os.path.exists(self.run_args.db_name):
-            os.remove(self.run_args.db_name)
+        path = self.run_args.db_name
+        if os.path.exists(path):
+            os.remove(path)
             if self.verbose:
-                print(f'Removed existing calibration {self.run_args.db_name}')
+                print(f'Removed existing calibration: {path}')
         return
 
 
