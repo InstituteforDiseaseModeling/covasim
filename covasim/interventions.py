@@ -1471,10 +1471,11 @@ class BaseVaccination(Intervention):
             sim.people.doses[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = t
 
-            _t = sim.people.t
+            # Update the NAbs, resetting the time for historical vaccination if needed
+            orig_t = sim.people.t
             sim.people.t = t
             cvi.update_peak_nab(sim.people, vacc_inds, self.p)
-            sim.people.t = _t
+            sim.people.t = orig_t
 
             if t >= 0: # Only update the flows if it's *not* a historical dose
                 factor = sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
