@@ -431,14 +431,14 @@ class People(cvb.BasePeople):
             icu_max  (bool):  whether or not there is an ICU bed available for this person
             source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
-            variant   (int):   the variant people are being infected by
+            variant  (int):   the variant people are being infected by
 
         Returns:
             count (int): number of people infected
         '''
 
         if len(inds) == 0:
-            return 0
+            return np.array([], dtype=cvd.default_int)
 
         # Remove duplicates
         inds, unique = np.unique(inds, return_index=True)
@@ -459,6 +459,7 @@ class People(cvb.BasePeople):
             for k in variant_keys:
                 infect_pars[k] *= self.pars['variant_pars'][variant_label][k]
 
+
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
@@ -469,6 +470,7 @@ class People(cvb.BasePeople):
             self.rel_trans[new_breakthrough_inds] *= self.pars['trans_redux']
 
         # Update states, variant info, and flows
+        n_infections = len(inds)
         self.susceptible[inds]    = False
         self.naive[inds]          = False
         self.recovered[inds]      = False
@@ -478,9 +480,9 @@ class People(cvb.BasePeople):
         self.n_breakthroughs[breakthrough_inds] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
-        self.flows['new_infections']   += len(inds)
+        self.flows['new_infections']   += n_infections
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-        self.flows_variant['new_infections_by_variant'][variant] += len(inds)
+        self.flows_variant['new_infections_by_variant'][variant] += n_infections
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -488,7 +490,7 @@ class People(cvb.BasePeople):
             self.infection_log.append(entry)
 
         # Calculate how long before this person can infect other people
-        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=len(inds))
+        self.dur_exp2inf[inds] = cvu.sample(**durpars['exp2inf'], size=n_infections)
         self.date_exposed[inds]   = self.t
         self.date_infectious[inds] = self.dur_exp2inf[inds] + self.t
 
