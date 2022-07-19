@@ -21,7 +21,7 @@ __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_synthpop']
 
 
-def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs):
+def make_people(sim, popdict=None, die=True, reset=False, recreate=False, verbose=None, **kwargs):
     '''
     Make the actual people for the simulation.
 
@@ -33,6 +33,7 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
         popdict  (any)  : if supplied, use this population dictionary instead of generating a new one; can be a dict, SynthPop, or People object
         die      (bool) : whether or not to fail if synthetic populations are requested but not available
         reset    (bool) : whether to force population creation even if self.popdict/self.people exists
+        recreate (bool) : whether to recreate (re-instantiate) the People object even if already supplied
         verbose  (bool) : level of detail to print
         kwargs   (dict) : passed to make_randpop() or make_synthpop()
 
@@ -88,7 +89,11 @@ def make_people(sim, popdict=None, die=True, reset=False, verbose=None, **kwargs
 
     # Do minimal validation and create the people
     validate_popdict(popdict, sim.pars, verbose=verbose)
-    people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
+    if isinstance(popdict, cvppl.People) and not recreate:
+        people = popdict
+        people.set_pars(sim.pars)
+    else:
+        people = cvppl.People(sim.pars, uid=popdict['uid'], age=popdict['age'], sex=popdict['sex'], contacts=popdict['contacts']) # List for storing the people
 
     sc.printv(f'Created {pop_size} people, average age {people.age.mean():0.2f} years', 2, verbose)
 

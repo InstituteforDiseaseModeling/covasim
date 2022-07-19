@@ -147,19 +147,10 @@ class People(cvb.BasePeople):
             errormsg = 'This people object does not have the required parameters ("prognoses" and "rand_seed"). Create a sim (or parameters), then do e.g. people.set_pars(sim.pars).'
             raise sc.KeyNotFoundError(errormsg)
 
-        def find_cutoff(age_cutoffs, age):
-            '''
-            Find which age bin each person belongs to -- e.g. with standard
-            age bins 0, 10, 20, etc., ages [5, 12, 4, 58] would be mapped to
-            indices [0, 1, 0, 5]. Age bins are not guaranteed to be uniform
-            width, which is why this can't be done as an array operation.
-            '''
-            return np.nonzero(age_cutoffs <= age)[0][-1]  # Index of the age bin to use
-
         cvu.set_seed(pars['rand_seed'])
 
         progs = pars['prognoses'] # Shorten the name
-        inds = np.fromiter((find_cutoff(progs['age_cutoffs'], this_age) for this_age in self.age), dtype=cvd.default_int, count=len(self)) # Convert ages to indices
+        inds = np.digitize(self.age, progs['age_cutoffs'])-1
         self.symp_prob[:]   = progs['symp_probs'][inds] # Probability of developing symptoms
         self.severe_prob[:] = progs['severe_probs'][inds]*progs['comorbidities'][inds] # Severe disease probability is modified by comorbidities
         self.crit_prob[:]   = progs['crit_probs'][inds] # Probability of developing critical disease
@@ -179,21 +170,24 @@ class People(cvb.BasePeople):
 
         # Perform updates
         self.init_flows()
-        self.flows['new_infectious']    += self.check_infectious() # For people who are exposed and not infectious, check if they begin being infectious
-        self.flows['new_symptomatic']   += self.check_symptomatic()
-        self.flows['new_severe']        += self.check_severe()
-        self.flows['new_critical']      += self.check_critical()
-        self.flows['new_recoveries']    += self.check_recovery()
-        new_deaths, new_known_deaths    = self.check_death()
+        self.flows['new_infectious']    += len(self.check_infectious()) # For people who are exposed and not infectious, check if they begin being infectious
+        self.flows['new_symptomatic']   += len(self.check_symptomatic())
+        self.flows['new_severe']        += len(self.check_severe())
+        self.flows['new_critical']      += len(self.check_critical())
+        self.flows['new_recoveries']    += len(self.check_recovery())
+        _, new_deaths, new_known_deaths    = self.check_death()
         self.flows['new_deaths']        += new_deaths
         self.flows['new_known_deaths']  += new_known_deaths
+
+        if self.pars['use_waning']:
+            cvi.check_immunity(self)
 
         return
 
 
     def update_states_post(self):
         ''' Perform post-timestep updates '''
-        self.flows['new_diagnoses']   += self.check_diagnosed()
+        self.flows['new_diagnoses']   += len(self.check_diagnosed())
         self.flows['new_quarantined'] += self.check_quar()
         del self.is_exp  # Tidy up
 
@@ -233,28 +227,28 @@ class People(cvb.BasePeople):
             n_this_variant_inds = len(this_variant_inds)
             self.flows_variant['new_infectious_by_variant'][variant] += n_this_variant_inds
             self.infectious_by_variant[variant, this_variant_inds] = True
-        return len(inds)
+        return inds
 
 
     def check_symptomatic(self):
         ''' Check for new progressions to symptomatic '''
         inds = self.check_inds(self.symptomatic, self.date_symptomatic, filter_inds=self.is_exp)
         self.symptomatic[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_severe(self):
         ''' Check for new progressions to severe '''
         inds = self.check_inds(self.severe, self.date_severe, filter_inds=self.is_exp)
         self.severe[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_critical(self):
         ''' Check for new progressions to critical '''
         inds = self.check_inds(self.critical, self.date_critical, filter_inds=self.is_exp)
         self.critical[inds] = True
-        return len(inds)
+        return inds
 
 
     def check_recovery(self, inds=None, filter_inds='is_exp'):
@@ -292,7 +286,7 @@ class People(cvb.BasePeople):
             self.susceptible[inds] = True
             self.diagnosed[inds]   = False # Reset their diagnosis state because they might be reinfected
 
-        return len(inds)
+        return inds
 
 
     def check_death(self):
@@ -313,7 +307,7 @@ class People(cvb.BasePeople):
         self.infectious_variant[inds] = np.nan
         self.exposed_variant[inds]    = np.nan
         self.recovered_variant[inds]  = np.nan
-        return len(inds), len(diag_inds)
+        return inds, len(inds), len(diag_inds)
 
 
     def check_diagnosed(self):
@@ -336,7 +330,7 @@ class People(cvb.BasePeople):
         self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
         self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
 
-        return len(test_pos_inds)
+        return test_pos_inds
 
 
     def check_quar(self):
@@ -412,7 +406,7 @@ class People(cvb.BasePeople):
 
         if set_recovered:
             self.date_recovered[inds] = date_recovered # Reset date recovered
-            self.check_recovered(inds=inds, filter_inds=None) # Set recovered
+            self.check_recovery(inds=inds, filter_inds=None) # Set recovered
 
         return
 
@@ -437,14 +431,15 @@ class People(cvb.BasePeople):
             icu_max  (bool):  whether or not there is an ICU bed available for this person
             source   (array): source indices of the people who transmitted this infection (None if an importation or seed infection)
             layer    (str):   contact layer this infection was transmitted on
-            variant   (int):   the variant people are being infected by
+            variant  (int):   the variant people are being infected by
 
         Returns:
             count (int): number of people infected
         '''
 
+        # If no infections, short-circuit
         if len(inds) == 0:
-            return 0
+            return inds
 
         # Remove duplicates
         inds, unique = np.unique(inds, return_index=True)
@@ -465,7 +460,7 @@ class People(cvb.BasePeople):
             for k in variant_keys:
                 infect_pars[k] *= self.pars['variant_pars'][variant_label][k]
 
-        n_infections = len(inds)
+
         durpars      = self.pars['dur']
 
         # Retrieve those with a breakthrough infection (defined nabs)
@@ -476,6 +471,7 @@ class People(cvb.BasePeople):
             self.rel_trans[new_breakthrough_inds] *= self.pars['trans_redux']
 
         # Update states, variant info, and flows
+        n_infections = len(inds)
         self.susceptible[inds]    = False
         self.naive[inds]          = False
         self.recovered[inds]      = False
@@ -485,9 +481,9 @@ class People(cvb.BasePeople):
         self.n_breakthroughs[breakthrough_inds] += 1
         self.exposed_variant[inds] = variant
         self.exposed_by_variant[variant, inds] = True
-        self.flows['new_infections']   += len(inds)
+        self.flows['new_infections']   += n_infections
         self.flows['new_reinfections'] += len(cvu.defined(self.date_recovered[inds])) # Record reinfections
-        self.flows_variant['new_infections_by_variant'][variant] += len(inds)
+        self.flows_variant['new_infections_by_variant'][variant] += n_infections
 
         # Record transmissions
         for i, target in enumerate(inds):
@@ -567,7 +563,7 @@ class People(cvb.BasePeople):
             symp = dict(asymp=asymp_inds, mild=mild_inds, sev=sev_inds)
             cvi.update_peak_nab(self, inds, nab_pars=self.pars, symp=symp)
 
-        return n_infections # For incrementing counters
+        return inds # For incrementing counters
 
 
     def test(self, inds, test_sensitivity=1.0, loss_prob=0.0, test_delay=0):

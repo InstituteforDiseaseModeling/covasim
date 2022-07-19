@@ -1470,9 +1470,14 @@ class BaseVaccination(Intervention):
             sim.people.vaccine_source[vacc_inds] = self.index
             sim.people.doses[vacc_inds] += 1
             sim.people.date_vaccinated[vacc_inds] = t
-            cvi.update_peak_nab(sim.people, vacc_inds, self.p)
 
-            if t >= 0: # Only record these quantities by default if it's not a historical dose
+            # Update the NAbs, resetting the time for historical vaccination if needed
+            orig_t = sim.people.t
+            sim.people.t = t
+            cvi.update_peak_nab(sim.people, vacc_inds, self.p)
+            sim.people.t = orig_t
+
+            if t >= 0: # Only update the flows if it's *not* a historical dose
                 factor = sim['pop_scale']/sim.rescale_vec[t] # Scale up by pop_scale, but then down by the current rescale_vec, which gets applied again when results are finalized
                 sim.people.flows['new_doses']      += len(vacc_inds)*factor # Count number of doses given
                 sim.people.flows['new_vaccinated'] += len(new_vacc)*factor # Count number of people not already vaccinated given doses
@@ -1906,8 +1911,16 @@ class historical_vaccinate_prob(BaseVaccination):
             if len(to_update):
                 cvi.update_nab(sim.people, inds=to_update)
 
-        # reset the seed infections
+        # Re-compute immunity so that seed infection prognoses will reflect the NAb level
+        sim.people.t = 0
+        cvi.check_immunity(sim.people)
+
+        # Re-infect the seed cases so they get updated prognoses
         sim.people.infect(seed_inds, layer='seed_infection')
+
+        # Restore the time index so that it matches sim.t (noting that these would both usually be 0)
+        sim.people.t = sim.t
+
         return
 
 
@@ -2186,4 +2199,3 @@ class historical_wave(Intervention):
         sim.people.infect(seed_inds, layer='seed_infection')
 
         return
-
