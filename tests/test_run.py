@@ -49,6 +49,12 @@ def test_multirun(do_plot=do_plot): # If being run via pytest, turn off
         simlist.append(sim)
     sims2 = cv.multi_run(sim=simlist, verbose=verbose)
 
+    # Method 3 -- shortcut for parallelization
+    s1 = cv.Sim(n_days=n_days, pop_size=pop_size)
+    s2 = s1.copy()
+    s1,s2 = cv.parallel(s1, s2).sims
+    assert np.allclose(s1.summary[:], s2.summary[:], rtol=0, atol=0, equal_nan=True)
+
     # Run in serial for debugging
     cv.multi_run(sim=cv.Sim(n_days=n_days, pop_size=pop_size), n_runs=2, parallel=False)
 

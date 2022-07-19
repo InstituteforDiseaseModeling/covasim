@@ -15,7 +15,7 @@ verbose = -1
 debug   = 1 # This runs without parallelization; faster with pytest
 csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
 xlsx_file = os.path.join(sc.thisdir(), 'example_data.xlsx')
-cv.options.set(interactive=False) # Assume not running interactively
+cv.options(interactive=False) # Assume not running interactively
 
 
 def remove_files(*args):
@@ -95,8 +95,8 @@ def test_basepeople():
     ppl.to_df()
     ppl.to_arr()
     ppl.person(50)
-    people = ppl.to_people()
-    ppl.from_people(people)
+    people = ppl.to_list()
+    ppl.from_list(people)
     ppl.make_edgelist([{'new_key':[0,1,2]}])
     ppl.brief()
 
@@ -170,9 +170,6 @@ def test_misc():
     with pytest.raises(NotImplementedError):
         cv.load_data('example_data.unsupported_extension')
 
-    with pytest.raises(ValueError):
-        cv.load_data(xlsx_file, columns=['missing_column'])
-
     # Dates
     d1 = cv.date('2020-04-04')
     d2 = cv.date(sc.readdate('2020-04-04'))
@@ -234,7 +231,7 @@ def test_misc():
 def test_plotting():
     sc.heading('Testing plotting')
 
-    fig_path = 'plotting_test.png'
+    fig_paths = ['plotting_test1.png', 'plotting_test2.png']
 
     # Create sim with data and interventions
     ce = cv.clip_edges(**{'days': 10, 'changes': 0.5})
@@ -242,9 +239,7 @@ def test_plotting():
     sim.run(do_plot=True)
 
     # Handle lesser-used plotting options
-    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], interval=5, do_save=True, fig_path=fig_path)
-    print('↑ May print a warning about zero values')
-
+    sim.plot(to_plot=['cum_deaths', 'new_infections'], sep_figs=True, log_scale=['Number of new infections'], do_save=True, fig_path=fig_paths)
 
     # Handle Plotly functions
     try:
@@ -255,7 +250,7 @@ def test_plotting():
         print(f'Plotly plotting failed ({str(E)}), but not essential so continuing')
 
     # Tidy up
-    remove_files(fig_path)
+    remove_files(*fig_paths)
 
     return
 
@@ -267,10 +262,13 @@ def test_population():
 
     # Test locations, including ones that don't work
     cv.Sim(pop_size=100, pop_type='hybrid', location='nigeria').initialize()
-    cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
-    print('↑ Should complain about location not found')
-    cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
-    print('↑ Should complain about missing h layer')
+    with cv.options.context(warnings='error'):
+        with pytest.raises(RuntimeWarning):
+            cv.Sim(pop_size=100, pop_type='hybrid', location='not_a_location').initialize()
+            print('↑ Should complain about location not found')
+        with pytest.raises(RuntimeWarning):
+            cv.Sim(pop_size=100, pop_type='random', location='lithuania').initialize()
+            print('↑ Should complain about missing h layer')
 
     # Test synthpops
     try:
@@ -286,11 +284,12 @@ def test_population():
         sim.initialize()
 
     # Save/load
-    sim = cv.Sim(pop_size=100, popfile=pop_path, save_pop=True)
+    sim = cv.Sim(pop_size=100)
     sim.initialize()
-    cv.Sim(pop_size=100, popfile=pop_path, load_pop=True)
+    sim.people.save(pop_path)
+    cv.Sim(pop_size=100, popfile=pop_path)
     with pytest.raises(ValueError):
-        sim = cv.Sim(pop_size=101, popfile=pop_path, load_pop=True)
+        sim = cv.Sim(pop_size=101, popfile=pop_path)
         sim.initialize()
 
     remove_files(pop_path)
@@ -444,7 +443,7 @@ def test_settings():
 if __name__ == '__main__':
 
     # Start timing and optionally enable interactive plotting
-    cv.options.set(interactive=do_plot)
+    cv.options(interactive=do_plot)
     T = sc.tic()
 
     test_base()

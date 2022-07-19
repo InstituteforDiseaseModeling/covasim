@@ -9,7 +9,7 @@ et-xmlfile==1.0.1
 gitdb==4.0.5
 GitPython==3.1.14
 idna==2.10
-ipython==7.21.0
+ipython==7.31.1
 ipython-genutils==0.2.0
 jdcal==1.4.1
 jedi==0.18.0
@@ -22,14 +22,14 @@ matplotlib==3.3.4
 memory-profiler==0.58.0
 multiprocess==0.70.11.1
 numba==0.52.0
-numpy==1.20.1
+numpy==1.22.0
 openpyexcel==2.5.14
 pandas==1.2.3
 parso==0.8.1
 patsy==0.5.1
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==8.3.2
+Pillow==9.0.1
 prompt-toolkit==3.0.16
 psutil==5.8.0
 ptyprocess==0.7.0
