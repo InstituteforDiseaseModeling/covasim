@@ -175,6 +175,7 @@ class People(cvb.BasePeople):
         self.flows['new_severe']        += len(self.check_severe())
         self.flows['new_critical']      += len(self.check_critical())
         self.flows['new_recoveries']    += len(self.check_recovery())
+        self.check_exit_iso()
         _, new_deaths, new_known_deaths    = self.check_death()
         self.flows['new_deaths']        += new_deaths
         self.flows['new_known_deaths']  += new_known_deaths
@@ -189,6 +190,7 @@ class People(cvb.BasePeople):
         ''' Perform post-timestep updates '''
         self.flows['new_diagnoses']   += len(self.check_diagnosed())
         self.flows['new_quarantined'] += self.check_quar()
+        self.flows['new_isolated'] += len(self.check_enter_iso())
         del self.is_exp  # Tidy up
 
         return
@@ -326,9 +328,6 @@ class People(cvb.BasePeople):
         # Handle people who were actually diagnosed today
         diag_inds  = self.check_inds(self.diagnosed, self.date_diagnosed, filter_inds=None) # Find who was actually diagnosed on this timestep
         self.diagnosed[diag_inds]   = True # Set these people to be diagnosed
-        quarantined = cvu.itruei(self.quarantined, diag_inds)
-        self.date_end_quarantine[quarantined] = self.t # Set end quarantine date to match when the person left quarantine (and entered isolation)
-        self.quarantined[diag_inds] = False # If you are diagnosed, you are isolated, not in quarantine
 
         return test_pos_inds
 
@@ -340,11 +339,17 @@ class People(cvb.BasePeople):
         for ind,end_day in self._pending_quarantine[self.t]:
             if self.quarantined[ind]:
                 self.date_end_quarantine[ind] = max(self.date_end_quarantine[ind], end_day) # Extend quarantine if required
-            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
+            elif not (self.dead[ind] or self.recovered[ind] or self.diagnosed[ind] or self.isolated[ind]): # Unclear whether recovered should be included here # elif not (self.dead[ind] or self.diagnosed[ind]):
                 self.quarantined[ind] = True
                 self.date_quarantined[ind] = self.t
                 self.date_end_quarantine[ind] = end_day
                 n_quarantined += 1
+
+        # If someone has been diagnosed today, end their quarantine
+        # By definition, 'quarantine' only applies to people that are not yet diagnosed
+        # After diagnosis, they are 'isolating'
+        diag_inds  = cvu.true(self.quarantined & (self.date_diagnosed == self.t))
+        self.date_end_quarantine[diag_inds] = self.t
 
         # If someone on quarantine has reached the end of their quarantine, release them
         end_inds = self.check_inds(~self.quarantined, self.date_end_quarantine, filter_inds=None) # Note the double-negative here (~)
@@ -352,6 +357,21 @@ class People(cvb.BasePeople):
 
         return n_quarantined
 
+
+    def check_enter_iso(self):
+        # Anyone diagnosed today enters isolation for the duration of their infection
+        iso_inds  = cvu.true(self.date_diagnosed == self.t)
+        self.isolated[iso_inds] = True
+        self.date_end_isolation[iso_inds] = self.date_recovered[iso_inds]
+        return iso_inds
+
+    def check_exit_iso(self):
+        '''
+        End isolation for anyone due to exit isolation
+        '''
+        end_inds = self.check_inds(~self.isolated, self.date_end_isolation, filter_inds=None) # Note the double-negative here (~)
+        self.isolated[end_inds] = False # Release from isolation
+        return end_inds
 
     #%% Methods to make events occur (infection and diagnosis)
 
