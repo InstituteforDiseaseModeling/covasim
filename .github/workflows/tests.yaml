@@ -25,7 +25,9 @@ jobs:
         run: pip install -r requirements_test.txt
       - name: Run integration tests
         working-directory: ./tests
-        run: pytest -v test_*.py --workers auto --durations=0
-      - name: Run unit tests
-        working-directory: ./tests/unittests
-        run: pytest -v test_*.py --workers auto --durations=0
+        run: pytest -v test_*.py unittests/test_*.py --workers auto --durations=0 --junitxml=test-results.xml
+      - name: Publish test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          junit_files: tests/test-results.xml
