@@ -192,11 +192,11 @@ class Result(object):
         return len(self.values)
 
 
-def set_metadata(obj, **kwargs):
+def set_metadata(obj, frame=4, **kwargs):
     ''' Set standard metadata for an object '''
     obj.created = kwargs.get('created', sc.now())
     obj.version = kwargs.get('version', cvv.__version__)
-    obj.git_info = kwargs.get('git_info', cvm.git_info())
+    obj.git_info = kwargs.get('git_info', cvm.git_info(frame=frame)) # 4 = 2 (default) + base + caller
     return
 
 
@@ -286,7 +286,7 @@ class BaseSim(ParsObj):
 
     def set_metadata(self, simfile):
         ''' Set the metadata for the simulation -- creation time and filename '''
-        set_metadata(self)
+        set_metadata(self, frame=5)
         if simfile is None:
             self.simfile = 'covasim.sim'
         return
@@ -397,7 +397,7 @@ class BaseSim(ParsObj):
 
         # Handle inputs
         if not isinstance(ind, list): # If it's a number, string, or dateobj, convert it to a list
-            ind = sc.promotetolist(ind)
+            ind = sc.tolist(ind)
         ind.extend(args)
         if dateformat is None:
             dateformat = '%Y-%m-%d'
@@ -547,7 +547,7 @@ class BaseSim(ParsObj):
         # Handle keys
         if keys is None:
             keys = ['results', 'pars', 'summary']
-        keys = sc.promotetolist(keys)
+        keys = sc.tolist(keys)
 
         # Convert to JSON-compatible format
         d = {}
@@ -662,8 +662,14 @@ class BaseSim(ParsObj):
 
         # Shrink interventions and analyzers, with a lot of checking along the way
         for key in ['interventions', 'analyzers']:
-            ias = self.pars[key] # List of interventions or analyzers
-            shrunken_ias = [ia.shrink(in_place=in_place) for ia in ias if isinstance(ia, (cvi.Intervention, cva.Analyzer))]
+            ias = sc.tolist(self.pars[key]) # List of interventions or analyzers
+            shrunken_ias = []
+            for ia in ias:
+                if isinstance(ia, (cvi.Intervention, cva.Analyzer)):
+                    shrunken_ia = ia.shrink(in_place=in_place)
+                else:
+                    shrunken_ia = ia
+                shrunken_ias.append(shrunken_ia)
             self.pars[key] = shrunken_ias # Actually shrink, and re-store
 
         # Don't return if in place
@@ -760,7 +766,7 @@ class BaseSim(ParsObj):
                 label = np.arange(n_ia)
             if isinstance(label, np.ndarray): # Allow arrays to be provided
                 label = label.tolist()
-            labels = sc.promotetolist(label)
+            labels = sc.tolist(label)
 
             # Calculate the matches
             matches = []
@@ -979,7 +985,7 @@ class BasePeople(FlexPretty):
         # Reset sizes
         if keys is None:
             keys = self.keys()
-        keys = sc.promotetolist(keys)
+        keys = sc.tolist(keys)
         for key in keys:
             self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
 
@@ -1827,7 +1833,7 @@ class Layer(FlexDict):
 
         # Check types
         if not isinstance(inds, np.ndarray):
-            inds = sc.promotetoarray(inds)
+            inds = sc.toarray(inds)
         if inds.dtype != np.int64:  # pragma: no cover # This is int64 since indices often come from cv.true(), which returns int64
             inds = np.array(inds, dtype=np.int64)
 

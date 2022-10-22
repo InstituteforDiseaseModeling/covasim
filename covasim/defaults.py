@@ -70,6 +70,7 @@ class PeopleMeta(sc.prettyobj):
             'dead',
             'known_contact',
             'quarantined',
+            'isolated',
             'vaccinated',
         ]
 
@@ -110,6 +111,7 @@ class PeopleMeta(sc.prettyobj):
         self.dates = [f'date_{state}' for state in self.states] # Convert each state into a date
         self.dates.append('date_pos_test') # Store the date when a person tested which will come back positive
         self.dates.append('date_end_quarantine') # Store the date when a person comes out of quarantine
+        self.dates.append('date_end_isolation') # Store the date when a person comes out of isolation
 
         # Duration of different states: these are floats per person -- used in people.py
         self.durs = [
@@ -152,6 +154,7 @@ result_stocks = {
     'diagnosed':   'Number of confirmed cases',
     'known_dead':  'Number of confirmed deaths',
     'quarantined': 'Number in quarantine',
+    'isolated':    'Number in isolation',
     'vaccinated':  'Number of people vaccinated',
 }
 
@@ -174,6 +177,7 @@ result_flows = {
     'diagnoses':    'diagnoses',
     'known_deaths': 'known deaths',
     'quarantined':  'quarantined people',
+    'isolated':     'isolated people',
     'doses':        'vaccine doses',
     'vaccinated':   'vaccinated people'
 }
@@ -258,6 +262,7 @@ def get_default_colors():
     c.diagnoses             = '#5f5cd2'
     c.diagnosed             = c.diagnoses
     c.quarantined           = '#5c399c'
+    c.isolated              = '#9756ff'
     c.doses                 = c.quarantined # TODO: new color
     c.vaccinated            = c.quarantined
     c.recoveries            = '#9e1149'
@@ -323,7 +328,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
     Specify which quantities to plot; used in sim.py.
 
     Args:
-        which (str): either 'default' or 'overview'
+        which (str):  'default' or 'overview' or 'all' or 'seir'
     '''
     which = str(which).lower() # To make comparisons easier
 
@@ -431,7 +436,7 @@ def get_default_plots(which='default', kind='sim', sim=None):
             'n_preinfectious',
             'n_infectious',
             'n_removed',
-        ],
+        ]
 
     else: # pragma: no cover
         errormsg = f'The choice which="{which}" is not supported: choices are "default", "overview", "all", "variant", "overview-variant", or "seir", along with any result key (see sim.results_keys(\'all\') for options)'

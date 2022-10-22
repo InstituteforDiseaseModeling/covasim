@@ -613,23 +613,22 @@ class Sim(cvb.BaseSim):
         symp = people.symptomatic
         diag = people.diagnosed
         quar = people.quarantined
+        iso  = people.isolated
+
         prel_trans = people.rel_trans
         prel_sus   = people.rel_sus
 
         # Iterate through n_variants to calculate infections
         for variant in range(nv):
 
-            # Check immunity
-            if self['use_waning']:
-                cvimm.check_immunity(people, variant)
-
             # Deal with variant parameters
-            rel_beta = self['rel_beta']
             asymp_factor = self['asymp_factor']
-            if variant:
-                variant_label = self.pars['variant_map'][variant]
-                rel_beta *= self['variant_pars'][variant_label]['rel_beta']
-            beta = cvd.default_float(self['beta'] * rel_beta)
+            variant_label = self.pars['variant_map'][variant]
+            beta = cvd.default_float(self['beta'] * self['rel_beta'] * self['variant_pars'][variant_label]['rel_beta'])
+
+            inf_variant = people.infectious * (people.infectious_variant == variant)
+            if ~inf_variant.any():
+                continue
 
             for lkey, layer in contacts.items():
                 p1 = layer['p1']
@@ -637,12 +636,11 @@ class Sim(cvb.BaseSim):
                 betas = layer['beta']
 
                 # Compute relative transmission and susceptibility
-                inf_variant = people.infectious * (people.infectious_variant == variant) # TODO: move out of loop?
                 sus_imm = people.sus_imm[variant,:]
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer  = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, diag, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, iso, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
 
                 # Calculate actual transmission
                 pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop

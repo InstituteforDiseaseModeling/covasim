@@ -173,7 +173,7 @@ class snapshot(Analyzer):
 
     def __init__(self, days, *args, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
-        days = sc.promotetolist(days) # Combine multiple days
+        days = sc.tolist(days) # Combine multiple days
         days.extend(args) # Include additional arguments, if present
         self.days      = days # Converted to integer representations
         self.die       = die  # Whether or not to raise an exception
@@ -297,7 +297,7 @@ class age_histogram(Analyzer):
         # Handle states
         if self.states is None:
             self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
-        self.states = sc.promotetolist(self.states)
+        self.states = sc.tolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
 
@@ -1345,6 +1345,7 @@ class Fit(Analyzer):
 
         return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
+
 def import_optuna():
     ''' A helper function to import Optuna, which is an optional dependency '''
     try:
@@ -1353,6 +1354,7 @@ def import_optuna():
         errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
         raise ModuleNotFoundError(errormsg)
     return op
+
 
 class Calibration(Analyzer):
     '''
@@ -1369,7 +1371,7 @@ class Calibration(Analyzer):
         sim          (Sim)  : the simulation to calibrate
         calib_pars   (dict) : a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
         fit_args     (dict) : a dictionary of options that are passed to sim.compute_fit() to calculate the goodness-of-fit
-        par_samplers (dict) : an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_uniform
+        par_samplers (dict) : an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_float
         custom_fn    (func) : a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
         n_trials     (int)  : the number of trials per worker
         n_workers    (int)  : the number of parallel workers (default: maximum
@@ -1411,7 +1413,7 @@ class Calibration(Analyzer):
         if db_name   is None: db_name   = f'{name}.db'
         if keep_db   is None: keep_db   = False
         if storage   is None: storage   = f'sqlite:///{db_name}'
-        if total_trials is not None: n_trials = total_trials/n_workers
+        if total_trials is not None: n_trials = np.ceil(total_trials/n_workers)
         self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, keep_db=keep_db, storage=storage)
 
         # Handle other inputs
@@ -1475,7 +1477,7 @@ class Calibration(Analyzer):
                     errormsg = 'The requested sampler function is not found: ensure it is a valid attribute of an Optuna Trial object'
                     raise AttributeError(errormsg) from E
             else:
-                sampler_fn = trial.suggest_uniform
+                sampler_fn = trial.suggest_float
             pars[key] = sampler_fn(key, low, high) # Sample from values within this range
         mismatch = self.run_sim(pars)
         return mismatch
@@ -1500,19 +1502,28 @@ class Calibration(Analyzer):
         else: # Special case: just run one
             output = [self.worker()]
         return output
-
-
+    
+    
     def remove_db(self):
         '''
         Remove the database file if keep_db is false and the path exists.
 
         New in version 3.1.0.
         '''
+        try:
+            op = import_optuna()
+            op.delete_study(study_name=self.run_args.name, storage=self.run_args.storage)
+            if self.verbose:
+                print(f'Deleted study {self.run_args.name} in {self.run_args.storage}')
+        except Exception as E:
+            print('Could not delete study, skipping...')
+            print(str(E))
         if os.path.exists(self.run_args.db_name):
             os.remove(self.run_args.db_name)
             if self.verbose:
                 print(f'Removed existing calibration {self.run_args.db_name}')
         return
+    
 
 
     def make_study(self):
