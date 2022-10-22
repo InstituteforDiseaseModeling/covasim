@@ -1225,11 +1225,10 @@ class Fit(Analyzer):
     def summarize(self):
         ''' Print out results from the fit '''
         if self.mismatch is not None:
-            print(f'Mismatch values for:')
+            print('Mismatch values for:')
             print(self.mismatches)
-            print(f'\nTotal mismatch value:')
+            print('\nTotal mismatch value:')
             print(self.mismatch)
-
         else:
             print('Mismatch values not yet calculated; please run sim.compute_fit().')
         return
@@ -1651,16 +1650,15 @@ class Calibration(Analyzer):
             return json
 
 
-    def plot_sims(self, color_before=[[0.21, 0.49, 0.72]], color_after=[[0.90, 0.11, 0.11]], **kwargs):
+    def plot_sims(self, **kwargs):
         '''
         Plot sims, before and after calibration.
 
         New in version 3.1.1: renamed from plot() to plot_sims().
         '''
         msim = cvr.MultiSim([self.before, self.after])
-        fig_bef = msim.plot(inds=[0,], colors=color_before, **kwargs)
-        fig_aft = msim.plot(inds=[1,], colors=color_after, **kwargs)
-        return cvpl.handle_show_return(figs=[fig_bef, fig_aft])
+        fig = msim.plot(**kwargs)
+        return cvpl.handle_show_return(fig=fig)
 
 
     def plot_trend(self, best_thresh=2):
