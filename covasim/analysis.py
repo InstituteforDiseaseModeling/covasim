@@ -1332,6 +1332,7 @@ class Fit(Analyzer):
 
         return cvpl.handle_show_return(fig=fig, do_show=do_show)
 
+
 def import_optuna():
     ''' A helper function to import Optuna, which is an optional dependency '''
     try:
@@ -1340,6 +1341,7 @@ def import_optuna():
         errormsg = f'Optuna import failed ({str(E)}), please install first (pip install optuna)'
         raise ModuleNotFoundError(errormsg)
     return op
+
 
 class Calibration(Analyzer):
     '''
@@ -1356,7 +1358,7 @@ class Calibration(Analyzer):
         sim          (Sim)  : the simulation to calibrate
         calib_pars   (dict) : a dictionary of the parameters to calibrate of the format dict(key1=[best, low, high])
         fit_args     (dict) : a dictionary of options that are passed to sim.compute_fit() to calculate the goodness-of-fit
-        par_samplers (dict) : an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_uniform
+        par_samplers (dict) : an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_float
         custom_fn    (func) : a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim
         n_trials     (int)  : the number of trials per worker
         n_workers    (int)  : the number of parallel workers (default: maximum
@@ -1462,7 +1464,7 @@ class Calibration(Analyzer):
                     errormsg = 'The requested sampler function is not found: ensure it is a valid attribute of an Optuna Trial object'
                     raise AttributeError(errormsg) from E
             else:
-                sampler_fn = trial.suggest_uniform
+                sampler_fn = trial.suggest_float
             pars[key] = sampler_fn(key, low, high) # Sample from values within this range
         mismatch = self.run_sim(pars)
         return mismatch
