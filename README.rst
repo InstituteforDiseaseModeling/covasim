@@ -191,12 +191,6 @@ Examples of how to calibrate simulations, including `Optuna`_ (also covered in t
 .. _Weights and Biases: https://www.wandb.com/
 
 
-Licenses
---------
-
-Licensing information and legal notices.
-
-
 Tests
 -----
 
