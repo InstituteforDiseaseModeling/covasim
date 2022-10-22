@@ -5,7 +5,6 @@ defined by the user by inheriting from these classes.
 
 import numpy as np
 import pandas as pd
-import scipy as sp
 import pylab as pl
 import sciris as sc
 import inspect
@@ -16,7 +15,6 @@ from . import base as cvb
 from . import defaults as cvd
 from . import parameters as cvpar
 from . import immunity as cvi
-from collections import defaultdict
 
 
 #%% Helper functions
@@ -1705,7 +1703,7 @@ class vaccinate_num(BaseVaccination):
         self.num_doses  = num_doses
         self.booster    = booster
         self.subtarget  = subtarget
-        self._scheduled_doses = defaultdict(set)  # Track scheduled second doses, where applicable
+        self._scheduled_doses = sc.ddict(set)  # Track scheduled second doses, where applicable
         return
 
 
@@ -2002,6 +2000,11 @@ class historical_vaccinate_prob(BaseVaccination):
 
             prob = historical_vaccinate.estimate_prob(duration=180, coverage=0.70)
         '''
+        from scipy import optimize, special # Not used elsewhere, and can't import scipy as sp
+        
+        def NB_cdf(k, p, r=1):
+            '''note that the NB distribution shows the fraction '''
+            return 1 - special.betainc(k + 1, r, p)
 
         # Note that NB distribution is defined as k number of successes *before* r=1 failures (vaccination) occur.
         # Mapping onto the vaccination campaign this means we need k+1 days of a campaign (k days to not be
@@ -2012,15 +2015,10 @@ class historical_vaccinate_prob(BaseVaccination):
         def invlogit(y):
             return np.exp(y)/(np.exp(y)+1)
         # this method can be finicky
-        p = sp.optimize.newton(lambda y: historical_vaccinate_prob.NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
+        p = optimize.newton(lambda y: NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
         # p is the probability of *not* being vaccinated per day so we return 1-p
         return 1 - invlogit(p)
-
-
-    @staticmethod
-    def NB_cdf(k, p, r=1):
-        '''note that the NB distribution shows the fraction '''
-        return 1 - sp.special.betainc(k + 1, r, p)
+    
 
 
 class historical_wave(Intervention):
