@@ -662,7 +662,7 @@ class BaseSim(ParsObj):
 
         # Shrink interventions and analyzers, with a lot of checking along the way
         for key in ['interventions', 'analyzers']:
-            ias = self.pars[key] # List of interventions or analyzers
+            ias = sc.tolist(self.pars[key]) # List of interventions or analyzers
             shrunken_ias = []
             for ia in ias:
                 if isinstance(ia, (cvi.Intervention, cva.Analyzer)):
