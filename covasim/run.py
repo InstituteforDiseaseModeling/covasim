@@ -524,12 +524,12 @@ class MultiSim(cvb.FlexPretty):
 
                 # Handle the legend and labels
                 if final_plot:
-                    merged_show_args  = show_args
+                    merged_show_args  = sc.mergedicts(dict(returnfig=cvo.returnfig), show_args)
                     kwargs['do_show'] = orig_show
                     kwargs['setylim'] = orig_setylim
                     cvo.set(close=orig_close) # Reset original closing settings
                 else:
-                    merged_show_args  = False # Only show things like data the last time it's plotting
+                    merged_show_args  = dict(annotations=False, returnfig=True) # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
                     kwargs['setylim'] = False # Don't set the y limits until we have all the data
                     cvo.set(close=False) # Do not close figures if we're in the middle of plotting

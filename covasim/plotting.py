@@ -20,7 +20,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 #%% Plotting helper functions
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
-                legend_args=None, date_args=None, show_args=None, style_args=None, do_show=cvo.do_show, **kwargs):
+                legend_args=None, date_args=None, show_args=None, style_args=None, do_show=None, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
 
     # Set defaults
@@ -32,7 +32,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False, do_show=do_show, returnfig=cvo.returnfig)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False, annotations=None, do_show=do_show, returnfig=cvo.returnfig)
     defaults.style   = sc.objdict(style=None, dpi=None, font=None, fontsize=None, grid=None, facecolor=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
@@ -43,12 +43,14 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
                 default[kw] = kwargs.pop(kw)
 
     # Handle what to show
-    show_keys = ['data', 'ticks', 'interventions', 'legend']
-    if show_args in [True, False]: # Handle all on or all off
-        show_bool = show_args
-        show_args = dict()
-        for k in show_keys:
-            show_args[k] = show_bool
+    if show_args is not None:
+        annotations = show_args.get('annotations', None)
+        if annotations is not None:
+            show_keys = ['data', 'ticks', 'interventions', 'legend']
+            if annotations in [True, False]: # Handle all on or all off
+                show_bool = show_args['a']
+                for k in show_keys:
+                    show_args[k] = show_bool
 
     # Merge arguments together
     args = sc.objdict()
@@ -433,7 +435,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                   legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
+                   legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
 
     # Do the plotting
@@ -469,14 +471,14 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
-                    if args.show['interventions']:
+                    if args.show.interventions:
                         plot_interventions(sim, ax) # Plot the interventions
                     if args.show['ticks']:
                         reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-            if args.show['legend']:
+            if args.show.legend:
                 title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
@@ -489,7 +491,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
-                       date_args=date_args, style_args=style_args, **kwargs)
+                       date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
 
     # Gather results
     res = sim.results[key]
@@ -519,7 +521,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
         title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
         reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=None, grid=False,
@@ -531,7 +533,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
     sep_figs = False
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, **kwargs)
+    args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, do_show=do_show, **kwargs)
 
     # Map from results into different categories
     mapping = {
@@ -565,7 +567,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
                 ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
             ax.grid(True)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 #%% Other plotting functions
