@@ -45,12 +45,10 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     # Handle what to show
     if show_args is not None:
         annotations = show_args.get('annotations', None)
-        if annotations is not None:
+        if annotations in [True, False]: # Handle all on or all off
             show_keys = ['data', 'ticks', 'interventions', 'legend']
-            if annotations in [True, False]: # Handle all on or all off
-                show_bool = show_args['a']
-                for k in show_keys:
-                    show_args[k] = show_bool
+            for k in show_keys:
+                show_args[k] = annotations
 
     # Merge arguments together
     args = sc.objdict()
@@ -88,7 +86,7 @@ def handle_show_return(do_show=None, returnfig=None, fig=None, figs=None):
     ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
     
     if do_show is None:
-        do_show = cvo.do_show
+        do_show = cvo.show
     if returnfig is None:
         returnfig = cvo.returnfig
 
