@@ -192,11 +192,11 @@ class Result(object):
         return len(self.values)
 
 
-def set_metadata(obj, **kwargs):
+def set_metadata(obj, frame=4, **kwargs):
     ''' Set standard metadata for an object '''
     obj.created = kwargs.get('created', sc.now())
     obj.version = kwargs.get('version', cvv.__version__)
-    obj.git_info = kwargs.get('git_info', cvm.git_info())
+    obj.git_info = kwargs.get('git_info', cvm.git_info(frame=frame)) # 4 = 2 (default) + base + caller
     return
 
 
@@ -286,7 +286,7 @@ class BaseSim(ParsObj):
 
     def set_metadata(self, simfile):
         ''' Set the metadata for the simulation -- creation time and filename '''
-        set_metadata(self)
+        set_metadata(self, frame=5)
         if simfile is None:
             self.simfile = 'covasim.sim'
         return
