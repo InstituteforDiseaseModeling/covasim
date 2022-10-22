@@ -1105,7 +1105,7 @@ class contact_tracing(Intervention):
         if not len(trace_inds):
             return {}
 
-        contacts = defaultdict(list)
+        contacts = sc.ddict(list)
 
         for lkey, this_trace_prob in self.trace_probs.items():
 
