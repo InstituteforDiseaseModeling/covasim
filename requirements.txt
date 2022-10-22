@@ -4,4 +4,4 @@ pandas
 scipy
 statsmodels
 matplotlib
-sciris>=1.3.3
+sciris>=2.0.1
