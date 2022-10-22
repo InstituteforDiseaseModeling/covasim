@@ -1222,6 +1222,18 @@ class Fit(Analyzer):
         return self.mismatch
 
 
+    def summarize(self):
+        ''' Print out results from the fit '''
+        if self.mismatch is not None:
+            print('Mismatch values for:')
+            print(self.mismatches)
+            print('\nTotal mismatch value:')
+            print(self.mismatch)
+        else:
+            print('Mismatch values not yet calculated; please run sim.compute_fit().')
+        return
+
+
     def plot(self, keys=None, width=0.8, fig_args=None, axis_args=None, plot_args=None,
              date_args=None, do_show=None, fig=None, **kwargs):
         '''
