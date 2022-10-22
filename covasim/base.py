@@ -663,7 +663,13 @@ class BaseSim(ParsObj):
         # Shrink interventions and analyzers, with a lot of checking along the way
         for key in ['interventions', 'analyzers']:
             ias = self.pars[key] # List of interventions or analyzers
-            shrunken_ias = [ia.shrink(in_place=in_place) for ia in ias if isinstance(ia, (cvi.Intervention, cva.Analyzer))]
+            shrunken_ias = []
+            for ia in ias:
+                if isinstance(ia, (cvi.Intervention, cva.Analyzer)):
+                    shrunken_ia = ia.shrink(in_place=in_place)
+                else:
+                    shrunken_ia = ia
+                shrunken_ias.append(shrunken_ia)
             self.pars[key] = shrunken_ias # Actually shrink, and re-store
 
         # Don't return if in place
