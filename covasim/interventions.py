@@ -5,7 +5,6 @@ defined by the user by inheriting from these classes.
 
 import numpy as np
 import pandas as pd
-import scipy as sp
 import pylab as pl
 import sciris as sc
 import inspect
@@ -16,7 +15,6 @@ from . import base as cvb
 from . import defaults as cvd
 from . import parameters as cvpar
 from . import immunity as cvi
-from collections import defaultdict
 
 
 #%% Helper functions
@@ -41,7 +39,7 @@ def find_day(arr, t=None, interv=None, sim=None, which='first'):
     '''
     if callable(arr):
         arr = arr(interv, sim)
-        arr = sc.promotetoarray(arr)
+        arr = sc.toarray(arr)
     all_inds = sc.findinds(arr=arr, val=t)
     if len(all_inds) == 0 or which == 'all':
         inds = all_inds
@@ -86,12 +84,12 @@ def process_days(sim, days, return_dates=False):
     if callable(days):
         return days
     if sc.isstring(days) or not sc.isiterable(days):
-        days = sc.promotetolist(days)
+        days = sc.tolist(days)
     for d,day in enumerate(days):
         if day in ['end', -1]: # pragma: no cover
             day = sim['end_day']
         days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
-    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    days = np.sort(sc.toarray(days)) # Ensure they're an array and in order
     if return_dates:
         dates = [sim.date(day) for day in days] # Store as date strings
         return days, dates
@@ -103,7 +101,7 @@ def process_changes(sim, changes, days):
     '''
     Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
     '''
-    changes = sc.promotetoarray(changes)
+    changes = sc.toarray(changes)
     if sc.isiterable(days) and len(days) != len(changes): # pragma: no cover
         errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
@@ -281,18 +279,17 @@ class Intervention:
 
     def _store_args(self):
         ''' Store the user-supplied arguments for later use in to_json '''
+        self.input_args = {} # Create a place to store the input arguments
         f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
         f1 = inspect.getouterframes(f0) # The list of outer frames
         parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
-        _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
-        if values:
-            self.input_args = {}
-            for key,value in values.items():
-                if key == 'kwargs': # Store additional kwargs directly
-                    for k2,v2 in value.items(): # pragma: no cover
-                        self.input_args[k2] = v2 # These are already a dict
-                elif key not in ['self', '__class__']: # Everything else, but skip these
-                    self.input_args[key] = value
+        arginfo = inspect.getargvalues(parent) # Get the values of the arguments
+        for arg in arginfo.args:
+            if arg != 'self': # Don't store this
+                self.input_args[arg] = arginfo.locals[arg] # Store normal arguments, including defined keyword arguments
+        if arginfo.keywords is not None:
+            for key,value in arginfo.locals['kwargs'].items(): # Store additional arguments captured by **kwargs
+                self.input_args[key] = value
         return
 
 
@@ -456,7 +453,7 @@ class dynamic_pars(Intervention):
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise sc.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
-                    pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
+                    pars[parkey][subkey] = sc.toarray(pars[parkey][subkey])
             days = pars[parkey]['days']
             vals = pars[parkey]['vals']
             if sc.isiterable(days):
@@ -564,7 +561,7 @@ class change_beta(Intervention):
         super().initialize()
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
-        self.layers  = sc.promotetolist(self.layers, keepnone=True)
+        self.layers  = sc.tolist(self.layers, keepnone=True)
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
@@ -632,7 +629,7 @@ class clip_edges(Intervention):
         if self.layers is None:
             self.layers = sim.layer_keys()
         else:
-            self.layers = sc.promotetolist(self.layers)
+            self.layers = sc.tolist(self.layers)
         self.contacts = cvb.Contacts(layer_keys=self.layers)
         return
 
@@ -703,7 +700,7 @@ def get_quar_inds(quar_policy, sim):
     elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
     elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
     elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
-        quar_policy = sc.promotetoarray(quar_policy)
+        quar_policy = sc.toarray(quar_policy)
         quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
@@ -1107,7 +1104,7 @@ class contact_tracing(Intervention):
         if not len(trace_inds):
             return {}
 
-        contacts = defaultdict(list)
+        contacts = sc.ddict(list)
 
         for lkey, this_trace_prob in self.trace_probs.items():
 
@@ -1548,7 +1545,7 @@ def process_sequence(sequence, sim):
     elif sequence is None:
         sequence = np.random.permutation(sim.n)
     elif sc.checktype(sequence, 'arraylike'):
-        sequence = sc.promotetoarray(sequence)
+        sequence = sc.toarray(sequence)
     else:
         errormsg = f'Unable to interpret sequence {type(sequence)}: must be None, "age", callable, or an array'
         raise TypeError(errormsg)
@@ -1705,7 +1702,7 @@ class vaccinate_num(BaseVaccination):
         self.num_doses  = num_doses
         self.booster    = booster
         self.subtarget  = subtarget
-        self._scheduled_doses = defaultdict(set)  # Track scheduled second doses, where applicable
+        self._scheduled_doses = sc.ddict(set)  # Track scheduled second doses, where applicable
         return
 
 
@@ -1977,10 +1974,10 @@ class historical_vaccinate_prob(BaseVaccination):
         if callable(days):
             return days
         if sc.isstring(days) or not sc.isiterable(days):
-            days = sc.promotetolist(days)
+            days = sc.tolist(days)
         for d,day in enumerate(days):
             days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
-        days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+        days = np.sort(sc.toarray(days)) # Ensure they're an array and in order
         if return_dates:
             dates = [sim.date(day) for day in days] # Store as date strings
             return days, dates
@@ -2002,6 +1999,11 @@ class historical_vaccinate_prob(BaseVaccination):
 
             prob = historical_vaccinate.estimate_prob(duration=180, coverage=0.70)
         '''
+        from scipy import optimize, special # Not used elsewhere, and can't import scipy as sp
+        
+        def NB_cdf(k, p, r=1):
+            '''note that the NB distribution shows the fraction '''
+            return 1 - special.betainc(k + 1, r, p)
 
         # Note that NB distribution is defined as k number of successes *before* r=1 failures (vaccination) occur.
         # Mapping onto the vaccination campaign this means we need k+1 days of a campaign (k days to not be
@@ -2012,15 +2014,10 @@ class historical_vaccinate_prob(BaseVaccination):
         def invlogit(y):
             return np.exp(y)/(np.exp(y)+1)
         # this method can be finicky
-        p = sp.optimize.newton(lambda y: historical_vaccinate_prob.NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
+        p = optimize.newton(lambda y: NB_cdf(k, invlogit(y)) - coverage, 0, x1=5)
         # p is the probability of *not* being vaccinated per day so we return 1-p
         return 1 - invlogit(p)
-
-
-    @staticmethod
-    def NB_cdf(k, p, r=1):
-        '''note that the NB distribution shows the fraction '''
-        return 1 - sp.special.betainc(k + 1, r, p)
+    
 
 
 class historical_wave(Intervention):
@@ -2064,7 +2061,7 @@ class historical_wave(Intervention):
 
         # deal with values for multiple waves
         if isinstance(self.days_prior, (float, int, str)):
-            self.days_prior = sc.promotetolist(self.days_prior)
+            self.days_prior = sc.tolist(self.days_prior)
         n_waves = len(self.days_prior)
         if not isinstance(self.subtarget, list):
             self.subtarget = n_waves*[self.subtarget]

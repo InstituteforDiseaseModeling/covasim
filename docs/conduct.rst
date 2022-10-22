@@ -1,1 +1,1 @@
-.. include:: ../CODE_OF_CONDUCT.rst
+.. include:: ../code_of_conduct.rst

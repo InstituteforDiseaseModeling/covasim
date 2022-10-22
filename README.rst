@@ -34,7 +34,7 @@ GitHub_ page. Full information about Covasim is provided in the documentation_.
 Background
 ==========
 
-Covasim has been used for analyses in over a dozen countries, both to inform policy decisions (including in the US, UK, and Australia), and as part of research studies. Academic papers that have been written using Covasim include:
+Covasim has been used for analyses in over a dozen countries, both to inform policy decisions (including in the US, UK, and Australia), and as part of research studies. Some key papers that have been written using Covasim include:
 
 1. **Controlling COVID-19 via test-trace-quarantine**. Kerr CC, Mistry D, Stuart RM, Rosenfeld R, Hart G, Núñez RC, Selvaraj P, Cohen JA, Abeysuriya RG, George L, Hagedorn B, Jastrzębski M, Fagalde M, Duchin J, Famulare M, Klein DJ (2021). *Nature Communications* 12:2993. doi: https://doi.org/10.1038/s41467-021-23276-9.
 
@@ -42,21 +42,9 @@ Covasim has been used for analyses in over a dozen countries, both to inform pol
 
 3. **Estimating and mitigating the risk of COVID-19 epidemic rebound associated with reopening of international borders in Vietnam: a modelling study**. Pham QD, Stuart RM, Nguyen TV, Luong QC, Tran DQ, Phan LT, Dang TQ, Tran DN, Mistry D, Klein DJ, Abeysuriya RG, Oron AP, Kerr CC (2021-04-12). *Lancet Global Health* S2214-109X(21) 00103-0; doi: https://doi.org/10.1016/S2214-109X(21)00103-0.
 
-4. **Modelling the impact of reducing control measures on the COVID-19 pandemic in a low transmission setting**. Scott N, Palmer A, Delport D, Abeysuriya RG, Stuart RM, Kerr CC, Mistry D, Klein DJ, Sacks-Davis R, Heath K, Hainsworth S, Pedrana A, Stoove M, Wilson DP, Hellard M (in press; accepted 2020-09-02). *Medical Journal of Australia* [`Preprint <https://www.mja.com.au/journal/2020/modelling-impact-reducing-control-measures-covid-19-pandemic-low-transmission-setting>`__]; doi: https://doi.org/10.1101/2020.06.11.20127027.
+A more complete list of papers is given in ``papers.rst``.
 
-5. **The role of masks, testing and contact tracing in preventing COVID-19 resurgences: a case study from New South Wales, Australia**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (in press; accepted 2021-03-19). *BMJ Open*; doi: https://doi.org/10.1101/2020.09.02.20186742.
-
-6. **The potential contribution of face coverings to the control of SARS-CoV-2 transmission in schools and broader society in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (in press; accepted 2021-04-08). *Nature Scientific Reports*; doi: https://doi.org/10.1101/2020.09.28.20202937.
-
-7. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review; posted 2020-09-10). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
-
-8. **COVID-19 reopening strategies at the county level in the face of uncertainty: Multiple Models for Outbreak Decision Support**. Shea K, Borchering RK, Probert WJM, et al. (under review; posted 2020-11-05). *medRxiv* 2020.11.03.20225409; doi: https://doi.org/10.1101/2020.11.03.20225409.
-
-9. **Preventing a cluster from becoming a new wave in settings with zero community COVID-19 cases**. Abeysuriya RG, Delport D, Stuart RM, Sacks-Davis R, Kerr CC, Mistry D, Klein DJ, Hellard M, Scott N (under review; posted 2020-12-22). *medRxiv* 2020.12.21.20248595; doi: https://doi.org/10.1101/2020.12.21.20248595.
-
-10. **Modelling the impact of reopening schools in early 2021 in the presence of the new SARS-CoV-2 variant in the UK**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (under review; posted 2021-02-09). *medRxiv* 2021.02.07.21251287; doi: https://doi.org/10.1101/2021.02.07.21251287.
-
-If you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:info@covasim.org>`__.
+If you've written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:info@covasim.org>`__.
 
 
 Requirements
@@ -203,21 +191,13 @@ Examples of how to calibrate simulations, including `Optuna`_ (also covered in t
 .. _Weights and Biases: https://www.wandb.com/
 
 
-Licenses
---------
-
-Licensing information and legal notices.
-
-
 Tests
 -----
 
-Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See the `tests README`_ for more information.
-
-.. _tests README: ./tests
+Integration, development, and unit tests. While not (yet) beautifully curated, these folders contain many usage examples. See README in the tests folder for more information.
 
 
 Disclaimer
 ==========
 
-The code in this repository was developed by IDM to support our research in disease transmission and managing epidemics. We’ve made it publicly available under the Creative Commons Attribution-ShareAlike 4.0 International License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests. You are welcome to create your own fork and modify the code to suit your own modeling needs as contemplated under the Creative Commons Attribution-ShareAlike 4.0 International License. See the contributing and code of conduct READMEs for more information.
+The code in this repository was developed by IDM, the Burnet Institute, the University of Copenhagen, and other collaborators to support our joint research on COVID. We’ve made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. Note that Covasim depends on a number of user-installed Python packages that can be installed automatically via ``pip install``. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests. You are welcome to create your own fork and modify the code to suit your own modeling needs as contemplated under the MIT License. See the contributing and code of conduct READMEs for more information.

@@ -6,7 +6,7 @@ Functions and classes for running multiple Covasim runs.
 import numpy as np
 import pandas as pd
 import sciris as sc
-from collections import defaultdict
+import pickle as pkl
 from . import defaults as cvd
 from . import misc as cvm
 from . import base as cvb
@@ -401,7 +401,7 @@ class MultiSim(cvb.FlexPretty):
             sim_inds = list(range(len(self.sims)))
 
         # Move the results to a dictionary
-        resdict = defaultdict(dict)
+        resdict = sc.ddict(dict)
         for i,s in enumerate(sim_inds):
             sim = self.sims[s]
             day = sim.day(t) # Unlikely, but different sims might have different start days
@@ -524,12 +524,12 @@ class MultiSim(cvb.FlexPretty):
 
                 # Handle the legend and labels
                 if final_plot:
-                    merged_show_args  = show_args
+                    merged_show_args  = sc.mergedicts(dict(returnfig=cvo.returnfig), show_args)
                     kwargs['do_show'] = orig_show
                     kwargs['setylim'] = orig_setylim
                     cvo.set(close=orig_close) # Reset original closing settings
                 else:
-                    merged_show_args  = False # Only show things like data the last time it's plotting
+                    merged_show_args  = dict(annotations=False, returnfig=True) # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
                     kwargs['setylim'] = False # Don't set the y limits until we have all the data
                     cvo.set(close=False) # Do not close figures if we're in the middle of plotting
@@ -1065,7 +1065,7 @@ class Scenarios(cvb.ParsObj):
         day = self.base_sim.day(t) # Unlike MultiSims, scenarios must have the same start day
 
         # Compute dataframe
-        x = defaultdict(dict)
+        x = sc.ddict(dict)
         variantkeys = self.result_keys('variant')
         for scenkey in self.scenarios.keys():
             for reskey in self.result_keys():
@@ -1403,7 +1403,9 @@ def single_run(sim, ind=0, reseed=True, noise=0.0, noisepar=None, keep_people=Fa
     return sim
 
 
-def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=None, combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, do_run=True, parallel=True, n_cpus=None, verbose=None, **kwargs):
+def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=None, 
+              combine=False, keep_people=None, run_args=None, sim_args=None, par_args=None, 
+              do_run=True, parallel=True, n_cpus=None, verbose=None, retry='warn', **kwargs):
     '''
     For running multiple runs in parallel. If the first argument is a list of sims,
     exactly these will be run and most other arguments will be ignored.
@@ -1424,6 +1426,7 @@ def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=Non
         parallel    (bool)  : whether to run in parallel using multiprocessing (else, just run in a loop)
         n_cpus      (int)   : the number of CPUs to run on (if blank, set automatically; otherwise, passed to par_args)
         verbose     (int)   : detail to print
+        retry       (str)   : what to do if default parallelizer fails: choices are 'warn' (default), 'die' (raise exception), or 'silent' (keep going)
         kwargs      (dict)  : also passed to the sim
 
     Returns:
@@ -1439,7 +1442,7 @@ def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts({'ncpus':n_cpus}, par_args) # Handle blank
+    par_args = sc.mergedicts({'ncpus':n_cpus, 'parallelizer':'concurrent.futures'}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
@@ -1469,8 +1472,9 @@ def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=Non
 
     # Actually run!
     if parallel:
+        kw = dict(iterkwargs=iterkwargs, kwargs=kwargs, **par_args)
         try:
-            sims = sc.parallelize(single_run, iterkwargs=iterkwargs, kwargs=kwargs, **par_args) # Run in parallel
+            sims = sc.parallelize(single_run, **kw) # Run in parallel
         except RuntimeError as E: # Handle if run outside of __main__ on Windows
             if 'freeze_support' in E.args[0]: # For this error, add additional information
                 errormsg = '''
@@ -1490,6 +1494,18 @@ Alternatively, to run without multiprocessing, set parallel=False.
                 raise RuntimeError(errormsg) from E
             else: # For all other runtime errors, raise the original exception
                 raise E
+        except pkl.PicklingError as E:
+            parallelizer = par_args.get('parallelizer')
+            if retry in ['warn', 'silent'] and parallelizer != 'multiprocess':
+                if retry == 'warn':
+                    warnmsg = f'multi_run() failed with parallelizer={parallelizer}, trying more robust "multiprocess"...'
+                    cvm.warn(warnmsg)
+                kw['parallelizer'] = 'multiprocess'
+                sims = sc.parallelize(single_run, **kw) # Try again to run in parallel
+            else:
+                errormsg = 'Parallel run failed due to a pickling error; this is usually due to including a lambda function or other complex object'
+                raise pkl.PicklingError(errormsg) from E
+                
     else: # Run in serial, not in parallel
         sims = []
         n_sims = len(list(iterkwargs.values())[0]) # Must have length >=1 and all entries must be the same length

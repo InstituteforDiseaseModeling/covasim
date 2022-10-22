@@ -97,7 +97,9 @@ def run_sims():
     sim_booster_date.run()
 
     # Create a multisim, run, and plot results
-    msim = cv.MultiSim([sim_baseline, sim_booster_age, sim_booster_date])
+    sims = [sim_baseline, sim_booster_age, sim_booster_date]
+    # msim = cv.parallel(sims) # Does not work with lambda analyzers above
+    msim = cv.MultiSim(sims)
     msim.plot(to_plot=['cum_infections', 'cum_severe', 'cum_deaths','pop_nabs'])
 
     # Plot doses

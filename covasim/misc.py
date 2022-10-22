@@ -631,7 +631,7 @@ def get_doubling_time(sim, series=None, interval=None, start_day=None, end_day=N
                 series='cum_infections'
             series = sim.results[series].values
     else:
-        series = sc.promotetoarray(series)
+        series = sc.toarray(series)
 
     # Validate inputs: interval
     if interval is not None:
@@ -839,7 +839,7 @@ For help on Covasim options, see cv.options.help().
         import covasim as cv # Here to avoid circular import
 
         # Handle inputs
-        flags = sc.promotetolist(flags)
+        flags = sc.tolist(flags)
         if ignorecase:
             flags.append(re.I)
 

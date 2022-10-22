@@ -28,6 +28,32 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.1.4 (2022-10-07)
+--------------------------
+
+Improvements
+^^^^^^^^^^^^
+- Added a new ``isolated`` state to explicitly track people who are in isolation (like quarantine).
+- Switched default parallelizer from ``multiprocess`` to ``concurrent.futures``; the latter is faster but less robust, so will automatically try again using ``multiprocess`` if ``concurrent.futures`` fails.
+- Added ``cv.Fit.summarize()`` to quickly get information about the mismatches.
+
+Bugfixes
+^^^^^^^^
+- Fixed plotting bug that prevented ``MultiSim`` plots from appearing correctly in Jupyter notebooks with (ironically) ``cv.options(jupyter=True)``.
+- Fixed bug with Matplotlib options (e.g. ``cv.options(dpi=150)``) not being set properly.
+- ``cv.Calibration.remove_db()`` now deletes the Optuna study as well. 
+- Fixed several issues with ``cv.git_info()`` pulling information from the wrong frame (i.e. file location).
+- Fixed shrunken sims dropping interventions/analyzers that were functions rather than classes.
+
+Other
+^^^^^
+- Updated Sciris dependency to 2.0.1.
+- Updated license to MIT instead of Creative Commons.
+- Added ``papers.rst`` and ``papers.bib`` that list additional Covasim publications.
+- Added a style guide and draft code linting scripts.
+- *GitHub info*: PR `1396 <https://github.com/amath-idm/covasim/pull/1396>`_
+
+
 Version 3.1.3 (2022-07-19)
 --------------------------
 - Fixed a bug with using ``'seir'`` as a default plot option. (Thanks Rik Belew for finding and fixing.)

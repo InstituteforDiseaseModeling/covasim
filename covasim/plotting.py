@@ -20,7 +20,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 #%% Plotting helper functions
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
-                legend_args=None, date_args=None, show_args=None, style_args=None, **kwargs):
+                legend_args=None, date_args=None, show_args=None, style_args=None, do_show=None, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
 
     # Set defaults
@@ -32,7 +32,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False, annotations=None, do_show=do_show, returnfig=cvo.returnfig)
     defaults.style   = sc.objdict(style=None, dpi=None, font=None, fontsize=None, grid=None, facecolor=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
@@ -41,6 +41,14 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         for kw in keys:
             if kw in default.keys():
                 default[kw] = kwargs.pop(kw)
+
+    # Handle what to show
+    if show_args is not None:
+        annotations = show_args.get('annotations', None)
+        if annotations in [True, False]: # Handle all on or all off
+            show_keys = ['data', 'ticks', 'interventions', 'legend']
+            for k in show_keys:
+                show_args[k] = annotations
 
     # Merge arguments together
     args = sc.objdict()
@@ -71,40 +79,33 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
         raise sc.KeyNotFoundError(errormsg)
 
-    # Handle what to show
-    show_keys = ['data', 'ticks', 'interventions', 'legend']
-    if show_args in [True, False]: # Handle all on or all off
-        for k in show_keys:
-            args.show[k] = show_args
-
     return args
 
 
-def handle_show(do_show):
-    ''' Helper function to handle the slightly complex logic of show -- not for users '''
-    backend = pl.get_backend()
-    if do_show is None:  # If not supplied, reset to global value
+def handle_show_return(do_show=None, returnfig=None, fig=None, figs=None):
+    ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
+    
+    if do_show is None:
         do_show = cvo.show
+    if returnfig is None:
+        returnfig = cvo.returnfig
+
+    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
+    
+    # Decide whether to show the figure or not
+    backend = pl.get_backend()
     if backend == 'agg': # Cannot show plots for a non-interactive backend
         do_show = False
     if do_show: # Now check whether to show, and atually do it
         pl.show()
-    return do_show
-
-
-def handle_show_return(do_show=None, fig=None, figs=None):
-    ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
-
-    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
 
     # Show the figure, or close it
-    do_show = handle_show(do_show)
     if cvo.close and not do_show:
         for f in figlist:
             pl.close(f)
 
     # Return the figure or figures unless we're in Jupyter
-    if not cvo.returnfig:
+    if not returnfig:
         return
     else:
         if figs is not None:
@@ -281,7 +282,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
     if show_args['outer']:
         lastrow = ax.get_subplotspec().is_last_row()
         if not lastrow:
-            for label in ax.get_xticklabels(which="both"):
+            for label in ax.get_xticklabels(which='both'):
                 label.set_visible(False)
             ax.set_xlabel('')
 
@@ -326,19 +327,19 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None, n_cols=1):
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, args):
     ''' Handle saving, figure showing, and what value to return '''
-
+    
     figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
 
     # Optionally maximize -- does not work on all systems
-    if args.show['maximize']:
+    if args.show.maximize:
         for f in figlist:
             sc.maximize(fig=f)
         pl.pause(0.01) # Force refresh
 
     # Use tight layout for all figures
-    if args.show['tight']:
+    if args.show.tight:
         for f in figlist:
             sc.figlayout(fig=f)
 
@@ -348,7 +349,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(fig=figlist, filename=fig_path) # Save the figure
 
-    return handle_show_return(do_show, fig=fig, figs=figs)
+    return handle_show_return(do_show=args.show.do_show, returnfig=args.show.returnfig, fig=fig, figs=figs)
 
 
 def set_line_options(input_args, reskey, resnum, default):
@@ -377,7 +378,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                       legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
+                       legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
@@ -419,7 +420,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 plot_interventions(sim, ax) # Plot the interventions
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
 
-        output = tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+        output = tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
     return output
 
@@ -432,7 +433,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                   legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
+                   legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('scens', to_plot, n_cols, sim=scens.base_sim, check_ready=False) # Since this sim isn't run
 
     # Do the plotting
@@ -441,7 +442,7 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
         default_colors = sc.gridcolors(ncolors=len(scens.sims))
         for pnum,title,reskeys in to_plot.enumitems():
             ax = create_subplots(figs, fig, ax, n_rows, n_cols, pnum, args.fig, sep_figs, log_scale, title)
-            reskeys = sc.promotetolist(reskeys) # In case it's a string
+            reskeys = sc.tolist(reskeys) # In case it's a string
             for reskey in reskeys:
                 res_t = scens.datevec
                 resdata = scens.results[reskey]
@@ -468,14 +469,14 @@ def plot_scens(to_plot=None, scens=None, do_save=None, fig_path=None, fig_args=N
                         if args.show['data']:
                             plot_data(sim, ax, reskey, args.scatter, color=color)  # Plot the data
 
-                    if args.show['interventions']:
+                    if args.show.interventions:
                         plot_interventions(sim, ax) # Plot the interventions
                     if args.show['ticks']:
                         reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
-            if args.show['legend']:
+            if args.show.legend:
                 title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show, pnum==0) # Configure the title, grid, and legend -- only show legend for first
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, scatter_args=None,
@@ -488,7 +489,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
     fig_args  = sc.mergedicts({'figsize':(8,5)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args,
-                       date_args=date_args, style_args=style_args, **kwargs)
+                       date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
 
     # Gather results
     res = sim.results[key]
@@ -518,7 +519,7 @@ def plot_result(key, sim=None, fig_args=None, plot_args=None, axis_args=None, sc
         title_grid_legend(ax, res.name, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
         reset_ticks(ax, sim, args.date) # Optionally reset tick marks (useful for e.g. plotting weeks/months)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=None, grid=False,
@@ -530,7 +531,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
     sep_figs = False
     fig_args  = sc.mergedicts({'figsize':(8,8)}, fig_args)
     axis_args = sc.mergedicts({'left': 0.16, 'bottom': 0.05, 'right': 0.98, 'top': 0.98, 'wspace': 0.50, 'hspace': 0.10}, axis_args)
-    args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, **kwargs)
+    args = handle_args(fig_args=fig_args, axis_args=axis_args, style_args=style_args, do_show=do_show, **kwargs)
 
     # Map from results into different categories
     mapping = {
@@ -564,7 +565,7 @@ def plot_compare(df, log_scale=True, fig_args=None, axis_args=None, style_args=N
                 ax.legend(loc='upper left', bbox_to_anchor=(0,-0.3))
             ax.grid(True)
 
-    return tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+    return tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
 
 #%% Other plotting functions
@@ -748,7 +749,7 @@ def get_individual_states(sim): # pragma: no cover
 
 
 # Default settings for the Plotly legend
-plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
+plotly_legend = dict(legend_orientation='h', legend=dict(x=0.0, y=1.18))
 
 
 def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
@@ -760,7 +761,7 @@ def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
                 for interv_day in interv.days:
                     if interv_day and interv_day < sim['n_days']:
                         interv_date = sim.date(interv_day, as_date=True)
-                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
+                        fig.add_shape(dict(type='line', xref='x', yref='paper', x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
                         if add_to_legend:
                             fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
     return
@@ -812,7 +813,7 @@ def plotly_people(sim, do_show=False): # pragma: no cover
             stackgroup='one',
             line=dict(width=0.5, color=state['color']),
             fillcolor=state['color'],
-            hoverinfo="y+name",
+            hoverinfo='y+name',
             name=state['name']
         ))
 
@@ -845,59 +846,59 @@ def plotly_animate(sim, do_show=False): # pragma: no cover
     days = sim.tvec
 
     fig_dict = {
-        "data": [],
-        "layout": {},
-        "frames": []
+        'data': [],
+        'layout': {},
+        'frames': []
     }
 
-    fig_dict["layout"]["updatemenus"] = [
+    fig_dict['layout']['updatemenus'] = [
         {
-            "buttons": [
+            'buttons': [
                 {
-                    "args": [None, {"frame": {"duration": 200, "redraw": True},
-                                    "fromcurrent": True}],
-                    "label": "Play",
-                    "method": "animate"
+                    'args': [None, {'frame': {'duration': 200, 'redraw': True},
+                                    'fromcurrent': True}],
+                    'label': 'Play',
+                    'method': 'animate'
                 },
                 {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
-                                      "mode": "immediate",
-                                      "transition": {"duration": 0}}],
-                    "label": "Pause",
-                    "method": "animate"
+                    'args': [[None], {'frame': {'duration': 0, 'redraw': True},
+                                      'mode': 'immediate',
+                                      'transition': {'duration': 0}}],
+                    'label': 'Pause',
+                    'method': 'animate'
                 }
             ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": False,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
+            'direction': 'left',
+            'pad': {'r': 10, 't': 87},
+            'showactive': False,
+            'type': 'buttons',
+            'x': 0.1,
+            'xanchor': 'right',
+            'y': 0,
+            'yanchor': 'top'
         }
     ]
 
     sliders_dict = {
-        "active": 0,
-        "yanchor": "top",
-        "xanchor": "left",
-        "currentvalue": {
-            "font": {"size": 16},
-            "prefix": "Day: ",
-            "visible": True,
-            "xanchor": "right"
+        'active': 0,
+        'yanchor': 'top',
+        'xanchor': 'left',
+        'currentvalue': {
+            'font': {'size': 16},
+            'prefix': 'Day: ',
+            'visible': True,
+            'xanchor': 'right'
         },
-        "transition": {"duration": 200},
-        "pad": {"b": 10, "t": 50},
-        "len": 0.9,
-        "x": 0.1,
-        "y": 0,
-        "steps": []
+        'transition': {'duration': 200},
+        'pad': {'b': 10, 't': 50},
+        'len': 0.9,
+        'x': 0.1,
+        'y': 0,
+        'steps': []
     }
 
     # make data
-    fig_dict["data"] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
+    fig_dict['data'] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
                                    zmin=min_color,
                                    zmax=max_color,
                                    colorscale=colorscale,
@@ -905,25 +906,25 @@ def plotly_animate(sim, do_show=False): # pragma: no cover
                                    )]
 
     for state in states:
-        fig_dict["data"].append(go.Scatter(x=[None], y=[None], mode='markers',
+        fig_dict['data'].append(go.Scatter(x=[None], y=[None], mode='markers',
                                            marker=dict(size=10, color=state['color']),
                                            showlegend=True, name=state['name']))
 
     # make frames
     for i, day in enumerate(days):
-        frame = {"data": [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
-                 "name": i}
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
+        frame = {'data': [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
+                 'name': i}
+        fig_dict['frames'].append(frame)
+        slider_step = {'args': [
             [i],
-            {"frame": {"duration": 5, "redraw": True},
-             "mode": "immediate", }
+            {'frame': {'duration': 5, 'redraw': True},
+             'mode': 'immediate', }
         ],
-            "label": i,
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
+            'label': i,
+            'method': 'animate'}
+        sliders_dict['steps'].append(slider_step)
 
-    fig_dict["layout"]["sliders"] = [sliders_dict]
+    fig_dict['layout']['sliders'] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
 

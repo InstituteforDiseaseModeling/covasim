@@ -19,6 +19,7 @@ Full contents
 
    overview
    tutorials
+   papers
    faq
    whatsnew
    parameters
@@ -26,4 +27,5 @@ Full contents
    glossary
    conduct
    contributing
+   style
    modules
