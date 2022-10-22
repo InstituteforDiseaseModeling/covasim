@@ -20,7 +20,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 #%% Plotting helper functions
 
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None,
-                legend_args=None, date_args=None, show_args=None, style_args=None, **kwargs):
+                legend_args=None, date_args=None, show_args=None, style_args=None, do_show=cvo.do_show, **kwargs):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
 
     # Set defaults
@@ -32,7 +32,7 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     defaults.fill    = sc.objdict(alpha=0.2)
     defaults.legend  = sc.objdict(loc='best', frameon=False)
     defaults.date    = sc.objdict(as_dates=True, dateformat=None, rotation=None, start=None, end=None)
-    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False)
+    defaults.show    = sc.objdict(data=True, ticks=True, interventions=True, legend=True, outer=False, tight=False, maximize=False, do_show=do_show, returnfig=cvo.returnfig)
     defaults.style   = sc.objdict(style=None, dpi=None, font=None, fontsize=None, grid=None, facecolor=None) # Use Covasim global defaults
 
     # Handle directly supplied kwargs
@@ -82,31 +82,30 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
     return args
 
 
-def handle_show(do_show):
-    ''' Helper function to handle the slightly complex logic of show -- not for users '''
+def handle_show_return(do_show=None, returnfig=None, fig=None, figs=None):
+    ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
+    
+    if do_show is None:
+        do_show = cvo.do_show
+    if returnfig is None:
+        returnfig = cvo.returnfig
+
+    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
+    
+    # Decide whether to show the figure or not
     backend = pl.get_backend()
-    if do_show is None:  # If not supplied, reset to global value
-        do_show = cvo.show
     if backend == 'agg': # Cannot show plots for a non-interactive backend
         do_show = False
     if do_show: # Now check whether to show, and atually do it
         pl.show()
-    return do_show
-
-
-def handle_show_return(do_show=None, fig=None, figs=None):
-    ''' Helper function to handle both show and what to return -- a nothing if Jupyter, else a figure '''
-
-    figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
 
     # Show the figure, or close it
-    do_show = handle_show(do_show)
     if cvo.close and not do_show:
         for f in figlist:
             pl.close(f)
 
     # Return the figure or figures unless we're in Jupyter
-    if not cvo.returnfig:
+    if not returnfig:
         return
     else:
         if figs is not None:
@@ -328,19 +327,19 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None, n_cols=1):
     return
 
 
-def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
+def tidy_up(fig, figs, sep_figs, do_save, fig_path, args):
     ''' Handle saving, figure showing, and what value to return '''
     
     figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
 
     # Optionally maximize -- does not work on all systems
-    if args.show['maximize']:
+    if args.show.maximize:
         for f in figlist:
             sc.maximize(fig=f)
         pl.pause(0.01) # Force refresh
 
     # Use tight layout for all figures
-    if args.show['tight']:
+    if args.show.tight:
         for f in figlist:
             sc.figlayout(fig=f)
 
@@ -350,7 +349,7 @@ def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
             fig_path = sc.makefilepath(fig_path) # Ensure it's valid, including creating the folder
         cvm.savefig(fig=figlist, filename=fig_path) # Save the figure
 
-    return handle_show_return(do_show, fig=fig, figs=figs)
+    return handle_show_return(do_show=args.show.do_show, returnfig=args.show.returnfig, fig=fig, figs=figs)
 
 
 def set_line_options(input_args, reskey, resnum, default):
@@ -379,7 +378,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
 
     # Handle inputs
     args = handle_args(fig_args=fig_args, plot_args=plot_args, scatter_args=scatter_args, axis_args=axis_args, fill_args=fill_args,
-                       legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, **kwargs)
+                       legend_args=legend_args, show_args=show_args, date_args=date_args, style_args=style_args, do_show=do_show, **kwargs)
     to_plot, n_cols, n_rows = handle_to_plot('sim', to_plot, n_cols, sim=sim)
 
     # Do the plotting
@@ -421,7 +420,7 @@ def plot_sim(to_plot=None, sim=None, do_save=None, fig_path=None, fig_args=None,
                 plot_interventions(sim, ax) # Plot the interventions
             title_grid_legend(ax, title, grid, commaticks, setylim, args.legend, args.show) # Configure the title, grid, and legend
 
-        output = tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args)
+        output = tidy_up(fig, figs, sep_figs, do_save, fig_path, args)
 
     return output
 
