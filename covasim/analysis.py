@@ -173,7 +173,7 @@ class snapshot(Analyzer):
 
     def __init__(self, days, *args, die=True, **kwargs):
         super().__init__(**kwargs) # Initialize the Analyzer object
-        days = sc.promotetolist(days) # Combine multiple days
+        days = sc.tolist(days) # Combine multiple days
         days.extend(args) # Include additional arguments, if present
         self.days      = days # Converted to integer representations
         self.die       = die  # Whether or not to raise an exception
@@ -297,7 +297,7 @@ class age_histogram(Analyzer):
         # Handle states
         if self.states is None:
             self.states = ['exposed', 'severe', 'dead', 'tested', 'diagnosed']
-        self.states = sc.promotetolist(self.states)
+        self.states = sc.tolist(self.states)
         for s,state in enumerate(self.states):
             self.states[s] = state.replace('date_', '') # Allow keys starting with date_ as input, but strip it off here
 

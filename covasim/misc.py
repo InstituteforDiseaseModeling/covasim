@@ -839,7 +839,7 @@ For help on Covasim options, see cv.options.help().
         import covasim as cv # Here to avoid circular import
 
         # Handle inputs
-        flags = sc.promotetolist(flags)
+        flags = sc.tolist(flags)
         if ignorecase:
             flags.append(re.I)
 

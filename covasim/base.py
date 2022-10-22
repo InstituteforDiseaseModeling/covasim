@@ -397,7 +397,7 @@ class BaseSim(ParsObj):
 
         # Handle inputs
         if not isinstance(ind, list): # If it's a number, string, or dateobj, convert it to a list
-            ind = sc.promotetolist(ind)
+            ind = sc.tolist(ind)
         ind.extend(args)
         if dateformat is None:
             dateformat = '%Y-%m-%d'
@@ -547,7 +547,7 @@ class BaseSim(ParsObj):
         # Handle keys
         if keys is None:
             keys = ['results', 'pars', 'summary']
-        keys = sc.promotetolist(keys)
+        keys = sc.tolist(keys)
 
         # Convert to JSON-compatible format
         d = {}
@@ -766,7 +766,7 @@ class BaseSim(ParsObj):
                 label = np.arange(n_ia)
             if isinstance(label, np.ndarray): # Allow arrays to be provided
                 label = label.tolist()
-            labels = sc.promotetolist(label)
+            labels = sc.tolist(label)
 
             # Calculate the matches
             matches = []
@@ -985,7 +985,7 @@ class BasePeople(FlexPretty):
         # Reset sizes
         if keys is None:
             keys = self.keys()
-        keys = sc.promotetolist(keys)
+        keys = sc.tolist(keys)
         for key in keys:
             self[key].resize(new_size, refcheck=False) # Don't worry about cross-references to the arrays
 

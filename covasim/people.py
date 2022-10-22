@@ -695,7 +695,7 @@ class People(cvb.BasePeople):
                 llabel = f'"{lkey}"'
             return llabel
 
-        uids = sc.promotetolist(uid)
+        uids = sc.tolist(uid)
         uids.extend(args)
 
         for uid in uids:

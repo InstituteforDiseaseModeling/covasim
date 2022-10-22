@@ -84,7 +84,7 @@ def process_days(sim, days, return_dates=False):
     if callable(days):
         return days
     if sc.isstring(days) or not sc.isiterable(days):
-        days = sc.promotetolist(days)
+        days = sc.tolist(days)
     for d,day in enumerate(days):
         if day in ['end', -1]: # pragma: no cover
             day = sim['end_day']
@@ -562,7 +562,7 @@ class change_beta(Intervention):
         super().initialize()
         self.days    = process_days(sim, self.days)
         self.changes = process_changes(sim, self.changes, self.days)
-        self.layers  = sc.promotetolist(self.layers, keepnone=True)
+        self.layers  = sc.tolist(self.layers, keepnone=True)
         self.orig_betas = {}
         for lkey in self.layers:
             if lkey is None:
@@ -630,7 +630,7 @@ class clip_edges(Intervention):
         if self.layers is None:
             self.layers = sim.layer_keys()
         else:
-            self.layers = sc.promotetolist(self.layers)
+            self.layers = sc.tolist(self.layers)
         self.contacts = cvb.Contacts(layer_keys=self.layers)
         return
 
@@ -1975,7 +1975,7 @@ class historical_vaccinate_prob(BaseVaccination):
         if callable(days):
             return days
         if sc.isstring(days) or not sc.isiterable(days):
-            days = sc.promotetolist(days)
+            days = sc.tolist(days)
         for d,day in enumerate(days):
             days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
         days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
@@ -2062,7 +2062,7 @@ class historical_wave(Intervention):
 
         # deal with values for multiple waves
         if isinstance(self.days_prior, (float, int, str)):
-            self.days_prior = sc.promotetolist(self.days_prior)
+            self.days_prior = sc.tolist(self.days_prior)
         n_waves = len(self.days_prior)
         if not isinstance(self.subtarget, list):
             self.subtarget = n_waves*[self.subtarget]
