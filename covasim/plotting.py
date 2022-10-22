@@ -42,6 +42,14 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
             if kw in default.keys():
                 default[kw] = kwargs.pop(kw)
 
+    # Handle what to show
+    show_keys = ['data', 'ticks', 'interventions', 'legend']
+    if show_args in [True, False]: # Handle all on or all off
+        show_bool = show_args
+        show_args = dict()
+        for k in show_keys:
+            show_args[k] = show_bool
+
     # Merge arguments together
     args = sc.objdict()
     args.fig     = sc.mergedicts(defaults.fig,     fig_args)
@@ -70,12 +78,6 @@ def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None
         errormsg += f'Valid keywords are:\n{valid}\n\n'
         errormsg += 'For more precise plotting control, use fig_args, plot_args, etc.'
         raise sc.KeyNotFoundError(errormsg)
-
-    # Handle what to show
-    show_keys = ['data', 'ticks', 'interventions', 'legend']
-    if show_args in [True, False]: # Handle all on or all off
-        for k in show_keys:
-            args.show[k] = show_args
 
     return args
 

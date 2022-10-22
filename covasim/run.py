@@ -529,7 +529,7 @@ class MultiSim(cvb.FlexPretty):
                     kwargs['setylim'] = orig_setylim
                     cvo.set(close=orig_close) # Reset original closing settings
                 else:
-                    merged_show_args  = None # Only show things like data the last time it's plotting
+                    merged_show_args  = False # Only show things like data the last time it's plotting
                     kwargs['do_show'] = False # On top of that, don't show the plot at all unless it's the last time
                     kwargs['setylim'] = False # Don't set the y limits until we have all the data
                     cvo.set(close=False) # Do not close figures if we're in the middle of plotting
