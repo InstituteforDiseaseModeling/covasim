@@ -42,23 +42,9 @@ Covasim has been used for analyses in over a dozen countries, both to inform pol
 
 3. **Estimating and mitigating the risk of COVID-19 epidemic rebound associated with reopening of international borders in Vietnam: a modelling study**. Pham QD, Stuart RM, Nguyen TV, Luong QC, Tran DQ, Phan LT, Dang TQ, Tran DN, Mistry D, Klein DJ, Abeysuriya RG, Oron AP, Kerr CC (2021-04-12). *Lancet Global Health* S2214-109X(21) 00103-0; doi: https://doi.org/10.1016/S2214-109X(21)00103-0.
 
-More complete lists of papers are given in ``papers.rst`` and ``papers.bib``.
+A more complete list of papers is given in ``papers.rst``.
 
-4. **Modelling the impact of reducing control measures on the COVID-19 pandemic in a low transmission setting**. Scott N, Palmer A, Delport D, Abeysuriya RG, Stuart RM, Kerr CC, Mistry D, Klein DJ, Sacks-Davis R, Heath K, Hainsworth S, Pedrana A, Stoove M, Wilson DP, Hellard M (in press; accepted 2020-09-02). *Medical Journal of Australia* [`Preprint <https://www.mja.com.au/journal/2020/modelling-impact-reducing-control-measures-covid-19-pandemic-low-transmission-setting>`__]; doi: https://doi.org/10.1101/2020.06.11.20127027.
-
-5. **The role of masks, testing and contact tracing in preventing COVID-19 resurgences: a case study from New South Wales, Australia**. Stuart RM, Abeysuriya RG, Kerr CC, Mistry D, Klein DJ, Gray R, Hellard M, Scott N (in press; accepted 2021-03-19). *BMJ Open*; doi: https://doi.org/10.1101/2020.09.02.20186742.
-
-6. **The potential contribution of face coverings to the control of SARS-CoV-2 transmission in schools and broader society in the UK: a modelling study**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (in press; accepted 2021-04-08). *Nature Scientific Reports*; doi: https://doi.org/10.1101/2020.09.28.20202937.
-
-7. **Schools are not islands: Balancing COVID-19 risk and educational benefits using structural and temporal countermeasures**. Cohen JA, Mistry D, Kerr CC, Klein DJ (under review; posted 2020-09-10). *medRxiv* 2020.09.08.20190942; doi: https://doi.org/10.1101/2020.09.08.20190942.
-
-8. **COVID-19 reopening strategies at the county level in the face of uncertainty: Multiple Models for Outbreak Decision Support**. Shea K, Borchering RK, Probert WJM, et al. (under review; posted 2020-11-05). *medRxiv* 2020.11.03.20225409; doi: https://doi.org/10.1101/2020.11.03.20225409.
-
-9. **Preventing a cluster from becoming a new wave in settings with zero community COVID-19 cases**. Abeysuriya RG, Delport D, Stuart RM, Sacks-Davis R, Kerr CC, Mistry D, Klein DJ, Hellard M, Scott N (under review; posted 2020-12-22). *medRxiv* 2020.12.21.20248595; doi: https://doi.org/10.1101/2020.12.21.20248595.
-
-10. **Modelling the impact of reopening schools in early 2021 in the presence of the new SARS-CoV-2 variant in the UK**. Panovska-Griffiths J, Kerr CC, Waites W, Stuart RM, Mistry D, Foster D, Klein DJ, Viner R, Bonnell C (under review; posted 2021-02-09). *medRxiv* 2021.02.07.21251287; doi: https://doi.org/10.1101/2021.02.07.21251287.
-
-If you have written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:info@covasim.org>`__.
+If you've written a paper or report using Covasim, we'd love to know about it! Please write to us `here <mailto:info@covasim.org>`__.
 
 
 Requirements
