@@ -1833,7 +1833,7 @@ class Layer(FlexDict):
 
         # Check types
         if not isinstance(inds, np.ndarray):
-            inds = sc.promotetoarray(inds)
+            inds = sc.toarray(inds)
         if inds.dtype != np.int64:  # pragma: no cover # This is int64 since indices often come from cv.true(), which returns int64
             inds = np.array(inds, dtype=np.int64)
 

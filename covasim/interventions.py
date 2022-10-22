@@ -39,7 +39,7 @@ def find_day(arr, t=None, interv=None, sim=None, which='first'):
     '''
     if callable(arr):
         arr = arr(interv, sim)
-        arr = sc.promotetoarray(arr)
+        arr = sc.toarray(arr)
     all_inds = sc.findinds(arr=arr, val=t)
     if len(all_inds) == 0 or which == 'all':
         inds = all_inds
@@ -89,7 +89,7 @@ def process_days(sim, days, return_dates=False):
         if day in ['end', -1]: # pragma: no cover
             day = sim['end_day']
         days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
-    days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+    days = np.sort(sc.toarray(days)) # Ensure they're an array and in order
     if return_dates:
         dates = [sim.date(day) for day in days] # Store as date strings
         return days, dates
@@ -101,7 +101,7 @@ def process_changes(sim, changes, days):
     '''
     Ensure lists of changes are in consistent format. Used by change_beta and clip_edges.
     '''
-    changes = sc.promotetoarray(changes)
+    changes = sc.toarray(changes)
     if sc.isiterable(days) and len(days) != len(changes): # pragma: no cover
         errormsg = f'Number of days supplied ({len(days)}) does not match number of changes ({len(changes)})'
         raise ValueError(errormsg)
@@ -454,7 +454,7 @@ class dynamic_pars(Intervention):
                     errormsg = f'Parameter {parkey} is missing subkey {subkey}'
                     raise sc.KeyNotFoundError(errormsg)
                 if sc.isnumber(pars[parkey][subkey]): # Allow scalar values or dicts, but leave everything else unchanged
-                    pars[parkey][subkey] = sc.promotetoarray(pars[parkey][subkey])
+                    pars[parkey][subkey] = sc.toarray(pars[parkey][subkey])
             days = pars[parkey]['days']
             vals = pars[parkey]['vals']
             if sc.isiterable(days):
@@ -701,7 +701,7 @@ def get_quar_inds(quar_policy, sim):
     elif quar_policy == 'both':  quar_test_inds = np.concatenate([cvu.true(sim.people.date_quarantined==t-1), cvu.true(sim.people.date_end_quarantine==t+1)])
     elif quar_policy == 'daily': quar_test_inds = cvu.true(sim.people.quarantined)
     elif sc.isnumber(quar_policy) or (sc.isiterable(quar_policy) and not sc.isstring(quar_policy)):
-        quar_policy = sc.promotetoarray(quar_policy)
+        quar_policy = sc.toarray(quar_policy)
         quar_test_inds = np.unique(np.concatenate([cvu.true(sim.people.date_quarantined==t-1-q) for q in quar_policy]))
     elif callable(quar_policy):
         quar_test_inds = quar_policy(sim)
@@ -1546,7 +1546,7 @@ def process_sequence(sequence, sim):
     elif sequence is None:
         sequence = np.random.permutation(sim.n)
     elif sc.checktype(sequence, 'arraylike'):
-        sequence = sc.promotetoarray(sequence)
+        sequence = sc.toarray(sequence)
     else:
         errormsg = f'Unable to interpret sequence {type(sequence)}: must be None, "age", callable, or an array'
         raise TypeError(errormsg)
@@ -1978,7 +1978,7 @@ class historical_vaccinate_prob(BaseVaccination):
             days = sc.tolist(days)
         for d,day in enumerate(days):
             days[d] = preprocess_day(day, sim) # Ensure it's an integer and not a string or something
-        days = np.sort(sc.promotetoarray(days)) # Ensure they're an array and in order
+        days = np.sort(sc.toarray(days)) # Ensure they're an array and in order
         if return_dates:
             dates = [sim.date(day) for day in days] # Store as date strings
             return days, dates
