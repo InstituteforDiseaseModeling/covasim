@@ -330,7 +330,7 @@ def reset_ticks(ax, sim=None, date_args=None, start_day=None, n_cols=1):
 
 def tidy_up(fig, figs, sep_figs, do_save, fig_path, do_show, args):
     ''' Handle saving, figure showing, and what value to return '''
-
+    
     figlist = sc.mergelists(fig, figs) # Usually just one figure, but here for completeness
 
     # Optionally maximize -- does not work on all systems

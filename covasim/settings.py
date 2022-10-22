@@ -209,13 +209,14 @@ class Options(sc.objdict):
         return optdesc, options
 
 
-    def set(self, key=None, value=None, **kwargs):
+    def set(self, key=None, value=None, use=False, **kwargs):
         '''
         Actually change the style. See ``cv.options.help()`` for more information.
 
         Args:
             key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
             value  (varies): the value to specify; use None or 'default' to reset to default
+            use    (bool):   whether to immediately apply the change (to Matplotlib)
             kwargs (dict):   if supplied, set multiple key-value pairs
 
         **Example**::
@@ -236,18 +237,19 @@ class Options(sc.objdict):
         # Handle Jupyter
         if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
             jupyter = kwargs['jupyter']
-            kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
-            try: # This makes plots much nicer, but isn't available on all systems
-                if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
-                    try: # First try interactive
-                        assert jupyter not in ['default', 'retina'] # Hack to intentionally go to the other part of the loop
-                        from IPython import get_ipython
-                        magic = get_ipython().magic
-                        magic('%matplotlib widget')
-                    except: # Then try retina
-                        assert jupyter != 'default'
-                        import matplotlib_inline
-                        matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+            if jupyter == True:
+                jupyter = 'retina' # Default option for True
+            # kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
+            # kwargs['show'] = False
+            pl.ioff()
+            try: 
+                if jupyter == 'retina': # This makes plots much nicer, but isn't available on all systems
+                    import matplotlib_inline
+                    matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+                elif jupyter in ['widget', 'interactive']: # Or use interactive
+                    from IPython import get_ipython
+                    magic = get_ipython().magic
+                    magic('%matplotlib widget')
             except:
                 pass
 
@@ -288,12 +290,27 @@ class Options(sc.objdict):
                 numba_keys = ['precision', 'numba_parallel', 'numba_cache'] # Specify which keys require a reload
                 if key in numba_keys:
                     reload_required = True
-                if key in 'backend':
-                    pl.switch_backend(value)
+                matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
+                if key in matplotlib_keys:
+                    self.set_matplotlib_global(key, value)
+
+        if use:
+            self.use_style()
 
         if reload_required:
             reload_numba()
 
+        return
+
+
+    def set_matplotlib_global(self, key, value):
+        ''' Set a global option for Matplotlib -- not for users '''
+        if value: # Don't try to reset any of these to a None value
+            if   key == 'fontsize': pl.rcParams['font.size']   = value
+            elif key == 'font':     pl.rcParams['font.family'] = value
+            elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
+            elif key == 'backend':  pl.switch_backend(value)
+            else: raise KeyError(f'Key {key} not found')
         return
 
 
