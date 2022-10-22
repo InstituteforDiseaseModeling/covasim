@@ -1,1 +1,1 @@
-.. include:: ../FAQ.rst
+.. include:: ../faq.rst

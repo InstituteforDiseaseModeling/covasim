@@ -1,1 +1,1 @@
-.. include:: ../GLOSSARY.rst
+.. include:: ../glossary.rst

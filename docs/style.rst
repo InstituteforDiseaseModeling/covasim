@@ -1,1 +1,1 @@
-.. include:: ../STYLE_GUIDE.rst
+.. include:: ../style_guide.rst
