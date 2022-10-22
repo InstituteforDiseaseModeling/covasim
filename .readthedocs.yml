@@ -1,36 +1,28 @@
-# .readthedocs.yml
+# .readthedocs.yaml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
 # Required
 version: 2
 
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-20.04
+  tools:
+    python: "3.9"
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+   configuration: docs/conf.py
 
-# Build documentation with MkDocs
-#mkdocs:
-#  configuration: mkdocs.yml
-
-# Optionally build your docs in additional formats such as PDF
+# If using Sphinx, optionally build your docs in additional formats such as PDF
 formats:
-  - htmlzip
-  - pdf
+   - pdf
 
-# Optionally set the version of Python and requirements required to build your docs
+# Optionally declare the Python requirements required to build your docs
 python:
-  version: 3.9
   install:
     - requirements: docs/requirements.txt
     - method: pip
       path: .
   system_packages: true
-    
-# Optionally rank topics in search results, between -10 (lower) and 10 (higher).
-# 0 is normal rank, not no rank
-
-search:
-  ranking:
-    index.html: 3
-    modules.html: 2
