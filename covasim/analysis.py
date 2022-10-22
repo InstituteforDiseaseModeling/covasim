@@ -1400,7 +1400,7 @@ class Calibration(Analyzer):
         if db_name   is None: db_name   = f'{name}.db'
         if keep_db   is None: keep_db   = False
         if storage   is None: storage   = f'sqlite:///{db_name}'
-        if total_trials is not None: n_trials = total_trials/n_workers
+        if total_trials is not None: n_trials = np.ceil(total_trials/n_workers)
         self.run_args   = sc.objdict(n_trials=int(n_trials), n_workers=int(n_workers), name=name, db_name=db_name, keep_db=keep_db, storage=storage)
 
         # Handle other inputs
