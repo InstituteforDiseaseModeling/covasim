@@ -19,6 +19,7 @@ Full contents
 
    overview
    tutorials
+   papers
    faq
    whatsnew
    parameters
