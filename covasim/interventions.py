@@ -279,18 +279,17 @@ class Intervention:
 
     def _store_args(self):
         ''' Store the user-supplied arguments for later use in to_json '''
+        self.input_args = {} # Create a place to store the input arguments
         f0 = inspect.currentframe() # This "frame", i.e. Intervention.__init__()
         f1 = inspect.getouterframes(f0) # The list of outer frames
         parent = f1[2].frame # The parent frame, e.g. change_beta.__init__()
-        _,_,_,values = inspect.getargvalues(parent) # Get the values of the arguments
-        if values:
-            self.input_args = {}
-            for key,value in values.items():
-                if key == 'kwargs': # Store additional kwargs directly
-                    for k2,v2 in value.items(): # pragma: no cover
-                        self.input_args[k2] = v2 # These are already a dict
-                elif key not in ['self', '__class__']: # Everything else, but skip these
-                    self.input_args[key] = value
+        arginfo = inspect.getargvalues(parent) # Get the values of the arguments
+        for arg in arginfo.args:
+            if arg != 'self': # Don't store this
+                self.input_args[arg] = arginfo.locals[arg] # Store normal arguments, including defined keyword arguments
+        if arginfo.keywords is not None:
+            for key,value in arginfo.locals['kwargs'].items(): # Store additional arguments captured by **kwargs
+                self.input_args[key] = value
         return
 
 
