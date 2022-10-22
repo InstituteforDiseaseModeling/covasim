@@ -239,9 +239,10 @@ class Options(sc.objdict):
             jupyter = kwargs['jupyter']
             if jupyter == True:
                 jupyter = 'retina' # Default option for True
-            # kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
-            # kwargs['show'] = False
-            pl.ioff()
+            if 'returnfig' not in kwargs:
+                kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
+            if 'show' not in kwargs:
+                kwargs['show'] = False
             try: 
                 if jupyter == 'retina': # This makes plots much nicer, but isn't available on all systems
                     import matplotlib_inline
