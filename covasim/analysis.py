@@ -1489,20 +1489,28 @@ class Calibration(Analyzer):
         else: # Special case: just run one
             output = [self.worker()]
         return output
-
-
+    
+    
     def remove_db(self):
         '''
         Remove the database file if keep_db is false and the path exists.
 
         New in version 3.1.0.
         '''
-        path = self.run_args.db_name
-        if os.path.exists(path):
-            os.remove(path)
+        try:
+            op = import_optuna()
+            op.delete_study(study_name=self.run_args.name, storage=self.run_args.storage)
             if self.verbose:
-                print(f'Removed existing calibration: {path}')
+                print(f'Deleted study {self.run_args.name} in {self.run_args.storage}')
+        except Exception as E:
+            print('Could not delete study, skipping...')
+            print(str(E))
+        if os.path.exists(self.run_args.db_name):
+            os.remove(self.run_args.db_name)
+            if self.verbose:
+                print(f'Removed existing calibration {self.run_args.db_name}')
         return
+    
 
 
     def make_study(self):
