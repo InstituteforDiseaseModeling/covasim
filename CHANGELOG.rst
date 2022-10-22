@@ -28,6 +28,12 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.1.4 (2022-10-07)
+--------------------------
+- TBC
+- *GitHub info*: PR `TBC <https://github.com/amath-idm/covasim/pull/TBC>`_
+
+
 Version 3.1.3 (2022-07-19)
 --------------------------
 - Fixed a bug with using ``'seir'`` as a default plot option. (Thanks Rik Belew for finding and fixing.)
