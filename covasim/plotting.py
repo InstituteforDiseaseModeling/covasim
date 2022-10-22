@@ -281,7 +281,7 @@ def title_grid_legend(ax, title, grid, commaticks, setylim, legend_args, show_ar
     if show_args['outer']:
         lastrow = ax.get_subplotspec().is_last_row()
         if not lastrow:
-            for label in ax.get_xticklabels(which="both"):
+            for label in ax.get_xticklabels(which='both'):
                 label.set_visible(False)
             ax.set_xlabel('')
 
@@ -748,7 +748,7 @@ def get_individual_states(sim): # pragma: no cover
 
 
 # Default settings for the Plotly legend
-plotly_legend = dict(legend_orientation="h", legend=dict(x=0.0, y=1.18))
+plotly_legend = dict(legend_orientation='h', legend=dict(x=0.0, y=1.18))
 
 
 def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
@@ -760,7 +760,7 @@ def plotly_interventions(sim, fig, add_to_legend=False): # pragma: no cover
                 for interv_day in interv.days:
                     if interv_day and interv_day < sim['n_days']:
                         interv_date = sim.date(interv_day, as_date=True)
-                        fig.add_shape(dict(type="line", xref="x", yref="paper", x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
+                        fig.add_shape(dict(type='line', xref='x', yref='paper', x0=interv_date, x1=interv_date, y0=0, y1=1, line=dict(width=0.5, dash='dash')))
                         if add_to_legend:
                             fig.add_trace(go.Scatter(x=[interv_date], y=[0], mode='lines', name='Intervention change', line=dict(width=0.5, dash='dash')))
     return
@@ -812,7 +812,7 @@ def plotly_people(sim, do_show=False): # pragma: no cover
             stackgroup='one',
             line=dict(width=0.5, color=state['color']),
             fillcolor=state['color'],
-            hoverinfo="y+name",
+            hoverinfo='y+name',
             name=state['name']
         ))
 
@@ -845,59 +845,59 @@ def plotly_animate(sim, do_show=False): # pragma: no cover
     days = sim.tvec
 
     fig_dict = {
-        "data": [],
-        "layout": {},
-        "frames": []
+        'data': [],
+        'layout': {},
+        'frames': []
     }
 
-    fig_dict["layout"]["updatemenus"] = [
+    fig_dict['layout']['updatemenus'] = [
         {
-            "buttons": [
+            'buttons': [
                 {
-                    "args": [None, {"frame": {"duration": 200, "redraw": True},
-                                    "fromcurrent": True}],
-                    "label": "Play",
-                    "method": "animate"
+                    'args': [None, {'frame': {'duration': 200, 'redraw': True},
+                                    'fromcurrent': True}],
+                    'label': 'Play',
+                    'method': 'animate'
                 },
                 {
-                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
-                                      "mode": "immediate",
-                                      "transition": {"duration": 0}}],
-                    "label": "Pause",
-                    "method": "animate"
+                    'args': [[None], {'frame': {'duration': 0, 'redraw': True},
+                                      'mode': 'immediate',
+                                      'transition': {'duration': 0}}],
+                    'label': 'Pause',
+                    'method': 'animate'
                 }
             ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 87},
-            "showactive": False,
-            "type": "buttons",
-            "x": 0.1,
-            "xanchor": "right",
-            "y": 0,
-            "yanchor": "top"
+            'direction': 'left',
+            'pad': {'r': 10, 't': 87},
+            'showactive': False,
+            'type': 'buttons',
+            'x': 0.1,
+            'xanchor': 'right',
+            'y': 0,
+            'yanchor': 'top'
         }
     ]
 
     sliders_dict = {
-        "active": 0,
-        "yanchor": "top",
-        "xanchor": "left",
-        "currentvalue": {
-            "font": {"size": 16},
-            "prefix": "Day: ",
-            "visible": True,
-            "xanchor": "right"
+        'active': 0,
+        'yanchor': 'top',
+        'xanchor': 'left',
+        'currentvalue': {
+            'font': {'size': 16},
+            'prefix': 'Day: ',
+            'visible': True,
+            'xanchor': 'right'
         },
-        "transition": {"duration": 200},
-        "pad": {"b": 10, "t": 50},
-        "len": 0.9,
-        "x": 0.1,
-        "y": 0,
-        "steps": []
+        'transition': {'duration': 200},
+        'pad': {'b': 10, 't': 50},
+        'len': 0.9,
+        'x': 0.1,
+        'y': 0,
+        'steps': []
     }
 
     # make data
-    fig_dict["data"] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
+    fig_dict['data'] = [go.Heatmap(z=np.reshape(z[:, 0], (y_size, x_size)),
                                    zmin=min_color,
                                    zmax=max_color,
                                    colorscale=colorscale,
@@ -905,25 +905,25 @@ def plotly_animate(sim, do_show=False): # pragma: no cover
                                    )]
 
     for state in states:
-        fig_dict["data"].append(go.Scatter(x=[None], y=[None], mode='markers',
+        fig_dict['data'].append(go.Scatter(x=[None], y=[None], mode='markers',
                                            marker=dict(size=10, color=state['color']),
                                            showlegend=True, name=state['name']))
 
     # make frames
     for i, day in enumerate(days):
-        frame = {"data": [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
-                 "name": i}
-        fig_dict["frames"].append(frame)
-        slider_step = {"args": [
+        frame = {'data': [go.Heatmap(z=np.reshape(z[:, i], (y_size, x_size)))],
+                 'name': i}
+        fig_dict['frames'].append(frame)
+        slider_step = {'args': [
             [i],
-            {"frame": {"duration": 5, "redraw": True},
-             "mode": "immediate", }
+            {'frame': {'duration': 5, 'redraw': True},
+             'mode': 'immediate', }
         ],
-            "label": i,
-            "method": "animate"}
-        sliders_dict["steps"].append(slider_step)
+            'label': i,
+            'method': 'animate'}
+        sliders_dict['steps'].append(slider_step)
 
-    fig_dict["layout"]["sliders"] = [sliders_dict]
+    fig_dict['layout']['sliders'] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
 
