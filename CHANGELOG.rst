@@ -64,7 +64,7 @@ Version 3.1.3 (2022-07-19)
 - *GitHub info*: PR `1374 <https://github.com/amath-idm/covasim/pull/1374>`_
 
 
-Version 3.1.2 (2021-01-16)
+Version 3.1.2 (2022-01-16)
 --------------------------
 
 Highlights
