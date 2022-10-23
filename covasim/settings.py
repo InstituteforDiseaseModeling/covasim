@@ -244,13 +244,14 @@ class Options(sc.objdict):
             if 'show' not in kwargs:
                 kwargs['show'] = False
             try: 
-                if jupyter == 'retina': # This makes plots much nicer, but isn't available on all systems
-                    import matplotlib_inline
-                    matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
-                elif jupyter in ['widget', 'interactive']: # Or use interactive
-                    from IPython import get_ipython
-                    magic = get_ipython().magic
-                    magic('%matplotlib widget')
+                if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
+                    if jupyter == 'retina': # This makes plots much nicer, but isn't available on all systems
+                        import matplotlib_inline
+                        matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+                    elif jupyter in ['widget', 'interactive']: # Or use interactive
+                        from IPython import get_ipython
+                        magic = get_ipython().magic
+                        magic('%matplotlib widget')
             except:
                 pass
 
