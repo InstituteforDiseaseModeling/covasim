@@ -1106,7 +1106,7 @@ class Fit(Analyzer):
             self.inds.data[key] = []
             self.date_matches[key] = []
             count = -1
-            for d, datum in self.data[key].iteritems():
+            for d, datum in self.data[key].items():
                 count += 1
                 if np.isfinite(datum):
                     if d in self.sim_dates:
