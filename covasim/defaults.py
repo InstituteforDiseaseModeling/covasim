@@ -220,7 +220,6 @@ immunity_sources = [
     'severe',
 ]
 
-default_SVI_data = np.array([])
 # Default age data, based on Seattle 2018 census data -- used in population.py
 default_age_data = np.array([
     [ 0,  4, 0.0605],

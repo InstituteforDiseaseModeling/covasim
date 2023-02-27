@@ -54,7 +54,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Network parameters, generally initialized after the population has been constructed
     pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
-    pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
+    pars['beta_l ayer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
 
     # Basic disease transmission parameters
     pars['beta_dist']    = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
