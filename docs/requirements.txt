@@ -1,3 +1,4 @@
+myst-parser~=2.0.0
 pytest
 sphinx-rtd-theme
 sphinxcontrib-napoleon
