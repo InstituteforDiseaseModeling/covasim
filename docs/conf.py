@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import sphinx_rtd_theme
+import myst_parser
 from datetime import datetime
 import covasim as cv
 
@@ -46,6 +47,7 @@ with open(filename, "w") as f: # Write new file
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
