@@ -1,8 +1,11 @@
 pandoc
 pypandoc
 sphinx
-sphinx-rtd-theme
-sphinxcontrib-napoleon
+sphinx-autodoc-typehints
+pydata-sphinx-theme
+sphinx-design
+ipykernel # For tutorials
+nbsphinx # For tutorials
 myst-parser
 plantweb
 ipykernel

@@ -14,7 +14,6 @@
 import os
 import subprocess
 import sys
-import sphinx_rtd_theme
 import myst_parser
 from datetime import datetime
 import covasim as cv
@@ -100,7 +99,7 @@ release = cv.__version__
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 
 # suppress warnings for multiple possible Python references in the namespace
 # suppress_warnings = ['ref.python']
@@ -118,10 +117,7 @@ rst_epilog = "\n.. include:: /variables.txt"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-
-# Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "pydata_sphinx_theme"
 
 
 html_logo = "images/IDM_white.png"
