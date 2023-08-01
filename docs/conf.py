@@ -80,12 +80,12 @@ templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-source_suffix = ['.rst', '.md']
+source_suffix = ['.rst']
 master_doc = 'index'
 
 # General information about the project.
 project = 'Covasim'
-copyright = f'1999 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
+copyright = f'2020 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
 author = 'Institute for Disease Modeling'
 
 # The version info for the project you're documenting, acts as replacement for
