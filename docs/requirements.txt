@@ -1,12 +1,11 @@
-myst-parser~=2.0.0
-pytest
+pandoc
+pypandoc
+sphinx
 sphinx-rtd-theme
 sphinxcontrib-napoleon
-sphinx
+myst-parser
 plantweb
 ipykernel
 nbsphinx
-pandoc
-pypandoc
 optuna
 seaborn
