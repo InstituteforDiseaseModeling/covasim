@@ -53,6 +53,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
     'nbsphinx',
+    'sphinx_search.extension', # search across multiple docsets in domain
 ]
 
 autodoc_default_options = {
@@ -155,6 +156,22 @@ html_show_sphinx = False
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
 html_use_opensearch = 'docs.idmod.org/projects/covasim/en/latest'
+
+
+# -- RTD Sphinx search for searching across the entire domain, default child -------------
+
+if os.environ.get('READTHEDOCS') == 'True':
+
+    search_project_parent = "institute-for-disease-modeling-idm"
+    search_project = os.environ["READTHEDOCS_PROJECT"]
+    search_version = os.environ["READTHEDOCS_VERSION"]
+
+    rtd_sphinx_search_default_filter = f"subprojects:{search_project}/{search_version}"
+
+    rtd_sphinx_search_filters = {
+        "Search this project": f"project:{search_project}/{search_version}",
+        "Search all IDM docs": f"subprojects:{search_project_parent}/{search_version}",
+    }
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Covasim'
