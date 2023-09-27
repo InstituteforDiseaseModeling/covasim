@@ -54,7 +54,8 @@ extensions = [
     'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
     'nbsphinx',
     'sphinx_search.extension', # search across multiple docsets in domain
-]
+    'sphinx.ext.viewcode', # link to view source code
+    ]
 
 autodoc_default_options = {
     'member-order': 'bysource',
