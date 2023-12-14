@@ -14,7 +14,6 @@
 import os
 import subprocess
 import sys
-import sphinx_rtd_theme
 from datetime import datetime
 import covasim as cv
 
@@ -55,25 +54,6 @@ extensions = [
     'nbsphinx',
     'sphinx_search.extension', # search across multiple docsets in domain
     'sphinx.ext.viewcode', # link to view source code
-    'myst_parser', # source files written in MD or RST
-]
-
-myst_enable_extensions = [
-    "amsmath",
-    "attrs_inline",
-    "colon_fence",
-    "deflist",
-    "dollarmath",
-    "fieldlist",
-    "html_admonition",
-    "html_image",
-    "inv_link",
-    "linkify",
-    "replacements",
-    "smartquotes",
-    "strikethrough",
-    "substitution",
-    "tasklist",
 ]
 
 autodoc_default_options = {
@@ -99,12 +79,12 @@ templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-source_suffix = ['.rst', '.md']
+source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
 project = 'Covasim'
-copyright = f'1999 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
+copyright = f'2020 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
 author = 'Institute for Disease Modeling'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -119,7 +99,7 @@ release = cv.__version__
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # suppress warnings for multiple possible Python references in the namespace
 # suppress_warnings = ['ref.python']
@@ -137,10 +117,7 @@ rst_epilog = "\n.. include:: /variables.txt"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-
-# Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "pydata_sphinx_theme"
 
 
 html_logo = "images/IDM_white.png"
@@ -149,10 +126,7 @@ html_favicon = "images/favicon.ico"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-
 html_static_path = ['_static']
-
-html_css_files = ['theme_overrides.css']
 
 html_context = {
     'rtd_url': 'https://docs.idmod.org/projects/covasim/en/latest',
