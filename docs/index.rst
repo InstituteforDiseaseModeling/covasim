@@ -28,4 +28,4 @@ Full contents
    conduct
    contributing
    style
-   modules
+   api/index
