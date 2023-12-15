@@ -67,28 +67,28 @@ suppress_warnings = ['autosectionlabel.*']
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "pydata_sphinx_theme"
-html_theme_options = {
-    "collapse_navigation": False,
-    "navigation_depth": 3,
-    "show_prev_next": True,
-    "icon_links": [
-        {"name": "Web", "url": "https://covasim.org", "icon": "fas fa-home"},
-        {
-            "name": "GitHub",
-            "url": "https://github.com/institutefordiseasemodeling/covasim",
-            "icon": "fab fa-github-square",
-        },
-    ],
-    "navbar_end": ["theme-switcher", "navbar-icon-links"],
-    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
-    "header_links_before_dropdown": 7,
-}
+# html_theme_options = {
+#     "collapse_navigation": False,
+#     "navigation_depth": 3,
+#     "show_prev_next": True,
+#     "icon_links": [
+#         {"name": "Web", "url": "https://covasim.org", "icon": "fas fa-home"},
+#         {
+#             "name": "GitHub",
+#             "url": "https://github.com/institutefordiseasemodeling/covasim",
+#             "icon": "fab fa-github-square",
+#         },
+#     ],
+#     "navbar_end": ["theme-switcher", "navbar-icon-links"],
+#     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+#     "header_links_before_dropdown": 7,
+# }
 html_sidebars = {
-    "**": ["sidebar-nav-bs"],
-    "index": [],
-    "overview": [],
-    "whatsnew": [],
-    "contributing": [],
+    "**": ["navbar-nav", "sidebar-nav-bs"],
+    # "index": ["navbar-nav", "sidebar-nav-bs"],
+    # "overview": [],
+    # "whatsnew": [],
+    # "contributing": [],
 }
 html_logo = "images/IDM_white.png"
 html_favicon = "images/favicon.ico"
