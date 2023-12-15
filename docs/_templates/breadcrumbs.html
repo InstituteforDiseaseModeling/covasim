@@ -1,9 +1,0 @@
-{% extends '!breadcrumbs.html' %}
-{% block breadcrumbs %}
-    <li><a href="//covasim.org">Covasim website</a> &raquo;</li>
-    <li><a href="{{ pathto(master_doc) }}">Documentation</a> &raquo;</li>
-    {% for doc in parents %}
-        <li><a href="{{ doc.link|e }}">{{ doc.title }}</a> &raquo;</li>
-    {% endfor %}
-    <li>{{ title }}</li>
-{% endblock %}

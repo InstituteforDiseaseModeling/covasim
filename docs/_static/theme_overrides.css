@@ -1,76 +1,78 @@
-.wy-table-responsive table td, .wy-table-responsive table th {
-    white-space: normal;
+.version-stable {
+    background-color: #2c7fb8ff;
+    color: #2c7fb8ff;
 }
 
-.wy-table-responsive table td p {
-    font-size: 100%;
+.version-alert a {
+    text-decoration: underline;
+    background-color: #2c7fb8ff;
+    color: #ddd;
 }
 
-/* CK: slightly wider than default (800px) */
-.wy-nav-content {
-    max-width: 920px;
+.version-alert {
+    background-color: #ff7f0eff;
+    cff7f0effolor: #fff;
+    font-family: "Work Sans", sans-serif;
+    font-weight: 600; font-size: 16px;
 }
 
-footer p {
-    font-size: 14px;
-    margin-top: 0px;
-    margin-bottom: 0px;
+.btn-version {
+    background: #2c7fb8ff;
+    color: #ffffff;
 }
 
+.btn-version:hover, .btn-version:focus, .btn-version:active, .btn-version.active, .open > .dropdown-toggle.btn-version {
+    background: #33a6cc;
+}
+
+.btn-version:active, .btn-version.active {
+    background: #007299;
+    box-shadow: none;
+}
+
+/*Additional customizations*/
 h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
     font-family: "Montserrat", "Lato", "Open Sans", sans-serif;
-    margin-bottom: 0.5em;
-}
-
-/* CK: added toc-backref since otherwise overrides this */
-.toc-backref, .rst-content {
-    font-size: inherit !important;
-    color: inherit !important;
-    margin-bottom: inherit !important;
 }
 
 h1 {
-    margin-bottom: 1.0em;
+    margin-top: 0.0em;
+    margin-bottom: 0.5em;
 }
 
 h2 {
-    font-size: 125%;
-    color: #0055af !important;
-    margin-bottom: 1.0em;
+    font-size: 140%;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
 }
 
 
 h3 {
-    font-size: 115%;
-    color: #38761d;
+    font-size: 120%;
+    margin-top: 1.0em;
+    margin-bottom: 0.5em;
 }
 
 h4 {
-    font-size: 105%;
-    color: #bf9000;
+    font-style: italic;
+    font-size: 100%;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
-div.document span.search-highlight {
-    background-color: yellow;
+/* Layout changes */
+.bd-main .bd-content .bd-article-container {
+  max-width: 100em;  /* default is 60em */
 }
 
-.btn {
-    margin-bottom: 10px;
+.bd-page-width {
+  max-width: 100rem;  /* default is 88rem */
 }
 
-/* CK: alternating table row colors */
-.rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td, .wy-table-backed, .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
-    background-color: #acf;
-}
-tr.row-even {
-    background-color: #def;
+.bd-sidebar-primary {
+  width: 20em;
 }
 
-/* CK: Change the color of code blocks */
-.highlight  { background: #D9F0FF; }
-
-/* CK: Change the color of inline code */
-code.literal {
-    color: #e01e5a !important;
-    background-color: #f6f6f6 !important;
+.bd-sidebar-secondary {
+  width: 30em !important;
 }
