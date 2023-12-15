@@ -1,6 +1,6 @@
-==============
-Covasim papers 
-==============
+============
+Publications
+============
 
 Here is an incomplete list of papers relating to the Covasim model. You can also check `citations on Google Scholar <https://scholar.google.com/scholar?cites=293396678055528103&as_sdt=2005&sciodt=0,5&hl=en>`_. If you've written a paper or report using Covasim that isn't listed here, please write to us `here <mailto:info@covasim.org>`_.
 
