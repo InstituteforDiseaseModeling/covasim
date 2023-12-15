@@ -7,7 +7,6 @@ See also test_immunity.py for tests of vaccines.
 
 #%% Housekeeping
 
-import os
 import sciris as sc
 import numpy as np
 import pylab as pl
@@ -17,7 +16,7 @@ import pytest
 verbose = -1
 do_plot = 0 # Whether to plot when run interactively
 cv.options.set(interactive=False) # Assume not running interactively
-csv_file  = os.path.join(sc.thisdir(), 'example_data.csv')
+csv_file  = sc.thispath() / 'example_data.csv'
 
 
 def test_all_interventions(do_plot=False):
