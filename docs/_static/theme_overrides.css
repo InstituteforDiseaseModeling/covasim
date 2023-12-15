@@ -59,3 +59,20 @@ h4 {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
+
+/* Layout changes */
+.bd-main .bd-content .bd-article-container {
+  max-width: 100em;  /* default is 60em */
+}
+
+.bd-page-width {
+  max-width: 100rem;  /* default is 88rem */
+}
+
+.bd-sidebar-primary {
+  width: 20em;
+}
+
+.bd-sidebar-secondary {
+  width: 30em !important;
+}

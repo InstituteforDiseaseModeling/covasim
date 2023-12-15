@@ -80,15 +80,11 @@ html_theme_options = {
         },
     ],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
-    "secondary_sidebar_items": ["sidebar-nav-bs", "page-toc"],
-    "header_links_before_dropdown": 4,
+    "secondary_sidebar_items": ["navbar-side"],
+    "header_links_before_dropdown": 5,
 }
 html_sidebars = {
-    "**": ["navbar-side"],
-    # "index": ["navbar-nav", "sidebar-nav-bs"],
-    # "overview": [],
-    # "whatsnew": [],
-    # "contributing": [],
+    "**": ["sidebar-nav-bs", "page-toc"],
 }
 html_logo = "images/IDM_white.png"
 html_favicon = "images/favicon.ico"
@@ -96,17 +92,13 @@ html_static_path = ['_static']
 html_baseurl = "https://docs.idmod.org/projects/covasim/en/latest"
 html_context = {
     'rtd_url': 'https://docs.idmod.org/projects/covasim/en/latest',
-    # 'theme_vcs_pageview_mode': 'edit',
     "versions_dropdown": {
         "latest": "devel (latest)",
         "stable": "current (stable)",
     },
     "default_mode": "light",
 }
-# Add any extra paths that contain custom files (such as robots.txt or
-# .htaccess) here, relative to this directory. These files are copied
-# directly to the root of the documentation.
-#
+# Add any extra paths that contain custom files
 if not on_rtd:
     html_extra_path = ['robots.txt']
 
@@ -118,16 +110,7 @@ html_show_sphinx = False
 html_copy_source = False
 htmlhelp_basename = 'Covasim'
 
-# Intersphinx mapping
-# intersphinx_mapping = {
-#     "python": ("https://docs.python.org/3/", None),
-#     "numpy": ("https://numpy.org/doc/stable/", None),
-#     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-#     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-#     "matplotlib": ("https://matplotlib.org/stable/", None),
-#     "psutil": ("https://psutil.readthedocs.io/en/latest/", None),
-# }
-
+# Add customizations
 def setup(app):
     app.add_css_file("theme_overrides.css")
 
