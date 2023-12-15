@@ -84,7 +84,7 @@ html_theme_options = {
     "header_links_before_dropdown": 4,
 }
 html_sidebars = {
-    "**": ["navbar-nav"],
+    "**": ["navbar-side"],
     # "index": ["navbar-nav", "sidebar-nav-bs"],
     # "overview": [],
     # "whatsnew": [],
@@ -119,14 +119,14 @@ html_copy_source = False
 htmlhelp_basename = 'Covasim'
 
 # Intersphinx mapping
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "psutil": ("https://psutil.readthedocs.io/en/latest/", None),
-}
+# intersphinx_mapping = {
+#     "python": ("https://docs.python.org/3/", None),
+#     "numpy": ("https://numpy.org/doc/stable/", None),
+#     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+#     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+#     "matplotlib": ("https://matplotlib.org/stable/", None),
+#     "psutil": ("https://psutil.readthedocs.io/en/latest/", None),
+# }
 
 def setup(app):
     app.add_css_file("theme_overrides.css")
