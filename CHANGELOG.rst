@@ -14,18 +14,18 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Coming soon
 ~~~~~~~~~~~
 
-These are the major improvements we are currently working on. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
-
-- Default Omicron parameters (planned for v3.1.4)
-- Additional nuance in how immunity is modeled (planned for v3.1.4)
-- Multi-region and geographical support
-- Economics and costing analysis
-
+Covasim is currently in maintenance phase, and only one major further update is planned (updating how immunity is modeled). If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Version 3.1.5 (2023-12-15)
+--------------------------
+- Fixed a deprecation in `pandas` that prevented displaying the summary table of interventions and analyzers.
+- *GitHub info*: PR `1433 <https://github.com/amath-idm/covasim/pull/1433>`_
 
 
 Version 3.1.4 (2022-10-22)
