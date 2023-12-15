@@ -1,4 +1,3 @@
-venv_bash/
 # Custom -- docs build files
 docs/covasim*.rst
 docs/modules.rst
