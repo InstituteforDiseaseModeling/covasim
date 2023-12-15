@@ -163,11 +163,6 @@ if os.environ.get('READTHEDOCS') == 'True':
         "Search all IDM docs": f"subprojects:{search_project_parent}/{search_version}",
     }
 
-# Output file base name for HTML help builder.
-htmlhelp_basename = 'Covasim'
-
-}
-
 def setup(app):
     app.add_css_file("theme_overrides.css")
 
