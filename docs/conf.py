@@ -1,131 +1,107 @@
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
 
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
 import os
-import subprocess
 import sys
-from datetime import datetime
 import covasim as cv
 
 # Set environment
 os.environ['SPHINX_BUILD'] = 'True' # This is used so cv.options.set('jupyter') doesn't reset the Matplotlib renderer
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
-# Rename "covasim package" to "API reference"
-filename = 'modules.rst' # This must match the Makefile
-with open(filename) as f: # Read existing file
-    lines = f.readlines()
-lines[0] = "API reference\n" # Blast away the existing heading and replace with this
-lines[1] = "=============\n" # Ensure the heading is the right length
-with open(filename, "w") as f: # Write new file
-    f.writelines(lines)
+
+# -- Project information -----------------------------------------------------
+
+project = 'Covasim'
+copyright = f'2020 - 2023, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
+author = 'Institute for Disease Modeling'
+
+# The short X.Y version
+version = cv.__version__
+
+# The full version, including alpha/beta/rc tags
+release = cv.__version__
 
 
 # -- General configuration ---------------------------------------------------
 
-# If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# Add any Sphinx extension module names here
 extensions = [
-    'sphinx.ext.mathjax',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',  # Add a link to the Python source code for classes, functions etc.
-    'nbsphinx',
+    "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
+    "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosectionlabel",
+    "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
+    "sphinx_design", # Add e.g. grid layout
     'sphinx_search.extension', # search across multiple docsets in domain
-    'sphinx.ext.viewcode', # link to view source code
+    "nbsphinx",
 ]
 
-autodoc_default_options = {
-    'member-order': 'bysource',
-    'members': None
-}
-
-autodoc_mock_imports = []
-
-
+# Use Google docstrings
 napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
-html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+autosummary_ignore_module_all = False # Respect __all__
 autodoc_member_order = 'bysource' # Keep original ordering
 add_module_names = False  # NB, does not work
 autodoc_inherit_docstrings = False # Stops sublcasses from including docs from parent classes
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
-# The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-source_suffix = '.rst'
-master_doc = 'index'
+# Syntax highlighting style
+pygments_style = "sphinx"
+modindex_common_prefix = ["covasim."]
 
-# General information about the project.
-project = 'Covasim'
-copyright = f'2020 - {datetime.today().year}, Bill & Melinda Gates Foundation. All rights reserved.\nThese docs were built for Covasim version {cv.__version__}.\n'
-author = 'Institute for Disease Modeling'
+# List of patterns, relative to source directory, to exclude
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-version = cv.__version__
-# The full version, including alpha/beta/rc tags.
-release = cv.__version__
+# Suppress certain warnings
+suppress_warnings = ['autosectionlabel.*']
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# suppress warnings for multiple possible Python references in the namespace
-# suppress_warnings = ['ref.python']
-pygments_style = 'sphinx'
+# -- Options for HTML output -------------------------------------------------
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = False
-
-# RST epilog is added to the end of every topic. Useful for replace
-# directives to use across the docset.
-rst_epilog = "\n.. include:: /variables.txt"
-
-# -- Options for HTML output ----------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
 html_theme = "pydata_sphinx_theme"
-
-
+html_theme_options = {
+    "collapse_navigation": False,
+    "navigation_depth": 3,
+    "show_prev_next": True,
+    "icon_links": [
+        {"name": "Web", "url": "https://covasim.org", "icon": "fas fa-home"},
+        {
+            "name": "GitHub",
+            "url": "https://github.com/institutefordiseasemodeling/covasim",
+            "icon": "fab fa-github-square",
+        },
+    ],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+    "header_links_before_dropdown": 7,
+}
+html_sidebars = {
+    "**": ["sidebar-nav-bs"],
+    "index": [],
+    "overview": [],
+    "whatsnew": [],
+    "contributing": [],
+}
 html_logo = "images/IDM_white.png"
 html_favicon = "images/favicon.ico"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
+html_baseurl = "https://docs.idmod.org/projects/covasim/en/latest"
 html_context = {
     'rtd_url': 'https://docs.idmod.org/projects/covasim/en/latest',
-    'theme_vcs_pageview_mode': 'edit'
+    # 'theme_vcs_pageview_mode': 'edit',
+    "versions_dropdown": {
+        "latest": "devel (latest)",
+        "stable": "current (stable)",
+    },
+    "default_mode": "light",
 }
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -142,14 +118,31 @@ html_show_sphinx = False
 html_copy_source = False
 htmlhelp_basename = 'Covasim'
 
-# If true, an OpenSearch description file will be output, and all pages will
-# contain a <link> tag referring to it.  The value of this option must be the
-# base URL from which the finished HTML is served.
+# Intersphinx mapping
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "psutil": ("https://psutil.readthedocs.io/en/latest/", None),
+}
+
+def setup(app):
+    app.add_css_file("theme_overrides.css")
+
+
+# Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
+nb_ex_default = ['auto', 'never'][0]
+nb_ex = os.getenv('NBSPHINX_EXECUTE')
+if not nb_ex: nb_ex = nb_ex_default
+print(f'\n\nBuilding Jupyter notebooks with build option: {nb_ex}\n\n')
+nbsphinx_execute = nb_ex
+
+# OpenSearch options
 html_use_opensearch = 'docs.idmod.org/projects/covasim/en/latest'
 
-
 # -- RTD Sphinx search for searching across the entire domain, default child -------------
-
 if os.environ.get('READTHEDOCS') == 'True':
 
     search_project_parent = "institute-for-disease-modeling-idm"
@@ -162,14 +155,3 @@ if os.environ.get('READTHEDOCS') == 'True':
         "Search this project": f"project:{search_project}/{search_version}",
         "Search all IDM docs": f"subprojects:{search_project_parent}/{search_version}",
     }
-
-def setup(app):
-    app.add_css_file("theme_overrides.css")
-
-
-# Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
-nb_ex_default = ['auto', 'never'][0]
-nb_ex = os.getenv('NBSPHINX_EXECUTE')
-if not nb_ex: nb_ex = nb_ex_default
-print(f'\n\nBuilding Jupyter notebooks with build option: {nb_ex}\n\n')
-nbsphinx_execute = nb_ex
