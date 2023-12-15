@@ -4,6 +4,7 @@ sphinx
 sphinx-autodoc-typehints
 pydata-sphinx-theme
 sphinx-design
+readthedocs-sphinx-search
 ipykernel # For tutorials
 nbsphinx # For tutorials
 plantweb
@@ -11,4 +12,3 @@ ipykernel
 nbsphinx
 optuna
 seaborn
-readthedocs-sphinx-search
