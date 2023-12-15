@@ -1,6 +1,6 @@
-================
-Covasim overview
-================
+========
+Overview
+========
 
 .. include:: ../README.rst
    :start-line: 4
