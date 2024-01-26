@@ -1,13 +1,11 @@
-# Custom -- docs build files
-docs/covasim*.rst
-docs/modules.rst
-
 # Data files
 data/epi_data
 
 # Other files
 .idea
 .vscode
+.DS_Store
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -82,6 +80,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/_autosummary
 
 # PyBuilder
 target/
