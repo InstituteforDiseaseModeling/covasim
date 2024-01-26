@@ -1,12 +1,21 @@
 #!/bin/bash
-# Build docs. Example usage:
-#  ./build_docs # default
-#  ./build_docs never # don't rebuild notebooks
-#  ./build_docs noclean # don't clean up tutorials
+#
+# To run in debug mode (serial), type
+#  ./build_docs debug
+#
+# To not rebuild notebooks, type
+#  ./build_docs never
+#
+# Otherwise, Jupyter notebooks will be rebuilt in parallel.
+#
+# To not clean up after tutorial builds, run ./build_docs noclean
+
+set -e  # Pass errors upwards
 
 echo 'Building docs...'
 start=$SECONDS
-make clean
+make clean # Delete previous build
+
 
 # Handle notebook build options
 if [[ "$*" == *"never"* ]]; then
@@ -16,6 +25,7 @@ elif [[ "$*" == *"always"* ]]; then
 else
     export NBSPHINX_EXECUTE=auto
 fi
+
 
 # Handle notebook build options
 if [[ "$*" == *"debug"* ]]; then
