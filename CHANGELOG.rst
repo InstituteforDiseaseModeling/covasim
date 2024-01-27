@@ -22,6 +22,12 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Version 3.1.6 (2024-01-27)
+--------------------------
+- Reverted to ``multiprocess`` instead of ``concurrent.futures`` as the default parallelization method to prevent run failures on Macs. To continue using ``concurrent.futures``, add an argument to ``run()``, e.g. ``msim.run(par_args={'parallelizer':'fast'})`` (``'fast'`` defaults to ``concurrent.futures``, while ``'robust'`` defaults to ``multiprocess``; see all options `here <https://sciris.readthedocs.io/en/latest/api/_autosummary/sciris.sc_parallel.parallelize.html#sciris.sc_parallel.parallelize>`_).
+- *GitHub info*: PR `1439 <https://github.com/amath-idm/covasim/pull/1439>`_
+
+
 Version 3.1.5 (2023-12-15)
 --------------------------
 - Fixed a deprecation in `pandas` that prevented displaying the summary table of interventions and analyzers.
