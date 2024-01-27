@@ -1442,7 +1442,7 @@ def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts({'ncpus':n_cpus, 'parallelizer':'concurrent.futures'}, par_args) # Handle blank
+    par_args = sc.mergedicts({'ncpus':n_cpus, 'parallelizer':'robust'}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
