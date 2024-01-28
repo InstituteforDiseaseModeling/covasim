@@ -27,3 +27,4 @@ This page lists Covasim's full API, including all functions and classes.
    covasim.settings
    covasim.sim
    covasim.utils
+   covasim.data

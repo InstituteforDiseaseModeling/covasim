@@ -19,13 +19,14 @@ Full contents
 
    overview
    tutorials
-   papers
-   faq
    whatsnew
+   faq
+   api/index
+   papers
    parameters
    data
    glossary
    conduct
    contributing
    style
-   api/index
+   

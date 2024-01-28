@@ -1,4 +1,6 @@
 '''
+Define age pyramids for each state.
+
 This data is translated from the US Census CSV to JSON/Python format.
 '''
 
