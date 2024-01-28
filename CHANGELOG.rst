@@ -22,9 +22,9 @@ Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Version 3.1.6 (2024-01-27)
+Version 3.1.6 (2024-01-28)
 --------------------------
-- Reverted to ``multiprocess`` instead of ``concurrent.futures`` as the default parallelization method to prevent run failures on Macs. To continue using ``concurrent.futures``, add an argument to ``run()``, e.g. ``msim.run(par_args={'parallelizer':'fast'})`` (``'fast'`` defaults to ``concurrent.futures``, while ``'robust'`` defaults to ``multiprocess``; see all options `here <https://sciris.readthedocs.io/en/latest/api/_autosummary/sciris.sc_parallel.parallelize.html#sciris.sc_parallel.parallelize>`_).
+- ``get_intervention()`` and ``get_analyzer()`` now return a match if there is an exact match for a class name. Previously, this only used ``isinstance()``, which sometimes failed during parallel processing since these required pickling and unpickling the intervention, and upon unpickling Python would (incorrectly) consider it to be a different class.
 - *GitHub info*: PR `1439 <https://github.com/amath-idm/covasim/pull/1439>`_
 
 
