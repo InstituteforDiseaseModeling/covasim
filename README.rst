@@ -15,7 +15,7 @@ Covasim's immunity module (including vaccines and variants) is described here:
 
     **Mechanistic modeling of SARS-CoV-2 immune memory, variants, and vaccines**. Cohen JA, Stuart RM, Núñez RC, Wagner B, Chang ST, Rosenfeld K, Kerr CC, Famulare M, Klein DJ (under review; posted 2021-06-01). *medRxiv* 2021.05.31.21258018; doi: https://doi.org/10.1101/2021.05.31.21258018.
 
-The Covasim webapp is available at http://app.covasim.org, and the repository for it is available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__.
+The Covasim webapp is available at https://app.covasim.org, and the repository for it is available `here <https://github.com/institutefordiseasemodeling/covasim_webapp>`__.
 
 Covasim was developed by the `Institute for Disease Modeling <https://idmod.org/>`__, with additional contributions from the `University of Copenhagen <https://www.math.ku.dk/english>`__, the `Burnet Institute <https://www.burnet.edu.au/>`__, `GitHub <https://github.com/>`__, and `Microsoft <https://www.microsoft.com/en-us/ai/ai-for-health-covid-data>`__.
 
@@ -50,7 +50,7 @@ If you've written a paper or report using Covasim, we'd love to know about it! P
 Requirements
 ============
 
-Python 3.7-3.9 (64-bit). (Note: Python 2.7 and Python 3.10 are not supported, the latter being due to `Numba <https://numba.pydata.org/>`_ not supporting Python 3.10 at the time of writing.)
+Python 3.9-3.11 (64-bit). (Note: Python 2.7 and Python 3.12 are not supported, the latter being due to `Numba <https://numba.pydata.org/>`_ not supporting Python 3.12 at the time of writing.)
 
 We also recommend, but do not require, installing Covasim in a virtual environment. For more information, see documentation for e.g. Anaconda_.
 

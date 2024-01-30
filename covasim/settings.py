@@ -17,8 +17,8 @@ import pylab as pl
 import sciris as sc
 import matplotlib.font_manager as fm
 
-# Only the class instance is public
-__all__ = ['options']
+# Only the class and class instance is public
+__all__ = ['Options', 'options']
 
 
 #%% General settings
@@ -47,7 +47,7 @@ rc_covasim = sc.mergedicts(rc_simple, {
 
 class Options(sc.objdict):
     '''
-    Set options for Covasim.
+    Set options for Covasim. Note: use the class instance ``cv.options`` to set options, not the class itself (``cv.Options``).
 
     Use ``cv.options.set('defaults')`` to reset all values to default, or ``cv.options.set(dpi='default')``
     to reset one parameter to default. See ``cv.options.help(detailed=True)`` for

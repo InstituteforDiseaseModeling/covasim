@@ -1442,7 +1442,7 @@ def multi_run(sim, n_runs=4, reseed=None, noise=0.0, noisepar=None, iterpars=Non
 
     # Handle inputs
     sim_args = sc.mergedicts(sim_args, kwargs) # Handle blank
-    par_args = sc.mergedicts({'ncpus':n_cpus, 'parallelizer':'concurrent.futures'}, par_args) # Handle blank
+    par_args = sc.mergedicts({'ncpus':n_cpus, 'parallelizer':'robust'}, par_args) # Handle blank
 
     # Handle iterpars
     if iterpars is None:
@@ -1496,7 +1496,7 @@ Alternatively, to run without multiprocessing, set parallel=False.
                 raise E
         except pkl.PicklingError as E:
             parallelizer = par_args.get('parallelizer')
-            if retry in ['warn', 'silent'] and parallelizer != 'multiprocess':
+            if retry in ['warn', 'silent'] and parallelizer not in ['multiprocess', 'robust']:
                 if retry == 'warn':
                     warnmsg = f'multi_run() failed with parallelizer={parallelizer}, trying more robust "multiprocess"...'
                     cvm.warn(warnmsg)

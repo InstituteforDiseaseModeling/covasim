@@ -781,7 +781,7 @@ class BaseSim(ParsObj):
                         if sc.isstring(label) and ia_obj.label == label or (partial and (label in str(ia_obj.label))):
                             matches.append(ia_obj)
                             match_inds.append(ind)
-                        elif isinstance(label, type) and isinstance(ia_obj, label):
+                        elif isinstance(label, type) and (isinstance(ia_obj, label) or str(ia_obj.__class__) == str(label)):
                             matches.append(ia_obj)
                             match_inds.append(ind)
                 else: # pragma: no cover
