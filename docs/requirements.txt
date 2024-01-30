@@ -6,7 +6,7 @@ pydata-sphinx-theme
 sphinx-design
 readthedocs-sphinx-search
 ipykernel # For tutorials
-nbsphinx # For tutorials
+nbsphinx==7.13.0 # For tutorials; >=7.14 does not work
 plantweb
 ipykernel
 nbsphinx
