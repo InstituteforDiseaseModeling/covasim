@@ -83,11 +83,13 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "secondary_sidebar_items": ["navbar-side"],
     "header_links_before_dropdown": 5,
+    "footer_start": ["copyright", "footer_start"],
+    "footer_end": ["theme-version", "footer_end"],
 }
 html_sidebars = {
     "**": ["sidebar-nav-bs", "page-toc"],
 }
-html_logo = "images/IDM_white.png"
+html_logo = "images/idm-logo-transparent.png"
 html_favicon = "images/favicon.ico"
 html_static_path = ['_static']
 html_baseurl = "https://docs.idmod.org/projects/covasim/en/latest"
