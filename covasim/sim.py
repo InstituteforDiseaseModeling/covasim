@@ -1403,10 +1403,10 @@ def diff_sims(sim1, sim2, skip_key_diffs=False, skip=None, output=False, die=Fal
     skip = sc.tolist(skip)
     for key in sim2.keys(): # To ensure order
         if key in sim1_keys and key not in skip: # If a key is missing, don't count it as a mismatch
-            sim1_val = sim1[key] if key in sim1 else 'not present'
-            sim2_val = sim2[key] if key in sim2 else 'not present'
+            sim1_val = sim1[key]
+            sim2_val = sim2[key]
             both_nan = sc.isnumber(sim1_val, isnan=True) and sc.isnumber(sim2_val, isnan=True)
-            if sim1_val != sim2_val and not both_nan:
+            if not np.isclose(sim1_val,sim2_val) and not both_nan:
                 mismatches[key] = {'sim1': sim1_val, 'sim2': sim2_val}
 
     if len(mismatches):
