@@ -699,6 +699,9 @@ class Sim(cvb.BaseSim):
         Returns:
             A pointer to the sim object (with results modified in-place)
         '''
+        
+        # 追加しました
+        print("追加しました．")
 
         # Initialization steps -- start the timer, initialize the sim and the seed, and check that the sim hasn't been run
         T = sc.timer()
