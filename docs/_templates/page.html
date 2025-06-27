@@ -2,15 +2,6 @@
 
 {% set css_files = css_files + ["_static/theme_overrides.css"] %}
 
-{% block htmltitle %}
-{{ super() }}
-
-{% if not READTHEDOCS %}
-<meta name="robots" content="none">
-{% endif %}
-
-{% endblock %}
-
 {% block extrahead %}
 
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
