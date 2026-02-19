@@ -14,12 +14,17 @@ All notable changes to the codebase are documented in this file. Changes that ma
 Coming soon
 ~~~~~~~~~~~
 
-Covasim is currently in maintenance phase, and only one major further update is planned (updating how immunity is modeled). If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
+Covasim is currently in maintenance phase, and there are no further major releases planned. If there is a specific bugfix or feature you would like to see, please `create an issue <https://github.com/InstituteforDiseaseModeling/covasim/issues/new/choose>`_.
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~
 Latest versions (3.1.x)
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 3.1.7 (2026-02-18)
+--------------------------
+- Fixed a deprecation in NumPy 2.4 that affcted interventions.
+- *GitHub info*: PR `1452 <https://github.com/amath-idm/covasim/pull/1452>`_
 
 
 Version 3.1.6 (2024-01-28)
@@ -31,7 +36,7 @@ Version 3.1.6 (2024-01-28)
 
 Version 3.1.5 (2023-12-15)
 --------------------------
-- Fixed a deprecation in `pandas` that prevented displaying the summary table of interventions and analyzers.
+- Fixed a deprecation in ``pandas`` that prevented displaying the summary table of interventions and analyzers.
 - *GitHub info*: PR `1433 <https://github.com/amath-idm/covasim/pull/1433>`_
 
 

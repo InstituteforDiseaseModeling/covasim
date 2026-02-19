@@ -22,6 +22,8 @@ Covasim was developed by the `Institute for Disease Modeling <https://idmod.org/
 Questions or comments can be directed to info@covasim.org, or on this project's
 GitHub_ page. Full information about Covasim is provided in the documentation_.
 
+**Note:** Covasim is no longer actively maintained. Please see `Starsim <https://github.com/starsimhub/starsim>`__ for our current work on agent-based disease modeling.
+
 .. _GitHub: https://github.com/institutefordiseasemodeling/covasim
 .. _documentation: https://docs.covasim.org
 
