@@ -24,7 +24,7 @@ Latest versions (3.1.x)
 Version 3.1.5 (2023-12-15)
 --------------------------
 - Fixed a deprecation in NumPy 2.4 that affcted interventions.
-- *GitHub info*: PR `1439 <https://github.com/amath-idm/covasim/pull/1439>`_
+- *GitHub info*: PR `1452 <https://github.com/amath-idm/covasim/pull/1452>`_
 
 
 Version 3.1.6 (2024-01-28)
