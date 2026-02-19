@@ -1772,7 +1772,7 @@ class vaccinate_num(BaseVaccination):
         # It's *possible* that someone has been *scheduled* for a first dose by some other mechanism externally
         # Therefore, we need to check and remove them from the first dose list, otherwise they could be vaccinated
         # twice here (which would amount to wasting a dose)
-        first_dose_eligible = first_dose_eligible[~np.in1d(first_dose_eligible, scheduled)]
+        first_dose_eligible = first_dose_eligible[~np.isin(first_dose_eligible, scheduled)]
 
         if (len(first_dose_eligible)+len(scheduled)) > num_agents:
             first_dose_inds = first_dose_eligible[:(num_agents - len(scheduled))]
