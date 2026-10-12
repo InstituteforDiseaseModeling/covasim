@@ -33,7 +33,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     # Population parameters
     pars['pop_size']     = 20e3     # Number of agents, i.e., people susceptible to SARS-CoV-2
     pars['pop_infected'] = 20       # Number of initial infections
-    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise)
+    pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise), 'rank' (population-density based modeling)
     pars['location']     = None     # What location to load data from -- default Seattle
 
     # Simulation parameters
@@ -55,7 +55,9 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
-
+    pars['density_raster'] = None # Path to a population-density GeoTIFF (people per pixel), used to place agents when pop_type='rank'; None uses a 10x10 km test square
+    pars['density_bbox']   = None # Optional (lon_min, lat_min, lon_max, lat_max) window of that raster to read; None reads the whole file
+    
     # Basic disease transmission parameters
     pars['beta_dist']    = dict(dist='neg_binomial', par1=1.0, par2=0.45, step=0.01) # Distribution to draw individual level transmissibility; dispersion from https://www.researchsquare.com/article/rs-29548/v1
     pars['viral_dist']   = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
@@ -207,11 +209,14 @@ def reset_layer_pars(pars, layer_keys=None, force=False):
     for key,val in l_pars.items():
         layer_defaults['synthpops'][key]['l'] = val
 
+    #Specify defaults for rank -- the same single layer 'a' as random, and static, so the rank structure is never redrawn
+    layer_defaults['rank'] = sc.dcp(layer_defaults['random'])
+
     # Choose the parameter defaults based on the population type, and get the layer keys
     try:
         defaults = layer_defaults[pars['pop_type']]
     except Exception as E:
-        errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, or synthpops'
+        errormsg = f'Cannot load defaults for population type "{pars["pop_type"]}": must be hybrid, random, synthpops or rank'
         raise ValueError(errormsg) from E
     default_layer_keys = list(defaults['beta_layer'].keys()) # All layers should be the same, but use beta_layer for convenience
 

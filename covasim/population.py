@@ -13,12 +13,13 @@ from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpar
 from . import people as cvppl
+from .geography import assign_coords
 
 
 # Specify all externally visible functions this file defines
 __all__ = ['make_people', 'make_randpop', 'make_random_contacts',
            'make_microstructured_contacts', 'make_hybrid_contacts',
-           'make_synthpop']
+           'make_synthpop', 'make_rank_based_contacts']
 
 
 def make_people(sim, popdict=None, die=True, reset=False, recreate=False, verbose=None, **kwargs):
@@ -77,8 +78,8 @@ def make_people(sim, popdict=None, die=True, reset=False, recreate=False, verbos
     # Main use case: no popdict is supplied, so create one
     else:
         if popdict is None:
-            if pop_type in ['random', 'hybrid']:
-                popdict = make_randpop(sim, microstructure=pop_type, **kwargs) # Main use case: create a random or hybrid population
+            if pop_type in ['random', 'hybrid', 'rank']:
+                popdict = make_randpop(sim, microstructure=pop_type, **kwargs) # Main use case: create a random or hybrid or rank-based population
             else: # pragma: no cover
                 errormsg = f'Population type "{pop_type}" not found; choices are random, hybrid, or synthpops'
                 raise ValueError(errormsg)
@@ -216,12 +217,18 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     # Actually create the contacts
     if microstructure == 'random':
         contacts = dict()
-        for lkey,n in pars['contacts'].items():
+        for lkey, n in pars['contacts'].items():
             contacts[lkey] = make_random_contacts(pop_size, n, **kwargs)
     elif microstructure == 'hybrid':
         contacts = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
+    elif microstructure == 'rank':
+        coords = assign_coords(pars)                       # (N,2) x,y in km, sampled from the density raster
+        popdict['x'], popdict['y'] = coords[:, 0], coords[:, 1]
+        contacts = dict()
+        for lkey,n in pars['contacts'].items():
+            contacts[lkey] = make_rank_based_contacts(coords, n, **kwargs)
     else: # pragma: no cover
-        errormsg = f'Microstructure type "{microstructure}" not found; choices are random or hybrid'
+        errormsg = f'Microstructure type "{microstructure}" not found; choices are random or hybrid or rank'
         raise NotImplementedError(errormsg)
 
     popdict['contacts']   = contacts
@@ -436,3 +443,118 @@ def make_synthpop(sim=None, popdict=None, layer_mapping=None, community_contacts
     people['layer_keys'] = list(layer_mapping.values())
 
     return people
+
+# ----------------------------------------------------------------------------
+# 2. The rank-based network
+# ----------------------------------------------------------------------------
+
+def make_rank_based_contacts(coords, n, alpha=1.0, dispersion=None, mapping=None):
+
+    '''
+    Make a rank-based geographic friendship layer as an edgelist.
+
+    Model: Liben-Nowell et al. (2005), "Geographic routing in social networks".
+    Person u links to person v with probability proportional to
+
+        P(u -> v)  ~  1 / rank_u(v)^alpha,    alpha = 1 in the paper
+
+    where rank_u(v) is the number of people w (w != u) who are at least as close to u
+    as v is. Rank (not distance) means links are short in dense areas and long in
+    sparse areas.
+
+    Args:
+        coords     (array) : (N,2) array of x,y locations in km, one row per person
+        n          (float) : the average number of friends per person for this layer
+        alpha      (float) : how strongly friendships favour nearby people (0 = ignore
+                             distance, 1.0 = the value from Liben-Nowell et al., larger = more local)
+        dispersion (float) : if not None, use a negative binomial distribution with this
+                             dispersion parameter instead of Poisson for friend counts
+        mapping    (array) : optionally map the generated indices onto new indices
+
+    Returns:
+        Dictionary of two arrays, p1 and p2, defining the edgelist (friend pairs), in the
+        same format as make_random_contacts() so it can be used as a contact layer.
+
+    Method, for each person p:
+        1. Draw how many friendships p starts (Poisson, averaging about n/2, since each
+           friendship has two ends).
+        2. For each one, draw a rank r in 1..N-1 with probability proportional to 1/r^alpha.
+        3. Link p to their r-th nearest person (found by partially sorting the distances to everyone).
+    Duplicate and mutual pairs (A-B and B-A) are then merged, so the mean degree comes out
+    slightly below n (about 0.9n to 0.95n).
+
+    Method, for each person p:
+        1. Draw how many friends p picks: a random (Poisson) number averaging n/2. Every
+           friendship is picked by one of its two people, so a person's total comes from the
+           n/2 they pick plus about n/2 picked by others, about n friends in all.
+        2. For each friendship, pick a rank r from 1 to N-1. Small ranks are much more
+           likely than large ones (probability proportional to 1/r^alpha).
+        3. Connect p to the person who is r-th nearest to them: sort everyone else by
+           distance from p and take the r-th one. (The code only partially sorts, which is faster.)
+        4. Finally, pairs found twice (A-B and B-A, or A-B repeated) are merged into one friendship.
+           This is why the average number of friends comes out slightly below n (about 0.9n to 0.95n).
+
+    Notes:
+         - Cost grows roughly with N^2. For each of the N people, the code computes the
+          distance to everyone else (about N calculations) and then partially sorts that list
+          (about N more), so the total is about N x N. This takes about 6 s for 10,000
+          people and 10 minutes for 100,000. make_random_contacts() never looks at distances,
+          so its time grows roughly in step with N.
+    
+    '''
+
+    # Preprocessing
+    coords   = np.asarray(coords, dtype=float)
+    pop_size = len(coords) # Number of people
+    p1 = [] # Initialize the "sources"
+    p2 = [] # Initialize the "targets"
+    if pop_size < 2: # Nobody to befriend
+        return dict(p1=np.array([], dtype=cvd.default_int), p2=np.array([], dtype=cvd.default_int))
+
+    # Precalculate the probability of each rank
+    # Rank 1 = nearest person, rank pop_size-1 = farthest. Weight of rank r is 1/r^alpha.
+    rank_weights = np.arange(1, pop_size, dtype=float)**(-alpha)
+    rank_cdf     = np.cumsum(rank_weights) # Running total, used to turn random numbers into ranks
+    rank_cdf    /= rank_cdf[-1]
+
+    # Precalculate how many friendships each person starts (same approach as make_random_contacts)
+    if dispersion is None:
+        p_count = cvu.n_poisson(n, pop_size) # Draw the number of Poisson contacts for this person
+    else:
+        p_count = cvu.n_neg_binomial(rate=n, dispersion=dispersion, n=pop_size) # Or, from a negative binomial
+    p_count = np.array((p_count/2.0).round(), dtype=cvd.default_int) # Halve: each friendship has two ends
+
+    # Make contacts
+    for p in range(pop_size):
+        n_friends = p_count[p]
+        if n_friends == 0:
+            continue
+
+        # Pick a rank for each friendship (1 = nearest person); rank_cdf maps random numbers to ranks
+        ranks = np.searchsorted(rank_cdf, np.random.random(n_friends)) + 1
+        ranks = np.minimum(ranks, pop_size-1) # Guard against rounding at the far end
+
+        # Squared distance from this person to everyone (squared is fine for ordering)
+        dist2 = ((coords - coords[p])**2).sum(axis=1)
+        dist2[p] = np.inf # Put self last so it can never be chosen
+
+        # Find who sits at each chosen rank; argpartition avoids sorting everyone
+        order   = np.argpartition(dist2, np.unique(ranks-1))
+        friends = order[ranks-1]
+
+        p1.append(np.full(n_friends, p))
+        p2.append(friends)
+
+    # Tidy up: join the pieces, then merge duplicate pairs (A-B and B-A are the same friendship)
+    p1 = np.concatenate(p1) if p1 else np.empty(0)
+    p2 = np.concatenate(p2) if p2 else np.empty(0)
+    lo, hi = np.minimum(p1, p2), np.maximum(p1, p2)
+    pairs  = np.unique(np.column_stack((lo, hi)), axis=0)
+    p1, p2 = pairs[:, 0], pairs[:, 1]
+
+    if mapping is not None:
+        mapping = np.asarray(mapping)
+        p1, p2  = mapping[p1], mapping[p2]
+
+    output = dict(p1=p1.astype(cvd.default_int), p2=p2.astype(cvd.default_int))
+    return output
