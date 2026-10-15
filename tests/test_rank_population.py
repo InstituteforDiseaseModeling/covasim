@@ -15,5 +15,16 @@ def test_rank_population():
     assert len(sim.people.contacts['a']) > 0 # The layer has contacts
 
 
+def test_rank_population_workers():
+    ''' use_workers=True should build the same kind of layer. It needs at least 4,000 agents to use more than one worker,
+    and stays on one core if the computer cannot run workers, so it passes on any machine '''
+    sim = cv.Sim(pop_type='rank', pop_size=5000, n_days=5, verbose=0)
+    sim.initialize(use_workers=True)
+    sim.run()
+    assert list(sim.people.contacts.keys()) == ['a']
+    assert len(sim.people.contacts['a']) > 0
+
+
 if __name__ == '__main__':
     test_rank_population()
+    test_rank_population_workers()
