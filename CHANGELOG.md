@@ -8,6 +8,11 @@ There are no further major releases planned. If there is a specific bugfix or fe
 
 ## Latest versions (4.0.x)
 
+### Version 4.0.1 (2026-10-16)
+
+- Fixed `cv.change_beta()` and `cv.clip_edges()` raising an error when the days are given as an array (e.g. `np.arange(180)`).
+- *GitHub info*: PR [468](https://github.com/starsimhub/covasim/pull/468)
+
 ### Version 4.0.0 (2026-10-04)
 
 This release changes Covasim from a standalone library to one built on the [Starsim](https://starsim.org) framework. The Covasim API is preserved, and almost all v3 scripts run unchanged or with minor adjustments. The changes that are needed are listed in the [v3 → v4 migration guide](https://docs.covasim.org/migrate3to4.html), and summarized below.

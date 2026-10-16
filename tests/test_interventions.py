@@ -158,6 +158,11 @@ def test_intervention_effects():
     sim.run()
     assert np.isclose(sim['beta'], baseline['beta'])
 
+    # Days and changes can also be arrays
+    sim = cv.Sim(pars, interventions=cv.change_beta(days=np.arange(60), changes=np.linspace(0.5, 1.0, 60)))
+    sim.run(until=30)
+    assert np.isclose(sim['beta'], np.linspace(0.5, 1.0, 60)[29]*baseline['beta'])
+
     # Clipping edges removes contacts, then puts them back
     sim = cv.Sim(pars, interventions=cv.clip_edges(days=[20, 40], changes=[0.5, 1.0]))
     sim.initialize()
