@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -472,6 +476,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -607,7 +617,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.parallel(orig_sim, sim)</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Covasim 3.1.9 (2026-09-29) — © 2020-2026 by IDM</code></pre>
+<pre><code>Covasim 4.0.1 (2026-10-16) — © 2020-2026 by IDM</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -620,7 +630,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="defining-dynamic-layers" class="level2">
 <h2 class="anchored" data-anchor-id="defining-dynamic-layers">Defining dynamic layers</h2>
-<p>You can also define custom layers that update dynamically, e.g.&nbsp;based on a supplied number of contacts per day. To do this, create a new <code>Layer</code> class and define the <code>update()</code> method. For example:</p>
+<p>You can also define custom layers that update dynamically, e.g.&nbsp;based on a supplied number of contacts per day. To do this, create a new <code>Layer</code> class and define the <code>step()</code> method, which is called on each timestep; the contacts are stored in <code>self.edges</code>. For example:</p>
 <div id="38903362" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> covasim <span class="im">as</span> cv</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -629,46 +639,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CustomLayer(cv.Layer):</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">''' Create a custom layer that updates daily based on supplied contacts '''</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, layer, contact_data):</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">''' Convert an existing layer to a custom layer and store contact data '''</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k,v <span class="kw">in</span> layer.items():</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>[k] <span class="op">=</span> v</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.contact_data <span class="op">=</span> contact_data</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> update(<span class="va">self</span>, people):</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">''' Update the contacts '''</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        pop_size <span class="op">=</span> <span class="bu">len</span>(people)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        n_new <span class="op">=</span> <span class="va">self</span>.contact_data[people.t] <span class="co"># Pull out today's contacts</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>[<span class="st">'p1'</span>]   <span class="op">=</span> np.array(cv.choose_r(max_n<span class="op">=</span>pop_size, n<span class="op">=</span>n_new), dtype<span class="op">=</span>cv.default_int) <span class="co"># Choose with replacement</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>[<span class="st">'p2'</span>]   <span class="op">=</span> np.array(cv.choose_r(max_n<span class="op">=</span>pop_size, n<span class="op">=</span>n_new), dtype<span class="op">=</span>cv.default_int) <span class="co"># Paired contact</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>[<span class="st">'beta'</span>] <span class="op">=</span> np.ones(n_new, dtype<span class="op">=</span>cv.default_float) <span class="co"># Per-contact transmission (just 1.0)</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, contact_data, <span class="op">**</span>kwargs):</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">''' Store the contact data '''</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.contact_data <span class="op">=</span> contact_data</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step(<span class="va">self</span>):</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="co">''' Update the contacts '''</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        uids <span class="op">=</span> <span class="va">self</span>.sim.people.indices() <span class="co"># The people who are alive</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        n_new <span class="op">=</span> <span class="va">self</span>.contact_data[<span class="va">self</span>.ti] <span class="co"># Pull out today's contacts</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.edges.p1   <span class="op">=</span> uids[cv.choose_r(max_n<span class="op">=</span><span class="bu">len</span>(uids), n<span class="op">=</span>n_new)] <span class="co"># Choose with replacement</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.edges.p2   <span class="op">=</span> uids[cv.choose_r(max_n<span class="op">=</span><span class="bu">len</span>(uids), n<span class="op">=</span>n_new)] <span class="co"># Paired contact</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.edges.beta <span class="op">=</span> np.ones(n_new, dtype<span class="op">=</span>cv.default_float) <span class="co"># Per-contact transmission (just 1.0)</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Define some simple parameters</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>pars <span class="op">=</span> sc.objdict(</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    pop_size <span class="op">=</span> <span class="dv">1000</span>,</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    n_days <span class="op">=</span> <span class="dv">90</span>,</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up and run the simulation</span></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>base_sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Default simulation'</span>)</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars, dynam_layer<span class="op">=</span><span class="va">True</span>, label<span class="op">=</span><span class="st">'Dynamic layers'</span>)</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>sim.initialize()</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Update to custom layer</span></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> sim.layer_keys():</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    contact_data <span class="op">=</span> np.random.randint(pars.pop_size<span class="op">*</span><span class="dv">10</span>, pars.pop_size<span class="op">*</span><span class="dv">20</span>, size<span class="op">=</span>pars.n_days<span class="op">+</span><span class="dv">1</span>) <span class="co"># Generate a number of contacts for today</span></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    sim.people.contacts[key] <span class="op">=</span> CustomLayer(sim.people.contacts[key], contact_data<span class="op">=</span>contact_data)</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Run and plot</span></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.parallel(base_sim, sim)</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Define some simple parameters</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>pars <span class="op">=</span> sc.objdict(</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    pop_size <span class="op">=</span> <span class="dv">1000</span>,</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    n_days <span class="op">=</span> <span class="dv">90</span>,</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the custom layer, to use instead of the default one ('a')</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>contact_data <span class="op">=</span> np.random.randint(pars.pop_size<span class="op">*</span><span class="dv">10</span>, pars.pop_size<span class="op">*</span><span class="dv">20</span>, size<span class="op">=</span>pars.n_days<span class="op">+</span><span class="dv">1</span>) <span class="co"># Generate a number of contacts for each day</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>layer <span class="op">=</span> CustomLayer(contact_data, name<span class="op">=</span><span class="st">'a'</span>)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up and run the simulation</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>base_sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Default simulation'</span>)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars, networks<span class="op">=</span>layer, label<span class="op">=</span><span class="st">'Dynamic layers'</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Run and plot</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.parallel(base_sim, sim)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Exception ignored while finalizing file &lt;_io.BytesIO object at 0x7f797850bec0&gt;:
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/site-packages/starsim/utils.py", line 667, in __getattr__
+    def __getattr__(self, attr):
+BufferError: Existing exports of data: object cannot be re-sized</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_advanced_files/figure-html/cell-3-output-1.png" width="880" height="754" class="figure-img"></p>
+<p><img src="tut_advanced_files/figure-html/cell-3-output-2.png" width="880" height="754" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -678,33 +692,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="defining-custom-population-properties">Defining custom population properties</h2>
 <p>Another useful feature is adding additional features to people, for use in subtargeting. For example, this example shows how to define a subpopulation with higher baseline mortality rates. This is a simple example illustrating how you would identify and target people based on whether or not the have a prime-number index, based on the protecting the elderly example from Tutorial 1.</p>
 <div id="cc2fcced" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> covasim <span class="im">as</span> cv</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protect_the_prime(sim):</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> sim.t <span class="op">==</span> sim.day(<span class="st">'2020-04-01'</span>):</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        are_prime <span class="op">=</span> sim.people.prime</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        sim.people.rel_sus[are_prime] <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>pars <span class="op">=</span> <span class="bu">dict</span>(</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    pop_type <span class="op">=</span> <span class="st">'hybrid'</span>,</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    pop_infected <span class="op">=</span> <span class="dv">100</span>,</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    n_days <span class="op">=</span> <span class="dv">90</span>,</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="dv">0</span>,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Default simulation</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>orig_sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Default'</span>)</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the simulation</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Protect the prime'</span>, interventions<span class="op">=</span>protect_the_prime)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>sim.initialize() <span class="co"># Initialize to create the people array</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>sim.people.prime <span class="op">=</span> np.array([sc.isprime(i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(sim.people))]) <span class="co"># Define whom to target</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run and plot</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.parallel(orig_sim, sim)</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> covasim <span class="im">as</span> cv</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protect_the_prime(sim):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> sim.ti <span class="op">==</span> sim.day(<span class="st">'2020-04-01'</span>):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        are_prime <span class="op">=</span> sim.people.prime</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        sim.people.rel_sus[are_prime] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>pars <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    pop_type <span class="op">=</span> <span class="st">'hybrid'</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    pop_infected <span class="op">=</span> <span class="dv">100</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    n_days <span class="op">=</span> <span class="dv">90</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="dv">0</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Default simulation</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>orig_sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Default'</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the simulation</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars, label<span class="op">=</span><span class="st">'Protect the prime'</span>, interventions<span class="op">=</span>protect_the_prime)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>sim.initialize() <span class="co"># Initialize to create the people array</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>sim.people.prime <span class="op">=</span> np.array([i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(sim.people)) <span class="cf">if</span> sc.isprime(i)]) <span class="co"># Define whom to target, by their index</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run and plot</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.parallel(orig_sim, sim)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -716,44 +730,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="changing-numba-options" class="level2">
 <h2 class="anchored" data-anchor-id="changing-numba-options">Changing Numba options</h2>
-<p>Finally, this example shows how you can change the default Numba calculation options. It’s not recommended – especially running with multithreading, which is faster but gives stochastically unreproducible results – but it’s there if you want it.</p>
+<p>Finally, this example shows how you can change the default Numba calculation options. It’s not recommended, but it’s there if you want it.</p>
 <div id="952b0c78" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> covasim <span class="im">as</span> cv</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a standard 32-bit simulation</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>sim32 <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'32-bit, single-threaded (default)'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>sim32.run()</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Use 64-bit instead of 32</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>cv.options.<span class="bu">set</span>(precision<span class="op">=</span><span class="dv">64</span>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>sim64 <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'64-bit, single-threaded'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>sim64.run()</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Use parallel threading</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>cv.options.<span class="bu">set</span>(numba_parallel<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>sim_par <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'64-bit, multi-threaded'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>sim_par.run()</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Reset to defaults</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>cv.options.<span class="bu">set</span>(<span class="st">'defaults'</span>)</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>sim32b <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'32-bit, single-threaded (restored)'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>sim32b.run()</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.MultiSim([sim32, sim64, sim_par, sim32b])</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> covasim <span class="im">as</span> cv</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a standard 32-bit simulation</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sim32 <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'32-bit, single-threaded (default)'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>sim32.run()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Use 64-bit instead of 32</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>cv.options.<span class="bu">set</span>(precision<span class="op">=</span><span class="dv">64</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>sim64 <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'64-bit, single-threaded'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>sim64.run()</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Reset to defaults</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>cv.options.<span class="bu">set</span>(<span class="st">'defaults'</span>)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>sim32b <span class="op">=</span> cv.Sim(label<span class="op">=</span><span class="st">'32-bit, single-threaded (restored)'</span>, verbose<span class="op">=</span><span class="st">'brief'</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>sim32b.run()</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.MultiSim([sim32, sim64, sim32b])</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>msim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Sim("32-bit, single-threaded (default)"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 12730⚙, 14☠)
+<pre><code>Sim("32-bit, single-threaded (default)"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 11873⚙, 21☠)
 Reloading Covasim so changes take effect...
 Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.
-Sim("64-bit, single-threaded"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 13209⚙, 16☠)
+Sim("64-bit, single-threaded"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 13188⚙, 10☠)
 Reloading Covasim so changes take effect...
+Covasim 4.0.1 (2026-10-16) — © 2020-2026 by IDM
 Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.
-Sim("64-bit, multi-threaded"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 13209⚙, 16☠)
-Reloading Covasim so changes take effect...
-Covasim 3.1.9 (2026-09-29) — © 2020-2026 by IDM
-Reload complete. Note: for some options to take effect, you may also need to delete Covasim's __pycache__ folder.
-Sim("32-bit, single-threaded (restored)"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 12730⚙, 14☠)</code></pre>
+Sim("32-bit, single-threaded (restored)"; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 11873⚙, 21☠)</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1207,7 +1213,7 @@ Sim("32-bit, single-threaded (restored)"; 2020-03-01 to 2020-04-30; pop: 20000 r
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

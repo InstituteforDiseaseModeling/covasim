@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -507,6 +511,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#covasim.defaults.get_default_plots" id="toc-covasim.defaults.get_default_plots" class="nav-link" data-scroll-target="#covasim.defaults.get_default_plots">get_default_plots</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -524,7 +529,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>defaults</h1>
 <p><code>defaults</code></p>
 <p>Set the defaults across each of the different files.</p>
-<p>To change the default precision from 32 bit (default) to 64 bit, use::</p>
+<p>The precision (32 bit by default, or 64 bit) is shared with Starsim; to change it, use::</p>
 <pre><code>cv.options.set(precision=64)</code></pre>
 <section id="functions" class="level2">
 <h2 class="anchored" data-anchor-id="functions">Functions</h2>
@@ -538,24 +543,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.defaults.get_default_colors">get_default_colors</a></td>
-<td>Specify plot colors – used in sim.py.</td>
+<td>Specify the plot colors of the results, by result name without its prefix</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.defaults.get_default_plots">get_default_plots</a></td>
-<td>Specify which quantities to plot; used in sim.py.</td>
+<td>Specify which quantities to plot.</td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.defaults.get_default_colors" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.defaults.get_default_colors">get_default_colors</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>defaults.get_default_colors()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Specify plot colors – used in sim.py.</p>
+<p>Specify the plot colors of the results, by result name without its prefix (e.g.&nbsp;“infections” for “cum_infections”). The plotting functions use <code>cv.defaults.default_colors</code>, which is built once from this.</p>
 <p>NB, includes duplicates since stocks and flows are named differently.</p>
 </section>
 <section id="covasim.defaults.get_default_plots" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.defaults.get_default_plots">get_default_plots</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>defaults.get_default_plots(which<span class="op">=</span><span class="st">'default'</span>, kind<span class="op">=</span><span class="st">'sim'</span>, sim<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Specify which quantities to plot; used in sim.py.</p>
+<p>Specify which quantities to plot.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
@@ -571,8 +576,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>which</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>‘default’ or ‘overview’ or ‘all’ or ‘seir’</td>
+<td>‘default’, ‘overview’, ‘variant’, ‘overview-variant’, ‘seir’, or ‘all’</td>
 <td><code>'default'</code></td>
+</tr>
+<tr class="even">
+<td>kind</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>‘sim’ for a single sim, or ‘scens’ for scenarios and multisims (which have different default plots)</td>
+<td><code>'sim'</code></td>
+</tr>
+<tr class="odd">
+<td>sim</td>
+<td><a href="../api/sim.html#covasim.sim.Sim">Sim</a></td>
+<td>the sim; only needed for which=‘all’, which plots every result key of the sim</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 85%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>A dict of lists of result keys (keyed by plot title), or a list of result keys (one plot each)</td>
 </tr>
 </tbody>
 </table>
@@ -1016,7 +1057,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

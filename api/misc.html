@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -510,49 +514,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#covasim.misc.check_version" id="toc-covasim.misc.check_version" class="nav-link" data-scroll-target="#covasim.misc.check_version">check_version</a>
   <ul class="collapse">
   <li><a href="#parameters-1" id="toc-parameters-1" class="nav-link" data-scroll-target="#parameters-1">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.compute_gof" id="toc-covasim.misc.compute_gof" class="nav-link" data-scroll-target="#covasim.misc.compute_gof">compute_gof</a>
   <ul class="collapse">
   <li><a href="#parameters-2" id="toc-parameters-2" class="nav-link" data-scroll-target="#parameters-2">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns</a></li>
+  </ul></li>
+  <li><a href="#covasim.misc.diff_sims" id="toc-covasim.misc.diff_sims" class="nav-link" data-scroll-target="#covasim.misc.diff_sims">diff_sims</a>
+  <ul class="collapse">
+  <li><a href="#parameters-3" id="toc-parameters-3" class="nav-link" data-scroll-target="#parameters-3">Parameters</a></li>
+  <li><a href="#returns-2" id="toc-returns-2" class="nav-link" data-scroll-target="#returns-2">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.get_doubling_time" id="toc-covasim.misc.get_doubling_time" class="nav-link" data-scroll-target="#covasim.misc.get_doubling_time">get_doubling_time</a></li>
   <li><a href="#covasim.misc.get_png_metadata" id="toc-covasim.misc.get_png_metadata" class="nav-link" data-scroll-target="#covasim.misc.get_png_metadata">get_png_metadata</a>
   <ul class="collapse">
-  <li><a href="#parameters-3" id="toc-parameters-3" class="nav-link" data-scroll-target="#parameters-3">Parameters</a></li>
+  <li><a href="#parameters-4" id="toc-parameters-4" class="nav-link" data-scroll-target="#parameters-4">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.misc.get_version_pars" id="toc-covasim.misc.get_version_pars" class="nav-link" data-scroll-target="#covasim.misc.get_version_pars">get_version_pars</a>
   <ul class="collapse">
-  <li><a href="#parameters-4" id="toc-parameters-4" class="nav-link" data-scroll-target="#parameters-4">Parameters</a></li>
-  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns</a></li>
+  <li><a href="#parameters-5" id="toc-parameters-5" class="nav-link" data-scroll-target="#parameters-5">Parameters</a></li>
+  <li><a href="#returns-3" id="toc-returns-3" class="nav-link" data-scroll-target="#returns-3">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.git_info" id="toc-covasim.misc.git_info" class="nav-link" data-scroll-target="#covasim.misc.git_info">git_info</a>
   <ul class="collapse">
-  <li><a href="#parameters-5" id="toc-parameters-5" class="nav-link" data-scroll-target="#parameters-5">Parameters</a></li>
+  <li><a href="#parameters-6" id="toc-parameters-6" class="nav-link" data-scroll-target="#parameters-6">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.misc.help" id="toc-covasim.misc.help" class="nav-link" data-scroll-target="#covasim.misc.help">help</a>
   <ul class="collapse">
-  <li><a href="#parameters-6" id="toc-parameters-6" class="nav-link" data-scroll-target="#parameters-6">Parameters</a></li>
+  <li><a href="#parameters-7" id="toc-parameters-7" class="nav-link" data-scroll-target="#parameters-7">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.misc.load" id="toc-covasim.misc.load" class="nav-link" data-scroll-target="#covasim.misc.load">load</a>
   <ul class="collapse">
-  <li><a href="#parameters-7" id="toc-parameters-7" class="nav-link" data-scroll-target="#parameters-7">Parameters</a></li>
-  <li><a href="#returns-2" id="toc-returns-2" class="nav-link" data-scroll-target="#returns-2">Returns</a></li>
+  <li><a href="#parameters-8" id="toc-parameters-8" class="nav-link" data-scroll-target="#parameters-8">Parameters</a></li>
+  <li><a href="#returns-4" id="toc-returns-4" class="nav-link" data-scroll-target="#returns-4">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.load_data" id="toc-covasim.misc.load_data" class="nav-link" data-scroll-target="#covasim.misc.load_data">load_data</a>
   <ul class="collapse">
-  <li><a href="#parameters-8" id="toc-parameters-8" class="nav-link" data-scroll-target="#parameters-8">Parameters</a></li>
-  <li><a href="#returns-3" id="toc-returns-3" class="nav-link" data-scroll-target="#returns-3">Returns</a></li>
-  </ul></li>
-  <li><a href="#covasim.misc.migrate" id="toc-covasim.misc.migrate" class="nav-link" data-scroll-target="#covasim.misc.migrate">migrate</a>
-  <ul class="collapse">
   <li><a href="#parameters-9" id="toc-parameters-9" class="nav-link" data-scroll-target="#parameters-9">Parameters</a></li>
-  <li><a href="#returns-4" id="toc-returns-4" class="nav-link" data-scroll-target="#returns-4">Returns</a></li>
+  <li><a href="#returns-5" id="toc-returns-5" class="nav-link" data-scroll-target="#returns-5">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.save" id="toc-covasim.misc.save" class="nav-link" data-scroll-target="#covasim.misc.save">save</a>
   <ul class="collapse">
   <li><a href="#parameters-10" id="toc-parameters-10" class="nav-link" data-scroll-target="#parameters-10">Parameters</a></li>
-  <li><a href="#returns-5" id="toc-returns-5" class="nav-link" data-scroll-target="#returns-5">Returns</a></li>
+  <li><a href="#returns-6" id="toc-returns-6" class="nav-link" data-scroll-target="#returns-6">Returns</a></li>
   </ul></li>
   <li><a href="#covasim.misc.savefig" id="toc-covasim.misc.savefig" class="nav-link" data-scroll-target="#covasim.misc.savefig">savefig</a>
   <ul class="collapse">
@@ -590,43 +595,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.misc.check_version">check_version</a></td>
-<td>Get current git information and optionally write it to disk. The expected</td>
+<td>Check the installed version of Covasim against an expected version. The expected</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.misc.compute_gof">compute_gof</a></td>
 <td>Calculate the goodness of fit. By default use normalized absolute error, but</td>
 </tr>
 <tr class="even">
+<td><a href="#covasim.misc.diff_sims">diff_sims</a></td>
+<td>Compute the difference of the summaries of two simulations, and print any</td>
+</tr>
+<tr class="odd">
 <td><a href="#covasim.misc.get_doubling_time">get_doubling_time</a></td>
 <td>Alternate method to calculate doubling time (one is already implemented in</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.misc.get_png_metadata">get_png_metadata</a></td>
 <td>Read metadata from a PNG file. For use with images saved with cv.savefig().</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.misc.get_version_pars">get_version_pars</a></td>
 <td>Function for loading parameters from the specified version.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.misc.git_info">git_info</a></td>
 <td>Get current git information and optionally write it to disk. Simplest usage</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.misc.help">help</a></td>
 <td>Get help on Covasim in general, or search for a word/expression.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.misc.load">load</a></td>
 <td>Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.misc.load_data">load_data</a></td>
 <td>Load data for comparing to the model output, either from file or from a dataframe.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.misc.migrate">migrate</a></td>
-<td>Define migrations allowing compatibility between different versions of saved</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.misc.save">save</a></td>
@@ -689,7 +694,7 @@ cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinf
 <section id="covasim.misc.check_version" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.check_version">check_version</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>misc.check_version(expected, die<span class="op">=</span><span class="va">False</span>, verbose<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Get current git information and optionally write it to disk. The expected version string may optionally start with ‘&gt;=’ or ‘&lt;=’ (== is implied otherwise), but other operators (e.g.&nbsp;~=) are not supported. Note that e.g.&nbsp;‘&gt;’ is interpreted to mean ‘&gt;=’.</p>
+<p>Check the installed version of Covasim against an expected version. The expected version string may optionally start with ‘&gt;=’ or ‘&lt;=’ (== is implied otherwise), but other operators (e.g.&nbsp;~=) are not supported. Note that e.g.&nbsp;‘&gt;’ is interpreted to mean ‘&gt;=’.</p>
 <section id="parameters-1" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
 <table class="caption-top table">
@@ -713,6 +718,36 @@ cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinf
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether or not to raise an exception if the check fails</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to print a note if the versions differ</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 85%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>-1 if the installed version is older than expected, 0 if it is the same, and 1 if it is newer</td>
 </tr>
 </tbody>
 </table>
@@ -810,13 +845,13 @@ cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinf
 </tbody>
 </table>
 </section>
-<section id="returns" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<section id="returns-1" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 8%">
-<col style="width: 14%">
-<col style="width: 76%">
+<col style="width: 6%">
+<col style="width: 11%">
+<col style="width: 81%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -829,7 +864,7 @@ cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinf
 <tr class="odd">
 <td>gofs</td>
 <td><code>arr</code></td>
-<td>array of goodness-of-fit values, or a single value if as_scalar is True</td>
+<td>array of goodness-of-fit values, or a single value if as_scalar is ‘sum’, ‘mean’, or ‘median’</td>
 </tr>
 </tbody>
 </table>
@@ -838,37 +873,151 @@ cv.check_save_version('1.7.2', folder='gitinfo', comments={'SynthPops':sc.gitinf
 x2 = np.cumsum(np.random.random(100))
 
 e1 = compute_gof(x1, x2) # Default, normalized absolute error
-e2 = compute_gof(x1, x2, normalize=False, use_frac=False) # Fractional error
+e2 = compute_gof(x1, x2, normalize=False, use_frac=True) # Fractional error
 e3 = compute_gof(x1, x2, normalize=False, use_squared=True, as_scalar='mean') # Mean squared error
 e4 = compute_gof(x1, x2, skestimator='mean_squared_error') # Scikit-learn's MSE method
 e5 = compute_gof(x1, x2, as_scalar='median') # Normalized median absolute error -- highly robust</code></pre>
 </section>
 </section>
+<section id="covasim.misc.diff_sims" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.misc.diff_sims">diff_sims</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>misc.diff_sims(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    sim1,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    sim2,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    skip_key_diffs<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    skip<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    atol<span class="op">=</span><span class="fl">1e-09</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    rtol<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Compute the difference of the summaries of two simulations, and print any values which differ, as a table with the difference, the ratio, and the direction of the change (↑, ↓, or ≈ for a change of less than 0.1%).</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sim1</td>
+<td><a href="../api/sim.html#covasim.sim.Sim">Sim</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>either a run simulation or its sim.summary dictionary</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>sim2</td>
+<td><a href="../api/sim.html#covasim.sim.Sim">Sim</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>ditto</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>skip_key_diffs</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to skip keys that don’t match between sims</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>skip</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>a list of keys to skip</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>output</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to return the differences as a string (otherwise print)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>die</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if the sims don’t match</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to print “Sims match” if they do (and output=False)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>atol</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>the absolute tolerance for values to count as equal (default 1e-9)</td>
+<td><code>1e-09</code></td>
+</tr>
+<tr class="odd">
+<td>rtol</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>the relative tolerance for values to count as equal (default 0)</td>
+<td><code>0</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 83%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>If output=True, a string describing the differences (empty if the sims match)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>::</p>
+<pre><code>s1 = cv.Sim(beta=0.01)
+s2 = cv.Sim(beta=0.02)
+s1.run()
+s2.run()
+cv.diff_sims(s1, s2)</code></pre>
+</section>
+</section>
 <section id="covasim.misc.get_doubling_time" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.get_doubling_time">get_doubling_time</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>misc.get_doubling_time(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    series<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    moving_window<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    exp_approx<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    max_doubling_time<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    eps<span class="op">=</span><span class="fl">0.001</span>,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Alternate method to calculate doubling time (one is already implemented in the sim object).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>misc.get_doubling_time(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    series<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    moving_window<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    exp_approx<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    max_doubling_time<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    eps<span class="op">=</span><span class="fl">0.001</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alternate method to calculate doubling time (one is already implemented in the sim object). By default, the doubling time is calculated over the whole series.</p>
 <p><strong>Examples</strong>::</p>
 <pre><code>cv.get_doubling_time(sim, interval=[3,30]) # returns the doubling time over the given interval (single float)
 cv.get_doubling_time(sim, interval=[3,30], moving_window=3) # returns doubling times calculated over moving windows (array)</code></pre>
 </section>
 <section id="covasim.misc.get_png_metadata" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.get_png_metadata">get_png_metadata</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>misc.get_png_metadata(filename, output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>misc.get_png_metadata(filename, output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Read metadata from a PNG file. For use with images saved with cv.savefig(). Requires pillow, an optional dependency. Metadata retrieval for PDF and SVG is not currently supported.</p>
-<section id="parameters-3" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<section id="parameters-4" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -895,7 +1044,7 @@ cv.get_png_metadata('covasim.png')</code></pre>
 </section>
 <section id="covasim.misc.get_version_pars" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.get_version_pars">get_version_pars</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>misc.get_version_pars(version, verbose<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>misc.get_version_pars(version, verbose<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Function for loading parameters from the specified version.</p>
 <p>Parameters will be loaded for Covasim ‘as at’ the requested version i.e.&nbsp;the most recent set of parameters that is &lt;= the requested version. Available parameter values are stored in the regression folder. If parameters are available for versions 1.3, and 1.4, then this function will return the following</p>
 <ul>
@@ -903,8 +1052,8 @@ cv.get_png_metadata('covasim.png')</code></pre>
 <li>If parameters for version ‘1.3.5’ are requested, parameters will be returned from ‘1.3’, since Covasim at version 1.3.5 would have been using the parameters defined at version 1.3.</li>
 <li>If parameters for version ‘1.4’ are requested, parameters will be returned from ‘1.4’</li>
 </ul>
-<section id="parameters-4" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -924,8 +1073,8 @@ cv.get_png_metadata('covasim.png')</code></pre>
 </tbody>
 </table>
 </section>
-<section id="returns-1" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
+<section id="returns-3" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -946,20 +1095,20 @@ cv.get_png_metadata('covasim.png')</code></pre>
 </section>
 <section id="covasim.misc.git_info" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.git_info">git_info</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>misc.git_info(</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    filename<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    check<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    comments<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    old_info<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    indent<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    frame<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>misc.git_info(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    filename<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    check<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    comments<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    old_info<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    indent<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    frame<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get current git information and optionally write it to disk. Simplest usage is cv.git_info(<strong>file</strong>)</p>
-<section id="parameters-5" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1035,17 +1184,17 @@ cv.git_info('covasim_version.gitinfo', check=True) # Checks that current version
 </section>
 <section id="covasim.misc.help" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.help">help</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>misc.<span class="bu">help</span>(</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    pattern<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    ignorecase<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    context<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>misc.<span class="bu">help</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    pattern<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    ignorecase<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    context<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get help on Covasim in general, or search for a word/expression.</p>
-<section id="parameters-6" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<section id="parameters-7" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1104,10 +1253,10 @@ cv.help('lognormal', source=True, context=True)</code></pre>
 </section>
 <section id="covasim.misc.load" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.load">load</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>misc.load(<span class="op">*</span>args, do_migrate<span class="op">=</span><span class="va">True</span>, update<span class="op">=</span><span class="va">True</span>, verbose<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>misc.load(<span class="op">*</span>args, do_migrate<span class="op">=</span><span class="va">True</span>, update<span class="op">=</span><span class="va">True</span>, verbose<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Convenience method for sc.loadobj() and equivalent to cv.Sim.load() or cv.Scenarios.load().</p>
-<section id="parameters-7" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<section id="parameters-8" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1119,46 +1268,40 @@ cv.help('lognormal', source=True, context=True)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td>filename</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>file to load</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
 <td>do_migrate</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to migrate if loading an old object</td>
+<td>ignored (v3 objects cannot be migrated to v4); kept for backwards compatibility</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>update</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to modify the object to reflect the new version</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="even">
-<td>verbose</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to print migration information</td>
+<td>ignored; kept for backwards compatibility</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
-<td>args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>passed to sc.loadobj()</td>
-<td><code>()</code></td>
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to print a note when loading an object from an older version</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>passed to sc.loadobj(), e.g.&nbsp;the filename</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to sc.loadobj()</td>
+<td>passed to sc.loadobj(), e.g.&nbsp;filename and folder</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns-2" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
+<section id="returns-4" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1182,17 +1325,17 @@ scens = cv.load(filename='school-closures.scens', folder='schools')</code></pre>
 </section>
 <section id="covasim.misc.load_data" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.misc.load_data">load_data</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>misc.load_data(</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    datafile,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    calculate<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    check_date<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>misc.load_data(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    datafile,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    calculate<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    check_date<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Load data for comparing to the model output, either from file or from a dataframe.</p>
-<section id="parameters-8" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1222,22 +1365,28 @@ scens = cv.load(filename='school-closures.scens', folder='schools')</code></pre>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to print the cumulative columns that are added</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
 <td>start_day</td>
 <td><code>date</code></td>
 <td>if the ‘date’ column is provided as integer number of days, consider them relative to this</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to pd.read_excel()</td>
+<td>passed to the pandas reader (pd.read_csv(), pd.read_excel(), or pd.read_json())</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns-3" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<section id="returns-5" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 11%">
@@ -1259,73 +1408,6 @@ scens = cv.load(filename='school-closures.scens', folder='schools')</code></pre>
 </tr>
 </tbody>
 </table>
-</section>
-</section>
-<section id="covasim.misc.migrate" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.misc.migrate">migrate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>misc.migrate(obj, update<span class="op">=</span><span class="va">True</span>, verbose<span class="op">=</span><span class="va">True</span>, die<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Define migrations allowing compatibility between different versions of saved files. Usually invoked automatically upon load, but can be called directly by the user to load custom objects, e.g.&nbsp;lists of sims.</p>
-<p>Currently supported objects are sims, multisims, scenarios, and people.</p>
-<section id="parameters-9" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>obj</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#any">any</a></td>
-<td>the object to migrate</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>update</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to update version information to current version after successful migration</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="odd">
-<td>verbose</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to print warnings if something goes wrong</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="even">
-<td>die</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to raise an exception if something goes wrong</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-4" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>The migrated object</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>::</p>
-<pre><code>sims = cv.load('my-list-of-sims.obj')
-sims = [cv.migrate(sim) for sim in sims]</code></pre>
 </section>
 </section>
 <section id="covasim.misc.save" class="level3">
@@ -1371,8 +1453,8 @@ sims = [cv.migrate(sim) for sim in sims]</code></pre>
 </tbody>
 </table>
 </section>
-<section id="returns-5" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
+<section id="returns-6" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1432,7 +1514,7 @@ cv.save(filename='school-closures.scens', folder='schools', obj=scens)</code></p
 <tr class="even">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <code>fig.savefig()</code></td>
+<td>passed to <code>fig.savefig()</code>; a <code>metadata</code> dict is stored along with the Covasim metadata</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
@@ -1880,7 +1962,7 @@ cv.savefig()</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

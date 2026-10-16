@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -503,7 +507,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
   <ul>
-  <li><a href="#covasim.sim.AlreadyRunError" id="toc-covasim.sim.AlreadyRunError" class="nav-link" data-scroll-target="#covasim.sim.AlreadyRunError">AlreadyRunError</a></li>
   <li><a href="#covasim.sim.Sim" id="toc-covasim.sim.Sim" class="nav-link" data-scroll-target="#covasim.sim.Sim">Sim</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
@@ -511,38 +514,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#covasim.sim.Sim.brief" id="toc-covasim.sim.Sim.brief" class="nav-link" data-scroll-target="#covasim.sim.Sim.brief">brief</a></li>
   <li><a href="#covasim.sim.Sim.calibrate" id="toc-covasim.sim.Sim.calibrate" class="nav-link" data-scroll-target="#covasim.sim.Sim.calibrate">calibrate</a></li>
-  <li><a href="#covasim.sim.Sim.compute_doubling" id="toc-covasim.sim.Sim.compute_doubling" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_doubling">compute_doubling</a></li>
   <li><a href="#covasim.sim.Sim.compute_fit" id="toc-covasim.sim.Sim.compute_fit" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_fit">compute_fit</a></li>
   <li><a href="#covasim.sim.Sim.compute_gen_time" id="toc-covasim.sim.Sim.compute_gen_time" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_gen_time">compute_gen_time</a></li>
   <li><a href="#covasim.sim.Sim.compute_r_eff" id="toc-covasim.sim.Sim.compute_r_eff" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_r_eff">compute_r_eff</a></li>
-  <li><a href="#covasim.sim.Sim.compute_results" id="toc-covasim.sim.Sim.compute_results" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_results">compute_results</a></li>
-  <li><a href="#covasim.sim.Sim.compute_states" id="toc-covasim.sim.Sim.compute_states" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_states">compute_states</a></li>
-  <li><a href="#covasim.sim.Sim.compute_summary" id="toc-covasim.sim.Sim.compute_summary" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_summary">compute_summary</a></li>
-  <li><a href="#covasim.sim.Sim.compute_yield" id="toc-covasim.sim.Sim.compute_yield" class="nav-link" data-scroll-target="#covasim.sim.Sim.compute_yield">compute_yield</a></li>
-  <li><a href="#covasim.sim.Sim.disp" id="toc-covasim.sim.Sim.disp" class="nav-link" data-scroll-target="#covasim.sim.Sim.disp">disp</a></li>
-  <li><a href="#covasim.sim.Sim.finalize" id="toc-covasim.sim.Sim.finalize" class="nav-link" data-scroll-target="#covasim.sim.Sim.finalize">finalize</a></li>
-  <li><a href="#covasim.sim.Sim.init_analyzers" id="toc-covasim.sim.Sim.init_analyzers" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_analyzers">init_analyzers</a></li>
-  <li><a href="#covasim.sim.Sim.init_immunity" id="toc-covasim.sim.Sim.init_immunity" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_immunity">init_immunity</a></li>
-  <li><a href="#covasim.sim.Sim.init_infections" id="toc-covasim.sim.Sim.init_infections" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_infections">init_infections</a></li>
-  <li><a href="#covasim.sim.Sim.init_interventions" id="toc-covasim.sim.Sim.init_interventions" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_interventions">init_interventions</a></li>
-  <li><a href="#covasim.sim.Sim.init_people" id="toc-covasim.sim.Sim.init_people" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_people">init_people</a></li>
+  <li><a href="#covasim.sim.Sim.date" id="toc-covasim.sim.Sim.date" class="nav-link" data-scroll-target="#covasim.sim.Sim.date">date</a></li>
+  <li><a href="#covasim.sim.Sim.day" id="toc-covasim.sim.Sim.day" class="nav-link" data-scroll-target="#covasim.sim.Sim.day">day</a></li>
+  <li><a href="#covasim.sim.Sim.export_pars" id="toc-covasim.sim.Sim.export_pars" class="nav-link" data-scroll-target="#covasim.sim.Sim.export_pars">export_pars</a></li>
+  <li><a href="#covasim.sim.Sim.finalize_results" id="toc-covasim.sim.Sim.finalize_results" class="nav-link" data-scroll-target="#covasim.sim.Sim.finalize_results">finalize_results</a></li>
+  <li><a href="#covasim.sim.Sim.get_analyzer" id="toc-covasim.sim.Sim.get_analyzer" class="nav-link" data-scroll-target="#covasim.sim.Sim.get_analyzer">get_analyzer</a></li>
+  <li><a href="#covasim.sim.Sim.get_analyzers" id="toc-covasim.sim.Sim.get_analyzers" class="nav-link" data-scroll-target="#covasim.sim.Sim.get_analyzers">get_analyzers</a></li>
+  <li><a href="#covasim.sim.Sim.get_intervention" id="toc-covasim.sim.Sim.get_intervention" class="nav-link" data-scroll-target="#covasim.sim.Sim.get_intervention">get_intervention</a></li>
+  <li><a href="#covasim.sim.Sim.get_interventions" id="toc-covasim.sim.Sim.get_interventions" class="nav-link" data-scroll-target="#covasim.sim.Sim.get_interventions">get_interventions</a></li>
+  <li><a href="#covasim.sim.Sim.init" id="toc-covasim.sim.Sim.init" class="nav-link" data-scroll-target="#covasim.sim.Sim.init">init</a></li>
   <li><a href="#covasim.sim.Sim.init_results" id="toc-covasim.sim.Sim.init_results" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_results">init_results</a></li>
-  <li><a href="#covasim.sim.Sim.init_variants" id="toc-covasim.sim.Sim.init_variants" class="nav-link" data-scroll-target="#covasim.sim.Sim.init_variants">init_variants</a></li>
-  <li><a href="#covasim.sim.Sim.initialize" id="toc-covasim.sim.Sim.initialize" class="nav-link" data-scroll-target="#covasim.sim.Sim.initialize">initialize</a></li>
-  <li><a href="#covasim.sim.Sim.layer_keys" id="toc-covasim.sim.Sim.layer_keys" class="nav-link" data-scroll-target="#covasim.sim.Sim.layer_keys">layer_keys</a></li>
-  <li><a href="#covasim.sim.Sim.load_data" id="toc-covasim.sim.Sim.load_data" class="nav-link" data-scroll-target="#covasim.sim.Sim.load_data">load_data</a></li>
-  <li><a href="#covasim.sim.Sim.load_population" id="toc-covasim.sim.Sim.load_population" class="nav-link" data-scroll-target="#covasim.sim.Sim.load_population">load_population</a></li>
+  <li><a href="#covasim.sim.Sim.load" id="toc-covasim.sim.Sim.load" class="nav-link" data-scroll-target="#covasim.sim.Sim.load">load</a></li>
   <li><a href="#covasim.sim.Sim.make_age_histogram" id="toc-covasim.sim.Sim.make_age_histogram" class="nav-link" data-scroll-target="#covasim.sim.Sim.make_age_histogram">make_age_histogram</a></li>
   <li><a href="#covasim.sim.Sim.make_transtree" id="toc-covasim.sim.Sim.make_transtree" class="nav-link" data-scroll-target="#covasim.sim.Sim.make_transtree">make_transtree</a></li>
   <li><a href="#covasim.sim.Sim.plot" id="toc-covasim.sim.Sim.plot" class="nav-link" data-scroll-target="#covasim.sim.Sim.plot">plot</a></li>
   <li><a href="#covasim.sim.Sim.plot_result" id="toc-covasim.sim.Sim.plot_result" class="nav-link" data-scroll-target="#covasim.sim.Sim.plot_result">plot_result</a></li>
-  <li><a href="#covasim.sim.Sim.rescale" id="toc-covasim.sim.Sim.rescale" class="nav-link" data-scroll-target="#covasim.sim.Sim.rescale">rescale</a></li>
-  <li><a href="#covasim.sim.Sim.reset_layer_pars" id="toc-covasim.sim.Sim.reset_layer_pars" class="nav-link" data-scroll-target="#covasim.sim.Sim.reset_layer_pars">reset_layer_pars</a></li>
-  <li><a href="#covasim.sim.Sim.run" id="toc-covasim.sim.Sim.run" class="nav-link" data-scroll-target="#covasim.sim.Sim.run">run</a></li>
-  <li><a href="#covasim.sim.Sim.step" id="toc-covasim.sim.Sim.step" class="nav-link" data-scroll-target="#covasim.sim.Sim.step">step</a></li>
-  <li><a href="#covasim.sim.Sim.summarize" id="toc-covasim.sim.Sim.summarize" class="nav-link" data-scroll-target="#covasim.sim.Sim.summarize">summarize</a></li>
-  <li><a href="#covasim.sim.Sim.validate_layer_pars" id="toc-covasim.sim.Sim.validate_layer_pars" class="nav-link" data-scroll-target="#covasim.sim.Sim.validate_layer_pars">validate_layer_pars</a></li>
-  <li><a href="#covasim.sim.Sim.validate_pars" id="toc-covasim.sim.Sim.validate_pars" class="nav-link" data-scroll-target="#covasim.sim.Sim.validate_pars">validate_pars</a></li>
+  <li><a href="#covasim.sim.Sim.save" id="toc-covasim.sim.Sim.save" class="nav-link" data-scroll-target="#covasim.sim.Sim.save">save</a></li>
+  <li><a href="#covasim.sim.Sim.to_excel" id="toc-covasim.sim.Sim.to_excel" class="nav-link" data-scroll-target="#covasim.sim.Sim.to_excel">to_excel</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -550,11 +541,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#covasim.sim.demo" id="toc-covasim.sim.demo" class="nav-link" data-scroll-target="#covasim.sim.demo">demo</a>
   <ul class="collapse">
-  <li><a href="#parameters-20" id="toc-parameters-20" class="nav-link" data-scroll-target="#parameters-20">Parameters</a></li>
-  </ul></li>
-  <li><a href="#covasim.sim.diff_sims" id="toc-covasim.sim.diff_sims" class="nav-link" data-scroll-target="#covasim.sim.diff_sims">diff_sims</a>
-  <ul class="collapse">
-  <li><a href="#parameters-21" id="toc-parameters-21" class="nav-link" data-scroll-target="#parameters-21">Parameters</a></li>
+  <li><a href="#parameters-13" id="toc-parameters-13" class="nav-link" data-scroll-target="#parameters-13">Parameters</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -571,7 +558,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.sim" class="level1">
 <h1>sim</h1>
 <p><code>sim</code></p>
-<p>Defines the Sim class, Covasim’s core class.</p>
+<p>Defines the Sim class for Covasim on the Starsim base.</p>
+<p><code>cv.Sim(ss.Sim)</code> is a thin wrapper that assembles the Covasim modules – a <a href="../api/people.html#covasim.people.People" title="0"><code>cv.People</code></a>, one <code>cv.Network</code> per contact layer, and a <code>cv.COVID</code> disease – and forwards to <a href="https://docs.starsim.org/api/sim.html#starsim.sim.Sim" title="0"><code>ss.Sim</code></a> with a daily timestep. Per-layer transmissibility (Covasim’s <code>beta * beta_layer</code>) is carried on the disease. <code>pop_infected</code> agents are seeded exactly at t=0.</p>
+<p>Passing <code>people=</code> / <code>networks=</code> / <code>diseases=</code> overrides the corresponding default; with <code>diseases=</code>, the COVID parameters (e.g.&nbsp;<code>pop_infected</code>, <code>variants</code>) must be set on the disease rather than the sim.</p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -583,33 +572,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.sim.AlreadyRunError">AlreadyRunError</a></td>
-<td>This error is raised if a simulation is run in such a way that no timesteps</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.sim.Sim">Sim</a></td>
-<td>The Sim class handles the running of the simulation: the creation of the</td>
+<td>The Covasim simulation, on the Starsim base.</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.sim.AlreadyRunError" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.sim.AlreadyRunError">AlreadyRunError</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sim.AlreadyRunError()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This error is raised if a simulation is run in such a way that no timesteps will be taken. This error is a distinct type so that it can be safely caught and ignored if required, but it is anticipated that most of the time, calling sim.run() and not taking any timesteps, would be an inadvertent error.</p>
-</section>
 <section id="covasim.sim.Sim" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.sim.Sim">Sim</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sim.Sim(</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    pars<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    datafile<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    simfile<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    popfile<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    people<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    version<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The Sim class handles the running of the simulation: the creation of the population and the dynamics of the epidemic. This class handles the mechanics of the actual simulation, while BaseSim takes care of housekeeping (saving, loading, exporting, etc.). Please see the BaseSim class for additional methods.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sim.Sim(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    pars<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    datafile<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    simfile<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    popfile<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    people<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    version<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The Covasim simulation, on the Starsim base.</p>
+<p>Parameters can be supplied as a dict and/or as keyword arguments, using the v3 names (see <a href="../api/parameters.html#covasim.parameters.make_pars" title="0"><code>cv.make_pars()</code></a> for the full list and their defaults), e.g.&nbsp;<code>cv.Sim(pop_size=10e3, pop_type='hybrid', beta=0.02)</code>. The COVID parameters are stored on the disease module (<code>sim.diseases.covid.pars</code>) and the sim-level ones in <code>sim.pars</code>; <code>sim['key']</code> gets or sets either.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
@@ -635,52 +616,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
-<td>datacols</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>list of column names of the data to load</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
 <td>label</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the name of the simulation (useful to distinguish in batch runs)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>simfile</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the filename for this simulation, if it’s saved</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>popfile</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>if supplied, load the population from this file</td>
+<td>not supported in v4 (v3 populations cannot be loaded)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>people</td>
+<td><a href="../api/people.html#covasim.people.People">People</a></td>
+<td>optionally, the people to use instead of creating them</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
-<td>people</td>
-<td><code>varies</code></td>
-<td>if supplied, use these pre-generated people (as a dict, SynthPop, or People object) instead of loading or generating new ones</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
 <td>version</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if supplied, use default parameters from this version of Covasim instead of the latest</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>additional parameters; passed to <a href="../api/parameters.html#covasim.parameters.make_pars" title="0"><code>cv.make_pars()</code></a></td>
+<td>additional parameters; also passed to <a href="https://docs.starsim.org/api/sim.html#starsim.sim.Sim" title="0"><code>ss.Sim</code></a> (e.g.&nbsp;<code>networks</code>, <code>diseases</code>, <code>connectors</code>)</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Examples</strong>::</p>
-<pre><code>sim = cv.Sim()
-sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx', label='Sim with data')</code></pre>
 </section>
 <section id="methods" class="level4">
 <h4 class="anchored" data-anchor-id="methods">Methods</h4>
@@ -694,146 +666,98 @@ sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx', label='Sim with data')</cod
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.sim.Sim.brief">brief</a></td>
-<td>Print a one-line description of a sim. See also sim.disp() (detailed output)</td>
+<td>Print (or return) a one-line summary of the sim (v3 <code>Sim.brief</code>). The symbol “⚙” is used to show</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.sim.Sim.calibrate">calibrate</a></td>
-<td>Automatically calibrate the simulation, returning a Calibration object</td>
+<td>Automatically calibrate the simulation, returning a Calibration object. See the</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.compute_doubling">compute_doubling</a></td>
-<td>Calculate doubling time using exponential approximation – a more detailed</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.sim.Sim.compute_fit">compute_fit</a></td>
-<td>Compute the fit between the model and the data. See cv.Fit() for more</td>
+<td>Compute the goodness-of-fit against <code>self.data</code> (v3 <code>Sim.compute_fit</code>); returns a <a href="../api/analysis.html#covasim.analysis.Fit" title="0"><code>cv.Fit</code></a>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.sim.Sim.compute_gen_time">compute_gen_time</a></td>
-<td>Calculate the generation time (or serial interval). There are two</td>
+<td>Calculate the generation time (or serial interval) (v3 <code>Sim.compute_gen_time</code>). There are two</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.sim.Sim.compute_r_eff">compute_r_eff</a></td>
-<td>Effective reproduction number based on number of people each person infected.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.compute_results">compute_results</a></td>
-<td>Perform final calculations on the results</td>
+<td>Effective reproduction number based on number of people each person infected (v3 <code>Sim.compute_r_eff</code>).</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.compute_states">compute_states</a></td>
-<td>Compute prevalence, incidence, and other states. Prevalence is the current</td>
+<td><a href="#covasim.sim.Sim.date">date</a></td>
+<td>Convert day index/indices to date string(s) relative to <code>start_day</code> (v3 <code>Sim.date</code>).</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.compute_summary">compute_summary</a></td>
-<td>Compute the summary dict and string for the sim. Used internally; see</td>
+<td><a href="#covasim.sim.Sim.day">day</a></td>
+<td>Convert date(s) to the day index/indices relative to <code>start_day</code> (v3 <code>Sim.day</code>). Numbers are</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.compute_yield">compute_yield</a></td>
-<td>Compute test yield – number of positive tests divided by the total number</td>
+<td><a href="#covasim.sim.Sim.export_pars">export_pars</a></td>
+<td>Export the sim’s parameters to a JSON-compatible dict (the v3 <code>BaseSim.export_pars</code>): the v3</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.disp">disp</a></td>
-<td>Display a verbose description of a sim. See also sim.summarize() (medium</td>
+<td><a href="#covasim.sim.Sim.finalize_results">finalize_results</a></td>
+<td>Scale the results, skipping the references to the COVID results, which are scaled by the module</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.finalize">finalize</a></td>
-<td>Compute final results</td>
+<td><a href="#covasim.sim.Sim.get_analyzer">get_analyzer</a></td>
+<td>Same as get_intervention(), but for analyzers (the v3 <code>Sim.get_analyzer</code>).</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.init_analyzers">init_analyzers</a></td>
-<td>Initialize the analyzers</td>
+<td><a href="#covasim.sim.Sim.get_analyzers">get_analyzers</a></td>
+<td>Same as get_interventions(), but for analyzers (the v3 <code>Sim.get_analyzers</code>).</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.init_immunity">init_immunity</a></td>
-<td>Initialize immunity matrices and precompute nab waning for each variant</td>
+<td><a href="#covasim.sim.Sim.get_intervention">get_intervention</a></td>
+<td>Find the matching intervention by label, index, or type (the v3 <code>Sim.get_intervention</code>). If more than</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.init_infections">init_infections</a></td>
-<td>Initialize prior immunity and seed infections.</td>
+<td><a href="#covasim.sim.Sim.get_interventions">get_interventions</a></td>
+<td>Find the matching intervention(s) by label, index, or type (the v3 <code>Sim.get_interventions</code>).</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.init_interventions">init_interventions</a></td>
-<td>Initialize and validate the interventions</td>
+<td><a href="#covasim.sim.Sim.init">init</a></td>
+<td>Create the People (with Covasim’s age distribution), then initialize as usual.</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.init_people">init_people</a></td>
-<td>Create the people.</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.sim.Sim.init_results">init_results</a></td>
-<td>Create the main results structure.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.init_variants">init_variants</a></td>
-<td>Initialize the variants</td>
+<td>Initialize the results, then make the COVID results available at the top level, as in v3, e.g.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.initialize">initialize</a></td>
-<td>Perform all initializations on the sim.</td>
+<td><a href="#covasim.sim.Sim.load">load</a></td>
+<td>Load a saved sim from disk; the v3 <a href="../api/sim.html#covasim.sim.Sim.load" title="0"><code>cv.Sim.load</code></a> classmethod, via <a href="../api/misc.html#covasim.misc.load" title="0"><code>cv.load</code></a>.</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.layer_keys">layer_keys</a></td>
-<td>Attempt to retrieve the current layer keys, in the following order: from</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.sim.Sim.load_data">load_data</a></td>
-<td>Load the data to calibrate against, if provided</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.load_population">load_population</a></td>
-<td>Load the population dictionary from file – typically done automatically</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.sim.Sim.make_age_histogram">make_age_histogram</a></td>
-<td>Calculate the age histograms of infections, deaths, diagnoses, etc. See</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.make_transtree">make_transtree</a></td>
-<td>Create a TransTree (transmission tree) object, for analyzing the pattern</td>
+<td>Calculate the age histograms of infections, deaths, diagnoses, etc. (v3 <code>Sim.make_age_histogram</code>).</td>
 </tr>
 <tr class="even">
+<td><a href="#covasim.sim.Sim.make_transtree">make_transtree</a></td>
+<td>Create a TransTree (transmission tree) object (v3 <code>Sim.make_transtree</code>). See cv.TransTree().</td>
+</tr>
+<tr class="odd">
 <td><a href="#covasim.sim.Sim.plot">plot</a></td>
 <td>Plot the results of a single simulation.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.sim.Sim.plot_result">plot_result</a></td>
 <td>Simple method to plot a single result. Useful for results that aren’t</td>
 </tr>
-<tr class="even">
-<td><a href="#covasim.sim.Sim.rescale">rescale</a></td>
-<td>Dynamically rescale the population – used during step()</td>
-</tr>
 <tr class="odd">
-<td><a href="#covasim.sim.Sim.reset_layer_pars">reset_layer_pars</a></td>
-<td>Reset the parameters to match the population.</td>
+<td><a href="#covasim.sim.Sim.save">save</a></td>
+<td>Save the sim to disk.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.sim.Sim.run">run</a></td>
-<td>Run the simulation.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.step">step</a></td>
-<td>Step the simulation forward in time. Usually, the user would use sim.run()</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.sim.Sim.summarize">summarize</a></td>
-<td>Print a medium-length summary of the simulation, drawing from the last time</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.sim.Sim.validate_layer_pars">validate_layer_pars</a></td>
-<td>Handle layer parameters, since they need to be validated after the population</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.sim.Sim.validate_pars">validate_pars</a></td>
-<td>Some parameters can take multiple types; this makes them consistent.</td>
+<td><a href="#covasim.sim.Sim.to_excel">to_excel</a></td>
+<td>Export the results and parameters to an Excel workbook (the v3 <code>Sim.to_excel</code>), with a “Results”</td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.sim.Sim.brief" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.brief">brief</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.brief(output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Print a one-line description of a sim. See also sim.disp() (detailed output) and sim.summarize() (medium length output). The symbol “⚙” is used to show infections, and “☠” is used to show deaths.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.brief(output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Print (or return) a one-line summary of the sim (v3 <code>Sim.brief</code>). The symbol “⚙” is used to show infections, and “☠” is used to show deaths.</p>
 <section id="parameters-1" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
 <table class="caption-top table">
@@ -849,21 +773,17 @@ sim = cv.Sim(pop_size=10e3, datafile='my_data.xlsx', label='Sim with data')</cod
 <tr class="odd">
 <td>output</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>if true, return a string instead of printing output</td>
+<td>if true, return a string instead of printing it</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
-sim.run() # Run the sim
-sim.brief() # Prints one-line output</code></pre>
 </section>
 </section>
 <section id="covasim.sim.Sim.calibrate" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.calibrate">calibrate</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.calibrate(calib_pars, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Automatically calibrate the simulation, returning a Calibration object (a type of analyzer). See the documentation on that class for more information.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.calibrate(calib_pars, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Automatically calibrate the simulation, returning a Calibration object. See the documentation on that class for more information.</p>
 <section id="parameters-2" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
 <table class="caption-top table">
@@ -913,122 +833,20 @@ sim.brief() # Prints one-line output</code></pre>
 <pre><code>sim = cv.Sim(datafile='data.csv')
 calib_pars = dict(beta=[0.015, 0.010, 0.020])
 calib = sim.calibrate(calib_pars, n_trials=50)
-calib.plot()</code></pre>
-</section>
-</section>
-<section id="covasim.sim.Sim.compute_doubling" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_doubling">compute_doubling</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_doubling(window<span class="op">=</span><span class="dv">3</span>, max_doubling_time<span class="op">=</span><span class="dv">30</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Calculate doubling time using exponential approximation – a more detailed approach is in utils.py. Compares infections at time t to infections at time t-window, and uses that to compute the doubling time. For example, if there are 100 cumulative infections on day 12 and 200 infections on day 19, doubling time is 7 days.</p>
-<section id="parameters-3" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>window</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>the size of the window used (larger values are more accurate but less precise)</td>
-<td><code>3</code></td>
-</tr>
-<tr class="even">
-<td>max_doubling_time</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>doubling time could be infinite, so this places a bound on it</td>
-<td><code>30</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-1" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>doubling_time</td>
-<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
-<td>the doubling time results array</td>
-</tr>
-</tbody>
-</table>
+calib.plot_sims()</code></pre>
 </section>
 </section>
 <section id="covasim.sim.Sim.compute_fit" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_fit">compute_fit</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_fit(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute the fit between the model and the data. See cv.Fit() for more information.</p>
-<section id="parameters-4" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>passed to cv.Fit()</td>
-<td><code>()</code></td>
-</tr>
-<tr class="even">
-<td>kwargs</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to cv.Fit()</td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-2" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>A Fit object</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim(datafile='data.csv')
-sim.run()
-fit = sim.compute_fit()
-fit.plot()</code></pre>
-</section>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_fit(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Compute the goodness-of-fit against <code>self.data</code> (v3 <code>Sim.compute_fit</code>); returns a <a href="../api/analysis.html#covasim.analysis.Fit" title="0"><code>cv.Fit</code></a>.</p>
 </section>
 <section id="covasim.sim.Sim.compute_gen_time" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_gen_time">compute_gen_time</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_gen_time()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Calculate the generation time (or serial interval). There are two ways to do this calculation. The ‘true’ interval (exposure time to exposure time) or ‘clinical’ (symptom onset to symptom onset).</p>
-<section id="returns-3" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h6>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_gen_time()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Calculate the generation time (or serial interval) (v3 <code>Sim.compute_gen_time</code>). There are two ways to do this calculation. The ‘true’ interval (exposure time to exposure time) or ‘clinical’ (symptom onset to symptom onset).</p>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1049,10 +867,10 @@ fit.plot()</code></pre>
 </section>
 <section id="covasim.sim.Sim.compute_r_eff" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_r_eff">compute_r_eff</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_r_eff(method<span class="op">=</span><span class="st">'daily'</span>, smoothing<span class="op">=</span><span class="dv">2</span>, window<span class="op">=</span><span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Effective reproduction number based on number of people each person infected.</p>
-<section id="parameters-5" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_r_eff(method<span class="op">=</span><span class="st">'daily'</span>, smoothing<span class="op">=</span><span class="dv">2</span>, window<span class="op">=</span><span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Effective reproduction number based on number of people each person infected (v3 <code>Sim.compute_r_eff</code>).</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1084,8 +902,8 @@ fit.plot()</code></pre>
 </tbody>
 </table>
 </section>
-<section id="returns-4" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
+<section id="returns-2" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1104,26 +922,120 @@ fit.plot()</code></pre>
 </table>
 </section>
 </section>
-<section id="covasim.sim.Sim.compute_results" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_results">compute_results</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_results(verbose<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform final calculations on the results</p>
+<section id="covasim.sim.Sim.date" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.date">date</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.date(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert day index/indices to date string(s) relative to <code>start_day</code> (v3 <code>Sim.date</code>).</p>
 </section>
-<section id="covasim.sim.Sim.compute_states" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_states">compute_states</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_states()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute prevalence, incidence, and other states. Prevalence is the current number of infected people divided by the number of people who are alive. Incidence is the number of new infections per day divided by the susceptible population. Also calculates the number of people alive, the number preinfectious, the number removed, and recalculates susceptibles to handle scaling.</p>
+<section id="covasim.sim.Sim.day" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.day">day</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.day(day, <span class="op">*</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert date(s) to the day index/indices relative to <code>start_day</code> (v3 <code>Sim.day</code>). Numbers are treated as days and returned as integers; a list or array gives a list or array, and None gives None.</p>
+<p><strong>Example</strong>::</p>
+<pre><code>sim = cv.Sim(start_day='2020-03-01')
+sim.day('2020-03-05') # Returns 4</code></pre>
 </section>
-<section id="covasim.sim.Sim.compute_summary" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_summary">compute_summary</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_summary(</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    full<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    t<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    update<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    require_run<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute the summary dict and string for the sim. Used internally; see sim.summarize() for the user version.</p>
+<section id="covasim.sim.Sim.export_pars" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.export_pars">export_pars</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.export_pars(filename<span class="op">=</span><span class="va">None</span>, indent<span class="op">=</span><span class="dv">2</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Export the sim’s parameters to a JSON-compatible dict (the v3 <code>BaseSim.export_pars</code>): the v3 parameters (see <a href="../api/parameters.html#covasim.parameters.make_pars" title="0"><code>cv.make_pars()</code></a>), by their v3 names, followed by the other COVID parameters. Interventions and analyzers are converted with their <code>to_json()</code> method.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>filename</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>if given, also save the parameters to this JSON file</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>indent</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td>if saving, the JSON indent</td>
+<td><code>2</code></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://docs.sciris.org/api/sc_fileio.html#sciris.sc_fileio.savejson" title="0"><code>sc.savejson()</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="covasim.sim.Sim.finalize_results" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.finalize_results">finalize_results</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.finalize_results()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Scale the results, skipping the references to the COVID results, which are scaled by the module</p>
+</section>
+<section id="covasim.sim.Sim.get_analyzer" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.get_analyzer">get_analyzer</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.get_analyzer(label<span class="op">=</span><span class="va">None</span>, partial<span class="op">=</span><span class="va">False</span>, first<span class="op">=</span><span class="va">False</span>, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Same as get_intervention(), but for analyzers (the v3 <code>Sim.get_analyzer</code>).</p>
+</section>
+<section id="covasim.sim.Sim.get_analyzers" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.get_analyzers">get_analyzers</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.get_analyzers(label<span class="op">=</span><span class="va">None</span>, partial<span class="op">=</span><span class="va">False</span>, as_inds<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Same as get_interventions(), but for analyzers (the v3 <code>Sim.get_analyzers</code>).</p>
+</section>
+<section id="covasim.sim.Sim.get_intervention" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.get_intervention">get_intervention</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.get_intervention(label<span class="op">=</span><span class="va">None</span>, partial<span class="op">=</span><span class="va">False</span>, first<span class="op">=</span><span class="va">False</span>, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Find the matching intervention by label, index, or type (the v3 <code>Sim.get_intervention</code>). If more than one intervention matches, return the last by default. If no label is provided, return the last intervention.</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>label</td>
+<td>(<a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>, <a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="../api/interventions.html#covasim.interventions.Intervention">Intervention</a>)</td>
+<td>the label, index, or type of intervention to get</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>partial</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>if true, return partial matches (e.g.&nbsp;‘beta’ will match all beta interventions)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>first</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>if true, return first matching intervention (otherwise, return last)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>die</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if no intervention is found</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="covasim.sim.Sim.get_interventions" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.get_interventions">get_interventions</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.get_interventions(label<span class="op">=</span><span class="va">None</span>, partial<span class="op">=</span><span class="va">False</span>, as_inds<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Find the matching intervention(s) by label, index, or type (the v3 <code>Sim.get_interventions</code>). If None, return all interventions.</p>
 <section id="parameters-6" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
 <table class="caption-top table">
@@ -1137,48 +1049,54 @@ fit.plot()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td>full</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to print all results (by default, only cumulative)</td>
+<td>label</td>
+<td>(<a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>, <a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="../api/interventions.html#covasim.interventions.Intervention">Intervention</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>)</td>
+<td>the label, index, or type of intervention to get; if a list, iterate over one of those types</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
-<td>t</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>day or date to compute summary for (by default, the last point)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>update</td>
+<td>partial</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to update the stored sim.summary</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="even">
-<td>output</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to return the summary</td>
+<td>if true, return partial matches (e.g.&nbsp;‘beta’ will match all beta interventions)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
-<td>require_run</td>
+<td>as_inds</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to raise an exception if simulations have not been run yet</td>
+<td>if true, return matching indices instead of the actual interventions</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
+<p><strong>Examples</strong>::</p>
+<pre><code>tp = cv.test_prob(symp_prob=0.1)
+cb1 = cv.change_beta(days=5, changes=0.3, label='NPI')
+cb2 = cv.change_beta(days=10, changes=0.3, label='Masks')
+sim = cv.Sim(interventions=[tp, cb1, cb2])
+cb1, cb2 = sim.get_interventions(cv.change_beta)
+tp, cb2 = sim.get_interventions([0,2])
+ind = sim.get_interventions(cv.change_beta, as_inds=True) # Returns [1,2]</code></pre>
 </section>
 </section>
-<section id="covasim.sim.Sim.compute_yield" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.compute_yield">compute_yield</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.compute_yield()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute test yield – number of positive tests divided by the total number of tests, also called test positivity rate. Relative yield is with respect to prevalence: i.e., how the yield compares to what the yield would be from choosing a person at random from the population.</p>
+<section id="covasim.sim.Sim.init" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init">init</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create the People (with Covasim’s age distribution), then initialize as usual.</p>
 </section>
-<section id="covasim.sim.Sim.disp" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.disp">disp</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.disp(output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Display a verbose description of a sim. See also sim.summarize() (medium length output) and sim.brief() (short output).</p>
+<section id="covasim.sim.Sim.init_results" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_results">init_results</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_results()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Initialize the results, then make the COVID results available at the top level, as in v3, e.g. <code>sim.results['cum_deaths']</code> and <code>sim.results['variant']['new_infections_by_variant']</code>. These are references to the module’s results (not copies).</p>
+</section>
+<section id="covasim.sim.Sim.load" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.load">load</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.load(filename, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Load a saved sim from disk; the v3 <a href="../api/sim.html#covasim.sim.Sim.load" title="0"><code>cv.Sim.load</code></a> classmethod, via <a href="../api/misc.html#covasim.misc.load" title="0"><code>cv.load</code></a>.</p>
+</section>
+<section id="covasim.sim.Sim.make_age_histogram" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.make_age_histogram">make_age_histogram</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.make_age_histogram(<span class="op">*</span>args, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Calculate the age histograms of infections, deaths, diagnoses, etc. (v3 <code>Sim.make_age_histogram</code>). See cv.age_histogram() for more information. This can be used instead of adding the age histogram as an analyzer to the sim, but it can only record the final time point.</p>
 <section id="parameters-7" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
 <table class="caption-top table">
@@ -1194,36 +1112,29 @@ fit.plot()</code></pre>
 <tr class="odd">
 <td>output</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>if true, return a string instead of printing output</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+<td>whether or not to return the age histogram; if not, store in sim.agehist</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>passed to cv.age_histogram()</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to cv.age_histogram()</td>
+<td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
-sim.run() # Run the sim
-sim.disp() # Displays detailed output</code></pre>
 </section>
 </section>
-<section id="covasim.sim.Sim.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.finalize(verbose<span class="op">=</span><span class="va">None</span>, restore_pars<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute final results</p>
-</section>
-<section id="covasim.sim.Sim.init_analyzers" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_analyzers">init_analyzers</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_analyzers()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize the analyzers</p>
-</section>
-<section id="covasim.sim.Sim.init_immunity" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_immunity">init_immunity</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_immunity(create<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize immunity matrices and precompute nab waning for each variant</p>
-</section>
-<section id="covasim.sim.Sim.init_infections" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_infections">init_infections</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_infections(force<span class="op">=</span><span class="va">False</span>, verbose<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize prior immunity and seed infections.</p>
+<section id="covasim.sim.Sim.make_transtree" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.make_transtree">make_transtree</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.make_transtree(<span class="op">*</span>args, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create a TransTree (transmission tree) object (v3 <code>Sim.make_transtree</code>). See cv.TransTree().</p>
 <section id="parameters-8" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
 <table class="caption-top table">
@@ -1237,239 +1148,9 @@ sim.disp() # Displays detailed output</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td>force</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>initialize prior infections even if already initialized</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.init_interventions" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_interventions">init_interventions</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_interventions()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize and validate the interventions</p>
-</section>
-<section id="covasim.sim.Sim.init_people" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_people">init_people</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_people(</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    popdict<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    init_infections<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    reset<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Create the people.</p>
-<p>Use <code>init_infections=False</code> for creating a fresh People object for use in future simulations</p>
-<section id="parameters-9" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>popdict</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#any">any</a></td>
-<td>pre-generated people of various formats</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>init_infections</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to initialize infections (default false when called directly)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="odd">
-<td>reset</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to regenerate the people even if they already exist</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>verbose</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>detail to print</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>kwargs</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to cv.make_people()</td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.init_results" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_results">init_results</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_results()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Create the main results structure. We differentiate between flows, stocks, and cumulative results The prefix “new” is used for flow variables, i.e.&nbsp;counting new events (infections/deaths/recoveries) on each timestep The prefix “n” is used for stock variables, i.e.&nbsp;counting the total number in any given state (sus/inf/rec/etc) on any particular timestep The prefix “cum” is used for cumulative variables, i.e.&nbsp;counting the total number that have ever been in a given state at some point in the sim Note that, by definition, n_dead is the same as cum_deaths and n_recovered is the same as cum_recoveries, so we only define the cumulative versions</p>
-</section>
-<section id="covasim.sim.Sim.init_variants" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.init_variants">init_variants</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.init_variants()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize the variants</p>
-</section>
-<section id="covasim.sim.Sim.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.initialize(reset<span class="op">=</span><span class="va">False</span>, init_infections<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform all initializations on the sim.</p>
-<p>This includes validating the parameters, setting the random number seed, creating the results structure, initializing the people, validating the layer parameters (which requires the people), and initializing the interventions.</p>
-<p>Note: to create a population to save for later use, use <code>init_infections=False</code>. This will then create a fresh People object which other sims can finish initializing.</p>
-<section id="parameters-10" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>reset</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to reset people even if they already exist</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>init_infections</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to initialize infections (default true so sim is ready, but can’t reuse people then)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="odd">
-<td>kwargs</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to init_people</td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.layer_keys" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.layer_keys">layer_keys</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.layer_keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Attempt to retrieve the current layer keys, in the following order: from the people object (for an initialized sim), from the popdict (for one in the process of being initialized), from the beta_layer parameter (for an uninitialized sim), or by assuming a default (if none of the above are available).</p>
-</section>
-<section id="covasim.sim.Sim.load_data" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.load_data">load_data</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.load_data(datafile<span class="op">=</span><span class="va">None</span>, verbose<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Load the data to calibrate against, if provided</p>
-</section>
-<section id="covasim.sim.Sim.load_population" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.load_population">load_population</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.load_population(popfile<span class="op">=</span><span class="va">None</span>, init_people<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Load the population dictionary from file – typically done automatically as part of <code>sim.initialize()</code>.</p>
-<p>Supports loading either saved population dictionaries (popdicts, file ending .pop by convention), or ready-to-go People objects (file ending .ppl by convention). Either object an also be supplied directly. Once a population file is loaded, it is removed from the Sim object.</p>
-<section id="parameters-11" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>popfile</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> or <code>obj</code></td>
-<td>if a string, name of the file; otherwise, the popdict or People object to load</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>init_people</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to immediately convert the loaded popdict into an initialized People object</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="odd">
-<td>kwargs</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <code>sim.init_people()</code></td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.make_age_histogram" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.make_age_histogram">make_age_histogram</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.make_age_histogram(<span class="op">*</span>args, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Calculate the age histograms of infections, deaths, diagnoses, etc. See cv.age_histogram() for more information. This can be used alternatively to supplying the age histogram as an analyzer to the sim. If used this way, it can only record the final time point since the states of each person are not saved during the sim.</p>
-<section id="parameters-12" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
 <td>output</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to return the age histogram; if not, store in sim.results</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="even">
-<td>args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>passed to cv.age_histogram()</td>
-<td><code>()</code></td>
-</tr>
-<tr class="odd">
-<td>kwargs</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to cv.age_histogram()</td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim()
-sim.run()
-agehist = sim.make_age_histogram()
-agehist.plot()</code></pre>
-</section>
-</section>
-<section id="covasim.sim.Sim.make_transtree" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.make_transtree">make_transtree</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.make_transtree(<span class="op">*</span>args, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Create a TransTree (transmission tree) object, for analyzing the pattern of transmissions in the simulation. See cv.TransTree() for more information.</p>
-<section id="parameters-13" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>output</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to return the TransTree; if not, store in sim.results</td>
+<td>whether or not to return the TransTree; if not, store in sim.transtree</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
@@ -1486,18 +1167,14 @@ agehist.plot()</code></pre>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim()
-sim.run()
-tt = sim.make_transtree()</code></pre>
 </section>
 </section>
 <section id="covasim.sim.Sim.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.plot(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.plot(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the results of a single simulation.</p>
-<section id="parameters-14" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h6>
+<section id="parameters-9" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1581,13 +1258,13 @@ tt = sim.make_transtree()</code></pre>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>font_size</td>
+<td>fontsize</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>Size of the font</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>font_family</td>
+<td>font</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>Font face</td>
 <td><em>required</em></td>
@@ -1660,7 +1337,7 @@ tt = sim.make_transtree()</code></pre>
 - ``rotation``:   whether to rotate labels
 - ``start``:      the first day to plot
 - ``end``:        the last day to plot
-- ``outer``:      only show the date labels on the outer (bottom) plots</code></pre>
+- ``interval``:   the interval between x-axis ticks, in days</code></pre>
 <p>The <code>show_args</code> dictionary allows several other formatting options, such as:</p>
 <pre><code>- ``tight``:    use tight layout for the figure (default false)
 - ``maximize``: try to make the figure full screen (default false)
@@ -1668,8 +1345,8 @@ tt = sim.make_transtree()</code></pre>
 <p>Date, show, and other arguments can also be passed directly, e.g.&nbsp;<code>sim.plot(tight=True)</code>.</p>
 <p>For additional style options, see <code>cv.options.with_style()</code>, which is the final refuge of arguments that are not picked up by any of the other parsers, e.g.&nbsp;<code>sim.plot(**{'ytick.direction':'in'})</code>.</p>
 </section>
-<section id="returns-5" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h6>
+<section id="returns-3" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1699,10 +1376,10 @@ New in version 3.1.2: updated date arguments; mpl_args renamed style_args</div>
 </section>
 <section id="covasim.sim.Sim.plot_result" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.sim.Sim.plot_result">plot_result</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.plot_result(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.plot_result(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Simple method to plot a single result. Useful for results that aren’t standard outputs. See sim.plot() for explanation of other arguments.</p>
-<section id="parameters-15" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
+<section id="parameters-10" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1722,8 +1399,8 @@ New in version 3.1.2: updated date arguments; mpl_args renamed style_args</div>
 </tbody>
 </table>
 </section>
-<section id="returns-6" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h6>
+<section id="returns-4" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1745,17 +1422,13 @@ New in version 3.1.2: updated date arguments; mpl_args renamed style_args</div>
 sim.plot_result('r_eff')</code></pre>
 </section>
 </section>
-<section id="covasim.sim.Sim.rescale" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.rescale">rescale</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.rescale()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Dynamically rescale the population – used during step()</p>
-</section>
-<section id="covasim.sim.Sim.reset_layer_pars" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.reset_layer_pars">reset_layer_pars</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.reset_layer_pars(layer_keys<span class="op">=</span><span class="va">None</span>, force<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Reset the parameters to match the population.</p>
-<section id="parameters-16" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h6>
+<section id="covasim.sim.Sim.save" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.save">save</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.save(filename<span class="op">=</span><span class="va">None</span>, keep_people<span class="op">=</span><span class="va">None</span>, shrink<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Save the sim to disk.</p>
+<p>By default the full sim is saved, including the people, so it can be rerun or continued.</p>
+<section id="parameters-11" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1767,166 +1440,39 @@ sim.plot_result('r_eff')</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td>layer_keys</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>override the default layer keys (use stored keys by default)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>force</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>reset the parameters even if they already exist</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.run" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.run">run</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.run(</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    do_plot<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    until<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    restore_pars<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    reset_seed<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run the simulation.</p>
-<section id="parameters-17" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>do_plot</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to plot</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>until</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>day or date to run until</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>restore_pars</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to make a copy of the parameters before the run and restore it after, so runs are repeatable</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="even">
-<td>reset_seed</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to reset the random number stream immediately before run</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
-</tr>
-<tr class="odd">
-<td>verbose</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>level of detail to print, e.g.&nbsp;-1 = one-line output, 0 = no output, 0.1 = print every 10th day, 1 = print every day</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-7" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 79%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>A pointer to the sim object (with results modified in-place)</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.sim.Sim.step" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.step">step</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Step the simulation forward in time. Usually, the user would use sim.run() rather than calling sim.step() directly.</p>
-</section>
-<section id="covasim.sim.Sim.summarize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.summarize">summarize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.summarize(full<span class="op">=</span><span class="va">False</span>, t<span class="op">=</span><span class="va">None</span>, sep<span class="op">=</span><span class="va">None</span>, output<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Print a medium-length summary of the simulation, drawing from the last time point in the simulation by default. Called by default at the end of a sim run. See also sim.disp() (detailed output) and sim.brief() (short output).</p>
-<section id="parameters-18" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>full</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to print all results (by default, only cumulative)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>t</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>day or date to compute summary for (by default, the last point)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>sep</td>
+<td>filename</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>thousands separator (default ‘,’)</td>
+<td>path to save to (defaults to the sim’s <code>simfile</code>).</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
-<td>output</td>
+<td>keep_people</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to return the summary instead of printing it</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+<td>whether to keep the people (v3); <code>keep_people=False</code> is the same as <code>shrink=True</code></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>shrink</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>drop the people and other large objects before saving (default False).</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td></td>
+<td>passed through to <a href="https://docs.starsim.org/api/sim.html#starsim.sim.Sim.save" title="0"><code>ss.Sim.save</code></a> / <a href="https://docs.sciris.org/api/sc_fileio.html#sciris.sc_fileio.makefilepath" title="0"><code>sc.makefilepath</code></a>.</td>
+<td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Examples</strong>::</p>
-<pre><code>sim = cv.Sim(label='Example sim', verbose=0) # Set to run silently
-sim.run() # Run the sim
-sim.summarize() # Print medium-length summary of the sim
-sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</code></pre>
 </section>
 </section>
-<section id="covasim.sim.Sim.validate_layer_pars" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.validate_layer_pars">validate_layer_pars</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.validate_layer_pars()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Handle layer parameters, since they need to be validated after the population creation, rather than before.</p>
-</section>
-<section id="covasim.sim.Sim.validate_pars" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.sim.Sim.validate_pars">validate_pars</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.validate_pars(validate_layers<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Some parameters can take multiple types; this makes them consistent.</p>
-<section id="parameters-19" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h6>
+<section id="covasim.sim.Sim.to_excel" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.sim.Sim.to_excel">to_excel</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sim.Sim.to_excel(filename<span class="op">=</span><span class="va">None</span>, skip_pars<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Export the results and parameters to an Excel workbook (the v3 <code>Sim.to_excel</code>), with a “Results” sheet (from <code>sim.to_df()</code>) and a “Parameters” sheet (from <code>sim.export_pars()</code>, flattened).</p>
+<section id="parameters-12" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1938,10 +1484,35 @@ sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</c
 </thead>
 <tbody>
 <tr class="odd">
-<td>validate_layers</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to validate layer parameters as well via validate_layer_pars() – usually yes, except during initialization</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+<td>filename</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>if given, save the workbook to this file</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>skip_pars</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>the parameters to leave out (default: the variant and vaccine maps, as in v3)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>An <a href="https://docs.sciris.org/api/sc_fileio.html#sciris.sc_fileio.Spreadsheet" title="0"><code>sc.Spreadsheet</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1962,27 +1533,23 @@ sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</c
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.sim.demo">demo</a></td>
-<td>Shortcut for <code>cv.Sim().run().plot()</code>.</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.sim.diff_sims">diff_sims</a></td>
-<td>Compute the difference of the summaries of two simulations, and print any</td>
+<td>Shortcut for <code>cv.Sim().run().plot()</code> (the v3 <a href="../api/sim.html#covasim.sim.demo" title="0"><code>cv.demo</code></a>).</td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.sim.demo" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.sim.demo">demo</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sim.demo(</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>    preset<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    to_plot<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    scens<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    run_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Shortcut for <code>cv.Sim().run().plot()</code>.</p>
-<section id="parameters-20" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sim.demo(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    preset<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    to_plot<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    scens<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    run_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Shortcut for <code>cv.Sim().run().plot()</code> (the v3 <a href="../api/sim.html#covasim.sim.demo" title="0"><code>cv.demo</code></a>).</p>
+<section id="parameters-13" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1996,7 +1563,7 @@ sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</c
 <tr class="odd">
 <td>preset</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>use a preset run configuration; currently the only option is “full”</td>
+<td>ignored; kept for backwards compatibility</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -2008,7 +1575,19 @@ sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</c
 <tr class="odd">
 <td>scens</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>dictionary of scenarios to run as a multisim, if preset=‘full’</td>
+<td>ignored; kept for backwards compatibility</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>run_args</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to sim.run()</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>plot_args</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to sim.plot()</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -2017,100 +1596,10 @@ sim.summarize(t=24, full=True) # Print a "slice" of all sim results on day 24</c
 <td>passed to Sim()</td>
 <td><code>{}</code></td>
 </tr>
-<tr class="odd">
-<td>run_args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to sim.run()</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>plot_args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to sim.plot()</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Examples</strong>::</p>
-<pre><code>cv.demo() # Simplest example
-cv.demo('full') # Full example
-cv.demo('full', overview=True) # Plot all results
-cv.demo(beta=0.020, run_args={'verbose':0}, plot_args={'to_plot':'overview'}) # Pass in custom values</code></pre>
-</section>
-</section>
-<section id="covasim.sim.diff_sims" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.sim.diff_sims">diff_sims</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sim.diff_sims(</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    sim1,</span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    sim2,</span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    skip_key_diffs<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    skip<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Compute the difference of the summaries of two simulations, and print any values which differ.</p>
-<section id="parameters-21" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>sim1</td>
-<td><a href="../api/sim.html#covasim.sim">sim</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>either a simulation object or the sim.summary dictionary</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>sim2</td>
-<td><a href="../api/sim.html#covasim.sim">sim</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>ditto</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>skip_key_diffs</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to skip keys that don’t match between sims</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>skip</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>a list of values to skip</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>output</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to return the output as a string (otherwise print)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>die</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to raise an exception if the sims don’t match</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="odd">
-<td>require_run</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>require that the simulations have been run</td>
-<td><em>required</em></td>
-</tr>
 </tbody>
 </table>
 <p><strong>Example</strong>::</p>
-<pre><code>s1 = cv.Sim(beta=0.01)
-s2 = cv.Sim(beta=0.02)
-s1.run()
-s2.run()
-cv.diff_sims(s1, s2)</code></pre>
+<pre><code>cv.demo(beta=0.020, run_args={'verbose':0})</code></pre>
 
 
 </section>
@@ -2551,7 +2040,7 @@ cv.diff_sims(s1, s2)</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

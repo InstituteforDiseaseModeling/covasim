@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -472,6 +476,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -586,32 +596,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> sim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Covasim 3.1.9 (2026-09-29) — © 2020-2026 by IDM
-Initializing sim with 20000 people for 60 days
-  Running 2020-03-01 ( 0/60) (0.08 s)  ———————————————————— 2%
-  Running 2020-03-11 (10/60) (0.11 s)  •••————————————————— 18%
-  Running 2020-03-21 (20/60) (0.14 s)  ••••••—————————————— 34%
-  Running 2020-03-31 (30/60) (0.17 s)  ••••••••••—————————— 51%
-  Running 2020-04-10 (40/60) (0.21 s)  •••••••••••••——————— 67%
-  Running 2020-04-20 (50/60) (0.26 s)  ••••••••••••••••———— 84%
-  Running 2020-04-30 (60/60) (0.32 s)  •••••••••••••••••••• 100%
+<pre><code>Covasim 4.0.1 (2026-10-16) — © 2020-2026 by IDM
+Initializing sim with 20000 agents
+  Running 2020.03.01 ( 0/61) (0.00 s)  ———————————————————— 2%
+  Running 2020.03.11 (10/61) (0.10 s)  •••————————————————— 18%
+  Running 2020.03.21 (20/61) (0.19 s)  ••••••—————————————— 34%
+  Running 2020.03.31 (30/61) (0.29 s)  ••••••••••—————————— 51%
+  Running 2020.04.10 (40/61) (0.40 s)  •••••••••••••——————— 67%
+  Running 2020.04.20 (50/61) (0.52 s)  ••••••••••••••••———— 84%
+  Running 2020.04.30 (60/61) (0.65 s)  •••••••••••••••••••• 100%
 
 Simulation summary:
-       12,730 cumulative infections
-          596 cumulative reinfections
-       10,182 cumulative infectious
-        6,395 cumulative symptomatic cases
-          386 cumulative severe cases
-          114 cumulative critical cases
-        5,159 cumulative recoveries
-           14 cumulative deaths
+       11,873 cumulative infections
+        9,271 cumulative infectious
+        5,913 cumulative symptomatic
+          322 cumulative severe
+           89 cumulative critical
+        4,478 cumulative recoveries
+           21 cumulative deaths
+            0 cumulative known deaths
+          533 cumulative reinfections
             0 cumulative tests
             0 cumulative diagnoses
-            0 cumulative known deaths
-            0 cumulative quarantined people
-            0 cumulative isolated people
             0 cumulative vaccine doses
             0 cumulative vaccinated people
+            0 cumulative quarantined people
+            0 cumulative isolated people
 </code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -639,34 +649,34 @@ Simulation summary:
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Initializing sim with 50000 people for 61 days
-  Running 2020-04-01 ( 0/61) (0.17 s)  ———————————————————— 2%
-  Running 2020-04-11 (10/61) (0.24 s)  •••————————————————— 18%
-  Running 2020-04-21 (20/61) (0.31 s)  ••••••—————————————— 34%
-  Running 2020-05-01 (30/61) (0.41 s)  ••••••••••—————————— 50%
-  Running 2020-05-11 (40/61) (0.51 s)  •••••••••••••——————— 66%
-  Running 2020-05-21 (50/61) (0.66 s)  ••••••••••••••••———— 82%
-  Running 2020-05-31 (60/61) (0.83 s)  •••••••••••••••••••— 98%
+<pre><code>Initializing sim with 50000 agents
+  Running 2020.04.01 ( 0/62) (0.00 s)  ———————————————————— 2%
+  Running 2020.04.11 (10/62) (0.13 s)  •••————————————————— 18%
+  Running 2020.04.21 (20/62) (0.27 s)  ••••••—————————————— 34%
+  Running 2020.05.01 (30/62) (0.42 s)  ••••••••••—————————— 50%
+  Running 2020.05.11 (40/62) (0.60 s)  •••••••••••••——————— 66%
+  Running 2020.05.21 (50/62) (0.81 s)  ••••••••••••••••———— 82%
+  Running 2020.05.31 (60/62) (1.04 s)  •••••••••••••••••••— 98%
 Simulation summary:
-       41,466 cumulative infections
-        3,679 cumulative reinfections
-       36,997 cumulative infectious
-       24,043 cumulative symptomatic cases
-        1,542 cumulative severe cases
-          475 cumulative critical cases
-       24,320 cumulative recoveries
-           86 cumulative deaths
+       36,255 cumulative infections
+       30,772 cumulative infectious
+       19,761 cumulative symptomatic
+        1,234 cumulative severe
+          325 cumulative critical
+       17,839 cumulative recoveries
+           50 cumulative deaths
+            0 cumulative known deaths
+        2,353 cumulative reinfections
             0 cumulative tests
             0 cumulative diagnoses
-            0 cumulative known deaths
-            0 cumulative quarantined people
-            0 cumulative isolated people
             0 cumulative vaccine doses
             0 cumulative vaccinated people
+            0 cumulative quarantined people
+            0 cumulative isolated people
 </code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="3">
-<pre><code>Sim(&lt;no label&gt;; 2020-04-01 to 2020-06-01; pop: 50000 random; epi: 41466⚙, 86☠)</code></pre>
+<pre><code>Sim(n=50000; 2020.04.01—2020.06.01; networks=a; diseases=covid; connectors=crossimmunity)</code></pre>
 </div>
 </div>
 <p>This will generate a results dictionary <code>sim.results</code>. For example, the number of new infections per day is <code>sim.results['new_infections']</code>.</p>
@@ -675,34 +685,34 @@ Simulation summary:
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pop_size<span class="op">=</span><span class="fl">50e3</span>, pop_infected<span class="op">=</span><span class="dv">100</span>, start_day<span class="op">=</span><span class="st">'2020-04-01'</span>, end_day<span class="op">=</span><span class="st">'2020-06-01'</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Initializing sim with 50000 people for 61 days
-  Running 2020-04-01 ( 0/61) (0.17 s)  ———————————————————— 2%
-  Running 2020-04-11 (10/61) (0.23 s)  •••————————————————— 18%
-  Running 2020-04-21 (20/61) (0.30 s)  ••••••—————————————— 34%
-  Running 2020-05-01 (30/61) (0.38 s)  ••••••••••—————————— 50%
-  Running 2020-05-11 (40/61) (0.48 s)  •••••••••••••——————— 66%
-  Running 2020-05-21 (50/61) (0.63 s)  ••••••••••••••••———— 82%
-  Running 2020-05-31 (60/61) (0.81 s)  •••••••••••••••••••— 98%
+<pre><code>Initializing sim with 50000 agents
+  Running 2020.04.01 ( 0/62) (0.00 s)  ———————————————————— 2%
+  Running 2020.04.11 (10/62) (0.12 s)  •••————————————————— 18%
+  Running 2020.04.21 (20/62) (0.25 s)  ••••••—————————————— 34%
+  Running 2020.05.01 (30/62) (0.38 s)  ••••••••••—————————— 50%
+  Running 2020.05.11 (40/62) (0.56 s)  •••••••••••••——————— 66%
+  Running 2020.05.21 (50/62) (0.76 s)  ••••••••••••••••———— 82%
+  Running 2020.05.31 (60/62) (0.99 s)  •••••••••••••••••••— 98%
 Simulation summary:
-       41,466 cumulative infections
-        3,679 cumulative reinfections
-       36,997 cumulative infectious
-       24,043 cumulative symptomatic cases
-        1,542 cumulative severe cases
-          475 cumulative critical cases
-       24,320 cumulative recoveries
-           86 cumulative deaths
+       36,255 cumulative infections
+       30,772 cumulative infectious
+       19,761 cumulative symptomatic
+        1,234 cumulative severe
+          325 cumulative critical
+       17,839 cumulative recoveries
+           50 cumulative deaths
+            0 cumulative known deaths
+        2,353 cumulative reinfections
             0 cumulative tests
             0 cumulative diagnoses
-            0 cumulative known deaths
-            0 cumulative quarantined people
-            0 cumulative isolated people
             0 cumulative vaccine doses
             0 cumulative vaccinated people
+            0 cumulative quarantined people
+            0 cumulative isolated people
 </code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="4">
-<pre><code>Sim(&lt;no label&gt;; 2020-04-01 to 2020-06-01; pop: 50000 random; epi: 41466⚙, 86☠)</code></pre>
+<pre><code>Sim(n=50000; 2020.04.01—2020.06.01; networks=a; diseases=covid; connectors=crossimmunity)</code></pre>
 </div>
 </div>
 <p>You can mix and match too – pass in a parameter dictionary with default options, and then include other parameters as keywords (including overrides; keyword arguments take precedence). For example:</p>
@@ -710,34 +720,34 @@ Simulation summary:
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(pars, pop_infected<span class="op">=</span><span class="dv">10</span>) <span class="co"># Use parameters defined above, except start with 10 infected people</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Initializing sim with 50000 people for 61 days
-  Running 2020-04-01 ( 0/61) (0.18 s)  ———————————————————— 2%
-  Running 2020-04-11 (10/61) (0.23 s)  •••————————————————— 18%
-  Running 2020-04-21 (20/61) (0.29 s)  ••••••—————————————— 34%
-  Running 2020-05-01 (30/61) (0.36 s)  ••••••••••—————————— 50%
-  Running 2020-05-11 (40/61) (0.42 s)  •••••••••••••——————— 66%
-  Running 2020-05-21 (50/61) (0.50 s)  ••••••••••••••••———— 82%
-  Running 2020-05-31 (60/61) (0.59 s)  •••••••••••••••••••— 98%
+<pre><code>Initializing sim with 50000 agents
+  Running 2020.04.01 ( 0/62) (0.00 s)  ———————————————————— 2%
+  Running 2020.04.11 (10/62) (0.11 s)  •••————————————————— 18%
+  Running 2020.04.21 (20/62) (0.23 s)  ••••••—————————————— 34%
+  Running 2020.05.01 (30/62) (0.35 s)  ••••••••••—————————— 50%
+  Running 2020.05.11 (40/62) (0.48 s)  •••••••••••••——————— 66%
+  Running 2020.05.21 (50/62) (0.63 s)  ••••••••••••••••———— 82%
+  Running 2020.05.31 (60/62) (0.82 s)  •••••••••••••••••••— 98%
 Simulation summary:
-       10,392 cumulative infections
-          128 cumulative reinfections
-        6,710 cumulative infectious
-        4,185 cumulative symptomatic cases
-          195 cumulative severe cases
-           51 cumulative critical cases
-        2,473 cumulative recoveries
-            7 cumulative deaths
+       12,354 cumulative infections
+        8,222 cumulative infectious
+        5,053 cumulative symptomatic
+          280 cumulative severe
+           75 cumulative critical
+        3,287 cumulative recoveries
+           10 cumulative deaths
+            0 cumulative known deaths
+          214 cumulative reinfections
             0 cumulative tests
             0 cumulative diagnoses
-            0 cumulative known deaths
-            0 cumulative quarantined people
-            0 cumulative isolated people
             0 cumulative vaccine doses
             0 cumulative vaccinated people
+            0 cumulative quarantined people
+            0 cumulative isolated people
 </code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="5">
-<pre><code>Sim(&lt;no label&gt;; 2020-04-01 to 2020-06-01; pop: 50000 random; epi: 10392⚙, 7☠)</code></pre>
+<pre><code>Sim(n=50000; 2020.04.01—2020.06.01; networks=a; diseases=covid; connectors=crossimmunity)</code></pre>
 </div>
 </div>
 </section>
@@ -763,7 +773,7 @@ Simulation summary:
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Custom intervention -- see Tutorial 5</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> protect_elderly(sim):</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> sim.t <span class="op">==</span> sim.day(<span class="st">'2020-04-01'</span>):</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> sim.ti <span class="op">==</span> sim.day(<span class="st">'2020-04-01'</span>):</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        elderly <span class="op">=</span> sim.people.age<span class="op">&gt;</span><span class="dv">70</span></span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        sim.people.rel_sus[elderly] <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
@@ -782,10 +792,17 @@ Simulation summary:
 <span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>msim <span class="op">=</span> cv.MultiSim([s1, s2])</span>
 <span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>msim.run()</span>
 <span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> msim.plot([<span class="st">'cum_deaths'</span>, <span class="st">'cum_infections'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Exception ignored while finalizing file &lt;_io.BytesIO object at 0x7f52204d89f0&gt;:
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/site-packages/starsim/utils.py", line 671, in __getattr__
+    raise AttributeError(attr)
+BufferError: Existing exports of data: object cannot be re-sized</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_intro_files/figure-html/cell-8-output-1.png" width="888" height="754" class="figure-img"></p>
+<p><img src="tut_intro_files/figure-html/cell-8-output-2.png" width="888" height="754" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1227,7 +1244,7 @@ Simulation summary:
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

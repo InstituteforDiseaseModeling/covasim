@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -309,6 +309,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="../whatsnew.html"> 
 <span class="menu-text">What’s new</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
@@ -620,8 +624,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.utils" class="level1">
 <h1>utils</h1>
 <p><code>utils</code></p>
-<p>Numerical utilities for running Covasim.</p>
-<p>These include the viral load, transmissibility, and infection calculations at the heart of the integration loop.</p>
+<p>Numerical utilities for Covasim: sampling, random numbers, and array indexing helpers.</p>
 <section id="functions" class="level2">
 <h2 class="anchored" data-anchor-id="functions">Functions</h2>
 <table class="caption-top table">
@@ -654,11 +657,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.defined">defined</a></td>
-<td>Returns the indices of the values of the array that are not-nan.</td>
+<td>Returns the indices of the values of the array that are not-nan. For a Starsim</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.utils.false">false</a></td>
-<td>Returns the indices of the values of the array that are false.</td>
+<td>Returns the indices of the values of the array that are false. For a Starsim</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.get_pdf">get_pdf</a></td>
@@ -674,7 +677,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="#covasim.utils.ifalse">ifalse</a></td>
-<td>Returns the indices that are true in the array – name is short for indices<a href="#covasim.utils.false">false</a></td>
+<td>Returns the indices that are false in the array – name is short for indices<a href="#covasim.utils.false">false</a></td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.ifalsei">ifalsei</a></td>
@@ -694,11 +697,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.iundefinedi">iundefinedi</a></td>
-<td>Returns the indices that are undefined in the array – name is short for indices[defined[indices]]</td>
+<td>Returns the indices that are undefined in the array – name is short for indices[undefined[indices]]</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.utils.n_binomial">n_binomial</a></td>
-<td>Perform multiple binomial (Bernolli) trials</td>
+<td>Perform multiple binomial (Bernoulli) trials</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.n_multinomial">n_multinomial</a></td>
@@ -726,11 +729,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.utils.true">true</a></td>
-<td>Returns the indices of the values of the array that are true: just an alias</td>
+<td>Returns the indices of the values of the array that are true: for a NumPy</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.utils.undefined">undefined</a></td>
-<td>Returns the indices of the values of the array that are not-nan.</td>
+<td>Returns the indices of the values of the array that are nan. For a Starsim</td>
 </tr>
 </tbody>
 </table>
@@ -950,7 +953,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.utils.defined" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.defined">defined</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>utils.defined(arr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices of the values of the array that are not-nan.</p>
+<p>Returns the indices of the values of the array that are not-nan. For a Starsim array (e.g.&nbsp;<code>sim.people.date_symptomatic</code>), returns the UIDs of the matching agents.</p>
 <section id="parameters-5" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
 <table class="caption-top table">
@@ -978,7 +981,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.utils.false" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.false">false</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>utils.false(arr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices of the values of the array that are false.</p>
+<p>Returns the indices of the values of the array that are false. For a Starsim array (e.g.&nbsp;<code>sim.people.susceptible</code>), returns the UIDs of the matching agents.</p>
 <section id="parameters-6" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
 <table class="caption-top table">
@@ -1007,6 +1010,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="covasim.utils.get_pdf">get_pdf</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>utils.get_pdf(dist<span class="op">=</span><span class="va">None</span>, par1<span class="op">=</span><span class="va">None</span>, par2<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return a probability density function for the specified distribution. This is used for example by test_num to retrieve the distribution of times from symptom-to-swab for testing. For example, for Washington State, these values are dist=‘lognormal’, par1=10, par2=170.</p>
+<p>Note that the parameters differ from those of cv.sample() for the same distribution names:</p>
+<ul>
+<li>‘uniform’ : from par1 to par1+par2 (i.e.&nbsp;par2 is the width, not the upper limit)</li>
+<li>‘lognormal’ : mean=par1 and <em>variance</em>=par2 (not std) of the lognormal distribution, shifted 0.5 days earlier</li>
+</ul>
 </section>
 <section id="covasim.utils.idefined" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.idefined">idefined</h3>
@@ -1038,8 +1046,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<p>Note: for a Starsim array, <code>inds</code> must have one entry per living agent (see <a href="../api/utils.html#covasim.utils.itrue" title="0"><code>cv.itrue()</code></a>).</p>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.idefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))</code></pre>
+<pre><code>inds = cv.idefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+uids = cv.idefined(sim.people.date_symptomatic, sim.people.uid)</code></pre>
 </section>
 </section>
 <section id="covasim.utils.idefinedi" class="level3">
@@ -1079,7 +1089,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.utils.ifalse" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.ifalse">ifalse</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>utils.ifalse(arr, inds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices that are true in the array – name is short for indices<a href="#covasim.utils.false">false</a></p>
+<p>Returns the indices that are false in the array – name is short for indices<a href="#covasim.utils.false">false</a></p>
 <section id="parameters-9" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
 <table class="caption-top table">
@@ -1106,8 +1116,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<p>Note: for a Starsim array, <code>inds</code> must have one entry per living agent (see <a href="../api/utils.html#covasim.utils.itrue" title="0"><code>cv.itrue()</code></a>).</p>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.ifalse(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))</code></pre>
+<pre><code>inds = cv.ifalse(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+uids = cv.ifalse(sim.people.susceptible, sim.people.uid)</code></pre>
 </section>
 </section>
 <section id="covasim.utils.ifalsei" class="level3">
@@ -1174,8 +1186,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<p>Note: a Starsim array (e.g.&nbsp;<code>sim.people.susceptible</code>) only has entries for living agents, so <code>inds</code> must have one entry per living agent, e.g. <code>sim.people.uid</code>; <code>np.arange(pop_size)</code> gives positions, not UIDs, once agents have died.</p>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.itrue(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))</code></pre>
+<pre><code>inds = cv.itrue(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+uids = cv.itrue(sim.people.susceptible, sim.people.uid)</code></pre>
 </section>
 </section>
 <section id="covasim.utils.itruei" class="level3">
@@ -1242,14 +1256,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<p>Note: for a Starsim array, <code>inds</code> must have one entry per living agent (see <a href="../api/utils.html#covasim.utils.itrue" title="0"><code>cv.itrue()</code></a>).</p>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.iundefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))</code></pre>
+<pre><code>inds = cv.iundefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+uids = cv.iundefined(sim.people.date_symptomatic, sim.people.uid)</code></pre>
 </section>
 </section>
 <section id="covasim.utils.iundefinedi" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.iundefinedi">iundefinedi</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>utils.iundefinedi(arr, inds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices that are undefined in the array – name is short for indices[defined[indices]]</p>
+<p>Returns the indices that are undefined in the array – name is short for indices[undefined[indices]]</p>
 <section id="parameters-14" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h4>
 <table class="caption-top table">
@@ -1283,7 +1299,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.utils.n_binomial" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.n_binomial">n_binomial</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>utils.n_binomial(prob, n)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform multiple binomial (Bernolli) trials</p>
+<p>Perform multiple binomial (Bernoulli) trials</p>
 <section id="parameters-15" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h4>
 <table class="caption-top table">
@@ -1383,7 +1399,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example</strong>::</p>
-<pre><code>outcomes = cv.multinomial(np.ones(6)/6.0, 50)+1 # Return 50 die-rolls</code></pre>
+<pre><code>outcomes = cv.n_multinomial(np.ones(6)/6.0, 50)+1 # Return 50 die-rolls</code></pre>
 </section>
 </section>
 <section id="covasim.utils.n_neg_binomial" class="level3">
@@ -1504,7 +1520,7 @@ outcomes = cv.n_neg_binomial(1, 100, 20) # 20 negative binomial trials with mean
 <li>‘normal’ : normal distribution with mean=par1 and std=par2</li>
 <li>‘lognormal’ : lognormal distribution with mean=par1 and std=par2 (parameters are for the lognormal distribution, <em>not</em> the underlying normal distribution)</li>
 <li>‘normal_pos’ : right-sided normal distribution (i.e.&nbsp;only positive values), with mean=par1 and std=par2 <em>of the underlying normal distribution</em></li>
-<li>‘normal_int’ : normal distribution with mean=par1 and std=par2, returns only integer values</li>
+<li>‘normal_int’ : as ‘normal_pos’ (i.e.&nbsp;mean=par1 and std=par2 <em>of the underlying normal distribution</em>), but returns only integer values</li>
 <li>‘lognormal_int’ : lognormal distribution with mean=par1 and std=par2, returns only integer values</li>
 <li>‘poisson’ : Poisson distribution with rate=par1 (par2 is not used); mean and variance are equal to par1</li>
 <li>‘neg_binomial’ : negative binomial distribution with mean=par1 and k=par2; converges to Poisson with k=∞</li>
@@ -1524,25 +1540,25 @@ outcomes = cv.n_neg_binomial(1, 100, 20) # 20 negative binomial trials with mean
 <tr class="odd">
 <td>dist</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>the distribution to sample from</td>
+<td>the distribution to sample from (default ‘uniform’)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>par1</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>the “main” distribution parameter (e.g.&nbsp;mean)</td>
+<td>the “main” distribution parameter (e.g.&nbsp;mean; default 0)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>par2</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>the “secondary” distribution parameter (e.g.&nbsp;std)</td>
+<td>the “secondary” distribution parameter (e.g.&nbsp;std; default 1)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>size</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>the number of samples (default=1)</td>
+<td>the number of samples (default: a single sample, returned as a scalar)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
@@ -1557,6 +1573,11 @@ outcomes = cv.n_neg_binomial(1, 100, 20) # 20 negative binomial trials with mean
 <section id="returns-4" class="level4 doc-section doc-section-returns">
 <h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 80%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -1568,7 +1589,7 @@ outcomes = cv.n_neg_binomial(1, 100, 20) # 20 negative binomial trials with mean
 <tr class="odd">
 <td></td>
 <td></td>
-<td>A length N array of samples</td>
+<td>A length N array of samples, or a single sample if size is None</td>
 </tr>
 </tbody>
 </table>
@@ -1586,7 +1607,8 @@ cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distribu
 <section id="covasim.utils.set_seed" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.set_seed">set_seed</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>utils.set_seed(seed<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Reset the random seed – complicated because of Numba, which requires special syntax to reset the seed. This function also resets Python’s built-in random number generated.</p>
+<p>Reset the random seed – complicated because of Numba, which requires special syntax to reset the seed. This function also resets Python’s built-in random number generator.</p>
+<p>Note: this resets the global NumPy, Numba, and Python random number generators used by the functions in this module, not Starsim’s per-distribution random number streams (which are set by the sim’s <code>rand_seed</code>).</p>
 <section id="parameters-21" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h4>
 <table class="caption-top table">
@@ -1612,7 +1634,7 @@ cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distribu
 <section id="covasim.utils.true" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.true">true</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>utils.true(arr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices of the values of the array that are true: just an alias for arr.nonzero()[0].</p>
+<p>Returns the indices of the values of the array that are true: for a NumPy array, just an alias for arr.nonzero()[0]. For a Starsim array (e.g. <code>sim.people.susceptible</code>), returns the UIDs of the matching agents.</p>
 <section id="parameters-22" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-22">Parameters</h4>
 <table class="caption-top table">
@@ -1634,13 +1656,14 @@ cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distribu
 </tbody>
 </table>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.true(np.array([1,0,0,1,1,0,1])) # Returns array([0, 3, 4, 6])</code></pre>
+<pre><code>inds = cv.true(np.array([1,0,0,1,1,0,1])) # Returns array([0, 3, 4, 6])
+inds = cv.true(sim.people.age &gt; 65) # Returns the UIDs of people over 65</code></pre>
 </section>
 </section>
 <section id="covasim.utils.undefined" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.utils.undefined">undefined</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>utils.undefined(arr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Returns the indices of the values of the array that are not-nan.</p>
+<p>Returns the indices of the values of the array that are nan. For a Starsim array (e.g.&nbsp;<code>sim.people.date_symptomatic</code>), returns the UIDs of the matching agents.</p>
 <section id="parameters-23" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-23">Parameters</h4>
 <table class="caption-top table">
@@ -1662,7 +1685,7 @@ cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distribu
 </tbody>
 </table>
 <p><strong>Example</strong>::</p>
-<pre><code>inds = cv.defined(np.array([1,np.nan,0,np.nan,1,0,1]))</code></pre>
+<pre><code>inds = cv.undefined(np.array([1,np.nan,0,np.nan,1,0,1]))</code></pre>
 
 
 </section>
@@ -2100,7 +2123,7 @@ cv.sample(dist='lognormal_int', par1=5, par2=3) # returns a lognormally distribu
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

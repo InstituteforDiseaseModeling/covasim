@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -472,6 +476,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -579,7 +589,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>agehist <span class="op">=</span> sim.get_analyzer() <span class="co"># Only one analyzer so we can retrieve it like this</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>agehist.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Covasim 3.1.9 (2026-09-29) — © 2020-2026 by IDM</code></pre>
+<pre><code>Covasim 4.0.1 (2026-10-16) — © 2020-2026 by IDM</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -607,7 +617,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_analyzers_files/figure-html/cell-3-output-2.png" width="1092" height="726" class="figure-img"></p>
+<p><img src="tut_analyzers_files/figure-html/cell-3-output-2.png" width="1083" height="726" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -625,7 +635,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">*</span>args, <span class="op">**</span>kwargs) <span class="co"># This is necessary to initialize the class properly</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.t <span class="op">=</span> []</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.tvec <span class="op">=</span> []</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.S <span class="op">=</span> []</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.E <span class="op">=</span> []</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.I <span class="op">=</span> []</span>
@@ -634,7 +644,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, sim):</span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        ppl <span class="op">=</span> sim.people <span class="co"># Shorthand</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.t.append(sim.t)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.tvec.append(sim.ti)</span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.S.append(ppl.susceptible.<span class="bu">sum</span>())</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.E.append(ppl.exposed.<span class="bu">sum</span>() <span class="op">-</span> ppl.infectious.<span class="bu">sum</span>())</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.I.append(ppl.infectious.<span class="bu">sum</span>())</span>
@@ -643,10 +653,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> plot(<span class="va">self</span>):</span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        pl.figure()</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.t, <span class="va">self</span>.S, label<span class="op">=</span><span class="st">'S'</span>)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.t, <span class="va">self</span>.E, label<span class="op">=</span><span class="st">'E'</span>)</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.t, <span class="va">self</span>.I, label<span class="op">=</span><span class="st">'I'</span>)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.t, <span class="va">self</span>.R, label<span class="op">=</span><span class="st">'R'</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.tvec, <span class="va">self</span>.S, label<span class="op">=</span><span class="st">'S'</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.tvec, <span class="va">self</span>.E, label<span class="op">=</span><span class="st">'E'</span>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.tvec, <span class="va">self</span>.I, label<span class="op">=</span><span class="st">'I'</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        pl.plot(<span class="va">self</span>.tvec, <span class="va">self</span>.R, label<span class="op">=</span><span class="st">'R'</span>)</span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        pl.legend()</span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        pl.xlabel(<span class="st">'Day'</span>)</span>
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        pl.ylabel(<span class="st">'People'</span>)</span>
@@ -674,116 +684,119 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    people_who_are_88_with_covid <span class="op">=</span> cv.true(people_who_are_88 <span class="op">*</span> people_exposed) <span class="co"># Multiplication is the same as logical "and"</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(people_who_are_88_with_covid) <span class="co"># Count how many people there are</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n:</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Oh no! </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> people aged 88 have covid on timestep </span><span class="sc">{</span>sim<span class="sc">.</span>t<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span><span class="st">"🤯"</span><span class="op">*</span>n<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Oh no! </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> people aged 88 have covid on timestep </span><span class="sc">{</span>sim<span class="sc">.</span>ti<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span><span class="st">"🤯"</span><span class="op">*</span>n<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim(n_days<span class="op">=</span><span class="dv">120</span>, analyzers<span class="op">=</span>check_88, verbose<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Oh no! 2 people aged 88 have covid on timestep 20 🤯🤯
-Oh no! 2 people aged 88 have covid on timestep 21 🤯🤯
-Oh no! 2 people aged 88 have covid on timestep 22 🤯🤯
-Oh no! 2 people aged 88 have covid on timestep 23 🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 24 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 25 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 26 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 27 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 28 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 29 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 30 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 31 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 32 🤯🤯🤯
+<pre><code>Oh no! 1 people aged 88 have covid on timestep 2 🤯
+Oh no! 1 people aged 88 have covid on timestep 3 🤯
+Oh no! 1 people aged 88 have covid on timestep 4 🤯
+Oh no! 1 people aged 88 have covid on timestep 5 🤯
+Oh no! 1 people aged 88 have covid on timestep 6 🤯
+Oh no! 1 people aged 88 have covid on timestep 7 🤯
+Oh no! 1 people aged 88 have covid on timestep 8 🤯
+Oh no! 1 people aged 88 have covid on timestep 9 🤯
+Oh no! 1 people aged 88 have covid on timestep 10 🤯
+Oh no! 1 people aged 88 have covid on timestep 11 🤯
+Oh no! 1 people aged 88 have covid on timestep 12 🤯
+Oh no! 1 people aged 88 have covid on timestep 13 🤯
+Oh no! 1 people aged 88 have covid on timestep 14 🤯
+Oh no! 1 people aged 88 have covid on timestep 15 🤯
+Oh no! 1 people aged 88 have covid on timestep 18 🤯
+Oh no! 1 people aged 88 have covid on timestep 19 🤯
+Oh no! 1 people aged 88 have covid on timestep 20 🤯
+Oh no! 1 people aged 88 have covid on timestep 21 🤯
+Oh no! 1 people aged 88 have covid on timestep 22 🤯
+Oh no! 1 people aged 88 have covid on timestep 23 🤯
+Oh no! 1 people aged 88 have covid on timestep 24 🤯
+Oh no! 1 people aged 88 have covid on timestep 25 🤯
+Oh no! 1 people aged 88 have covid on timestep 26 🤯
+Oh no! 1 people aged 88 have covid on timestep 27 🤯
+Oh no! 1 people aged 88 have covid on timestep 28 🤯
+Oh no! 1 people aged 88 have covid on timestep 29 🤯
+Oh no! 1 people aged 88 have covid on timestep 30 🤯
+Oh no! 1 people aged 88 have covid on timestep 31 🤯
+Oh no! 2 people aged 88 have covid on timestep 32 🤯🤯
 Oh no! 3 people aged 88 have covid on timestep 33 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 34 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 35 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 36 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 37 🤯🤯🤯
-Oh no! 4 people aged 88 have covid on timestep 38 🤯🤯🤯🤯
-Oh no! 5 people aged 88 have covid on timestep 39 🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 40 🤯🤯🤯🤯🤯🤯
-Oh no! 7 people aged 88 have covid on timestep 41 🤯🤯🤯🤯🤯🤯🤯
-Oh no! 7 people aged 88 have covid on timestep 42 🤯🤯🤯🤯🤯🤯🤯
-Oh no! 8 people aged 88 have covid on timestep 43 🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 12 people aged 88 have covid on timestep 44 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 12 people aged 88 have covid on timestep 45 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 14 people aged 88 have covid on timestep 46 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 15 people aged 88 have covid on timestep 47 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 15 people aged 88 have covid on timestep 48 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 16 people aged 88 have covid on timestep 49 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 17 people aged 88 have covid on timestep 50 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 16 people aged 88 have covid on timestep 51 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 15 people aged 88 have covid on timestep 52 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 18 people aged 88 have covid on timestep 53 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 19 people aged 88 have covid on timestep 54 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 20 people aged 88 have covid on timestep 55 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 21 people aged 88 have covid on timestep 56 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 21 people aged 88 have covid on timestep 57 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 22 people aged 88 have covid on timestep 58 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 25 people aged 88 have covid on timestep 59 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 28 people aged 88 have covid on timestep 60 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 28 people aged 88 have covid on timestep 61 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 28 people aged 88 have covid on timestep 62 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 27 people aged 88 have covid on timestep 63 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 28 people aged 88 have covid on timestep 64 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 28 people aged 88 have covid on timestep 65 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 27 people aged 88 have covid on timestep 66 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 27 people aged 88 have covid on timestep 67 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 25 people aged 88 have covid on timestep 68 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 22 people aged 88 have covid on timestep 69 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 19 people aged 88 have covid on timestep 70 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 18 people aged 88 have covid on timestep 71 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 16 people aged 88 have covid on timestep 72 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 15 people aged 88 have covid on timestep 73 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 13 people aged 88 have covid on timestep 74 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 75 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 76 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 77 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 78 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 79 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 8 people aged 88 have covid on timestep 80 🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 8 people aged 88 have covid on timestep 81 🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 9 people aged 88 have covid on timestep 82 🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 83 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 10 people aged 88 have covid on timestep 84 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 8 people aged 88 have covid on timestep 85 🤯🤯🤯🤯🤯🤯🤯🤯
-Oh no! 7 people aged 88 have covid on timestep 86 🤯🤯🤯🤯🤯🤯🤯
-Oh no! 7 people aged 88 have covid on timestep 87 🤯🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 88 🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 89 🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 90 🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 91 🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 92 🤯🤯🤯🤯🤯🤯
-Oh no! 6 people aged 88 have covid on timestep 93 🤯🤯🤯🤯🤯🤯
+Oh no! 2 people aged 88 have covid on timestep 34 🤯🤯
+Oh no! 2 people aged 88 have covid on timestep 35 🤯🤯
+Oh no! 2 people aged 88 have covid on timestep 36 🤯🤯
+Oh no! 2 people aged 88 have covid on timestep 37 🤯🤯
+Oh no! 2 people aged 88 have covid on timestep 38 🤯🤯
+Oh no! 3 people aged 88 have covid on timestep 39 🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 40 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 41 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 42 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 43 🤯🤯🤯🤯
+Oh no! 5 people aged 88 have covid on timestep 44 🤯🤯🤯🤯🤯
+Oh no! 6 people aged 88 have covid on timestep 45 🤯🤯🤯🤯🤯🤯
+Oh no! 6 people aged 88 have covid on timestep 46 🤯🤯🤯🤯🤯🤯
+Oh no! 6 people aged 88 have covid on timestep 47 🤯🤯🤯🤯🤯🤯
+Oh no! 7 people aged 88 have covid on timestep 48 🤯🤯🤯🤯🤯🤯🤯
+Oh no! 8 people aged 88 have covid on timestep 49 🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 8 people aged 88 have covid on timestep 50 🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 9 people aged 88 have covid on timestep 51 🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 12 people aged 88 have covid on timestep 52 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 14 people aged 88 have covid on timestep 53 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 54 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 16 people aged 88 have covid on timestep 55 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 14 people aged 88 have covid on timestep 56 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 57 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 58 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 59 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 18 people aged 88 have covid on timestep 60 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 16 people aged 88 have covid on timestep 61 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 62 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 63 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 16 people aged 88 have covid on timestep 64 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 65 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 18 people aged 88 have covid on timestep 66 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 67 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 68 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 18 people aged 88 have covid on timestep 69 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 20 people aged 88 have covid on timestep 70 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 71 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 17 people aged 88 have covid on timestep 72 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 16 people aged 88 have covid on timestep 73 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 74 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 15 people aged 88 have covid on timestep 75 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 14 people aged 88 have covid on timestep 76 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 11 people aged 88 have covid on timestep 77 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 12 people aged 88 have covid on timestep 78 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 11 people aged 88 have covid on timestep 79 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 11 people aged 88 have covid on timestep 80 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 11 people aged 88 have covid on timestep 81 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 11 people aged 88 have covid on timestep 82 🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 9 people aged 88 have covid on timestep 83 🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 9 people aged 88 have covid on timestep 84 🤯🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 7 people aged 88 have covid on timestep 85 🤯🤯🤯🤯🤯🤯🤯
+Oh no! 8 people aged 88 have covid on timestep 86 🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 8 people aged 88 have covid on timestep 87 🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 8 people aged 88 have covid on timestep 88 🤯🤯🤯🤯🤯🤯🤯🤯
+Oh no! 7 people aged 88 have covid on timestep 89 🤯🤯🤯🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 90 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 91 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 92 🤯🤯🤯🤯
+Oh no! 4 people aged 88 have covid on timestep 93 🤯🤯🤯🤯
 Oh no! 4 people aged 88 have covid on timestep 94 🤯🤯🤯🤯
 Oh no! 4 people aged 88 have covid on timestep 95 🤯🤯🤯🤯
 Oh no! 4 people aged 88 have covid on timestep 96 🤯🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 97 🤯🤯🤯
-Oh no! 3 people aged 88 have covid on timestep 98 🤯🤯🤯
-Oh no! 2 people aged 88 have covid on timestep 99 🤯🤯
-Oh no! 2 people aged 88 have covid on timestep 100 🤯🤯
+Oh no! 1 people aged 88 have covid on timestep 97 🤯
+Oh no! 1 people aged 88 have covid on timestep 98 🤯
+Oh no! 1 people aged 88 have covid on timestep 99 🤯
+Oh no! 1 people aged 88 have covid on timestep 100 🤯
 Oh no! 1 people aged 88 have covid on timestep 101 🤯
 Oh no! 1 people aged 88 have covid on timestep 102 🤯
 Oh no! 1 people aged 88 have covid on timestep 103 🤯
 Oh no! 1 people aged 88 have covid on timestep 104 🤯
 Oh no! 1 people aged 88 have covid on timestep 105 🤯
 Oh no! 1 people aged 88 have covid on timestep 106 🤯
-Oh no! 1 people aged 88 have covid on timestep 107 🤯
-Oh no! 1 people aged 88 have covid on timestep 108 🤯
-Oh no! 1 people aged 88 have covid on timestep 109 🤯
-Oh no! 1 people aged 88 have covid on timestep 110 🤯
-Oh no! 1 people aged 88 have covid on timestep 111 🤯
-Oh no! 1 people aged 88 have covid on timestep 112 🤯
-Oh no! 1 people aged 88 have covid on timestep 113 🤯
-Oh no! 1 people aged 88 have covid on timestep 114 🤯
-Oh no! 1 people aged 88 have covid on timestep 115 🤯
-Oh no! 1 people aged 88 have covid on timestep 116 🤯
-Oh no! 1 people aged 88 have covid on timestep 117 🤯
-Oh no! 1 people aged 88 have covid on timestep 118 🤯
-Oh no! 1 people aged 88 have covid on timestep 119 🤯
-Oh no! 1 people aged 88 have covid on timestep 120 🤯</code></pre>
+Oh no! 1 people aged 88 have covid on timestep 107 🤯</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="4">
-<pre><code>Sim(&lt;no label&gt;; 2020-03-01 to 2020-06-29; pop: 20000 random; epi: 21222⚙, 119☠)</code></pre>
+<pre><code>Sim(n=20000; 2020.03.01—2020.06.29; networks=a; diseases=covid; connectors=crossimmunity)</code></pre>
 </div>
 </div>
 
@@ -1223,7 +1236,7 @@ Oh no! 1 people aged 88 have covid on timestep 120 🤯</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

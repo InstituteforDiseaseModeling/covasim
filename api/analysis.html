@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -503,45 +507,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
   <ul>
-  <li><a href="#covasim.analysis.Analyzer" id="toc-covasim.analysis.Analyzer" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer">Analyzer</a>
+  <li><a href="#covasim.analysis.Analyzer" id="toc-covasim.analysis.Analyzer" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer">Analyzer</a></li>
+  <li><a href="#covasim.analysis.Calibration" id="toc-covasim.analysis.Calibration" class="nav-link" data-scroll-target="#covasim.analysis.Calibration">Calibration</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.analysis.Analyzer.apply" id="toc-covasim.analysis.Analyzer.apply" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer.apply">apply</a></li>
-  <li><a href="#covasim.analysis.Analyzer.finalize" id="toc-covasim.analysis.Analyzer.finalize" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer.finalize">finalize</a></li>
-  <li><a href="#covasim.analysis.Analyzer.initialize" id="toc-covasim.analysis.Analyzer.initialize" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer.initialize">initialize</a></li>
-  <li><a href="#covasim.analysis.Analyzer.shrink" id="toc-covasim.analysis.Analyzer.shrink" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer.shrink">shrink</a></li>
-  <li><a href="#covasim.analysis.Analyzer.to_json" id="toc-covasim.analysis.Analyzer.to_json" class="nav-link" data-scroll-target="#covasim.analysis.Analyzer.to_json">to_json</a></li>
-  </ul></li>
-  </ul></li>
-  <li><a href="#covasim.analysis.Calibration" id="toc-covasim.analysis.Calibration" class="nav-link" data-scroll-target="#covasim.analysis.Calibration">Calibration</a>
-  <ul class="collapse">
-  <li><a href="#parameters-3" id="toc-parameters-3" class="nav-link" data-scroll-target="#parameters-3">Parameters</a></li>
-  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns</a></li>
-  <li><a href="#methods-1" id="toc-methods-1" class="nav-link" data-scroll-target="#methods-1">Methods</a>
-  <ul class="collapse">
   <li><a href="#covasim.analysis.Calibration.calibrate" id="toc-covasim.analysis.Calibration.calibrate" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.calibrate">calibrate</a></li>
-  <li><a href="#covasim.analysis.Calibration.make_study" id="toc-covasim.analysis.Calibration.make_study" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.make_study">make_study</a></li>
+  <li><a href="#covasim.analysis.Calibration.check_fit" id="toc-covasim.analysis.Calibration.check_fit" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.check_fit">check_fit</a></li>
   <li><a href="#covasim.analysis.Calibration.parse_study" id="toc-covasim.analysis.Calibration.parse_study" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.parse_study">parse_study</a></li>
+  <li><a href="#covasim.analysis.Calibration.plot" id="toc-covasim.analysis.Calibration.plot" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot">plot</a></li>
   <li><a href="#covasim.analysis.Calibration.plot_all" id="toc-covasim.analysis.Calibration.plot_all" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_all">plot_all</a></li>
   <li><a href="#covasim.analysis.Calibration.plot_best" id="toc-covasim.analysis.Calibration.plot_best" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_best">plot_best</a></li>
+  <li><a href="#covasim.analysis.Calibration.plot_final" id="toc-covasim.analysis.Calibration.plot_final" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_final">plot_final</a></li>
   <li><a href="#covasim.analysis.Calibration.plot_sims" id="toc-covasim.analysis.Calibration.plot_sims" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_sims">plot_sims</a></li>
   <li><a href="#covasim.analysis.Calibration.plot_stride" id="toc-covasim.analysis.Calibration.plot_stride" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_stride">plot_stride</a></li>
   <li><a href="#covasim.analysis.Calibration.plot_trend" id="toc-covasim.analysis.Calibration.plot_trend" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.plot_trend">plot_trend</a></li>
-  <li><a href="#covasim.analysis.Calibration.remove_db" id="toc-covasim.analysis.Calibration.remove_db" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.remove_db">remove_db</a></li>
   <li><a href="#covasim.analysis.Calibration.run_sim" id="toc-covasim.analysis.Calibration.run_sim" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.run_sim">run_sim</a></li>
   <li><a href="#covasim.analysis.Calibration.run_trial" id="toc-covasim.analysis.Calibration.run_trial" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.run_trial">run_trial</a></li>
-  <li><a href="#covasim.analysis.Calibration.run_workers" id="toc-covasim.analysis.Calibration.run_workers" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.run_workers">run_workers</a></li>
   <li><a href="#covasim.analysis.Calibration.summarize" id="toc-covasim.analysis.Calibration.summarize" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.summarize">summarize</a></li>
-  <li><a href="#covasim.analysis.Calibration.to_json" id="toc-covasim.analysis.Calibration.to_json" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.to_json">to_json</a></li>
-  <li><a href="#covasim.analysis.Calibration.worker" id="toc-covasim.analysis.Calibration.worker" class="nav-link" data-scroll-target="#covasim.analysis.Calibration.worker">worker</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.analysis.Fit" id="toc-covasim.analysis.Fit" class="nav-link" data-scroll-target="#covasim.analysis.Fit">Fit</a>
   <ul class="collapse">
-  <li><a href="#parameters-5" id="toc-parameters-5" class="nav-link" data-scroll-target="#parameters-5">Parameters</a></li>
-  <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
+  <li><a href="#parameters-9" id="toc-parameters-9" class="nav-link" data-scroll-target="#parameters-9">Parameters</a></li>
+  <li><a href="#methods-1" id="toc-methods-1" class="nav-link" data-scroll-target="#methods-1">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.Fit.compute" id="toc-covasim.analysis.Fit.compute" class="nav-link" data-scroll-target="#covasim.analysis.Fit.compute">compute</a></li>
   <li><a href="#covasim.analysis.Fit.compute_diffs" id="toc-covasim.analysis.Fit.compute_diffs" class="nav-link" data-scroll-target="#covasim.analysis.Fit.compute_diffs">compute_diffs</a></li>
@@ -553,16 +543,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#covasim.analysis.Fit.summarize" id="toc-covasim.analysis.Fit.summarize" class="nav-link" data-scroll-target="#covasim.analysis.Fit.summarize">summarize</a></li>
   </ul></li>
   </ul></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot" id="toc-covasim.analysis.PeopleSnapshot" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot">PeopleSnapshot</a>
+  <ul class="collapse">
+  <li><a href="#parameters-11" id="toc-parameters-11" class="nav-link" data-scroll-target="#parameters-11">Parameters</a></li>
+  <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
+  <ul class="collapse">
+  <li><a href="#covasim.analysis.PeopleSnapshot.count" id="toc-covasim.analysis.PeopleSnapshot.count" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.count">count</a></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot.defined" id="toc-covasim.analysis.PeopleSnapshot.defined" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.defined">defined</a></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot.false" id="toc-covasim.analysis.PeopleSnapshot.false" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.false">false</a></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot.keys" id="toc-covasim.analysis.PeopleSnapshot.keys" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.keys">keys</a></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot.true" id="toc-covasim.analysis.PeopleSnapshot.true" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.true">true</a></li>
+  <li><a href="#covasim.analysis.PeopleSnapshot.undefined" id="toc-covasim.analysis.PeopleSnapshot.undefined" class="nav-link" data-scroll-target="#covasim.analysis.PeopleSnapshot.undefined">undefined</a></li>
+  </ul></li>
+  </ul></li>
   <li><a href="#covasim.analysis.TransTree" id="toc-covasim.analysis.TransTree" class="nav-link" data-scroll-target="#covasim.analysis.TransTree">TransTree</a>
   <ul class="collapse">
-  <li><a href="#parameters-7" id="toc-parameters-7" class="nav-link" data-scroll-target="#parameters-7">Parameters</a></li>
+  <li><a href="#parameters-12" id="toc-parameters-12" class="nav-link" data-scroll-target="#parameters-12">Parameters</a></li>
   <li><a href="#methods-3" id="toc-methods-3" class="nav-link" data-scroll-target="#methods-3">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.TransTree.animate" id="toc-covasim.analysis.TransTree.animate" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.animate">animate</a></li>
   <li><a href="#covasim.analysis.TransTree.count_targets" id="toc-covasim.analysis.TransTree.count_targets" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.count_targets">count_targets</a></li>
   <li><a href="#covasim.analysis.TransTree.count_transmissions" id="toc-covasim.analysis.TransTree.count_transmissions" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.count_transmissions">count_transmissions</a></li>
   <li><a href="#covasim.analysis.TransTree.day" id="toc-covasim.analysis.TransTree.day" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.day">day</a></li>
+  <li><a href="#covasim.analysis.TransTree.get_people_attr" id="toc-covasim.analysis.TransTree.get_people_attr" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.get_people_attr">get_people_attr</a></li>
   <li><a href="#covasim.analysis.TransTree.make_detailed" id="toc-covasim.analysis.TransTree.make_detailed" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.make_detailed">make_detailed</a></li>
+  <li><a href="#covasim.analysis.TransTree.make_tree" id="toc-covasim.analysis.TransTree.make_tree" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.make_tree">make_tree</a></li>
   <li><a href="#covasim.analysis.TransTree.plot" id="toc-covasim.analysis.TransTree.plot" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.plot">plot</a></li>
   <li><a href="#covasim.analysis.TransTree.plot_histograms" id="toc-covasim.analysis.TransTree.plot_histograms" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.plot_histograms">plot_histograms</a></li>
   <li><a href="#covasim.analysis.TransTree.r0" id="toc-covasim.analysis.TransTree.r0" class="nav-link" data-scroll-target="#covasim.analysis.TransTree.r0">r0</a></li>
@@ -570,7 +575,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#covasim.analysis.age_histogram" id="toc-covasim.analysis.age_histogram" class="nav-link" data-scroll-target="#covasim.analysis.age_histogram">age_histogram</a>
   <ul class="collapse">
-  <li><a href="#parameters-12" id="toc-parameters-12" class="nav-link" data-scroll-target="#parameters-12">Parameters</a></li>
+  <li><a href="#parameters-17" id="toc-parameters-17" class="nav-link" data-scroll-target="#parameters-17">Parameters</a></li>
   <li><a href="#methods-4" id="toc-methods-4" class="nav-link" data-scroll-target="#methods-4">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.age_histogram.compute_windows" id="toc-covasim.analysis.age_histogram.compute_windows" class="nav-link" data-scroll-target="#covasim.analysis.age_histogram.compute_windows">compute_windows</a></li>
@@ -581,7 +586,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#covasim.analysis.daily_age_stats" id="toc-covasim.analysis.daily_age_stats" class="nav-link" data-scroll-target="#covasim.analysis.daily_age_stats">daily_age_stats</a>
   <ul class="collapse">
-  <li><a href="#parameters-14" id="toc-parameters-14" class="nav-link" data-scroll-target="#parameters-14">Parameters</a></li>
+  <li><a href="#parameters-19" id="toc-parameters-19" class="nav-link" data-scroll-target="#parameters-19">Parameters</a></li>
   <li><a href="#methods-5" id="toc-methods-5" class="nav-link" data-scroll-target="#methods-5">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.daily_age_stats.plot" id="toc-covasim.analysis.daily_age_stats.plot" class="nav-link" data-scroll-target="#covasim.analysis.daily_age_stats.plot">plot</a></li>
@@ -591,7 +596,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#covasim.analysis.daily_stats" id="toc-covasim.analysis.daily_stats" class="nav-link" data-scroll-target="#covasim.analysis.daily_stats">daily_stats</a>
   <ul class="collapse">
-  <li><a href="#parameters-16" id="toc-parameters-16" class="nav-link" data-scroll-target="#parameters-16">Parameters</a></li>
+  <li><a href="#parameters-21" id="toc-parameters-21" class="nav-link" data-scroll-target="#parameters-21">Parameters</a></li>
   <li><a href="#methods-6" id="toc-methods-6" class="nav-link" data-scroll-target="#methods-6">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.daily_stats.intersect" id="toc-covasim.analysis.daily_stats.intersect" class="nav-link" data-scroll-target="#covasim.analysis.daily_stats.intersect">intersect</a></li>
@@ -603,7 +608,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#covasim.analysis.nab_histogram" id="toc-covasim.analysis.nab_histogram" class="nav-link" data-scroll-target="#covasim.analysis.nab_histogram">nab_histogram</a>
   <ul class="collapse">
-  <li><a href="#parameters-18" id="toc-parameters-18" class="nav-link" data-scroll-target="#parameters-18">Parameters</a></li>
+  <li><a href="#parameters-23" id="toc-parameters-23" class="nav-link" data-scroll-target="#parameters-23">Parameters</a></li>
   <li><a href="#methods-7" id="toc-methods-7" class="nav-link" data-scroll-target="#methods-7">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.nab_histogram.plot" id="toc-covasim.analysis.nab_histogram.plot" class="nav-link" data-scroll-target="#covasim.analysis.nab_histogram.plot">plot</a></li>
@@ -611,7 +616,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#covasim.analysis.snapshot" id="toc-covasim.analysis.snapshot" class="nav-link" data-scroll-target="#covasim.analysis.snapshot">snapshot</a>
   <ul class="collapse">
-  <li><a href="#parameters-20" id="toc-parameters-20" class="nav-link" data-scroll-target="#parameters-20">Parameters</a></li>
+  <li><a href="#parameters-25" id="toc-parameters-25" class="nav-link" data-scroll-target="#parameters-25">Parameters</a></li>
   <li><a href="#methods-8" id="toc-methods-8" class="nav-link" data-scroll-target="#methods-8">Methods</a>
   <ul class="collapse">
   <li><a href="#covasim.analysis.snapshot.get" id="toc-covasim.analysis.snapshot.get" class="nav-link" data-scroll-target="#covasim.analysis.snapshot.get">get</a></li>
@@ -632,7 +637,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.analysis" class="level1">
 <h1>analysis</h1>
 <p><code>analysis</code></p>
-<p>Additional analysis functions that are not part of the core Covasim workflow, but which are useful for particular investigations.</p>
+<p>Additional analysis functions that are not part of the core Covasim workflow, but which are useful for particular investigations: the analyzers (which run during a sim, e.g.&nbsp;<a href="../api/analysis.html#covasim.analysis.snapshot" title="0"><code>cv.snapshot</code></a>), <a href="../api/analysis.html#covasim.analysis.Fit" title="0"><code>cv.Fit</code></a> and <a href="../api/analysis.html#covasim.analysis.Calibration" title="0"><code>cv.Calibration</code></a> (which compare a sim with data), and <a href="../api/analysis.html#covasim.analysis.TransTree" title="0"><code>cv.TransTree</code></a> (the transmission tree).</p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -645,7 +650,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.analysis.Analyzer">Analyzer</a></td>
-<td>Base class for analyzers. Based on the Intervention class. Analyzers are used</td>
+<td>Base class for Covasim analyzers, built on <a href="https://docs.starsim.org/api/analyzers.html#starsim.analyzers.Analyzer" title="0"><code>ss.Analyzer</code></a>.</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.analysis.Calibration">Calibration</a></td>
@@ -656,26 +661,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>A class for calculating the fit between the model and the data. Note the</td>
 </tr>
 <tr class="even">
+<td><a href="#covasim.analysis.PeopleSnapshot">PeopleSnapshot</a></td>
+<td>A copy of the per-agent states of <code>sim.people</code> at one point in time (as stored by <a href="../api/analysis.html#covasim.analysis.snapshot" title="0"><code>cv.snapshot</code></a>).</td>
+</tr>
+<tr class="odd">
 <td><a href="#covasim.analysis.TransTree">TransTree</a></td>
 <td>A class for holding a transmission tree. There are several different representations</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.analysis.age_histogram">age_histogram</a></td>
 <td>Calculate statistics across age bins, including histogram plotting functionality.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.analysis.daily_age_stats">daily_age_stats</a></td>
 <td>Calculate daily counts by age, saving for each day of the simulation. Can</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.analysis.daily_stats">daily_stats</a></td>
 <td>Print out daily statistics about the simulation. Note that this analyzer takes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#covasim.analysis.nab_histogram">nab_histogram</a></td>
 <td>Store histogram of log_{10}(NAb) distribution</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.analysis.snapshot">snapshot</a></td>
 <td>Analyzer that takes a “snapshot” of the sim.people array at specified points</td>
 </tr>
@@ -683,181 +692,51 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="covasim.analysis.Analyzer" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.Analyzer">Analyzer</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer(label<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Base class for analyzers. Based on the Intervention class. Analyzers are used to provide more detailed information about a simulation than is available by default – for example, pulling states out of sim.people on a particular timestep before it gets updated in the next timestep.</p>
-<p>To retrieve a particular analyzer from a sim, use sim.get_analyzer().</p>
-<section id="parameters" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>label</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>a label for the Analyzer (used for ease of identification)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="methods" class="level4">
-<h4 class="anchored" data-anchor-id="methods">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.analysis.Analyzer.apply">apply</a></td>
-<td>Apply analyzer at each time point. The analyzer has full access to the</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.analysis.Analyzer.finalize">finalize</a></td>
-<td>Finalize analyzer</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.analysis.Analyzer.initialize">initialize</a></td>
-<td>Initialize the analyzer, e.g.&nbsp;convert date strings to integers.</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.analysis.Analyzer.shrink">shrink</a></td>
-<td>Remove any excess stored data from the intervention; for use with sim.shrink().</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.analysis.Analyzer.to_json">to_json</a></td>
-<td>Return JSON-compatible representation</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.analysis.Analyzer.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Analyzer.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Apply analyzer at each time point. The analyzer has full access to the sim object, and typically stores data/results in itself. This is the core method which each analyzer object needs to implement.</p>
-<section id="parameters-1" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>sim</td>
-<td></td>
-<td>the Sim instance</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.analysis.Analyzer.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Analyzer.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer.finalize(sim<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Finalize analyzer</p>
-<p>This method is run once as part of <code>sim.finalize()</code> enabling the analyzer to perform any final operations after the simulation is complete (e.g.&nbsp;rescaling)</p>
-</section>
-<section id="covasim.analysis.Analyzer.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Analyzer.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer.initialize(sim<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize the analyzer, e.g.&nbsp;convert date strings to integers.</p>
-</section>
-<section id="covasim.analysis.Analyzer.shrink" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Analyzer.shrink">shrink</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer.shrink(in_place<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Remove any excess stored data from the intervention; for use with sim.shrink().</p>
-<section id="parameters-2" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>in_place</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to shrink the intervention (else shrink a copy)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.analysis.Analyzer.to_json" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Analyzer.to_json">to_json</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer.to_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return JSON-compatible representation</p>
-<p>Custom classes can’t be directly represented in JSON. This method is a one-way export to produce a JSON-compatible representation of the intervention. This method will attempt to JSONify each attribute of the intervention, skipping any that fail.</p>
-<section id="returns" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>JSON-serializable representation</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-</section>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>analysis.Analyzer(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    do_plot<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    show_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    line_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Base class for Covasim analyzers, built on <a href="https://docs.starsim.org/api/analyzers.html#starsim.analyzers.Analyzer" title="0"><code>ss.Analyzer</code></a>.</p>
+<p>As in v3, an analyzer can define <code>initialize(self, sim)</code>, <code>apply(self, sim)</code> (called on each timestep), and <code>finalize(self, sim)</code>; or the Starsim equivalents <code>init_post()</code>, <code>step()</code>, and <code>finalize()</code>.</p>
+<p>Note: a custom analyzer must not store data under the names Starsim reserves on a module (<code>t</code>, <code>pars</code>, <code>sim</code>, <code>dists</code>, <code>results</code>) – use e.g.&nbsp;<code>self.tvec</code> instead of <code>self.t</code>.</p>
 </section>
 <section id="covasim.analysis.Calibration" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.Calibration">Calibration</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    calib_pars<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    fit_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    custom_fn<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    par_samplers<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    n_trials<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    n_workers<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    total_trials<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    db_name<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    keep_db<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    storage<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>A class to handle calibration of Covasim simulations. Uses the Optuna hyperparameter optimization library (optuna.org), which must be installed separately (via pip install optuna).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    calib_pars<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    fit_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    custom_fn<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    par_samplers<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    n_trials<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    n_workers<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    total_trials<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    db_name<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    keep_db<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    storage<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    weights<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    fit_kw<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    reseed<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A class to handle calibration of Covasim simulations. Uses the Optuna hyperparameter optimization library (optuna.org), via Starsim’s <a href="https://docs.starsim.org/api/calibration.html#starsim.calibration.Calibration" title="0"><code>ss.Calibration</code></a>.</p>
+<p>Each trial copies the sim, sets the trial’s parameter values (via <code>sim[key] = value</code>), runs it, and computes the fit to the data (<code>sim.compute_fit()</code>); Optuna then minimizes the mismatch.</p>
 <p>Note: running a calibration does not guarantee a good fit! You must ensure that you run for a sufficient number of iterations, have enough free parameters, and that the parameters have wide enough bounds. Please see the tutorial on calibration for more information.</p>
-<section id="parameters-3" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<section id="parameters" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 4%">
-<col style="width: 75%">
-<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 2%">
+<col style="width: 86%">
+<col style="width: 3%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -871,7 +750,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>sim (Sim)</td>
 <td></td>
-<td>the simulation to calibrate</td>
+<td>the simulation to calibrate (ideally not yet initialized, so that parameters used during initialization, such as pop_infected, can be calibrated)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -883,49 +762,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>fit_args (dict)</td>
 <td></td>
-<td>a dictionary of options that are passed to sim.compute_fit() to calculate the goodness-of-fit</td>
+<td>a dictionary of options that are passed to sim.compute_fit() to calculate the goodness-of-fit (e.g.&nbsp;data, weights, keys)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
+<td>custom_fn (func)</td>
+<td></td>
+<td>a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim. The sim has been initialized, so e.g.&nbsp;sim.get_intervention() can be used; calib_pars keys that are sim parameters have already been set.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
 <td>par_samplers (dict)</td>
 <td></td>
 <td>an optional mapping from parameters to the Optuna sampler to use for choosing new points for each; by default, suggest_float</td>
 <td><em>required</em></td>
 </tr>
-<tr class="odd">
-<td>custom_fn (func)</td>
-<td></td>
-<td>a custom function for modifying the simulation; receives the sim and calib_pars as inputs, should return the modified sim</td>
-<td><em>required</em></td>
-</tr>
 <tr class="even">
 <td>n_trials (int)</td>
 <td></td>
-<td>the number of trials per worker</td>
+<td>the number of trials per worker (default 20)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>n_workers (int)</td>
 <td></td>
-<td>the number of parallel workers (default: maximum</td>
+<td>the number of parallel workers (default: the number of CPUs)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>total_trials (int)</td>
 <td></td>
-<td>if n_trials is not supplied, calculate by dividing this number by n_workers)</td>
+<td>if supplied, the total number of trials, divided between the workers (overrides n_trials)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>name (str)</td>
 <td></td>
-<td>the name of the database (default: ‘covasim_calibration’)</td>
+<td>the name of the Optuna study (default: ‘covasim_calibration’)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>db_name (str)</td>
 <td></td>
-<td>the name of the database file (default: ‘covasim_calibration.db’)</td>
+<td>the name of the database file (default: a file in a temporary folder, or f’{name}.db’ if name is supplied)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -959,29 +838,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>kwargs (dict)</td>
+<td>data (df)</td>
 <td></td>
-<td>passed to cv.Calibration()</td>
+<td>shortcut for fit_args[‘data’]: the data to fit to (default: the sim’s data)</td>
 <td><em>required</em></td>
 </tr>
-</tbody>
-</table>
-</section>
-<section id="returns-1" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
 <tr class="odd">
+<td>weights (dict)</td>
 <td></td>
+<td>shortcut for fit_args[‘weights’]: the weight of each result key</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>fit_kw (dict)</td>
 <td></td>
-<td>A Calibration object</td>
+<td>alias for fit_args</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>reseed (bool)</td>
+<td></td>
+<td>whether to use a different random seed for each trial (default: false)</td>
+<td><em>required</em></td>
 </tr>
 </tbody>
 </table>
@@ -990,11 +868,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 calib_pars = dict(beta=[0.015, 0.010, 0.020])
 calib = cv.Calibration(sim, calib_pars, total_trials=100)
 calib.calibrate()
-calib.plot()</code></pre>
-<p>New in version 3.0.3.</p>
+calib.plot_sims()</code></pre>
 </section>
-<section id="methods-1" class="level4">
-<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1008,20 +885,28 @@ calib.plot()</code></pre>
 <td>Actually perform calibration.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.analysis.Calibration.make_study">make_study</a></td>
-<td>Make a study, deleting one if it already exists</td>
+<td><a href="#covasim.analysis.Calibration.check_fit">check_fit</a></td>
+<td>Check whether calibration improved the fit, by comparing the mismatch of the sims run before and</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.analysis.Calibration.parse_study">parse_study</a></td>
-<td>Parse the study into a data frame – called automatically</td>
+<td>Parse the study into a data frame (self.df), in the order the trials were run – called automatically.</td>
 </tr>
 <tr class="even">
+<td><a href="#covasim.analysis.Calibration.plot">plot</a></td>
+<td>Alias to plot_sims()</td>
+</tr>
+<tr class="odd">
 <td><a href="#covasim.analysis.Calibration.plot_all">plot_all</a></td>
 <td>Plot every point in the calibration. Warning, very slow for more than a few hundred trials.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#covasim.analysis.Calibration.plot_best">plot_best</a></td>
-<td>Plot only the points with lowest mismatch. New in version 3.1.1.</td>
+<td>Plot only the points with lowest mismatch.</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.analysis.Calibration.plot_final">plot_final</a></td>
+<td>Alias to plot_sims()</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.analysis.Calibration.plot_sims">plot_sims</a></td>
@@ -1036,41 +921,25 @@ calib.plot()</code></pre>
 <td>Plot the trend in best mismatch over time.</td>
 </tr>
 <tr class="odd">
-<td><a href="#covasim.analysis.Calibration.remove_db">remove_db</a></td>
-<td>Remove the database file if keep_db is false and the path exists.</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.analysis.Calibration.run_sim">run_sim</a></td>
-<td>Create and run a simulation</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.analysis.Calibration.run_trial">run_trial</a></td>
-<td>Define the objective for Optuna</td>
+<td>Create and run a simulation with the supplied parameter values, and compute its fit.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.analysis.Calibration.run_workers">run_workers</a></td>
-<td>Run multiple workers in parallel</td>
+<td><a href="#covasim.analysis.Calibration.run_trial">run_trial</a></td>
+<td>Define the objective for Optuna: sample the parameters, and return the mismatch</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.analysis.Calibration.summarize">summarize</a></td>
 <td>Print out results from the calibration</td>
 </tr>
-<tr class="even">
-<td><a href="#covasim.analysis.Calibration.to_json">to_json</a></td>
-<td>Convert the data to JSON.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.analysis.Calibration.worker">worker</a></td>
-<td>Run a single worker</td>
-</tr>
 </tbody>
 </table>
 <section id="covasim.analysis.Calibration.calibrate" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.calibrate">calibrate</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.calibrate(calib_pars<span class="op">=</span><span class="va">None</span>, verbose<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.calibrate(calib_pars<span class="op">=</span><span class="va">None</span>, verbose<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Actually perform calibration.</p>
-<section id="parameters-4" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1090,7 +959,7 @@ calib.plot()</code></pre>
 <tr class="even">
 <td>verbose</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to print output from each trial</td>
+<td>whether to print a summary of the results</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
@@ -1103,97 +972,284 @@ calib.plot()</code></pre>
 </table>
 </section>
 </section>
-<section id="covasim.analysis.Calibration.make_study" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.make_study">make_study</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.make_study()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Make a study, deleting one if it already exists</p>
+<section id="covasim.analysis.Calibration.check_fit" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.check_fit">check_fit</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.check_fit(do_plot<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Check whether calibration improved the fit, by comparing the mismatch of the sims run before and after calibration (see also summarize()).</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>do_plot</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to plot the sims before and after calibration</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>True if the fit improved</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 <section id="covasim.analysis.Calibration.parse_study" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.parse_study">parse_study</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.parse_study()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Parse the study into a data frame – called automatically</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.parse_study(study<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Parse the study into a data frame (self.df), in the order the trials were run – called automatically.</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>study</td>
+<td><code>Study</code></td>
+<td>the Optuna study to parse (default: self.study)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="covasim.analysis.Calibration.plot" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot">plot</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to plot_sims()</p>
 </section>
 <section id="covasim.analysis.Calibration.plot_all" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_all">plot_all</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_all()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_all()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot every point in the calibration. Warning, very slow for more than a few hundred trials.</p>
-<p>New in version 3.1.1.</p>
 </section>
 <section id="covasim.analysis.Calibration.plot_best" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_best">plot_best</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_best(best_thresh<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Plot only the points with lowest mismatch. New in version 3.1.1.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_best(best_thresh<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Plot only the points with lowest mismatch.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>best_thresh</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>plot the trials with a mismatch within this factor of the best mismatch</td>
+<td><code>2</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="covasim.analysis.Calibration.plot_final" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_final">plot_final</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_final(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to plot_sims()</p>
 </section>
 <section id="covasim.analysis.Calibration.plot_sims" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_sims">plot_sims</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_sims(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_sims(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot sims, before and after calibration.</p>
-<p>New in version 3.1.1: renamed from plot() to plot_sims().</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to MultiSim.plot(), e.g.&nbsp;to_plot</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 <section id="covasim.analysis.Calibration.plot_stride" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_stride">plot_stride</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_stride(npts<span class="op">=</span><span class="dv">200</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_stride(npts<span class="op">=</span><span class="dv">200</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot a fixed number of points in order across the results.</p>
-<p>New in version 3.1.1.</p>
+<section id="parameters-6" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>npts</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td>the number of points to plot</td>
+<td><code>200</code></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 <section id="covasim.analysis.Calibration.plot_trend" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.plot_trend">plot_trend</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_trend(best_thresh<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.plot_trend(best_thresh<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the trend in best mismatch over time.</p>
-<p>New in version 3.1.1.</p>
+<section id="parameters-7" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>best_thresh</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>in the lower panel, show the trials with a mismatch within this factor of the best mismatch</td>
+<td><code>2</code></td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="covasim.analysis.Calibration.remove_db" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.remove_db">remove_db</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.remove_db()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Remove the database file if keep_db is false and the path exists.</p>
-<p>New in version 3.1.0.</p>
 </section>
 <section id="covasim.analysis.Calibration.run_sim" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.run_sim">run_sim</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.run_sim(calib_pars, label<span class="op">=</span><span class="va">None</span>, return_sim<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Create and run a simulation</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.run_sim(calib_pars, label<span class="op">=</span><span class="va">None</span>, return_sim<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create and run a simulation with the supplied parameter values, and compute its fit.</p>
+<section id="parameters-8" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>calib_pars</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>the parameter values to use, e.g.&nbsp;dict(beta=0.015)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>label</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>if supplied, the label of the sim</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>return_sim</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to return the sim (with its fit in sim.fit) rather than the mismatch</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 84%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>The mismatch (or the sim if return_sim=True); inf (or None) if the sim could not be run</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 <section id="covasim.analysis.Calibration.run_trial" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.run_trial">run_trial</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.run_trial(trial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Define the objective for Optuna</p>
-</section>
-<section id="covasim.analysis.Calibration.run_workers" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.run_workers">run_workers</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.run_workers()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run multiple workers in parallel</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.run_trial(trial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Define the objective for Optuna: sample the parameters, and return the mismatch</p>
 </section>
 <section id="covasim.analysis.Calibration.summarize" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.summarize">summarize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.summarize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.summarize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Print out results from the calibration</p>
-</section>
-<section id="covasim.analysis.Calibration.to_json" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.to_json">to_json</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.to_json(filename<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Convert the data to JSON.</p>
-<p>New in version 3.1.1.</p>
-</section>
-<section id="covasim.analysis.Calibration.worker" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.analysis.Calibration.worker">worker</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>analysis.Calibration.worker()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run a single worker</p>
 </section>
 </section>
 </section>
 <section id="covasim.analysis.Fit" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.Fit">Fit</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit(</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    weights<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    keys<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    custom<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    compute<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    weights<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    keys<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    custom<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    compute<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A class for calculating the fit between the model and the data. Note the following terminology is used here:</p>
 <pre><code>- fit: nonspecific term for how well the model matches the data
 - difference: the absolute numerical differences between the model and the data (one time series per result)
@@ -1201,8 +1257,8 @@ calib.plot()</code></pre>
 - loss: the goodness-of-fit for each result multiplied by user-specified weights (one time series per result)
 - mismatches: the sum of all the losses (a single scalar value per time series)
 - mismatch: the sum of the mismatches -- this is the value to be minimized during calibration</code></pre>
-<section id="parameters-5" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1216,7 +1272,7 @@ calib.plot()</code></pre>
 <tr class="odd">
 <td>sim</td>
 <td><a href="../api/sim.html#covasim.sim.Sim">Sim</a></td>
-<td>the sim object</td>
+<td>the sim object (after it has been run)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -1258,10 +1314,16 @@ calib.plot()</code></pre>
 <tr class="even">
 <td>label</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>the label for the analyzer</td>
+<td>the label for the fit</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
+<td>data</td>
+<td><code>DataFrame</code></td>
+<td>the data to fit, indexed by date or by integer day, with columns named like the sim results (e.g.&nbsp;<code>cum_deaths</code>); by default, the sim’s data (<code>sim.data</code>)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to cv.compute_gof() – see this function for more detail on goodness-of-fit calculation options</td>
@@ -1275,8 +1337,8 @@ sim.run()
 fit = sim.compute_fit()
 fit.plot()</code></pre>
 </section>
-<section id="methods-2" class="level4">
-<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1321,45 +1383,45 @@ fit.plot()</code></pre>
 </table>
 <section id="covasim.analysis.Fit.compute" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.compute">compute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Perform all required computations</p>
 </section>
 <section id="covasim.analysis.Fit.compute_diffs" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.compute_diffs">compute_diffs</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_diffs(absolute<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_diffs(absolute<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Find the differences between the sim and the data</p>
 </section>
 <section id="covasim.analysis.Fit.compute_gofs" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.compute_gofs">compute_gofs</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_gofs(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_gofs(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Compute the goodness-of-fit</p>
 </section>
 <section id="covasim.analysis.Fit.compute_losses" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.compute_losses">compute_losses</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_losses()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_losses()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Compute the weighted goodness-of-fit</p>
 </section>
 <section id="covasim.analysis.Fit.compute_mismatch" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.compute_mismatch">compute_mismatch</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_mismatch(use_median<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.compute_mismatch(use_median<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Compute the final mismatch</p>
 </section>
 <section id="covasim.analysis.Fit.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.plot(</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    keys<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    date_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    fig<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.plot(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    keys<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    date_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    fig<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the fit of the model to the data. For each result, plot the data and the model; the difference; and the loss (weighted difference). Also plots the loss as a function of time.</p>
-<section id="parameters-6" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
+<section id="parameters-10" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1385,19 +1447,19 @@ fit.plot()</code></pre>
 <tr class="odd">
 <td>fig_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <code>pl.figure()</code></td>
+<td>passed to <a href="https://matplotlib.org/stable/api/figure_api.html#module-plt.figure" title="1"><code>plt.figure()</code></a></td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>axis_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <code>pl.subplots_adjust()</code></td>
+<td>passed to <code>plt.subplots_adjust()</code></td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>plot_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <code>pl.plot()</code></td>
+<td>passed to <code>plt.plot()</code></td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -1449,22 +1511,23 @@ fit.plot()</code></pre>
 </section>
 <section id="covasim.analysis.Fit.reconcile_inputs" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.reconcile_inputs">reconcile_inputs</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.reconcile_inputs()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.reconcile_inputs()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Find matching keys and indices between the model and the data</p>
 </section>
 <section id="covasim.analysis.Fit.summarize" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.Fit.summarize">summarize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.summarize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>analysis.Fit.summarize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Print out results from the fit</p>
 </section>
 </section>
 </section>
-<section id="covasim.analysis.TransTree" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.analysis.TransTree">TransTree</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree(sim, to_networkx<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>A class for holding a transmission tree. There are several different representations of the transmission tree: “infection_log” is copied from the people object and is the simplest representation. “detailed h” includes additional attributes about the source and target. If NetworkX is installed (required for most methods), “graph” includes an NX representation of the transmission tree.</p>
-<section id="parameters-7" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<section id="covasim.analysis.PeopleSnapshot" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot">PeopleSnapshot</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot(sim, copy<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A copy of the per-agent states of <code>sim.people</code> at one point in time (as stored by <a href="../api/analysis.html#covasim.analysis.snapshot" title="0"><code>cv.snapshot</code></a>).</p>
+<p>Every array is full length and indexed by agent (UID): agents who have died keep their last values (with <code>dead=True</code> and <code>alive=False</code>), so snapshots from different days can be compared elementwise. States are available as attributes or keys, e.g.&nbsp;<code>people.exposed</code> or <code>people['age']</code>, including the v3 names <code>date_exposed</code>, <code>date_symptomatic</code>, etc. (the <code>ti_*</code> time indices, since the timestep is one day).</p>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1478,8 +1541,108 @@ fit.plot()</code></pre>
 <tr class="odd">
 <td>sim</td>
 <td><a href="../api/sim.html#covasim.sim.Sim">Sim</a></td>
-<td>the sim object</td>
+<td>the sim to take the snapshot from</td>
 <td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>copy</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to copy the arrays (default); if False, the stored states are not copied, so only use the snapshot on the current timestep</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#covasim.analysis.PeopleSnapshot.count">count</a></td>
+<td>The number of people for whom this state is true</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.analysis.PeopleSnapshot.defined">defined</a></td>
+<td>The indices of people for whom this state is not NaN</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.analysis.PeopleSnapshot.false">false</a></td>
+<td>The indices of people for whom this state is false</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.analysis.PeopleSnapshot.keys">keys</a></td>
+<td>The names of the stored states</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.analysis.PeopleSnapshot.true">true</a></td>
+<td>The indices of people for whom this state is true</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.analysis.PeopleSnapshot.undefined">undefined</a></td>
+<td>The indices of people for whom this state is NaN</td>
+</tr>
+</tbody>
+</table>
+<section id="covasim.analysis.PeopleSnapshot.count" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.count">count</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.count(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The number of people for whom this state is true</p>
+</section>
+<section id="covasim.analysis.PeopleSnapshot.defined" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.defined">defined</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.defined(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The indices of people for whom this state is not NaN</p>
+</section>
+<section id="covasim.analysis.PeopleSnapshot.false" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.false">false</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.false(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The indices of people for whom this state is false</p>
+</section>
+<section id="covasim.analysis.PeopleSnapshot.keys" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.keys">keys</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The names of the stored states</p>
+</section>
+<section id="covasim.analysis.PeopleSnapshot.true" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.true">true</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.true(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The indices of people for whom this state is true</p>
+</section>
+<section id="covasim.analysis.PeopleSnapshot.undefined" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.PeopleSnapshot.undefined">undefined</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>analysis.PeopleSnapshot.undefined(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The indices of people for whom this state is NaN</p>
+</section>
+</section>
+</section>
+<section id="covasim.analysis.TransTree" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.analysis.TransTree">TransTree</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree(sim<span class="op">=</span><span class="va">None</span>, to_networkx<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A class for holding a transmission tree. There are several different representations of the transmission tree: “infection_log” is copied from the sim and is the simplest representation. “detailed” includes additional attributes about the source and target. If NetworkX is installed (required for most methods), “graph” includes an NX representation of the transmission tree.</p>
+<p>The transmission log is always recorded by the COVID module (<code>sim.diseases.covid.infection_log</code>), so the tree can be made from any sim after it has run. It can also be added as an analyzer (<code>analyzers=cv.TransTree()</code>), in which case it is made when the sim finishes.</p>
+<section id="parameters-12" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sim</td>
+<td><a href="../api/sim.html#covasim.sim.Sim">Sim</a></td>
+<td>the sim object (if None, make the tree at the end of the run the analyzer is part of)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>to_networkx</td>
@@ -1490,7 +1653,7 @@ fit.plot()</code></pre>
 </tbody>
 </table>
 <p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim().run()
+<pre><code>sim = cv.Sim()
 sim.run()
 tt = sim.make_transtree()
 tt.plot()
@@ -1524,8 +1687,16 @@ tt.plot_histograms()</code></pre>
 <td>Convenience function for converting an input to an integer day</td>
 </tr>
 <tr class="odd">
+<td><a href="#covasim.analysis.TransTree.get_people_attr">get_people_attr</a></td>
+<td>Get a per-agent array from the people; the date someone became a known contact is not recorded, so that is all NaN</td>
+</tr>
+<tr class="even">
 <td><a href="#covasim.analysis.TransTree.make_detailed">make_detailed</a></td>
-<td>Construct a detailed transmission tree, with additional information for each person</td>
+<td>Construct a detailed transmission tree, with additional information for each person (people is a cv.PeopleSnapshot)</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.analysis.TransTree.make_tree">make_tree</a></td>
+<td>Make the transmission tree from a sim that has been run</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.analysis.TransTree.plot">plot</a></td>
@@ -1545,8 +1716,8 @@ tt.plot_histograms()</code></pre>
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.animate">animate</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.animate(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Animate the transmission tree.</p>
-<section id="parameters-8" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
+<section id="parameters-13" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1584,19 +1755,19 @@ tt.plot_histograms()</code></pre>
 <tr class="odd">
 <td>fig_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>arguments passed to pl.figure()</td>
+<td>arguments passed to plt.figure()</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>axis_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>arguments passed to pl.subplots_adjust()</td>
+<td>arguments passed to plt.subplots_adjust()</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>plot_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>arguments passed to pl.plot()</td>
+<td>arguments passed to plt.plot()</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -1650,8 +1821,8 @@ tt.plot_histograms()</code></pre>
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.count_targets">count_targets</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.count_targets(start_day<span class="op">=</span><span class="va">None</span>, end_day<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Count the number of targets each infected person has. If start and/or end days are given, it will only count the targets of people who got infected between those dates (it does not, however, filter on the date the target got infected).</p>
-<section id="parameters-9" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
+<section id="parameters-14" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1689,17 +1860,27 @@ tt.plot_histograms()</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.day(day<span class="op">=</span><span class="va">None</span>, which<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Convenience function for converting an input to an integer day</p>
 </section>
+<section id="covasim.analysis.TransTree.get_people_attr" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.get_people_attr">get_people_attr</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.get_people_attr(people, attr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get a per-agent array from the people; the date someone became a known contact is not recorded, so that is all NaN</p>
+</section>
 <section id="covasim.analysis.TransTree.make_detailed" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.make_detailed">make_detailed</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.make_detailed(people, reset<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Construct a detailed transmission tree, with additional information for each person</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.make_detailed(people)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Construct a detailed transmission tree, with additional information for each person (people is a cv.PeopleSnapshot)</p>
+</section>
+<section id="covasim.analysis.TransTree.make_tree" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.make_tree">make_tree</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.make_tree(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Make the transmission tree from a sim that has been run</p>
 </section>
 <section id="covasim.analysis.TransTree.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.plot(fig_args<span class="op">=</span><span class="va">None</span>, plot_args<span class="op">=</span><span class="va">None</span>, do_show<span class="op">=</span><span class="va">None</span>, fig<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.plot(fig_args<span class="op">=</span><span class="va">None</span>, plot_args<span class="op">=</span><span class="va">None</span>, do_show<span class="op">=</span><span class="va">None</span>, fig<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the transmission tree.</p>
-<section id="parameters-10" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
+<section id="parameters-15" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1713,13 +1894,13 @@ tt.plot_histograms()</code></pre>
 <tr class="odd">
 <td>fig_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to pl.figure()</td>
+<td>passed to plt.figure()</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>plot_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to pl.plot()</td>
+<td>passed to plt.plot()</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
@@ -1740,17 +1921,17 @@ tt.plot_histograms()</code></pre>
 </section>
 <section id="covasim.analysis.TransTree.plot_histograms" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.plot_histograms">plot_histograms</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.plot_histograms(</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    fig<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.plot_histograms(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    fig<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plots a histogram of the number of transmissions.</p>
-<section id="parameters-11" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
+<section id="parameters-16" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1788,7 +1969,7 @@ tt.plot_histograms()</code></pre>
 <tr class="odd">
 <td>fig_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to pl.figure()</td>
+<td>passed to plt.figure()</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -1803,7 +1984,7 @@ tt.plot_histograms()</code></pre>
 </section>
 <section id="covasim.analysis.TransTree.r0" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.TransTree.r0">r0</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.r0(recovered_only<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>analysis.TransTree.r0(recovered_only<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return average number of transmissions per person</p>
 <p>This doesn’t include seed transmissions. By default, it also doesn’t adjust for length of infection (e.g.&nbsp;people infected towards the end of the simulation will have fewer transmissions because their infection may extend past the end of the simulation, these people are not included). If ‘recovered_only=True’ then the downstream transmissions will only be included for people that recover before the end of the simulation, thus ensuring they all had the same amount of time to transmit.</p>
 </section>
@@ -1811,18 +1992,19 @@ tt.plot_histograms()</code></pre>
 </section>
 <section id="covasim.analysis.age_histogram" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.age_histogram">age_histogram</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram(</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    days<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    states<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    edges<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    datafile<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    sim<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram(</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    days<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    states<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    edges<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    datafile<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    sim<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Calculate statistics across age bins, including histogram plotting functionality.</p>
-<section id="parameters-12" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
+<p>For each state, the histogram counts the people for whom that state’s date is defined (e.g. <code>date_exposed</code>), i.e.&nbsp;the cumulative number of people who have been (or are scheduled to be) in that state.</p>
+<section id="parameters-17" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1842,7 +2024,7 @@ tt.plot_histograms()</code></pre>
 <tr class="even">
 <td>states</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>which states of people to record (default: exposed, tested, diagnosed, dead)</td>
+<td>which states of people to record (default: exposed, severe, dead, tested, diagnosed)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
@@ -1915,33 +2097,33 @@ agehist.plot()</code></pre>
 </table>
 <section id="covasim.analysis.age_histogram.compute_windows" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.age_histogram.compute_windows">compute_windows</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.compute_windows()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.compute_windows()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Convert cumulative histograms to windows</p>
 </section>
 <section id="covasim.analysis.age_histogram.from_sim" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.age_histogram.from_sim">from_sim</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.from_sim(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.from_sim(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create an age histogram from an already run sim</p>
 </section>
 <section id="covasim.analysis.age_histogram.get" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.age_histogram.get">get</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.get(key<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.get(key<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Retrieve a specific histogram from the given key (int, str, or date)</p>
 </section>
 <section id="covasim.analysis.age_histogram.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.age_histogram.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.plot(</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    windows<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">'#F8A493'</span>,</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    data_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>analysis.age_histogram.plot(</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    windows<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">'#F8A493'</span>,</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>    data_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Simple method for plotting the histograms.</p>
-<section id="parameters-13" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
+<section id="parameters-18" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1997,15 +2179,35 @@ agehist.plot()</code></pre>
 </tbody>
 </table>
 </section>
+<section id="returns-4" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>A list of figures, one per day</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 </section>
 <section id="covasim.analysis.daily_age_stats" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.daily_age_stats">daily_age_stats</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats(states<span class="op">=</span><span class="va">None</span>, edges<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats(states<span class="op">=</span><span class="va">None</span>, edges<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Calculate daily counts by age, saving for each day of the simulation. Can plot either time series by age or a histogram over all time.</p>
-<section id="parameters-14" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h4>
+<p>The counts are stored in <code>age_results</code> (v3: <code>results</code>, which is reserved by Starsim for time-series results): <code>age_results[date][state]</code> is the number of people in each age bin whose <code>date_{state}</code> is that day.</p>
+<section id="parameters-19" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2019,7 +2221,7 @@ agehist.plot()</code></pre>
 <tr class="odd">
 <td>states</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>which states of people to record (default: [‘diagnoses’, ‘deaths’, ‘tests’, ‘severe’])</td>
+<td>which states of people to record (default: exposed, severe, dead, tested, diagnosed)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -2038,7 +2240,6 @@ agehist.plot()</code></pre>
 </table>
 <p><strong>Examples</strong>::</p>
 <pre><code>sim = cv.Sim(analyzers=cv.daily_age_stats())
-sim = cv.Sim(pars, analyzers=daily_age)
 sim.run()
 daily_age = sim.get_analyzer()
 daily_age.plot()
@@ -2070,20 +2271,20 @@ daily_age.plot(total=True)</code></pre>
 </table>
 <section id="covasim.analysis.daily_age_stats.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_age_stats.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.plot(</span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    total<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>    dateformat<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">'#F8A493'</span>,</span>
-<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.plot(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    total<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>    dateformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">'#F8A493'</span>,</span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the results.</p>
-<section id="parameters-15" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
+<section id="parameters-20" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2154,29 +2355,29 @@ daily_age.plot(total=True)</code></pre>
 </section>
 <section id="covasim.analysis.daily_age_stats.to_df" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_age_stats.to_df">to_df</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.to_df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.to_df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create dataframe totals for each day</p>
 </section>
 <section id="covasim.analysis.daily_age_stats.to_total_df" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_age_stats.to_total_df">to_total_df</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.to_total_df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_age_stats.to_total_df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create dataframe totals across days</p>
 </section>
 </section>
 </section>
 <section id="covasim.analysis.daily_stats" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.daily_stats">daily_stats</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats(</span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    days<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    reporter<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    save_inds<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats(</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    days<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>    reporter<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>    save_inds<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Print out daily statistics about the simulation. Note that this analyzer takes a considerable amount of time, so should be used primarily for debugging, not in production code. To keep the intervention but toggle it off, pass an empty list of days.</p>
 <p>To show the stats for a day after a run has finished, use e.g.&nbsp;<code>daily_stats.report('2020-04-04')</code>.</p>
-<section id="parameters-16" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h4>
+<section id="parameters-21" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2216,7 +2417,7 @@ daily_age.plot(total=True)</code></pre>
 <p><strong>Example</strong>::</p>
 <pre><code>sim = cv.Sim(analyzers=cv.daily_stats())
 sim.run()
-sim['analyzers'][0].plot()</code></pre>
+sim.get_analyzer().plot()</code></pre>
 </section>
 <section id="methods-6" class="level4">
 <h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
@@ -2242,7 +2443,7 @@ sim['analyzers'][0].plot()</code></pre>
 </tr>
 <tr class="even">
 <td><a href="#covasim.analysis.daily_stats.report">report</a></td>
-<td>Print out one or all reports – take a date string or an int</td>
+<td>Print out one or all reports – take a date string, or an int for the position in the list of reports (not a day of the sim)</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.analysis.daily_stats.transpose">transpose</a></td>
@@ -2252,26 +2453,26 @@ sim['analyzers'][0].plot()</code></pre>
 </table>
 <section id="covasim.analysis.daily_stats.intersect" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_stats.intersect">intersect</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.intersect(<span class="op">*</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.intersect(<span class="op">*</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Compute the intersection between arrays of indices, handling either keys to precomputed indices or lists of indices. With two array inputs, simply performs np.intersect1d(arr1, arr2).</p>
 </section>
 <section id="covasim.analysis.daily_stats.make_report" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_stats.make_report">make_report</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.make_report(sim, stats, show_empty<span class="op">=</span><span class="st">'count'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.make_report(sim, stats, show_empty<span class="op">=</span><span class="st">'count'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Turn the statistics into a report</p>
 </section>
 <section id="covasim.analysis.daily_stats.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_stats.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.plot(</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.plot(</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the daily statistics recorded. Some overlap with e.g.&nbsp;<code>sim.plot(to_plot='overview')</code>.</p>
-<section id="parameters-17" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h6>
+<section id="parameters-22" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-22">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2318,22 +2519,22 @@ sim['analyzers'][0].plot()</code></pre>
 </section>
 <section id="covasim.analysis.daily_stats.report" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_stats.report">report</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.report(day<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Print out one or all reports – take a date string or an int</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.report(day<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Print out one or all reports – take a date string, or an int for the position in the list of reports (not a day of the sim)</p>
 </section>
 <section id="covasim.analysis.daily_stats.transpose" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.daily_stats.transpose">transpose</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.transpose(keys<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>analysis.daily_stats.transpose(keys<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Transpose the data from a list-of-dicts-of-dicts to a dict-of-dicts-of-lists</p>
 </section>
 </section>
 </section>
 <section id="covasim.analysis.nab_histogram" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.nab_histogram">nab_histogram</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>analysis.nab_histogram(days<span class="op">=</span><span class="va">None</span>, edges<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>analysis.nab_histogram(days<span class="op">=</span><span class="va">None</span>, edges<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Store histogram of log_{10}(NAb) distribution</p>
-<section id="parameters-18" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h4>
+<section id="parameters-23" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-23">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2382,16 +2583,16 @@ sim.get_analyzer().plot()</code></pre>
 </table>
 <section id="covasim.analysis.nab_histogram.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.nab_histogram.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>analysis.nab_histogram.plot(</span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>analysis.nab_histogram.plot(</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>    fig_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>    axis_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>    plot_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>    do_show<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot the results</p>
-<section id="parameters-19" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h6>
+<section id="parameters-24" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-24">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2440,10 +2641,11 @@ sim.get_analyzer().plot()</code></pre>
 </section>
 <section id="covasim.analysis.snapshot" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.analysis.snapshot">snapshot</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>analysis.snapshot(days, <span class="op">*</span>args, die<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>analysis.snapshot(days, <span class="op">*</span>args, die<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Analyzer that takes a “snapshot” of the sim.people array at specified points in time, and saves them to itself. To retrieve them, you can either access the dictionary directly, or use the get() method.</p>
-<section id="parameters-20" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h4>
+<p>Each snapshot is a <a href="../api/analysis.html#covasim.analysis.PeopleSnapshot" title="0"><code>cv.PeopleSnapshot</code></a>: full-length per-agent arrays, indexed by agent, with the same names as in v3 (e.g.&nbsp;<code>people.exposed</code>, <code>people.age</code>, <code>people.date_symptomatic</code>).</p>
+<section id="parameters-25" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-25">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2483,7 +2685,7 @@ sim.get_analyzer().plot()</code></pre>
 <p><strong>Example</strong>::</p>
 <pre><code>sim = cv.Sim(analyzers=cv.snapshot('2020-04-04', '2020-04-14'))
 sim.run()
-snapshot = sim['analyzers'][0]
+snapshot = sim.get_analyzer()
 people = snapshot.snapshots[0]            # Option 1
 people = snapshot.snapshots['2020-04-04'] # Option 2
 people = snapshot.get('2020-04-14')       # Option 3
@@ -2508,7 +2710,7 @@ people = snapshot.get()                   # Option 5</code></pre>
 </table>
 <section id="covasim.analysis.snapshot.get" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.analysis.snapshot.get">get</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>analysis.snapshot.get(key<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>analysis.snapshot.get(key<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Retrieve a snapshot from the given key (int, str, or date)</p>
 
 
@@ -2951,7 +3153,7 @@ people = snapshot.get()                   # Option 5</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

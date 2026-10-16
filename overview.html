@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -311,6 +311,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -471,6 +475,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -571,6 +581,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="about-covasim" class="level2">
 <h2 class="anchored" data-anchor-id="about-covasim">About Covasim</h2>
 <p>Covasim is a stochastic agent-based simulator for performing COVID-19 analyses. These include projections of indicators such as numbers of infections and peak hospital demand. Covasim can also be used to explore the potential impact of different interventions, including social distancing, school closures, testing, contact tracing, quarantine, and vaccination.</p>
+<p><strong>Note:</strong> Covasim is now part of the Starsim framework; please see <a href="https://starsim.org">starsim.org</a> for our current work on agent-based disease modeling. If you recently upgraded from Covasim v3 to Covasim v4 and would like help with the migration, please <a href="info@covasim.org">reach out to us</a> or <a href="https://github.com/starsimhub/covasim/issues/new/choose">open an issue</a> and we would be very happy to help you upgrade and/or fix any bugs you come across.</p>
 <p>The original scientific paper describing Covasim is available at <a href="http://paper.covasim.org" class="uri">http://paper.covasim.org</a>. The recommended citation is:</p>
 <blockquote class="blockquote">
 <p><strong>Covasim: an agent-based model of COVID-19 dynamics and interventions</strong>. Kerr CC, Stuart RM, Mistry D, Abeysuriya RG, Rosenfeld R, Hart G, Núñez RC, Cohen JA, Selvaraj P, Hagedorn B, George L, Jastrzębski M, Izzo A, Fowler G, Palmer A, Delport D, Scott N, Kelly S, Bennette C, Wagner B, Chang S, Oron AP, Wenger E, Panovska-Griffiths J, Famulare M, Klein DJ (2021). <em>PLOS Computational Biology</em> <strong>17</strong> (7): e1009149. doi: <a href="https://doi.org/10.1371/journal.pcbi.1009149" class="uri">https://doi.org/10.1371/journal.pcbi.1009149</a>.</p>
@@ -582,7 +593,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The Covasim webapp is available at <a href="https://app.covasim.org" class="uri">https://app.covasim.org</a>, and the repository for it is available <a href="https://github.com/covasim/covasim_webapp">here</a>.</p>
 <p>Covasim was developed by the <a href="https://idmod.org/">Institute for Disease Modeling</a>, with additional contributions from the <a href="https://www.math.ku.dk/english">University of Copenhagen</a>, the <a href="https://www.burnet.edu.au/">Burnet Institute</a>, <a href="https://github.com/">GitHub</a>, and <a href="https://www.microsoft.com/en-us/ai/ai-for-health-covid-data">Microsoft</a>.</p>
 <p>Questions or comments can be directed to <a href="mailto:info@covasim.org" class="email">info@covasim.org</a>, or on this project’s <a href="https://github.com/starsimhub/covasim">GitHub</a> page. Full information about Covasim is provided in the <a href="https://docs.covasim.org">documentation</a>.</p>
-<p><strong>Note:</strong> Covasim is now part of the Starsim framework; please see <a href="https://starsim.org">starsim.org</a> for our current work on agent-based disease modeling.</p>
 </section>
 <section id="background" class="level2">
 <h2 class="anchored" data-anchor-id="background">Background</h2>
@@ -1136,7 +1146,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

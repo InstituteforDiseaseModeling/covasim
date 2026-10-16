@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -71,7 +71,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./faq.html" rel="next">
+<link href="./migrate3to4.html" rel="next">
 <link href="./tutorials/tut_advanced.html" rel="prev">
 <link href=".//assets/favicon.ico" rel="icon">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -472,6 +476,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -537,7 +547,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
   <li><a href="#coming-soon" id="toc-coming-soon" class="nav-link" data-scroll-target="#coming-soon">Coming soon</a></li>
-  <li><a href="#latest-versions-3.1.x" id="toc-latest-versions-3.1.x" class="nav-link" data-scroll-target="#latest-versions-3.1.x">Latest versions (3.1.x)</a>
+  <li><a href="#latest-versions-4.0.x" id="toc-latest-versions-4.0.x" class="nav-link" data-scroll-target="#latest-versions-4.0.x">Latest versions (4.0.x)</a>
+  <ul>
+  <li><a href="#version-4.0.1-2026-10-16" id="toc-version-4.0.1-2026-10-16" class="nav-link" data-scroll-target="#version-4.0.1-2026-10-16">Version 4.0.1 (2026-10-16)</a></li>
+  <li><a href="#version-4.0.0-2026-10-04" id="toc-version-4.0.0-2026-10-04" class="nav-link" data-scroll-target="#version-4.0.0-2026-10-04">Version 4.0.0 (2026-10-04)</a>
+  <ul class="collapse">
+  <li><a href="#highlights" id="toc-highlights" class="nav-link" data-scroll-target="#highlights">Highlights</a></li>
+  <li><a href="#preserved-features" id="toc-preserved-features" class="nav-link" data-scroll-target="#preserved-features">Preserved features</a></li>
+  <li><a href="#changes-to-sims-parameters-and-people" id="toc-changes-to-sims-parameters-and-people" class="nav-link" data-scroll-target="#changes-to-sims-parameters-and-people">Changes to sims, parameters and people</a></li>
+  <li><a href="#changes-to-transmission" id="toc-changes-to-transmission" class="nav-link" data-scroll-target="#changes-to-transmission">Changes to transmission</a></li>
+  <li><a href="#changes-to-results-and-analyzers" id="toc-changes-to-results-and-analyzers" class="nav-link" data-scroll-target="#changes-to-results-and-analyzers">Changes to results and analyzers</a></li>
+  <li><a href="#not-ported" id="toc-not-ported" class="nav-link" data-scroll-target="#not-ported">Not ported</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#versions-3.1.x-3.1.0-3.1.9" id="toc-versions-3.1.x-3.1.0-3.1.9" class="nav-link" data-scroll-target="#versions-3.1.x-3.1.0-3.1.9">Versions 3.1.x (3.1.0-3.1.9)</a>
   <ul>
   <li><a href="#version-3.1.9-2026-09-29" id="toc-version-3.1.9-2026-09-29" class="nav-link" data-scroll-target="#version-3.1.9-2026-09-29">Version 3.1.9 (2026-09-29)</a></li>
   <li><a href="#version-3.1.8-2026-05-29" id="toc-version-3.1.8-2026-05-29" class="nav-link" data-scroll-target="#version-3.1.8-2026-05-29">Version 3.1.8 (2026-05-29)</a></li>
@@ -553,7 +576,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#version-3.1.3-2022-07-19" id="toc-version-3.1.3-2022-07-19" class="nav-link" data-scroll-target="#version-3.1.3-2022-07-19">Version 3.1.3 (2022-07-19)</a></li>
   <li><a href="#version-3.1.2-2022-01-16" id="toc-version-3.1.2-2022-01-16" class="nav-link" data-scroll-target="#version-3.1.2-2022-01-16">Version 3.1.2 (2022-01-16)</a>
   <ul class="collapse">
-  <li><a href="#highlights" id="toc-highlights" class="nav-link" data-scroll-target="#highlights">Highlights</a></li>
+  <li><a href="#highlights-1" id="toc-highlights-1" class="nav-link" data-scroll-target="#highlights-1">Highlights</a></li>
   <li><a href="#plotting" id="toc-plotting" class="nav-link" data-scroll-target="#plotting">Plotting</a></li>
   <li><a href="#people-and-populations" id="toc-people-and-populations" class="nav-link" data-scroll-target="#people-and-populations">People and populations</a></li>
   <li><a href="#other-changes" id="toc-other-changes" class="nav-link" data-scroll-target="#other-changes">Other changes</a></li>
@@ -567,7 +590,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#version-3.1.0-2021-12-03" id="toc-version-3.1.0-2021-12-03" class="nav-link" data-scroll-target="#version-3.1.0-2021-12-03">Version 3.1.0 (2021-12-03)</a>
   <ul class="collapse">
-  <li><a href="#highlights-1" id="toc-highlights-1" class="nav-link" data-scroll-target="#highlights-1">Highlights</a></li>
+  <li><a href="#highlights-2" id="toc-highlights-2" class="nav-link" data-scroll-target="#highlights-2">Highlights</a></li>
   <li><a href="#immunity-related-parameter-changes" id="toc-immunity-related-parameter-changes" class="nav-link" data-scroll-target="#immunity-related-parameter-changes">Immunity-related parameter changes</a></li>
   <li><a href="#changes-to-states-and-results" id="toc-changes-to-states-and-results" class="nav-link" data-scroll-target="#changes-to-states-and-results">Changes to states and results</a></li>
   <li><a href="#new-functions-methods-and-classes" id="toc-new-functions-methods-and-classes" class="nav-link" data-scroll-target="#new-functions-methods-and-classes">New functions, methods and classes</a></li>
@@ -587,7 +610,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#version-3.0.1-2021-04-16" id="toc-version-3.0.1-2021-04-16" class="nav-link" data-scroll-target="#version-3.0.1-2021-04-16">Version 3.0.1 (2021-04-16)</a></li>
   <li><a href="#version-3.0.0-2021-04-13" id="toc-version-3.0.0-2021-04-13" class="nav-link" data-scroll-target="#version-3.0.0-2021-04-13">Version 3.0.0 (2021-04-13)</a>
   <ul class="collapse">
-  <li><a href="#highlights-2" id="toc-highlights-2" class="nav-link" data-scroll-target="#highlights-2">Highlights</a></li>
+  <li><a href="#highlights-3" id="toc-highlights-3" class="nav-link" data-scroll-target="#highlights-3">Highlights</a></li>
   <li><a href="#immunity-related-parameter-changes-1" id="toc-immunity-related-parameter-changes-1" class="nav-link" data-scroll-target="#immunity-related-parameter-changes-1">Immunity-related parameter changes</a></li>
   <li><a href="#other-parameter-changes" id="toc-other-parameter-changes" class="nav-link" data-scroll-target="#other-parameter-changes">Other parameter changes</a></li>
   <li><a href="#changes-to-states-and-results-1" id="toc-changes-to-states-and-results-1" class="nav-link" data-scroll-target="#changes-to-states-and-results-1">Changes to states and results</a></li>
@@ -603,7 +626,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#version-2.1.1-2021-03-29" id="toc-version-2.1.1-2021-03-29" class="nav-link" data-scroll-target="#version-2.1.1-2021-03-29">Version 2.1.1 (2021-03-29)</a></li>
   <li><a href="#version-2.1.0-2021-03-23" id="toc-version-2.1.0-2021-03-23" class="nav-link" data-scroll-target="#version-2.1.0-2021-03-23">Version 2.1.0 (2021-03-23)</a>
   <ul class="collapse">
-  <li><a href="#highlights-3" id="toc-highlights-3" class="nav-link" data-scroll-target="#highlights-3">Highlights</a></li>
+  <li><a href="#highlights-4" id="toc-highlights-4" class="nav-link" data-scroll-target="#highlights-4">Highlights</a></li>
   <li><a href="#bugfixes-4" id="toc-bugfixes-4" class="nav-link" data-scroll-target="#bugfixes-4">Bugfixes</a></li>
   <li><a href="#plotting-and-options" id="toc-plotting-and-options" class="nav-link" data-scroll-target="#plotting-and-options">Plotting and options</a></li>
   <li><a href="#other-changes-2" id="toc-other-changes-2" class="nav-link" data-scroll-target="#other-changes-2">Other changes</a></li>
@@ -616,7 +639,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#version-2.0.1-2021-01-31" id="toc-version-2.0.1-2021-01-31" class="nav-link" data-scroll-target="#version-2.0.1-2021-01-31">Version 2.0.1 (2021-01-31)</a></li>
   <li><a href="#version-2.0.0-2020-12-05" id="toc-version-2.0.0-2020-12-05" class="nav-link" data-scroll-target="#version-2.0.0-2020-12-05">Version 2.0.0 (2020-12-05)</a>
   <ul class="collapse">
-  <li><a href="#highlights-4" id="toc-highlights-4" class="nav-link" data-scroll-target="#highlights-4">Highlights</a></li>
+  <li><a href="#highlights-5" id="toc-highlights-5" class="nav-link" data-scroll-target="#highlights-5">Highlights</a></li>
   <li><a href="#parameter-updates" id="toc-parameter-updates" class="nav-link" data-scroll-target="#parameter-updates">Parameter updates</a></li>
   <li><a href="#plotting-and-options-1" id="toc-plotting-and-options-1" class="nav-link" data-scroll-target="#plotting-and-options-1">Plotting and options</a></li>
   <li><a href="#webapp" id="toc-webapp" class="nav-link" data-scroll-target="#webapp">Webapp</a></li>
@@ -740,15 +763,103 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>All notable changes to the codebase are documented in this file. Changes that may result in differences in model output, or are required in order to run an old parameter set with the current version, are flagged with the term “Regression information”.</p>
 <section id="coming-soon" class="level2">
 <h2 class="anchored" data-anchor-id="coming-soon">Coming soon</h2>
-<p>Covasim is currently being ported to <a href="https://starsim.org">Starsim</a>, but otherwise there are no further major releases planned. If there is a specific bugfix or feature you would like to see, please <a href="https://github.com/starsimhub/covasim/issues/new/choose">create an issue</a>.</p>
+<p>There are no further major releases planned. If there is a specific bugfix or feature you would like to see, please <a href="https://github.com/starsimhub/covasim/issues/new/choose">create an issue</a>.</p>
 </section>
-<section id="latest-versions-3.1.x" class="level2">
-<h2 class="anchored" data-anchor-id="latest-versions-3.1.x">Latest versions (3.1.x)</h2>
+<section id="latest-versions-4.0.x" class="level2">
+<h2 class="anchored" data-anchor-id="latest-versions-4.0.x">Latest versions (4.0.x)</h2>
+<section id="version-4.0.1-2026-10-16" class="level3">
+<h3 class="anchored" data-anchor-id="version-4.0.1-2026-10-16">Version 4.0.1 (2026-10-16)</h3>
+<ul>
+<li>Fixed <a href="./api/interventions.html#covasim.interventions.change_beta" title="0"><code>cv.change_beta()</code></a> and <a href="./api/interventions.html#covasim.interventions.clip_edges" title="0"><code>cv.clip_edges()</code></a> raising an error when the days are given as an array (e.g.&nbsp;<code>np.arange(180)</code>).</li>
+<li><em>GitHub info</em>: PR <a href="https://github.com/starsimhub/covasim/pull/468">468</a></li>
+</ul>
+</section>
+<section id="version-4.0.0-2026-10-04" class="level3">
+<h3 class="anchored" data-anchor-id="version-4.0.0-2026-10-04">Version 4.0.0 (2026-10-04)</h3>
+<p>This release changes Covasim from a standalone library to one built on the <a href="https://starsim.org">Starsim</a> framework. The Covasim API is preserved, and almost all v3 scripts run unchanged or with minor adjustments. The changes that are needed are listed in the <a href="https://docs.covasim.org/migrate3to4.html">v3 → v4 migration guide</a>, and summarized below.</p>
+<p><strong>Note:</strong> due to the size of the changes, not all Covasim projects will be able to immediately and frictionlessly transition from v3 to v4. There may also be some bugs in the port (although the port fixed several existing bugs in v3). While we hope AI tools will help a lot with migration, please <a href="info@covasim.org">reach out to us</a> or <a href="https://github.com/starsimhub/covasim/issues/new/choose">open an issue</a> and we would be very happy to help you upgrade and/or fix any bugs you come across.</p>
+<section id="highlights" class="level4">
+<h4 class="anchored" data-anchor-id="highlights">Highlights</h4>
+<ul>
+<li><strong>Reimplemented with Starsim</strong>: <a href="./api/sim.html#covasim.sim.Sim" title="0"><code>cv.Sim</code></a> is a subclass of <a href="https://docs.starsim.org/api/sim.html#starsim.sim.Sim" title="0"><code>ss.Sim</code></a>, the population is an <a href="https://docs.starsim.org/api/people.html#starsim.people.People" title="0"><code>ss.People</code></a>, contact layers are <a href="https://docs.starsim.org/api/networks.html#starsim.networks.Network" title="0"><code>ss.Network</code></a>s, and the COVID natural history, variants and immunity are in a single <code>cv.COVID</code> module. <a href="./api/run.html#covasim.run.MultiSim" title="0"><code>cv.MultiSim</code></a> and <a href="./api/analysis.html#covasim.analysis.Calibration" title="0"><code>cv.Calibration</code></a> are built on their Starsim equivalents. Covasim now requires Starsim 3.7.1 or later.</li>
+<li><strong>Compatible with v3</strong>: Parameters, results, interventions, analyzers, plotting, and the tools for multiple runs and fitting all keep their v3 names and signatures.</li>
+<li><strong>Migration script</strong>: <code>covasim-migrate3to4</code> applies the mechanical changes needed to run v3 code on v4, and lists the lines that may need changing by hand.</li>
+<li><strong>Faster</strong>: A detailed simulation (100,000 agents, hybrid, with testing, tracing, vaccination and variants) is about 15% faster than in v3.</li>
+</ul>
+</section>
+<section id="preserved-features" class="level4">
+<h4 class="anchored" data-anchor-id="preserved-features">Preserved features</h4>
+<ul>
+<li>Sims can be created with either a parameters dict (<code>cv.Sim(pars)</code>, including the full dict from <a href="./api/parameters.html#covasim.parameters.make_pars" title="0"><code>cv.make_pars()</code></a>) or keywords, and <code>sim['key']</code> gets and sets the v3 parameters (e.g.&nbsp;<code>sim['n_days'] = 10</code>).</li>
+<li>All built-in interventions (testing, tracing, vaccination, <a href="./api/interventions.html#covasim.interventions.change_beta" title="0"><code>cv.change_beta()</code></a>, <a href="./api/interventions.html#covasim.interventions.clip_edges" title="0"><code>cv.clip_edges()</code></a>, <a href="./api/interventions.html#covasim.interventions.dynamic_pars" title="0"><code>cv.dynamic_pars()</code></a>, <a href="./api/interventions.html#covasim.interventions.sequence" title="0"><code>cv.sequence()</code></a>, and the historical immunity interventions) and analyzers (<a href="./api/analysis.html#covasim.analysis.snapshot" title="0"><code>cv.snapshot()</code></a>, <a href="./api/analysis.html#covasim.analysis.age_histogram" title="0"><code>cv.age_histogram()</code></a>, <a href="./api/analysis.html#covasim.analysis.daily_age_stats" title="0"><code>cv.daily_age_stats()</code></a>, <a href="./api/analysis.html#covasim.analysis.daily_stats" title="0"><code>cv.daily_stats()</code></a>, <a href="./api/analysis.html#covasim.analysis.nab_histogram" title="0"><code>cv.nab_histogram()</code></a>, <a href="./api/analysis.html#covasim.analysis.TransTree" title="0"><code>cv.TransTree()</code></a>) keep their v3 arguments.</li>
+<li>Custom interventions and analyzers can still define the v3 methods <code>initialize(sim)</code>, <code>apply(sim)</code> and <code>finalize(sim)</code>.</li>
+<li><a href="./api/run.html#covasim.run.MultiSim" title="0"><code>cv.MultiSim</code></a>, <a href="./api/run.html#covasim.run.Scenarios" title="0"><code>cv.Scenarios</code></a>, <a href="./api/run.html#covasim.run.parallel" title="0"><code>cv.parallel()</code></a>, <a href="./api/analysis.html#covasim.analysis.Fit" title="0"><code>cv.Fit</code></a> and <a href="./api/analysis.html#covasim.analysis.Calibration" title="0"><code>cv.Calibration</code></a> keep the v3 API and result structure.</li>
+<li>Results keep their v3 names (e.g.&nbsp;<code>sim.results['cum_infections']</code>), as do the columns of <code>sim.to_df()</code> and the plotting functions and their arguments.</li>
+<li>The layer API is unchanged: <code>people.contacts</code>, <a href="./api/base.html#covasim.base.Layer" title="0"><code>cv.Layer</code></a> (now an <a href="https://docs.starsim.org/api/networks.html#starsim.networks.Network" title="0"><code>ss.Network</code></a>), <code>contacts.add_layer()</code>, <code>sim.reset_layer_pars()</code>, and <code>dynam_layer</code>.</li>
+<li><code>sim.initialize()</code> still works; it is the same as Starsim’s <code>sim.init()</code>.</li>
+</ul>
+</section>
+<section id="changes-to-sims-parameters-and-people" class="level4">
+<h4 class="anchored" data-anchor-id="changes-to-sims-parameters-and-people">Changes to sims, parameters and people</h4>
+<ul>
+<li><code>sim.pars</code> now holds the Starsim sim parameters (e.g.&nbsp;<code>n_agents</code> rather than <code>pop_size</code>), and the COVID parameters are in <code>sim.diseases.covid.pars</code>. Use <code>sim['key']</code> rather than <code>sim.pars['key']</code>, which works for both. Setting a parameter that doesn’t exist on an initialized sim now raises an error.</li>
+<li>In custom interventions and analyzers, use <code>sim.ti</code> rather than <code>sim.t</code> for the current day; <code>sim.t</code> is now the Starsim timeline.</li>
+<li>As in Starsim, per-agent arrays (e.g.&nbsp;<code>sim.people.age</code>) only include agents who are alive, so they get shorter as agents die. The exceptions are <code>sim.people.dead</code> and <code>sim.people.date_dead</code>. Indexing by UID works for any agent, and <code>.raw</code> gives the values for all agents. <a href="./api/utils.html#covasim.utils.true" title="0"><code>cv.true()</code></a> and related functions return UIDs.</li>
+<li>Custom interventions and analyzers can’t set the attributes that Starsim reserves (<code>t</code>, <code>pars</code>, <code>sim</code>, <code>dists</code>, <code>results</code>), and module names must be unique.</li>
+<li>Sims are saved with their people by default; use <code>sim.save(keep_people=False)</code> to remove them.</li>
+<li>Each random process now has its own random number stream (common random numbers), so <code>sim.set_seed()</code> and <code>sim.run(reset_seed=True)</code> part-way through a run have no effect; results only depend on <code>rand_seed</code>.</li>
+<li><code>sim.summarize()</code> returns the summary rather than printing it; use <code>print(sim.summary)</code>.</li>
+<li>Supplying COVID parameters (e.g.&nbsp;<code>pop_infected</code>) together with <code>diseases=</code> raises an error.</li>
+<li>The <code>numba_parallel</code> option has been removed, since Covasim no longer has multithreaded Numba functions.</li>
+<li>New: <code>cv.v3_dist()</code> converts a v3 distribution dict to a Starsim distribution; layer parameters can be a single number for all layers (e.g.&nbsp;<code>beta_layer=0.5</code>); <code>cv.data.show_locations(location, output=True)</code> returns whether the data are available.</li>
+<li><em>Regression information</em>: Location aliases (e.g.&nbsp;<code>'UK'</code>, <code>'DRC'</code>, <code>'Laos'</code>, <code>'Hong Kong'</code>) now load the household size as well as the ages (v3 used the default household size), which changes hybrid results for these locations. <code>'Cape Verde'</code> now loads.</li>
+<li><em>Regression information</em>: Results are not identical to v3 for the same <code>rand_seed</code>. To check that a script gives the same answers in v3 and v4, compare the means over several seeds rather than single runs.</li>
+</ul>
+</section>
+<section id="changes-to-transmission" class="level4">
+<h4 class="anchored" data-anchor-id="changes-to-transmission">Changes to transmission</h4>
+<ul>
+<li>The high viral load phase (<code>viral_dist</code>) now lasts the intended time: the first 30% of the infectious period, up to 4 days. In v3, a rounding error made it a day longer for people infectious for exactly 10 days, and for most people infectious for 14 days or more.</li>
+<li><em>Regression information</em>: Transmission is 1–2% lower than in v3 for the same parameters, which can add up to about 10% fewer infections over several months of a growing epidemic. Models calibrated with v3 should be recalibrated, usually by increasing <code>beta</code> by 1–2%.</li>
+<li><em>Regression information</em>: With <code>frac_susceptible</code>, all the seed infections are kept (v3 dropped about half of them).</li>
+</ul>
+</section>
+<section id="changes-to-results-and-analyzers" class="level4">
+<h4 class="anchored" data-anchor-id="changes-to-results-and-analyzers">Changes to results and analyzers</h4>
+<ul>
+<li>Results by variant now have time as the first axis, i.e.&nbsp;shape <code>(npts, n_variants)</code> rather than <code>(n_variants, npts)</code>. They are now included in <code>sim.to_df()</code>, <code>msim.reduce()</code> etc.</li>
+<li>Results that are not time series have moved from <code>sim.results</code> to the sim: <code>sim.gen_time</code>, <code>sim.transtree</code> and <code>sim.agehist</code>. Likewise, <code>daily_age_stats.results</code> is now <code>daily_age_stats.age_results</code>.</li>
+<li>The transmission log is always recorded, so <code>sim.make_transtree()</code> works after any run. It is stored as an <a href="https://docs.starsim.org/api/diseases.html#starsim.diseases.InfectionLog" title="0"><code>ss.InfectionLog</code></a> in <code>sim.diseases.covid.infection_log</code>; <code>sim.people.infection_log</code> returns it in the v3 format.</li>
+<li><a href="./api/analysis.html#covasim.analysis.snapshot" title="0"><code>cv.snapshot()</code></a> stores <a href="./api/analysis.html#covasim.analysis.PeopleSnapshot" title="0"><code>cv.PeopleSnapshot</code></a> objects rather than copies of the people.</li>
+<li>Plot titles use shorter result labels (e.g.&nbsp;“New infections” rather than “Number of new infections”).</li>
+<li><a href="./api/analysis.html#covasim.analysis.PeopleSnapshot" title="0"><code>cv.PeopleSnapshot</code></a> does not include <code>known_dead</code>, <code>date_known_dead</code>, <code>date_known_contact</code>, <code>n_infections</code> or the durations (<code>dur_*</code>).</li>
+<li>Fixed v3 bugs in plotting and options: <code>grid=False</code>, <code>ax=</code>, <code>legend=False</code> in <code>scens.plot()</code>, <code>to_plot</code> dicts of strings, <code>TransTree.animate()</code> markers, the <code>style</code> option, the <code>COVASIM_*</code> environment variables (<code>COVASIM_FONT_SIZE</code> is now <code>COVASIM_FONTSIZE</code>), and nested <code>cv.options.context()</code>. Also fixed <a href="./api/misc.html#covasim.misc.load_data" title="0"><code>cv.load_data()</code></a>, <a href="./api/misc.html#covasim.misc.savefig" title="0"><code>cv.savefig()</code></a> metadata, <code>cv.help(flags=...)</code>, <a href="./api/misc.html#covasim.misc.get_doubling_time" title="0"><code>cv.get_doubling_time()</code></a>, <a href="./api/utils.html#covasim.utils.sample" title="0"><code>cv.sample()</code></a>, <code>cv.make_pars(version=...)</code> and <code>Scenarios.compare()</code>.</li>
+<li><em>Regression information</em>: Three v3 bugs in the results have been fixed. <code>new_symptomatic_by_variant</code> and <code>new_severe_by_variant</code> are counted on the day they happen (v3 counted them on the day of infection). <code>prevalence_by_variant</code> is the number infected with each variant divided by the number alive (v3 used the number of new infections). With <a href="./api/interventions.html#covasim.interventions.historical_wave" title="0"><code>cv.historical_wave()</code></a>, the seed infections are not part of the wave (v3 included them and then infected them again, which counted them twice in <code>cum_infections</code> and in the transmission log).</li>
+</ul>
+</section>
+<section id="not-ported" class="level4">
+<h4 class="anchored" data-anchor-id="not-ported">Not ported</h4>
+<ul>
+<li>SynthPops populations (<code>pop_type='synthpops'</code>), population files (<code>popfile</code>), and <code>cv.make_people()</code>, <code>cv.make_randpop()</code> and <code>cv.make_synthpop()</code> have been removed; let <a href="./api/sim.html#covasim.sim.Sim" title="0"><code>cv.Sim</code></a> create the population instead.</li>
+<li>The v3 base classes <code>cv.ParsObj</code>, <code>cv.BaseSim</code>, <code>cv.BasePeople</code> and <code>cv.Person</code> no longer exist; <code>cv.Result</code> is now <a href="https://docs.starsim.org/api/results.html#starsim.results.Result" title="0"><code>ss.Result</code></a>.</li>
+<li>Sims saved with v3 can be loaded with <a href="./api/misc.html#covasim.misc.load" title="0"><code>cv.load()</code></a> and their results and parameters read, but they can’t be rerun or plotted.</li>
+<li>Parameters from Covasim versions before 2.1.0 (<code>cv.Sim(version=...)</code>) are not supported.</li>
+<li><a href="./api/analysis.html#covasim.analysis.Fit" title="0"><code>cv.Fit</code></a> is no longer an analyzer, and has no <code>to_json()</code>.</li>
+<li>Layers can’t be removed from a sim (<code>contacts.pop_layer()</code> raises an error); create the sim with the layers you want, e.g.&nbsp;<code>cv.Sim(networks=...)</code>.</li>
+<li>The per-person <code>vaccination_dates</code> list has been removed; use <code>people.date_vaccinated</code>.</li>
+<li>The unused <code>cv.utils.find_contacts()</code>, and the v3 <code>PeopleMeta</code> and <code>result_*</code> definitions in <a href="./api/defaults.html#covasim.defaults" title="0"><code>cv.defaults</code></a>, have been removed.</li>
+<li><em>GitHub info</em>: PR <a href="https://github.com/starsimhub/covasim/pull/445">445</a></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="versions-3.1.x-3.1.0-3.1.9" class="level2">
+<h2 class="anchored" data-anchor-id="versions-3.1.x-3.1.0-3.1.9">Versions 3.1.x (3.1.0-3.1.9)</h2>
 <section id="version-3.1.9-2026-09-29" class="level3">
 <h3 class="anchored" data-anchor-id="version-3.1.9-2026-09-29">Version 3.1.9 (2026-09-29)</h3>
 <ul>
 <li>Added compatibility with Python 3.14 by removing outdated SciPy pin.</li>
-<li>Fixed <a href="./api/sim.html#covasim.sim.diff_sims" title="0"><code>cv.diff_sims()</code></a> never marking values as <code>≈</code>: changes within 0.1% are now shown as approximately equal.</li>
+<li>Fixed <a href="./api/misc.html#covasim.misc.diff_sims" title="0"><code>cv.diff_sims()</code></a> never marking values as <code>≈</code>: changes within 0.1% are now shown as approximately equal.</li>
 <li><em>GitHub info</em>: PR <a href="https://github.com/starsimhub/covasim/pull/463">463</a></li>
 </ul>
 </section>
@@ -799,7 +910,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>Fixed plotting bug that prevented <code>MultiSim</code> plots from appearing correctly in Jupyter notebooks with (ironically) <code>cv.options(jupyter=True)</code>.</li>
 <li>Fixed bug with Matplotlib options (e.g.&nbsp;<code>cv.options(dpi=150)</code>) not being set properly.</li>
-<li><a href="./api/analysis.html#covasim.analysis.Calibration.remove_db" title="0"><code>cv.Calibration.remove_db()</code></a> now deletes the Optuna study as well.</li>
+<li><code>cv.Calibration.remove_db()</code> now deletes the Optuna study as well.</li>
 <li>Fixed several issues with <a href="./api/misc.html#covasim.misc.git_info" title="0"><code>cv.git_info()</code></a> pulling information from the wrong frame (i.e.&nbsp;file location).</li>
 <li>Fixed shrunken sims dropping interventions/analyzers that were functions rather than classes.</li>
 </ul>
@@ -820,7 +931,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>Fixed a bug with using <code>'seir'</code> as a default plot option. (Thanks Rik Belew for finding and fixing.)</li>
 <li>Updated immunity calculations to address edge cases in historical vaccination and multiple sources of immunity. Immunity calculations were also updated to skip variants with no infections for a small performance gain.</li>
-<li>Previously, when a <code>People</code> object was passed into a sim, it was recreated using a new instance. Now, the existing instance is preserved. To restore the previous behavior, use the new <code>recreate</code> keyword argument to <a href="./api/population.html#covasim.population.make_people" title="0"><code>cv.make_people()</code></a>, e.g.&nbsp;<code>sim = cv.Sim(people=people); sim.people = cv.make_people(sim, sim.people, recreate=True)</code>.</li>
+<li>Previously, when a <code>People</code> object was passed into a sim, it was recreated using a new instance. Now, the existing instance is preserved. To restore the previous behavior, use the new <code>recreate</code> keyword argument to <code>cv.make_people()</code>, e.g.&nbsp;<code>sim = cv.Sim(people=people); sim.people = cv.make_people(sim, sim.people, recreate=True)</code>.</li>
 <li><code>People</code> methods (e.g.&nbsp;<code>check_infectious()</code> now return the indices of the people whose state changed, rather than just the total number.</li>
 <li><em>Regression information</em>: Immunity calculations have changed, so all simulations will produce stochastically different results. Simulations that use historical immunity (vaccination or waves) or multiple circulating variants may produce significantly different (not just stochastically different) results.</li>
 <li><em>GitHub info</em>: PR <a href="https://github.com/amath-idm/covasim/pull/1374">1374</a></li>
@@ -828,8 +939,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="version-3.1.2-2022-01-16" class="level3">
 <h3 class="anchored" data-anchor-id="version-3.1.2-2022-01-16">Version 3.1.2 (2022-01-16)</h3>
-<section id="highlights" class="level4">
-<h4 class="anchored" data-anchor-id="highlights">Highlights</h4>
+<section id="highlights-1" class="level4">
+<h4 class="anchored" data-anchor-id="highlights-1">Highlights</h4>
 <ul>
 <li><strong>New styles</strong>: Plots have gotten a complete revamp.</li>
 <li><strong>More options</strong>: There are now many more options to control plot styles, warnings, etc.</li>
@@ -873,8 +984,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="regression-information" class="level4">
 <h4 class="anchored" data-anchor-id="regression-information">Regression information</h4>
 <ul>
-<li>In <a href="./api/population.html#covasim.population.make_people" title="0"><code>cv.make_people()</code></a>, the arguments <code>save_pop</code> and <code>popfile</code> have been removed; call <code>people.save()</code> on the generated population instead.</li>
-<li>In <a href="./api/population.html#covasim.population.make_synthpop" title="0"><code>cv.make_synthpop()</code></a>, the argument <code>population</code> has been renamed <code>popdict</code>, and will accept any SynthPops output (<code>popdict</code>, <code>Pop</code>, or <code>People</code>).</li>
+<li>In <code>cv.make_people()</code>, the arguments <code>save_pop</code> and <code>popfile</code> have been removed; call <code>people.save()</code> on the generated population instead.</li>
+<li>In <code>cv.make_synthpop()</code>, the argument <code>population</code> has been renamed <code>popdict</code>, and will accept any SynthPops output (<code>popdict</code>, <code>Pop</code>, or <code>People</code>).</li>
 <li>Calls to <code>people.to_people()</code> and <code>people.from_people()</code> should be replaced with <code>people.to_list()</code> and <code>people.from_list()</code>, respectively.</li>
 <li>Arguments <code>font_family</code>, <code>font_size</code>, and <code>mpl_args</code> to plots should be replaced with <code>font</code>, <code>fontsize</code>, and <code>style_args</code> respectively.</li>
 <li><code>cv.date_formatter()</code> has been removed; please use <a href="https://docs.sciris.org/api/sc_plotting.html#sciris.sc_plotting.dateformatter" title="0"><code>sc.dateformatter()</code></a> (for a date x-axis) or <a href="https://docs.sciris.org/api/sc_plotting.html#sciris.sc_plotting.datenumformatter" title="0"><code>sc.datenumformatter()</code></a> (for a numeric axis that you want to format as dates) instead.</li>
@@ -921,8 +1032,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="version-3.1.0-2021-12-03" class="level3">
 <h3 class="anchored" data-anchor-id="version-3.1.0-2021-12-03">Version 3.1.0 (2021-12-03)</h3>
 <p>This version contains important updates to the parameters around immunity. It also introduces additional features designed to help with policy questions relevant at this stage of the pandemic, including support for boosters and the ability to initialize a population with pre-existing immunity. Although we will continue to update parameter values as new data come in, the immunity and vaccine features are now out of the beta stage and ready to use.</p>
-<section id="highlights-1" class="level4">
-<h4 class="anchored" data-anchor-id="highlights-1">Highlights</h4>
+<section id="highlights-2" class="level4">
+<h4 class="anchored" data-anchor-id="highlights-2">Highlights</h4>
 <ul>
 <li><strong>New immunity parameters</strong>: Waning immunity and cross-immunity functions have been updated to match currently available empirical data.</li>
 <li><strong>Additional flexibility with vaccines</strong>: Several new vaccines have been added (e.g.&nbsp;Sinopharm), and additional options have been provided to enable booster doses, simplify age targeting, etc.</li>
@@ -982,7 +1093,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>By default, calibration now removes the database of individual trials. Set <code>keep_db=True</code> to keep it. There is also a <code>remove_db()</code> method to manually remove the database.</li>
 <li>Population creation methods have been updated to be more flexible, with keyword arguments being passed to helper functions.</li>
 <li>Simulation summaries now by default use comma-separated values. To change this to e.g.&nbsp;a dot, you can set a global option: <code>cv.options.set(sep='.')</code>, or e.g.&nbsp;<code>sim.summarize(sep='')</code>.</li>
-<li><a href="./api/sim.html#covasim.sim.diff_sims" title="0"><code>cv.diff_sims()</code></a> can now optionally skip specific results using the <code>skip</code> keyword.</li>
+<li><a href="./api/misc.html#covasim.misc.diff_sims" title="0"><code>cv.diff_sims()</code></a> can now optionally skip specific results using the <code>skip</code> keyword.</li>
 <li>Vaccination is now included in the regression tests.</li>
 </ul>
 </section>
@@ -1095,8 +1206,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="version-3.0.0-2021-04-13" class="level3">
 <h3 class="anchored" data-anchor-id="version-3.0.0-2021-04-13">Version 3.0.0 (2021-04-13)</h3>
 <p>This version introduces fully featured vaccines, variants, and immunity. <strong>Note:</strong> These new features are still under development; please use with caution and email us at <a href="mailto:info@covasim.org" class="email">info@covasim.org</a> if you have any questions or issues. We expect there to be several more releases over the next few weeks as we refine these new features.</p>
-<section id="highlights-2" class="level4">
-<h4 class="anchored" data-anchor-id="highlights-2">Highlights</h4>
+<section id="highlights-3" class="level4">
+<h4 class="anchored" data-anchor-id="highlights-3">Highlights</h4>
 <ul>
 <li><strong>Model structure</strong>: The model now follows an “SEIS”-type structure, instead of the previous “SEIR” structure. This means that after recovering from an infection, agents return to the “susceptible” compartment. Each agent in the simulation has properties <code>sus_imm</code>, <code>trans_imm</code> and <code>prog_imm</code>, which respectively determine their immunity to acquiring an infection, transmitting an infection, or developing a more severe case of COVID-19. All these immunity levels are initially zero. They can be boosted by either natural infection or vaccination, and thereafter they can wane over time or remain permanently elevated.</li>
 <li><strong>Multi-strain modeling</strong>: Model functionality has been extended to allow for modeling of multiple different co-circulating strains with different properties. This means you can now do e.g.&nbsp;<code>b117 = cv.strain('b117', days=1, n_imports=20)</code> followed by <code>sim = cv.Sim(strains=b117)</code> to import strain B117. Further examples are contained in <code>tests/test_immunity.py</code> and in Tutorial 8.</li>
@@ -1222,8 +1333,8 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 </section>
 <section id="version-2.1.0-2021-03-23" class="level3">
 <h3 class="anchored" data-anchor-id="version-2.1.0-2021-03-23">Version 2.1.0 (2021-03-23)</h3>
-<section id="highlights-3" class="level4">
-<h4 class="anchored" data-anchor-id="highlights-3">Highlights</h4>
+<section id="highlights-4" class="level4">
+<h4 class="anchored" data-anchor-id="highlights-4">Highlights</h4>
 <ul>
 <li><strong>Updated lognormal distributions</strong>: Lognormal distributions had been inadvertently using the variance instead of the standard deviation as the second parameter, resulting in too small variance. This has been fixed. This has a small but nonzero impact on the results (e.g.&nbsp;with default parameters, the time to peak infections is about 5-10% sooner now).</li>
 <li><strong>Expanded plotting features</strong>: You now have much more flexibility with passing arguments to <code>sim.plot()</code> and other plotting functions, such as to temporarily set global Matplotlib options (such as DPI), modify axis styles and limits, etc. For example, you can now do things like this: <code>cv.Sim().run().plot(dpi=150, rotation=30, start_day='2020-03-01', end_day=55, interval=7)</code>.</li>
@@ -1256,7 +1367,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <li><code>cv.sim.compute_fit()</code> has a new keyword argument, <code>die</code>, that will print warnings rather than raise exceptions if no matching data is found. Exceptions are now caught and helpful error messages are provided (e.g., if dates don’t match).</li>
 <li>The algorithm for <a href="./api/analysis.html#covasim.analysis.TransTree" title="0"><code>cv.TransTree</code></a> has been rewritten, and now runs 20x as fast. The detailed transmission tree, in <code>tt.detailed</code>, is now a pandas dataframe rather than a list of dictionaries. To restore something close to the previous version, use <code>tt.detailed.to_dict('records')</code>.</li>
 <li>A data file with an integer rather than date “date” index can now be loaded; these will be counted relative to the simulation’s start day.</li>
-<li><a href="./api/misc.html#covasim.misc.load" title="0"><code>cv.load()</code></a> has two new keyword arguments, <code>update</code> and <code>verbose</code>, than are passed to <a href="./api/misc.html#covasim.misc.migrate" title="0"><code>cv.migrate()</code></a>.</li>
+<li><a href="./api/misc.html#covasim.misc.load" title="0"><code>cv.load()</code></a> has two new keyword arguments, <code>update</code> and <code>verbose</code>, than are passed to <code>cv.migrate()</code>.</li>
 <li><code>cv.options</code> has new a <code>get_default()</code> method which returns the value of that parameter when Covasim was first loaded.</li>
 </ul>
 </section>
@@ -1311,7 +1422,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <ul>
 <li>Added a new option to easily turn on/off interactive plotting: e.g., simply set <code>cv.options.set(interactive=False)</code> to turn off interactive plotting. This meta-option sets the other options <code>show</code>, <code>close</code>, and <code>backend</code>.</li>
 <li>Changed the logic of <code>do_show</code>, such that <code>do_show=False</code> will never show a plot, even if <code>cv.options.show</code> is <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a>.</li>
-<li>Added a new method, <a href="./api/sim.html#covasim.sim.diff_sims" title="0"><code>cv.diff_sims()</code></a>, that allows the differences in results between two simulations to be quickly calculated.</li>
+<li>Added a new method, <a href="./api/misc.html#covasim.misc.diff_sims" title="0"><code>cv.diff_sims()</code></a>, that allows the differences in results between two simulations to be quickly calculated.</li>
 <li>Removed the <code>keys</code> argument from <a href="./api/analysis.html#covasim.analysis.daily_stats" title="0"><code>cv.daily_stats()</code></a>, since non-default keys are had to validate.</li>
 <li>Fixed a bug that prevented prognoses parameters from being correctly set to those from an earlier version.</li>
 <li>Added an R usage example to the <code>examples</code> folder (matching the one in the FAQ).</li>
@@ -1332,8 +1443,8 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <section id="version-2.0.0-2020-12-05" class="level3">
 <h3 class="anchored" data-anchor-id="version-2.0.0-2020-12-05">Version 2.0.0 (2020-12-05)</h3>
 <p>This version contains a number of major updates. Note: this version requires Sciris 1.0, so when upgrading to this version, you may also need to upgrade Sciris (<code>pip install sciris --upgrade</code>).</p>
-<section id="highlights-4" class="level4">
-<h4 class="anchored" data-anchor-id="highlights-4">Highlights</h4>
+<section id="highlights-5" class="level4">
+<h4 class="anchored" data-anchor-id="highlights-5">Highlights</h4>
 <ul>
 <li><strong>Parameters</strong>: Default infection fatality ratio estimates have been updated in line with the latest literature.</li>
 <li><strong>Plotting</strong>: Plotting defaults have been updated to support a wider range of systems, and users now have greater control over plotting and options.</li>
@@ -1376,7 +1487,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <h4 class="anchored" data-anchor-id="bugfixes-5">Bugfixes</h4>
 <ul>
 <li>The <code>quar_period</code> argument is now correctly passed to the <a href="./api/interventions.html#covasim.interventions.contact_tracing" title="0"><code>cv.contact_tracing()</code></a> intervention. (Thanks to Scott McCrae for finding this bug.)</li>
-<li>If the user supplies an incorrect type to <a href="./api/base.html#covasim.base.Layer.find_contacts" title="0"><code>cv.Layer.find_contacts()</code></a>, this is now caught and corrected. (Thanks to user sba5827 for finding this bug.)</li>
+<li>If the user supplies an incorrect type to <code>cv.Layer.find_contacts()</code>, this is now caught and corrected. (Thanks to user sba5827 for finding this bug.)</li>
 <li>Non-string <code>Layer</code> keys no longer raise an exception.</li>
 <li>The <code>sim.compute_r_eff()</code> error message now gives correct instructions (contributed by <a href="https://github.com/InstituteforDiseaseModeling/covasim/pull/295">Andrea Cattaneo</a>).</li>
 <li>Parallelization in Jupyter notebooks (e.g.&nbsp;<code>msim.run()</code>) should now work without crashing.</li>
@@ -1406,7 +1517,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <li>Transmission trees now contain additional output; after <code>tt = sim.make_transtree()</code>, a dataframe of key results is contained in <code>tt.df</code>.</li>
 <li>The default number of seed infections has been changed from 10 to 20 for greater numerical stability. (Note that this placeholder value should be overridden for all actual applications.)</li>
 <li><code>sim.run()</code> no longer returns the results object by default (if you want it, set <code>output=True</code>).</li>
-<li>A migrations module has been added (in <code>misc.py</code>). Objects are now automatically migrated to the current version of Covasim whene loaded The function <a href="./api/misc.html#covasim.misc.migrate" title="0"><code>cv.migrate()</code></a> can also be called explicitly on objects if needed.</li>
+<li>A migrations module has been added (in <code>misc.py</code>). Objects are now automatically migrated to the current version of Covasim whene loaded The function <code>cv.migrate()</code> can also be called explicitly on objects if needed.</li>
 </ul>
 </section>
 <section id="documentation" class="level4">
@@ -1433,7 +1544,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <section id="version-1.7.6-2020-10-23" class="level3">
 <h3 class="anchored" data-anchor-id="version-1.7.6-2020-10-23">Version 1.7.6 (2020-10-23)</h3>
 <ul>
-<li>Added additional flexibility to <a href="./api/people.html#covasim.people.People" title="0"><code>cv.People</code></a>, <a href="./api/population.html#covasim.population.make_people" title="0"><code>cv.make_people()</code></a>, and <a href="./api/population.html#covasim.population.make_synthpop" title="0"><code>cv.make_synthpop()</code></a> to allow easier modification of different types of people (e.g.&nbsp;the raw output of SynthPops, the popdict, and the <code>People</code> object).</li>
+<li>Added additional flexibility to <a href="./api/people.html#covasim.people.People" title="0"><code>cv.People</code></a>, <code>cv.make_people()</code>, and <code>cv.make_synthpop()</code> to allow easier modification of different types of people (e.g.&nbsp;the raw output of SynthPops, the popdict, and the <code>People</code> object).</li>
 <li><em>GitHub info</em>: PR <a href="https://github.com/amath-idm/covasim/pull/712">712</a></li>
 </ul>
 </section>
@@ -1445,7 +1556,7 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <li><code>Layer.members</code> returns an array of all people with interactions in the layer</li>
 <li><code>__contains__</code> is implemented so <code>uid in layer</code> can be used</li>
 </ul></li>
-<li><p><a href="./api/interventions.html#covasim.interventions.sequence.apply" title="0"><code>cv.sequence.apply()</code></a> passes on the underlying intervention’s return value rather than always returning <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></p></li>
+<li><p><code>cv.sequence.apply()</code> passes on the underlying intervention’s return value rather than always returning <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></p></li>
 <li><p><em>GitHub info</em>: PR <a href="https://github.com/amath-idm/covasim/pull/709">709</a></p></li>
 </ul>
 </section>
@@ -1567,8 +1678,8 @@ crit2die: μ =  6.2 → 10.7, σ = 1.7 → 4.8</code></pre></li>
 <section id="version-1.5.1-2020-08-17" class="level3">
 <h3 class="anchored" data-anchor-id="version-1.5.1-2020-08-17">Version 1.5.1 (2020-08-17)</h3>
 <ul>
-<li>Modify <code>cv.BasePeople.__getitem__()</code> to retrieve a person if the item is an integer, so that <code>sim.people[5]</code> will return a <a href="./api/base.html#covasim.base.Person" title="0"><code>cv.Person</code></a> instance</li>
-<li>Modify <code>cv.BasePeople.__iter__</code> so that iterating over people e.g.&nbsp;<code>for person in sim.people:</code> iterates over <a href="./api/base.html#covasim.base.Person" title="0"><code>cv.Person</code></a> instances</li>
+<li>Modify <code>cv.BasePeople.__getitem__()</code> to retrieve a person if the item is an integer, so that <code>sim.people[5]</code> will return a <code>cv.Person</code> instance</li>
+<li>Modify <code>cv.BasePeople.__iter__</code> so that iterating over people e.g.&nbsp;<code>for person in sim.people:</code> iterates over <code>cv.Person</code> instances</li>
 <li><em>Regression information</em>: To restore previous behavior of <code>for idx in sim.people:</code> use <code>for idx in range(len(sim.people)):</code> instead</li>
 <li><em>GitHub info</em>: PR <a href="https://github.com/amath-idm/covasim/pull/623">623</a>, head <code>aaa4d7c1</code></li>
 </ul>
@@ -1672,7 +1783,7 @@ pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)</code></pre></li>
 <ul>
 <li>Added <code>sim.people.plot()</code>, which shows the age distribution, and distribution of contacts by age and layer.</li>
 <li>Added <code>sim.make_age_histogram()</code>, as well as the ability to call <code>cv.age_histogram(sim)</code>, as an alternative to adding these as analyzers to a sim.</li>
-<li>Updated <a href="./api/population.html#covasim.population.make_synthpop" title="0"><code>cv.make_synthpop()</code></a> to pass a random seed to SynthPops (note: requires SynthPops version 0.7.1 or later).</li>
+<li>Updated <code>cv.make_synthpop()</code> to pass a random seed to SynthPops (note: requires SynthPops version 0.7.1 or later).</li>
 <li><a href="./api/utils.html#covasim.utils.set_seed" title="0"><code>cv.set_seed()</code></a> now also resets <a href="https://docs.python.org/3/library/random.html#random.seed" title="1"><code>random.seed()</code></a>, to ensure reproducibility among functions that use this (e.g., NetworkX).</li>
 <li>Corrected <code>sim.run()</code> so <code>sim.t</code> is left at the last timestep (instead of one more).</li>
 <li><em>GitHub info</em>: PR <a href="https://github.com/amath-idm/covasim/pull/574">574</a>, head <code>a828d29b</code></li>
@@ -1894,7 +2005,7 @@ pars['quar_factor'] = dict(h=0.8, s=0.0, w=0.0, c=0.3)</code></pre></li>
 <h3 class="anchored" data-anchor-id="version-1.1.3-2020-05-18">Version 1.1.3 (2020-05-18)</h3>
 <ul>
 <li>Improved the how “layer parameters” (e.g., <code>beta_layer</code>) are initialized.</li>
-<li>Allowed arbitrary arguments to be passed to SynthPops via <a href="./api/population.html#covasim.population.make_synthpop" title="0"><code>cv.make_synthpop</code></a>.</li>
+<li>Allowed arbitrary arguments to be passed to SynthPops via <code>cv.make_synthpop</code>.</li>
 <li><em>GitHub info</em>: head <code>0f6d48c0</code></li>
 </ul>
 </section>
@@ -2094,7 +2205,7 @@ crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0
 <li>Includes data on household sizes from various countries.</li>
 <li>Includes age data on US states.</li>
 <li>Changes to interventions to include end as well as start days, and plotting as a default option.</li>
-<li>Adds version checks to loading and introduces a new function <a href="./api/misc.html#covasim.misc.load" title="0"><code>cv.load()</code></a> to replace e.g.&nbsp;<code>cv.Sim.load()</code>.</li>
+<li>Adds version checks to loading and introduces a new function <a href="./api/misc.html#covasim.misc.load" title="0"><code>cv.load()</code></a> to replace e.g.&nbsp;<a href="./api/sim.html#covasim.sim.Sim.load" title="0"><code>cv.Sim.load()</code></a>.</li>
 <li>Major layout and functionality changes to the webapp, including country selection (disabled by default).</li>
 <li>Provided access to Plotly graphs via the backend.</li>
 <li>Moved relative probabilities (e.g.&nbsp;<code>rel_death_prob</code>) from population creation to loop so can be modified dynamically.</li>
@@ -2572,8 +2683,8 @@ crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./faq.html" class="pagination-link" aria-label="**FAQ**">
-        <span class="nav-page-text"><strong>FAQ</strong></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./migrate3to4.html" class="pagination-link" aria-label="**v3 → v4 migration**">
+        <span class="nav-page-text"><strong>v3 → v4 migration</strong></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -2584,7 +2695,7 @@ crit_probs   = np.array([0.00004, 0.00011, 0.00050, 0.00123, 0.00214, 0.00800, 0
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

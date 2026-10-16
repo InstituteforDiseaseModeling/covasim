@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -472,6 +476,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../migrate3to4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>v3 → v4 migration</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../faq.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><strong>FAQ</strong></span></a>
   </div>
@@ -579,10 +589,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> cv.Sim()</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Covasim 3.1.9 (2026-09-29) — © 2020-2026 by IDM</code></pre>
+<pre><code>Covasim 4.0.1 (2026-10-16) — © 2020-2026 by IDM</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
-<pre><code>Sim(&lt;no label&gt;; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 12730⚙, 14☠)</code></pre>
+<pre><code>Sim(n=20000; 2020.03.01—2020.04.30; networks=a; diseases=covid; connectors=crossimmunity)</code></pre>
 </div>
 </div>
 </section>
@@ -592,92 +602,184 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cbe48bff" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim.brief()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Sim(&lt;no label&gt;; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 12730⚙, 14☠)</code></pre>
+<pre><code>Sim(&lt;no label&gt;; 2020-03-01 to 2020-04-30; pop: 20000 random; epi: 11873⚙, 21☠)</code></pre>
 </div>
 </div>
 <p>You can get more detail with <code>summarize()</code>:</p>
 <div id="48cb59b1" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sim.summarize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Simulation summary:
-       12,730 cumulative infections
-          596 cumulative reinfections
-       10,182 cumulative infectious
-        6,395 cumulative symptomatic cases
-          386 cumulative severe cases
-          114 cumulative critical cases
-        5,159 cumulative recoveries
-           14 cumulative deaths
-            0 cumulative tests
-            0 cumulative diagnoses
-            0 cumulative known deaths
-            0 cumulative quarantined people
-            0 cumulative isolated people
-            0 cumulative vaccine doses
-            0 cumulative vaccinated people
-</code></pre>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<pre><code>#0. 'a_n_edges':           199694.0
+#1. 'n_alive':             19979.0
+#2. 'n_female':            10020.0
+#3. 'new_deaths':          3.0
+#4. 'new_emigrants':       0.0
+#5. 'cum_deaths':          21.0
+#6. 'pop_scale':           1.0
+#7. 'n_susceptible':       12605.0
+#8. 'n_infected':          7374.0
+#9. 'n_preinfectious':     2602.0
+#10. 'n_symptomatic':       2983.0
+#11. 'n_severe':            257.0
+#12. 'n_critical':          58.0
+#13. 'n_recovered':         3945.0
+#14. 'n_dead':              3.0
+#15. 'n_naive':             8660.0
+#16. 'n_tested':            0.0
+#17. 'n_diagnosed':         0.0
+#18. 'n_known_contact':     0.0
+#19. 'n_quarantined':       0.0
+#20. 'n_isolated':          0.0
+#21. 'n_vaccinated':        0.0
+#22. 'prevalence':          0.36908754191901494
+#23. 'new_infections':      520.0
+#24. 'cum_infections':      11873.0
+#25. 'n_infectious':        4772.0
+#26. 'new_infectious':      553.0
+#27. 'new_symptomatic':     390.0
+#28. 'new_severe':          22.0
+#29. 'new_critical':        11.0
+#30. 'new_recoveries':      379.0
+#31. 'cum_infectious':      9271.0
+#32. 'cum_symptomatic':     5913.0
+#33. 'cum_severe':          322.0
+#34. 'cum_critical':        89.0
+#35. 'cum_recoveries':      4478.0
+#36. 'new_known_deaths':    0.0
+#37. 'cum_known_deaths':    0.0
+#38. 'n_known_dead':        0.0
+#39. 'n_removed':           21.0
+#40. 'new_reinfections':    62.0
+#41. 'cum_reinfections':    533.0
+#42. 'n_exposed':           7374.0
+#43. 'n_imports':           0.0
+#44. 'new_tests':           0.0
+#45. 'cum_tests':           0.0
+#46. 'new_diagnoses':       0.0
+#47. 'cum_diagnoses':       0.0
+#48. 'new_doses':           0.0
+#49. 'cum_doses':           0.0
+#50. 'new_vaccinated':      0.0
+#51. 'cum_vaccinated':      0.0
+#52. 'new_quarantined':     0.0
+#53. 'cum_quarantined':     0.0
+#54. 'new_isolated':        0.0
+#55. 'cum_isolated':        0.0
+#56. 'test_yield':          0.0
+#57. 'r_eff':               1.058728828217512
+#58. 'incidence':           0.041253470844902815
+#59. 'rel_test_yield':      0.0
+#60. 'frac_vaccinated':     0.0
+#61. 'doubling_time':       13.897517771712964
+#62. 'pop_nabs':            2.137901544570923
+#63. 'pop_protection':      0.16149389743804932
+#64. 'pop_symp_protection': 0.06619777530431747
+#65. 't':                   60</code></pre>
 </div>
 </div>
 <p>Finally, to show the full object, including all methods and attributes, use <code>disp()</code>:</p>
 <div id="8160d931" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sim.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;covasim.sim.Sim at 0x7fcd40f0f510&gt;
-[&lt;class 'covasim.sim.Sim'&gt;, &lt;class 'covasim.base.BaseSim'&gt;, &lt;class 'covasim.base.ParsObj'&gt;, &lt;class 'covasim.base.FlexPretty'&gt;, &lt;class 'sciris.sc_printing.prettyobj'&gt;]
+<pre><code>&lt;covasim.sim.Sim at 0x7f42163e0ec0&gt;
+[&lt;class 'covasim.sim.Sim'&gt;, &lt;class 'covasim.compat.V3Sim'&gt;, &lt;class 'starsim.sim.Sim'&gt;, &lt;class 'starsim.modules.Base'&gt;]
 ————————————————————————————————————————————————————————————————————————
 Methods:
-  _brief()                finalize_analyzers()    plot()                  
-  _disp()                 finalize_interventi...  plot_result()           
-  _get_ia()               get_analyzer()          rescale()               
-  brief()                 get_analyzers()         reset_layer_pars()      
-  calibrate()             get_intervention()      result_keys()           
-  compute_doubling()      get_interventions()     run()                   
-  compute_fit()           init_analyzers()        save()                  
-  compute_gen_time()      init_immunity()         set_metadata()          
-  compute_r_eff()         init_infections()       set_seed()              
-  compute_results()       init_interventions()    shrink()                
-  compute_states()        init_people()           step()                  
-  compute_summary()       init_results()          summarize()             
-  compute_yield()         init_variants()         to_df()                 
-  copy()                  initialize()            to_excel()              
-  date()                  layer_keys()            to_json()               
-  day()                   load()                  update_pars()           
-  disp()                  load_data()             validate_layer_pars()   
-  export_pars()           load_population()       validate_pars()         
-  export_results()        make_age_histogram()    finalize()              
-  make_transtree()        
+  _add_network()          finalize()              make_transtree()        
+  _get_ia()               finalize_results()      plot()                  
+  _is_v3_saved()          finish_step()           plot_result()           
+  _load_location()        get_analyzer()          products()              
+  _make_contacts()        get_analyzers()         profile()               
+  _restore_orig()         get_intervention()      rescale()               
+  _v3_covid()             get_interventions()     reset_layer_pars()      
+  _v3_key_error()         get_module()            reset_time_pars()       
+  _v3_networks()          get_modules()           result_keys()           
+  add_module()            init()                  result_scale()          
+  brief()                 init_data()             run()                   
+  calibrate()             init_dists()            run_one_step()          
+  check_method_calls()    init_module_attrs()     save()                  
+  check_results_ready()   init_modules_post()     set_diagnostics()       
+  compute_fit()           init_modules_pre()      set_seed()              
+  compute_gen_time()      init_people()           shrink()                
+  compute_r_eff()         init_people_vals()      start_step()            
+  compute_summary()       init_rescale()          step()                  
+  copy()                  init_results()          summarize()             
+  cprofile()              init_time()             to_df()                 
+  date()                  initialize()            to_excel()              
+  day()                   layer_keys()            to_json()               
+  disp()                  load()                  to_yaml()               
+  export_pars()           lock_pars()             update_pars()           
+  export_results()        make_age_histogram()    
 ————————————————————————————————————————————————————————————————————————
 Properties:
-  datevec                 npts                    tvec                    
-  n                       scaled_pop_size         
+  current_scale           modules                 scaled_pop_size         
+  datevec                 n                       ti                      
+  dt                      now                     timevec                 
+  label                   npts                    tvec                    
+  label_to_name           rescale_vec             
 ————————————————————————————————————————————————————————————————————————
- _default_ver: None
-_legacy_trans: False
-   _orig_pars: {'interventions': [], 'analyzers': []}
-     complete: True
-      created: datetime.datetime(2026, 9, 29, 22, 1, 44, 349391)
-         data: None
-     datafile: None
-     git_info: {'covasim': {'version': '3.1.9', 'branch': 'main',
-               'hash': 'b3eeb78 [...]
-  initialized: True
-        label: None
-         pars: {'pop_size': 20000, 'pop_infected': 20, 'pop_type':
-               'random', 'loca [...]
-       people: People(n=20000; layers: a)
-      popdict: None
-      popfile: None
-  rescale_vec: array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
-               1., 1., 1.,  [...]
-      results: #0. 'cum_infections':
-               &lt;covasim.base.Result at 0x7fcd1e18b950&gt;
-               [&lt;cla [...]
-results_ready: True
-      simfile: 'covasim.sim'
-      summary: #0. 'cum_infections':      12730.0
-               #1. 'cum_reinfections':    596.0 [...]
-            t: 60
-      version: '3.1.9'
+       _age_data: None
+   _bridged_keys: ['n_susceptible', 'n_infected', 'n_preinfectious',
+                  'n_symptomati [...]
+ _household_size: None
+      _orig_pars: None
+       _orig_sim: b'\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xed=\tx\x
+                  14U\xd2\xb9\ [...]
+_v3_changed_pars: []
+    _v3_contacts: {'a': 20}
+ _v3_dur_applied: {'exp2inf': {'dist': 'lognormal_int', 'par1': 4.5,
+                  'par2': 1.5}, [...]
+        _v3_pars: {'location': None, 'scaled_pop': None, 'variants':
+                  [], 'dur': {' [...]
+       analyzers: ndict()
+        complete: True
+      connectors: #0. 'crossimmunity': crossimmunity(pars=[immunity,
+                  disease]; sta [...]
+         created: datetime.datetime(2026, 10, 16, 16, 14, 30, 680719)
+          custom: ndict()
+            data: None
+    demographics: ndict()
+     diagnostics: None
+        diseases: #0. 'covid': covid(pars=[init_prev, beta,
+                  beta_layer, rel_beta,  [...]
+           dists: &lt;starsim.distributions.Dists at 0x7f42163e2e40&gt;
+                  [&lt;class 'starsim [...]
+     dynam_layer: {'a': 0}
+         elapsed: 0.6309897899627686
+        filename: None
+        git_info: {'covasim': {'version': '4.0.1', 'branch': 'Detached
+                  head (no br [...]
+     initialized: True
+   interventions: ndict()
+            loop: Loop(n=1098, funcs=18, npts=61, index=1098)
+        metadata: #0. 'version':     '3.7.2'
+                  #1. 'versiondate': '2026-10-06'
+                  #2. ' [...]
+        networks: #0. 'a': a:RandomNet(n_edges=199635;
+                  pars=[n_contacts, dur, beta [...]
+            pars: #0. 'label':             ''
+                  ———————————————————————————————————— [...]
+          people: People(n=20000; alive=19979; age=38.3±22.0)
+        pop_type: 'random'
+         results: Results(Sim)
+                  0. timevec: array(start=2020.03.01, stop=2020.04.30
+                  [...]
+   results_ready: True
+     rng_rescale: ss.choose_n(n=1, weights=None)
+         simfile: None
+   stopping_func: None
+         summary: #0. 'a_n_edges':           199694.0
+                  #1. 'n_alive':             1 [...]
+               t: Timeline(2020.03.01-2020.04.30; dt=days(1);
+                  now=2020.04.30; ti=6 [...]
+       timelimit: None
+           timer: &lt;sciris.sc_datetime.timer at 0x7f42163e1940&gt;
+                  Timings:
+                  #0. '(0)': [...]
+         verbose: 0
+         version: '4.0.1'
+   _v3_init_keys: ['pop_size', 'pop_type', 'pop_infected', 'n_days',
+                  'start_day',  [...]
 ————————————————————————————————————————————————————————————————————————
 </code></pre>
 </div>
@@ -692,7 +794,7 @@ results_ready: True
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_plotting_files/figure-html/cell-6-output-1.png" width="598" height="411" class="figure-img"></p>
+<p><img src="tut_plotting_files/figure-html/cell-6-output-1.png" width="584" height="430" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -745,16 +847,16 @@ results_ready: True
 <div id="bd4712dc" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cv.get_png_metadata(<span class="st">'my-fig.png'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Covasim version: 3.1.9
-Covasim branch: main
-Covasim hash: b3eeb78
-Covasim date: 2026-09-29T17:53:23-04:00
-Covasim caller branch: main
-Covasim caller hash: b3eeb78
-Covasim caller date: 2026-09-29T17:53:23-04:00
+<pre><code>Covasim version: 4.0.1
+Covasim branch: Detached head (no branch)
+Covasim hash: 75f8f6f
+Covasim date: 2026-10-16T09:04:49-07:00
+Covasim caller branch: Detached head (no branch)
+Covasim caller hash: 75f8f6f
+Covasim caller date: 2026-10-16T09:04:49-07:00
 Covasim caller filename: /home/runner/work/covasim/covasim/covasim/misc.py
-Covasim current time: 2026-Sep-29 22:01:48
-Covasim calling file: /tmp/ipykernel_4310/1033588508.py</code></pre>
+Covasim current time: 2026-Oct-16 16:14:34
+Covasim calling file: /tmp/ipykernel_4307/1033588508.py</code></pre>
 </div>
 </div>
 </section>
@@ -841,57 +943,83 @@ Covasim calling file: /tmp/ipykernel_4310/1033588508.py</code></pre>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Object saved to /home/runner/work/covasim/covasim/docs/tutorials/my-sim.xlsx.
-         date   t  cum_infections  cum_reinfections  cum_infectious  \
-0  2020-04-01   0              20                 0               0   
-1  2020-04-02   1              21                 0               1   
-2  2020-04-03   2              21                 0               1   
-3  2020-04-04   3              23                 0               8   
-4  2020-04-05   4              28                 0              16   
-..        ...  ..             ...               ...             ...   
-57 2020-05-28  57            1632                25            1527   
-58 2020-05-29  58            1650                25            1561   
-59 2020-05-30  59            1665                25            1579   
-60 2020-05-31  60            1688                25            1596   
-61 2020-06-01  61            1704                26            1615   
+         date   t  a_n_edges  prevalence_by_variant_wild  \
+0  2020-04-01   0     200089                    0.001000   
+1  2020-04-02   1     200089                    0.001000   
+2  2020-04-03   2     200089                    0.001150   
+3  2020-04-04   3     200089                    0.001250   
+4  2020-04-05   4     200089                    0.001450   
+..        ...  ..        ...                         ...   
+57 2020-05-28  57     199832                    0.015960   
+58 2020-05-29  58     199832                    0.015509   
+59 2020-05-30  59     199832                    0.015609   
+60 2020-05-31  60     199832                    0.015460   
+61 2020-06-01  61     199811                    0.014910   
 
-    cum_symptomatic  cum_severe  cum_critical  cum_recoveries  cum_deaths  \
-0                 0           0             0               0           0   
-1                 0           0             0               0           0   
-2                 0           0             0               0           0   
-3                 0           0             0               0           0   
-4                 7           0             0               0           0   
-..              ...         ...           ...             ...         ...   
-57             1053          92            31            1251           7   
-58             1069          94            31            1278           7   
-59             1089          98            31            1306           7   
-60             1096          99            32            1341           9   
-61             1109         101            32            1369           9   
+    incidence_by_variant_wild  new_infections_by_variant_wild  \
+0                    0.000000                               0   
+1                    0.000000                               0   
+2                    0.000150                               3   
+3                    0.000100                               2   
+4                    0.000200                               4   
+..                        ...                             ...   
+57                   0.000813                              16   
+58                   0.000661                              13   
+59                   0.001118                              22   
+60                   0.001016                              20   
+61                   0.000762                              15   
 
-    ...  prevalence  incidence     r_eff  doubling_time  test_yield  \
-0   ...    0.001000   0.000000  2.766969            NaN           0   
-1   ...    0.001050   0.000050  3.018511            NaN           0   
-2   ...    0.001050   0.000000  2.602426            NaN           0   
-3   ...    0.001150   0.000100  2.537009      14.878453           0   
-4   ...    0.001400   0.000250  2.520561       7.228263           0   
-..  ...         ...        ...       ...            ...         ...   
-57  ...    0.018707   0.000968  0.738915      30.000000           0   
-58  ...    0.018256   0.000917  0.678174      30.000000           0   
-59  ...    0.017606   0.000764  0.696037      30.000000           0   
-60  ...    0.016908   0.001170  0.936910      30.000000           0   
-61  ...    0.016307   0.000814  0.676514      30.000000           0   
+    cum_infections_by_variant_wild  new_symptomatic_by_variant_wild  \
+0                               20                                0   
+1                               20                                0   
+2                               23                                0   
+3                               25                                3   
+4                               29                                1   
+..                             ...                              ...   
+57                            1447                               12   
+58                            1460                               22   
+59                            1482                               14   
+60                            1502                               15   
+61                            1517                               14   
 
-    rel_test_yield  frac_vaccinated  pop_nabs  pop_protection  \
-0                0                0  0.000258        0.000000   
-1                0                0  0.000518        0.000000   
-2                0                0  0.000778        0.000000   
-3                0                0  0.001047        0.000000   
-4                0                0  0.001348        0.000000   
-..             ...              ...       ...             ...   
-57               0                0  0.486243        0.050087   
-58               0                0  0.489911        0.051117   
-59               0                0  0.493096        0.052214   
-60               0                0  0.495393        0.053432   
-61               0                0  0.497245        0.054493   
+    cum_symptomatic_by_variant_wild  new_severe_by_variant_wild  ...  \
+0                                 0                           0  ...   
+1                                 0                           0  ...   
+2                                 0                           0  ...   
+3                                 3                           0  ...   
+4                                 4                           0  ...   
+..                              ...                         ...  ...   
+57                              924                           1  ...   
+58                              946                           1  ...   
+59                              960                           0  ...   
+60                              975                           1  ...   
+61                              989                           3  ...   
+
+    cum_isolated  test_yield     r_eff  incidence  rel_test_yield  \
+0              0           0  3.099759   0.000000               0   
+1              0           0  3.381555   0.000000               0   
+2              0           0  3.391480   0.000150               0   
+3              0           0  3.254062   0.000100               0   
+4              0           0  3.082368   0.000200               0   
+..           ...         ...       ...        ...             ...   
+57             0           0  0.668589   0.000813               0   
+58             0           0  0.702417   0.000661               0   
+59             0           0  0.789437   0.001118               0   
+60             0           0  0.875258   0.001016               0   
+61             0           0  0.674594   0.000762               0   
+
+    frac_vaccinated  doubling_time  pop_nabs  pop_protection  \
+0                 0            NaN  0.000336        0.000000   
+1                 0            NaN  0.000673        0.000000   
+2                 0            NaN  0.001053        0.000000   
+3                 0       9.318851  0.001438        0.000000   
+4                 0       5.596463  0.001916        0.000000   
+..              ...            ...       ...             ...   
+57                0      30.000000  0.340383        0.043758   
+58                0      30.000000  0.344928        0.044575   
+59                0      30.000000  0.349236        0.045283   
+60                0      30.000000  0.353284        0.046032   
+61                0      30.000000  0.356701        0.047024   
 
     pop_symp_protection  
 0              0.000000  
@@ -900,13 +1028,13 @@ Covasim calling file: /tmp/ipykernel_4310/1033588508.py</code></pre>
 3              0.000000  
 4              0.000000  
 ..                  ...  
-57             0.020291  
-58             0.020736  
-59             0.021199  
-60             0.021766  
-61             0.022223  
+57             0.018229  
+58             0.018590  
+59             0.018914  
+60             0.019270  
+61             0.019668  
 
-[62 rows x 60 columns]</code></pre>
+[62 rows x 79 columns]</code></pre>
 </div>
 </div>
 
@@ -1346,7 +1474,7 @@ Covasim calling file: /tmp/ipykernel_4310/1033588508.py</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

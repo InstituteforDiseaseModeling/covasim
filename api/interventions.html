@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -508,120 +512,107 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.BaseVaccination.apply" id="toc-covasim.interventions.BaseVaccination.apply" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.apply">apply</a></li>
-  <li><a href="#covasim.interventions.BaseVaccination.finalize" id="toc-covasim.interventions.BaseVaccination.finalize" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.finalize">finalize</a></li>
+  <li><a href="#covasim.interventions.BaseVaccination.register_vaccine" id="toc-covasim.interventions.BaseVaccination.register_vaccine" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.register_vaccine">register_vaccine</a></li>
   <li><a href="#covasim.interventions.BaseVaccination.select_people" id="toc-covasim.interventions.BaseVaccination.select_people" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.select_people">select_people</a></li>
-  <li><a href="#covasim.interventions.BaseVaccination.shrink" id="toc-covasim.interventions.BaseVaccination.shrink" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.shrink">shrink</a></li>
   <li><a href="#covasim.interventions.BaseVaccination.vaccinate" id="toc-covasim.interventions.BaseVaccination.vaccinate" class="nav-link" data-scroll-target="#covasim.interventions.BaseVaccination.vaccinate">vaccinate</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.Intervention" id="toc-covasim.interventions.Intervention" class="nav-link" data-scroll-target="#covasim.interventions.Intervention">Intervention</a>
   <ul class="collapse">
-  <li><a href="#parameters-2" id="toc-parameters-2" class="nav-link" data-scroll-target="#parameters-2">Parameters</a></li>
+  <li><a href="#parameters-3" id="toc-parameters-3" class="nav-link" data-scroll-target="#parameters-3">Parameters</a></li>
   <li><a href="#methods-1" id="toc-methods-1" class="nav-link" data-scroll-target="#methods-1">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.Intervention.apply" id="toc-covasim.interventions.Intervention.apply" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.apply">apply</a></li>
-  <li><a href="#covasim.interventions.Intervention.disp" id="toc-covasim.interventions.Intervention.disp" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.disp">disp</a></li>
-  <li><a href="#covasim.interventions.Intervention.finalize" id="toc-covasim.interventions.Intervention.finalize" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.finalize">finalize</a></li>
-  <li><a href="#covasim.interventions.Intervention.initialize" id="toc-covasim.interventions.Intervention.initialize" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.initialize">initialize</a></li>
-  <li><a href="#covasim.interventions.Intervention.plot_intervention" id="toc-covasim.interventions.Intervention.plot_intervention" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.plot_intervention">plot_intervention</a></li>
-  <li><a href="#covasim.interventions.Intervention.shrink" id="toc-covasim.interventions.Intervention.shrink" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.shrink">shrink</a></li>
-  <li><a href="#covasim.interventions.Intervention.to_json" id="toc-covasim.interventions.Intervention.to_json" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.to_json">to_json</a></li>
+  <li><a href="#covasim.interventions.Intervention.is_active" id="toc-covasim.interventions.Intervention.is_active" class="nav-link" data-scroll-target="#covasim.interventions.Intervention.is_active">is_active</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.change_beta" id="toc-covasim.interventions.change_beta" class="nav-link" data-scroll-target="#covasim.interventions.change_beta">change_beta</a>
   <ul class="collapse">
-  <li><a href="#parameters-6" id="toc-parameters-6" class="nav-link" data-scroll-target="#parameters-6">Parameters</a></li>
-  <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
-  <ul class="collapse">
-  <li><a href="#covasim.interventions.change_beta.initialize" id="toc-covasim.interventions.change_beta.initialize" class="nav-link" data-scroll-target="#covasim.interventions.change_beta.initialize">initialize</a></li>
-  </ul></li>
+  <li><a href="#parameters-4" id="toc-parameters-4" class="nav-link" data-scroll-target="#parameters-4">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.interventions.clip_edges" id="toc-covasim.interventions.clip_edges" class="nav-link" data-scroll-target="#covasim.interventions.clip_edges">clip_edges</a>
   <ul class="collapse">
-  <li><a href="#parameters-7" id="toc-parameters-7" class="nav-link" data-scroll-target="#parameters-7">Parameters</a></li>
-  <li><a href="#methods-3" id="toc-methods-3" class="nav-link" data-scroll-target="#methods-3">Methods</a>
+  <li><a href="#parameters-5" id="toc-parameters-5" class="nav-link" data-scroll-target="#parameters-5">Parameters</a></li>
+  <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.clip_edges.finalize" id="toc-covasim.interventions.clip_edges.finalize" class="nav-link" data-scroll-target="#covasim.interventions.clip_edges.finalize">finalize</a></li>
+  <li><a href="#covasim.interventions.clip_edges.shrink" id="toc-covasim.interventions.clip_edges.shrink" class="nav-link" data-scroll-target="#covasim.interventions.clip_edges.shrink">shrink</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.contact_tracing" id="toc-covasim.interventions.contact_tracing" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing">contact_tracing</a>
   <ul class="collapse">
-  <li><a href="#parameters-8" id="toc-parameters-8" class="nav-link" data-scroll-target="#parameters-8">Parameters</a></li>
-  <li><a href="#methods-4" id="toc-methods-4" class="nav-link" data-scroll-target="#methods-4">Methods</a>
+  <li><a href="#parameters-6" id="toc-parameters-6" class="nav-link" data-scroll-target="#parameters-6">Parameters</a></li>
+  <li><a href="#methods-3" id="toc-methods-3" class="nav-link" data-scroll-target="#methods-3">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.contact_tracing.apply" id="toc-covasim.interventions.contact_tracing.apply" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.apply">apply</a></li>
   <li><a href="#covasim.interventions.contact_tracing.identify_contacts" id="toc-covasim.interventions.contact_tracing.identify_contacts" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.identify_contacts">identify_contacts</a></li>
-  <li><a href="#covasim.interventions.contact_tracing.initialize" id="toc-covasim.interventions.contact_tracing.initialize" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.initialize">initialize</a></li>
+  <li><a href="#covasim.interventions.contact_tracing.init_post" id="toc-covasim.interventions.contact_tracing.init_post" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.init_post">init_post</a></li>
   <li><a href="#covasim.interventions.contact_tracing.notify_contacts" id="toc-covasim.interventions.contact_tracing.notify_contacts" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.notify_contacts">notify_contacts</a></li>
   <li><a href="#covasim.interventions.contact_tracing.select_cases" id="toc-covasim.interventions.contact_tracing.select_cases" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.select_cases">select_cases</a></li>
+  <li><a href="#covasim.interventions.contact_tracing.step" id="toc-covasim.interventions.contact_tracing.step" class="nav-link" data-scroll-target="#covasim.interventions.contact_tracing.step">step</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.dynamic_pars" id="toc-covasim.interventions.dynamic_pars" class="nav-link" data-scroll-target="#covasim.interventions.dynamic_pars">dynamic_pars</a>
   <ul class="collapse">
-  <li><a href="#parameters-11" id="toc-parameters-11" class="nav-link" data-scroll-target="#parameters-11">Parameters</a></li>
-  <li><a href="#methods-5" id="toc-methods-5" class="nav-link" data-scroll-target="#methods-5">Methods</a>
+  <li><a href="#parameters-9" id="toc-parameters-9" class="nav-link" data-scroll-target="#parameters-9">Parameters</a></li>
+  <li><a href="#methods-4" id="toc-methods-4" class="nav-link" data-scroll-target="#methods-4">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.dynamic_pars.apply" id="toc-covasim.interventions.dynamic_pars.apply" class="nav-link" data-scroll-target="#covasim.interventions.dynamic_pars.apply">apply</a></li>
+  <li><a href="#covasim.interventions.dynamic_pars.init_post" id="toc-covasim.interventions.dynamic_pars.init_post" class="nav-link" data-scroll-target="#covasim.interventions.dynamic_pars.init_post">init_post</a></li>
+  <li><a href="#covasim.interventions.dynamic_pars.step" id="toc-covasim.interventions.dynamic_pars.step" class="nav-link" data-scroll-target="#covasim.interventions.dynamic_pars.step">step</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.historical_vaccinate_prob" id="toc-covasim.interventions.historical_vaccinate_prob" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob">historical_vaccinate_prob</a>
   <ul class="collapse">
-  <li><a href="#parameters-12" id="toc-parameters-12" class="nav-link" data-scroll-target="#parameters-12">Parameters</a></li>
-  <li><a href="#methods-6" id="toc-methods-6" class="nav-link" data-scroll-target="#methods-6">Methods</a>
+  <li><a href="#parameters-10" id="toc-parameters-10" class="nav-link" data-scroll-target="#parameters-10">Parameters</a></li>
+  <li><a href="#methods-5" id="toc-methods-5" class="nav-link" data-scroll-target="#methods-5">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.interventions.historical_vaccinate_prob.estimate_prob" id="toc-covasim.interventions.historical_vaccinate_prob.estimate_prob" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.estimate_prob">estimate_prob</a></li>
-  <li><a href="#covasim.interventions.historical_vaccinate_prob.process_days" id="toc-covasim.interventions.historical_vaccinate_prob.process_days" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.process_days">process_days</a></li>
+  <li><a href="#covasim.interventions.historical_vaccinate_prob.filter_compliance" id="toc-covasim.interventions.historical_vaccinate_prob.filter_compliance" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.filter_compliance">filter_compliance</a></li>
+  <li><a href="#covasim.interventions.historical_vaccinate_prob.schedule_second_doses" id="toc-covasim.interventions.historical_vaccinate_prob.schedule_second_doses" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.schedule_second_doses">schedule_second_doses</a></li>
+  <li><a href="#covasim.interventions.historical_vaccinate_prob.select_first_doses" id="toc-covasim.interventions.historical_vaccinate_prob.select_first_doses" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.select_first_doses">select_first_doses</a></li>
+  <li><a href="#covasim.interventions.historical_vaccinate_prob.update_historical_nab" id="toc-covasim.interventions.historical_vaccinate_prob.update_historical_nab" class="nav-link" data-scroll-target="#covasim.interventions.historical_vaccinate_prob.update_historical_nab">update_historical_nab</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.historical_wave" id="toc-covasim.interventions.historical_wave" class="nav-link" data-scroll-target="#covasim.interventions.historical_wave">historical_wave</a>
   <ul class="collapse">
-  <li><a href="#parameters-14" id="toc-parameters-14" class="nav-link" data-scroll-target="#parameters-14">Parameters</a></li>
+  <li><a href="#parameters-11" id="toc-parameters-11" class="nav-link" data-scroll-target="#parameters-11">Parameters</a></li>
+  <li><a href="#methods-6" id="toc-methods-6" class="nav-link" data-scroll-target="#methods-6">Methods</a>
+  <ul class="collapse">
+  <li><a href="#covasim.interventions.historical_wave.per_wave" id="toc-covasim.interventions.historical_wave.per_wave" class="nav-link" data-scroll-target="#covasim.interventions.historical_wave.per_wave">per_wave</a></li>
+  <li><a href="#covasim.interventions.historical_wave.start_step" id="toc-covasim.interventions.historical_wave.start_step" class="nav-link" data-scroll-target="#covasim.interventions.historical_wave.start_step">start_step</a></li>
+  <li><a href="#covasim.interventions.historical_wave.step" id="toc-covasim.interventions.historical_wave.step" class="nav-link" data-scroll-target="#covasim.interventions.historical_wave.step">step</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.sequence" id="toc-covasim.interventions.sequence" class="nav-link" data-scroll-target="#covasim.interventions.sequence">sequence</a>
   <ul class="collapse">
-  <li><a href="#parameters-15" id="toc-parameters-15" class="nav-link" data-scroll-target="#parameters-15">Parameters</a></li>
-  <li><a href="#methods-7" id="toc-methods-7" class="nav-link" data-scroll-target="#methods-7">Methods</a>
-  <ul class="collapse">
-  <li><a href="#covasim.interventions.sequence.apply" id="toc-covasim.interventions.sequence.apply" class="nav-link" data-scroll-target="#covasim.interventions.sequence.apply">apply</a></li>
-  <li><a href="#covasim.interventions.sequence.initialize" id="toc-covasim.interventions.sequence.initialize" class="nav-link" data-scroll-target="#covasim.interventions.sequence.initialize">initialize</a></li>
-  </ul></li>
+  <li><a href="#parameters-12" id="toc-parameters-12" class="nav-link" data-scroll-target="#parameters-12">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.interventions.simple_vaccine" id="toc-covasim.interventions.simple_vaccine" class="nav-link" data-scroll-target="#covasim.interventions.simple_vaccine">simple_vaccine</a>
   <ul class="collapse">
-  <li><a href="#parameters-16" id="toc-parameters-16" class="nav-link" data-scroll-target="#parameters-16">Parameters</a></li>
-  <li><a href="#methods-8" id="toc-methods-8" class="nav-link" data-scroll-target="#methods-8">Methods</a>
-  <ul class="collapse">
-  <li><a href="#covasim.interventions.simple_vaccine.apply" id="toc-covasim.interventions.simple_vaccine.apply" class="nav-link" data-scroll-target="#covasim.interventions.simple_vaccine.apply">apply</a></li>
-  <li><a href="#covasim.interventions.simple_vaccine.initialize" id="toc-covasim.interventions.simple_vaccine.initialize" class="nav-link" data-scroll-target="#covasim.interventions.simple_vaccine.initialize">initialize</a></li>
-  </ul></li>
+  <li><a href="#parameters-13" id="toc-parameters-13" class="nav-link" data-scroll-target="#parameters-13">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.interventions.test_num" id="toc-covasim.interventions.test_num" class="nav-link" data-scroll-target="#covasim.interventions.test_num">test_num</a>
   <ul class="collapse">
-  <li><a href="#parameters-17" id="toc-parameters-17" class="nav-link" data-scroll-target="#parameters-17">Parameters</a></li>
-  <li><a href="#methods-9" id="toc-methods-9" class="nav-link" data-scroll-target="#methods-9">Methods</a>
-  <ul class="collapse">
-  <li><a href="#covasim.interventions.test_num.finalize" id="toc-covasim.interventions.test_num.finalize" class="nav-link" data-scroll-target="#covasim.interventions.test_num.finalize">finalize</a></li>
-  <li><a href="#covasim.interventions.test_num.initialize" id="toc-covasim.interventions.test_num.initialize" class="nav-link" data-scroll-target="#covasim.interventions.test_num.initialize">initialize</a></li>
-  </ul></li>
+  <li><a href="#parameters-14" id="toc-parameters-14" class="nav-link" data-scroll-target="#parameters-14">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.interventions.test_prob" id="toc-covasim.interventions.test_prob" class="nav-link" data-scroll-target="#covasim.interventions.test_prob">test_prob</a>
   <ul class="collapse">
-  <li><a href="#parameters-18" id="toc-parameters-18" class="nav-link" data-scroll-target="#parameters-18">Parameters</a></li>
-  <li><a href="#methods-10" id="toc-methods-10" class="nav-link" data-scroll-target="#methods-10">Methods</a>
-  <ul class="collapse">
-  <li><a href="#covasim.interventions.test_prob.apply" id="toc-covasim.interventions.test_prob.apply" class="nav-link" data-scroll-target="#covasim.interventions.test_prob.apply">apply</a></li>
-  <li><a href="#covasim.interventions.test_prob.finalize" id="toc-covasim.interventions.test_prob.finalize" class="nav-link" data-scroll-target="#covasim.interventions.test_prob.finalize">finalize</a></li>
-  <li><a href="#covasim.interventions.test_prob.initialize" id="toc-covasim.interventions.test_prob.initialize" class="nav-link" data-scroll-target="#covasim.interventions.test_prob.initialize">initialize</a></li>
-  </ul></li>
+  <li><a href="#parameters-15" id="toc-parameters-15" class="nav-link" data-scroll-target="#parameters-15">Parameters</a></li>
   </ul></li>
   <li><a href="#covasim.interventions.vaccinate_num" id="toc-covasim.interventions.vaccinate_num" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_num">vaccinate_num</a>
   <ul class="collapse">
-  <li><a href="#parameters-19" id="toc-parameters-19" class="nav-link" data-scroll-target="#parameters-19">Parameters</a></li>
+  <li><a href="#parameters-16" id="toc-parameters-16" class="nav-link" data-scroll-target="#parameters-16">Parameters</a></li>
+  <li><a href="#methods-7" id="toc-methods-7" class="nav-link" data-scroll-target="#methods-7">Methods</a>
+  <ul class="collapse">
+  <li><a href="#covasim.interventions.vaccinate_num.process_sequence" id="toc-covasim.interventions.vaccinate_num.process_sequence" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_num.process_sequence">process_sequence</a></li>
+  <li><a href="#covasim.interventions.vaccinate_num.select_people" id="toc-covasim.interventions.vaccinate_num.select_people" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_num.select_people">select_people</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#covasim.interventions.vaccinate_prob" id="toc-covasim.interventions.vaccinate_prob" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_prob">vaccinate_prob</a>
   <ul class="collapse">
-  <li><a href="#parameters-20" id="toc-parameters-20" class="nav-link" data-scroll-target="#parameters-20">Parameters</a></li>
+  <li><a href="#parameters-17" id="toc-parameters-17" class="nav-link" data-scroll-target="#parameters-17">Parameters</a></li>
+  <li><a href="#methods-8" id="toc-methods-8" class="nav-link" data-scroll-target="#methods-8">Methods</a>
+  <ul class="collapse">
+  <li><a href="#covasim.interventions.vaccinate_prob.schedule_second_doses" id="toc-covasim.interventions.vaccinate_prob.schedule_second_doses" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_prob.schedule_second_doses">schedule_second_doses</a></li>
+  <li><a href="#covasim.interventions.vaccinate_prob.select_first_doses" id="toc-covasim.interventions.vaccinate_prob.select_first_doses" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_prob.select_first_doses">select_first_doses</a></li>
+  <li><a href="#covasim.interventions.vaccinate_prob.select_people" id="toc-covasim.interventions.vaccinate_prob.select_people" class="nav-link" data-scroll-target="#covasim.interventions.vaccinate_prob.select_people">select_people</a></li>
+  </ul></li>
   </ul></li>
   </ul></li>
   <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions">Functions</a>
@@ -644,7 +635,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.interventions" class="level1">
 <h1>interventions</h1>
 <p><code>interventions</code></p>
-<p>Specify the core interventions available in Covasim. Other interventions can be defined by the user by inheriting from these classes.</p>
+<p>Specify the core interventions available in Covasim: testing, contact tracing, vaccination, prior immunity, and changes to transmission and parameters. Other interventions can be defined by the user by inheriting from these classes.</p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -661,7 +652,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.interventions.Intervention">Intervention</a></td>
-<td>Base class for interventions. By default, interventions are printed using a</td>
+<td>Base class for interventions. A custom intervention defines <code>step(self)</code> (or, as in v3,</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.interventions.change_beta">change_beta</a></td>
@@ -685,7 +676,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.interventions.historical_wave">historical_wave</a></td>
-<td>Imprint a historical (pre t=0) wave of infections in the population NAbs</td>
+<td>Imprint a historical (pre t=0) wave of infections in the population.</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.interventions.sequence">sequence</a></td>
@@ -693,7 +684,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#covasim.interventions.simple_vaccine">simple_vaccine</a></td>
-<td>Apply a simple vaccine to a subset of the population. In addition to changing the</td>
+<td>Apply a simple vaccine to a subset of the population. Rather than conferring neutralizing</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.interventions.test_num">test_num</a></td>
@@ -715,25 +706,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="covasim.interventions.BaseVaccination" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination">BaseVaccination</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination(vaccine, label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    booster<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Apply a vaccine to a subset of the population.</p>
-<p>This base class implements the mechanism of vaccinating people to modify their immunity. It does not implement allocation of the vaccines, which is implemented by derived classes such as <a href="../api/interventions.html#covasim.interventions.vaccinate" title="0"><code>cv.vaccinate</code></a>. The idea is that vaccination involves a series of standard operations to modify <a href="../api/people.html#covasim.people.People" title="0"><code>cv.People</code></a> and applications will likely need to modify the vaccine parameters and test potentially complex allocation strategies. These should be accounted for by:</p>
-<pre><code>- Custom vaccine parameters being passed in as a dictionary to the vaccine intervention
-- Custom vaccine allocations being implemented by a derived class overloading
-  `BaseVaccination.select_people`. Any additional attributes required to manage the allocation
-  can be defined in the derived class. Refer to `cv.vaccinate` or `cv.vaccinate_sequential` for
-  an example of how to implement this.</code></pre>
-<p>Some quantities are tracked during execution for reporting after running the simulation. These are:</p>
-<pre><code>- ``doses``:             the number of vaccine doses per person
-- ``vaccination_dates``: integer; dates of all doses for this vaccine</code></pre>
+<p>This base class implements the mechanism of vaccinating people to modify their immunity (through neutralizing antibodies, so it requires <code>use_waning=True</code>; otherwise, use <a href="../api/interventions.html#covasim.interventions.simple_vaccine" title="0"><code>cv.simple_vaccine</code></a>). It does not implement allocation of the vaccines, which is implemented by derived classes such as <a href="../api/interventions.html#covasim.interventions.vaccinate_prob" title="0"><code>cv.vaccinate_prob</code></a> and <a href="../api/interventions.html#covasim.interventions.vaccinate_num" title="0"><code>cv.vaccinate_num</code></a>. Custom vaccine allocations can be implemented by a derived class overriding <code>select_people(sim)</code>, which returns the UIDs of the people to vaccinate on the current timestep.</p>
+<p>The number of doses of this vaccine given to each person (indexed by UID) is stored in <code>doses</code>.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 16%">
+<col style="width: 17%">
 <col style="width: 6%">
-<col style="width: 66%">
-<col style="width: 10%">
+<col style="width: 67%">
+<col style="width: 9%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -757,12 +747,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>booster (boolean)</td>
+<td>booster (bool)</td>
 <td></td>
 <td>whether the vaccine is a booster, i.e.&nbsp;whether vaccinated people are eligible</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
+<td>subtarget (dict)</td>
+<td></td>
+<td>subtarget intervention to people with particular indices (see test_num() for details)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
 <td>kwargs (dict)</td>
 <td></td>
 <td>passed to Intervention()</td>
@@ -775,13 +771,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 - ``nab_init``:  the initial antibody level (higher = more protection)
 - ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
 OR
-- ``target_eff``: the target efficacy from which to calculate initial antibody and boosting.
-must be supplied as a list, where length of list is equal to number of doses
-- ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
+- ``target_eff``: the target efficacy from which to calculate initial antibody and boosting; must be supplied as a list, where the length of the list is equal to the number of doses
+AND
 - ``doses``:     the number of doses required to be fully vaccinated with this vaccine
 - ``interval``:  the interval between doses (integer)
 - entries for efficacy against each of the variants (e.g. ``b117``)</code></pre>
 <p>See <code>parameters.py</code> for additional examples of these parameters.</p>
+<p><strong>Example</strong>::</p>
+<pre><code>class vaccinate_over_70(cv.BaseVaccination):
+    def select_people(self, sim):
+        if sim.ti == 5:
+            return cv.true(sim.people.age &gt; 70)
+        return np.array([], dtype=int)
+
+sim = cv.Sim(interventions=vaccinate_over_70('pfizer'), use_waning=True).run()</code></pre>
 </section>
 <section id="methods" class="level4">
 <h4 class="anchored" data-anchor-id="methods">Methods</h4>
@@ -794,52 +797,28 @@ must be supplied as a list, where length of list is equal to number of doses
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.BaseVaccination.apply">apply</a></td>
-<td>Perform vaccination each timestep</td>
+<td><a href="#covasim.interventions.BaseVaccination.register_vaccine">register_vaccine</a></td>
+<td>Populate missing dose/variant pars, back-calculate target_eff, and register in the module.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.interventions.BaseVaccination.finalize">finalize</a></td>
-<td>Ensure variables with large memory footprints get erased</td>
-</tr>
-<tr class="odd">
 <td><a href="#covasim.interventions.BaseVaccination.select_people">select_people</a></td>
-<td>Return an array of indices of people to vaccinate</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.BaseVaccination.shrink">shrink</a></td>
-<td>Shrink vaccination intervention</td>
+<td>Return the UIDs of the people to vaccinate on this timestep. Derived classes must</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.interventions.BaseVaccination.vaccinate">vaccinate</a></td>
-<td>Vaccinate people</td>
+<td>Vaccinate people.</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.BaseVaccination.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform vaccination each timestep</p>
-</section>
-<section id="covasim.interventions.BaseVaccination.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.finalize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ensure variables with large memory footprints get erased</p>
+<section id="covasim.interventions.BaseVaccination.register_vaccine" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.register_vaccine">register_vaccine</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.register_vaccine(covid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Populate missing dose/variant pars, back-calculate target_eff, and register in the module.</p>
 </section>
 <section id="covasim.interventions.BaseVaccination.select_people" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.select_people">select_people</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.select_people(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return an array of indices of people to vaccinate Derived classes must implement this function to determine who to vaccinate at each timestep Args: sim: A cv.Sim instance Returns: Array of person indices</p>
-</section>
-<section id="covasim.interventions.BaseVaccination.shrink" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.shrink">shrink</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.shrink(in_place<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Shrink vaccination intervention</p>
-</section>
-<section id="covasim.interventions.BaseVaccination.vaccinate" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.vaccinate">vaccinate</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.vaccinate(sim, vacc_inds, t<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Vaccinate people</p>
-<p>This method applies the vaccine to the requested people indices. The indices of people vaccinated is returned. These may be different to the requested indices, because anyone that is dead will be skipped, as well as anyone already fully vaccinated (if booster=False). This could occur if a derived class does not filter out such people in its <code>select_people</code> method.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.select_people(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the UIDs of the people to vaccinate on this timestep. Derived classes must implement this method to determine who to vaccinate.</p>
 <section id="parameters-1" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
 <table class="caption-top table">
@@ -855,40 +834,66 @@ must be supplied as a list, where length of list is equal to number of doses
 <tr class="odd">
 <td>sim</td>
 <td></td>
-<td>A cv.Sim instance</td>
+<td>the simulation object</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="covasim.interventions.BaseVaccination.vaccinate" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.BaseVaccination.vaccinate">vaccinate</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>interventions.BaseVaccination.vaccinate(sim, vacc_inds, t<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Vaccinate people.</p>
+<p>This applies the vaccine to the requested people, and returns the UIDs of the people vaccinated. These may be fewer than were requested, since anyone who is dead, or who has already had all the doses of this vaccine, is skipped.</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sim</td>
+<td></td>
+<td>the simulation object</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>vacc_inds</td>
 <td></td>
-<td>An array of person indices to vaccinate</td>
+<td>the UIDs of the people to vaccinate</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>t</td>
 <td></td>
-<td>Optionally override the day on which vaccinations are recorded for historical vaccination</td>
+<td>the day of vaccination, if before the start of the sim (for historical vaccination)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
-<p>Returns: An array of person indices of people vaccinated</p>
 </section>
 </section>
 </section>
 </section>
 <section id="covasim.interventions.Intervention" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.Intervention">Intervention</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention(</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    show_label<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    do_plot<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    line_args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Base class for interventions. By default, interventions are printed using a dict format, which they can be recreated from. To display all the attributes of the intervention, use disp() instead.</p>
-<p>To retrieve a particular intervention from a sim, use sim.get_intervention().</p>
-<section id="parameters-2" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    do_plot<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    show_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    line_args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Base class for interventions. A custom intervention defines <code>step(self)</code> (or, as in v3, <code>apply(self, sim)</code>), which is called on each timestep, and optionally <code>init_post(self)</code> (or <code>initialize(self, sim)</code>).</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -903,28 +908,35 @@ must be supplied as a list, where length of list is equal to number of doses
 <td>label</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>a label for the intervention (used for plotting, and for ease of identification)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+<td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>show_label</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to include the label in the legend</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+<td>whether to include the label in the legend</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>do_plot</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to plot the intervention</td>
+<td>whether to plot the intervention</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>line_args</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>arguments passed to pl.axvline() when plotting</td>
+<td>arguments passed to ax.axvline() when plotting</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
+<p><strong>Example</strong>::</p>
+<pre><code>class halve_beta(cv.Intervention):
+    def step(self):
+        if self.ti == 30:
+            self.sim['beta'] = self.sim['beta']/2
+
+sim = cv.Sim(interventions=halve_beta()).run()</code></pre>
 </section>
 <section id="methods-1" class="level4">
 <h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
@@ -937,221 +949,24 @@ must be supplied as a list, where length of list is equal to number of doses
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.Intervention.apply">apply</a></td>
-<td>Apply the intervention. This is the core method which each derived intervention</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.Intervention.disp">disp</a></td>
-<td>Print a detailed representation of the intervention</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.interventions.Intervention.finalize">finalize</a></td>
-<td>Finalize intervention</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.Intervention.initialize">initialize</a></td>
-<td>Initialize intervention – this is used to make modifications to the intervention</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.interventions.Intervention.plot_intervention">plot_intervention</a></td>
-<td>Plot the intervention</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.Intervention.shrink">shrink</a></td>
-<td>Remove any excess stored data from the intervention; for use with sim.shrink().</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.interventions.Intervention.to_json">to_json</a></td>
-<td>Return JSON-compatible representation</td>
+<td><a href="#covasim.interventions.Intervention.is_active">is_active</a></td>
+<td>Whether the intervention is active on day index <code>ti</code> (within [start_day, end_day]).</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.Intervention.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Apply the intervention. This is the core method which each derived intervention class must implement. This method gets called at each timestep and can make arbitrary changes to the Sim object, as well as storing or modifying the state of the intervention.</p>
-<section id="parameters-3" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>sim</td>
-<td></td>
-<td>the Sim instance</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>None</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.interventions.Intervention.disp" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.disp">disp</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Print a detailed representation of the intervention</p>
-</section>
-<section id="covasim.interventions.Intervention.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.finalize(sim<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Finalize intervention</p>
-<p>This method is run once as part of <code>sim.finalize()</code> enabling the intervention to perform any final operations after the simulation is complete (e.g.&nbsp;rescaling)</p>
-</section>
-<section id="covasim.interventions.Intervention.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.initialize(sim<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize intervention – this is used to make modifications to the intervention that can’t be done until after the sim is created.</p>
-</section>
-<section id="covasim.interventions.Intervention.plot_intervention" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.plot_intervention">plot_intervention</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.plot_intervention(sim, ax<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Plot the intervention</p>
-<p>This can be used to do things like add vertical lines on days when interventions take place. Can be disabled by setting self.do_plot=False.</p>
-<p>Note 1: you can modify the plotting style via the <code>line_args</code> argument when creating the intervention.</p>
-<p>Note 2: By default, the intervention is plotted at the days stored in self.days. However, if there is a self.plot_days attribute, this will be used instead.</p>
-<section id="parameters-4" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>sim</td>
-<td></td>
-<td>the Sim instance</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>ax</td>
-<td></td>
-<td>the axis instance</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>kwargs</td>
-<td></td>
-<td>passed to ax.axvline()</td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-1" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>None</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.interventions.Intervention.shrink" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.shrink">shrink</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.shrink(in_place<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Remove any excess stored data from the intervention; for use with sim.shrink().</p>
-<section id="parameters-5" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>in_place</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to shrink the intervention (else shrink a copy)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.interventions.Intervention.to_json" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.to_json">to_json</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.to_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return JSON-compatible representation</p>
-<p>Custom classes can’t be directly represented in JSON. This method is a one-way export to produce a JSON-compatible representation of the intervention. In the first instance, the object dict will be returned. However, if an intervention itself contains non-standard variables as attributes, then its <code>to_json</code> method will need to handle those.</p>
-<p>Note that simply printing an intervention will usually return a representation that can be used to recreate it.</p>
-<section id="returns-2" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 83%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td></td>
-<td>JSON-serializable representation (typically a dict, but could be anything else)</td>
-</tr>
-</tbody>
-</table>
-</section>
+<section id="covasim.interventions.Intervention.is_active" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.Intervention.is_active">is_active</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>interventions.Intervention.is_active(ti)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Whether the intervention is active on day index <code>ti</code> (within [start_day, end_day]).</p>
 </section>
 </section>
 </section>
 <section id="covasim.interventions.change_beta" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.change_beta">change_beta</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>interventions.change_beta(days, changes, layers<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The most basic intervention – change beta (transmission) by a certain amount on a given day or days. This can be used to represent physical distancing (although clip_edges() is more appropriate for overall changes in mobility, e.g.&nbsp;school or workplace closures), as well as hand-washing, masks, and other behavioral changes that affect transmission rates.</p>
-<section id="parameters-6" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>interventions.change_beta(days, changes, layers<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The most basic intervention – change beta (transmission) by a certain amount on a given day or days. This can be used to represent physical distancing (although clip_edges() is more appropriate for overall changes in mobility, e.g.&nbsp;school or workplace closures), as well as hand-washing, masks, and other behavioral changes that affect transmission rates. Each change is relative to the original beta, not cumulative.</p>
+<section id="parameters-4" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1164,8 +979,8 @@ must be supplied as a list, where length of list is equal to number of doses
 <tbody>
 <tr class="odd">
 <td>days</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code></td>
-<td>the day or array of days to apply the interventions</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <code>function</code></td>
+<td>the day or array of days to apply the interventions, or a function <code>days(interv, sim)</code> returning them</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -1177,7 +992,7 @@ must be supplied as a list, where length of list is equal to number of doses
 <tr class="odd">
 <td>layers</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>the layers in which to change beta (default: all)</td>
+<td>the layers in which to change beta (default: all, by changing the overall beta)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -1192,35 +1007,14 @@ must be supplied as a list, where length of list is equal to number of doses
 <pre><code>interv = cv.change_beta(25, 0.3) # On day 25, reduce overall beta by 70% to 0.3
 interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta by 30%, and on day 28, return to 1 for schools</code></pre>
 </section>
-<section id="methods-2" class="level4">
-<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.interventions.change_beta.initialize">initialize</a></td>
-<td>Fix days and store beta</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.interventions.change_beta.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.change_beta.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>interventions.change_beta.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fix days and store beta</p>
-</section>
-</section>
 </section>
 <section id="covasim.interventions.clip_edges" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.clip_edges">clip_edges</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>interventions.clip_edges(days, changes, layers<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Isolate contacts by removing them from the simulation. Contacts are treated as “edges”, and this intervention works by removing them from sim.people.contacts and storing them internally. When the intervention is over, they are moved back. This intervention has quite similar effects as change_beta(), but is more appropriate for modeling the effects of mobility reductions such as school and workplace closures. The main difference is that since clip_edges() actually removes contacts, it affects the number of people who would be traced and placed in quarantine if an individual tests positive. It also alters the structure of the network – i.e., compared to a baseline case of 20 contacts and a 2% chance of infecting each, there are slightly different statistics for a beta reduction (i.e., 20 contacts and a 1% chance of infecting each) versus an edge clipping (i.e., 10 contacts and a 2% chance of infecting each).</p>
-<section id="parameters-7" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>interventions.clip_edges(days, changes, layers<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Isolate contacts by removing them from the simulation. Contacts are treated as “edges”, and this intervention works by removing them from the networks. When the intervention is over, they are restored. This intervention has quite similar effects as change_beta(), but is more appropriate for modeling the effects of mobility reductions such as school and workplace closures. The main difference is that since clip_edges() actually removes contacts, it affects the number of people who would be traced and placed in quarantine if an individual tests positive. It also alters the structure of the network – i.e., compared to a baseline case of 20 contacts and a 2% chance of infecting each, there are slightly different statistics for a beta reduction (i.e., 20 contacts and a 1% chance of infecting each) versus an edge clipping (i.e., 10 contacts and a 2% chance of infecting each).</p>
+<p>Each change is the fraction of the original edges to keep, not cumulative. For a dynamic layer (see <code>dynam_layer</code>), which is recreated on each timestep, that fraction of the edges is kept on every timestep until the next change.</p>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1233,19 +1027,19 @@ interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta
 <tbody>
 <tr class="odd">
 <td>days</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
-<td>the day or array of days to isolate contacts</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <code>function</code></td>
+<td>the day or array of days to isolate contacts, or a function <code>days(interv, sim)</code> returning them</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>changes</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <code>arr</code></td>
 <td>the changes in the number of contacts (1 = no change, 0 = no contacts)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>layers</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the layers in which to isolate contacts (if None, then all layers)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
@@ -1261,8 +1055,8 @@ interv = cv.change_beta([14, 28], [0.7, 1], layers='s') # On day 14, reduce beta
 <pre><code>interv = cv.clip_edges(25, 0.3) # On day 25, reduce overall contacts by 70% to 0.3
 interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% of school contacts, and on day 28, restore them</code></pre>
 </section>
-<section id="methods-3" class="level4">
-<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1272,33 +1066,34 @@ interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% o
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.clip_edges.finalize">finalize</a></td>
-<td>Ensure the edges get deleted at the end</td>
+<td><a href="#covasim.interventions.clip_edges.shrink">shrink</a></td>
+<td>Remove the copies of the original edges, for saving</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.clip_edges.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.clip_edges.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>interventions.clip_edges.finalize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ensure the edges get deleted at the end</p>
+<section id="covasim.interventions.clip_edges.shrink" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.clip_edges.shrink">shrink</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>interventions.clip_edges.shrink()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remove the copies of the original edges, for saving</p>
 </section>
 </section>
 </section>
 <section id="covasim.interventions.contact_tracing" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.contact_tracing">contact_tracing</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing(</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    trace_probs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    trace_time<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    presumptive<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    quar_period<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    capacity<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Contact tracing of people who are diagnosed. When a person is diagnosed positive (by either test_num() or test_prob(); this intervention has no effect if there is not also a testing intervention active), a certain proportion of the index case’s contacts (defined by trace_prob) are contacted after a certain number of days (defined by trace_time). After they are contacted, they are placed into quarantine (with effectiveness quar_factor, a simulation parameter) for a certain period (defined by quar_period, another simulation parameter). They may also change their testing probability, if test_prob() is defined.</p>
-<section id="parameters-8" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    trace_probs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    trace_time<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    presumptive<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    quar_period<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    capacity<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Contact tracing of people who are diagnosed. When a person is diagnosed positive (by either test_num() or test_prob(); this intervention has no effect if there is not also a testing intervention active), a certain proportion of the index case’s contacts (defined by trace_probs) are contacted after a certain number of days (defined by trace_time). After they are contacted, they are placed into quarantine (with effectiveness quar_factor, a simulation parameter) for a certain period (defined by quar_period). They may also change their testing probability, if test_prob() is defined.</p>
+<p>Tracing involves three steps that can independently be overridden or extended by derived classes: select_cases(), identify_contacts(), and notify_contacts().</p>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1312,24 +1107,24 @@ interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% o
 <tr class="odd">
 <td>trace_probs</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>probability of tracing, per layer (default: 100%, i.e.&nbsp;everyone is traced)</td>
+<td>probability of tracing, per layer (default: 100%, i.e.&nbsp;everyone is traced); a layer not in the dict is not traced</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>trace_time</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>days required to trace, per layer (default: 0, i.e.&nbsp;no delay)</td>
+<td>days required to trace, per layer (default: 0, i.e.&nbsp;no delay); rounded to a whole number of days</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>start_day</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>intervention start day (default: 0, i.e.&nbsp;the start of the simulation)</td>
 <td><code>0</code></td>
 </tr>
 <tr class="even">
 <td>end_day</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>intervention end day (default: no end)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
@@ -1340,15 +1135,15 @@ interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% o
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
-<td>capacity</td>
+<td>quar_period</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>optionally specify a maximum number of newly diagnosed people to trace each day</td>
+<td>number of days to quarantine when notified as a known contact (default: the sim’s <code>quar_period</code>)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
-<td>quar_period</td>
+<td>capacity</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>number of days to quarantine when notified as a known contact. Default value is <code>pars['quar_period']</code></td>
+<td>optionally specify a maximum number of newly diagnosed people to trace each day</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
@@ -1364,8 +1159,8 @@ interv = cv.clip_edges([14, 28], [0.7, 1], layers='s') # On day 14, remove 30% o
 ct = cv.contact_tracing(trace_probs=0.5, trace_time=2)
 sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracing has no effect</code></pre>
 </section>
-<section id="methods-4" class="level4">
-<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
+<section id="methods-3" class="level4">
+<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1375,45 +1170,34 @@ sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.contact_tracing.apply">apply</a></td>
-<td>Trace and notify contacts</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.interventions.contact_tracing.identify_contacts">identify_contacts</a></td>
-<td>Return contacts to notify by trace time</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.interventions.contact_tracing.initialize">initialize</a></td>
-<td>Process the dates and dictionaries</td>
+<td>Return the contacts to notify, by trace time.</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.interventions.contact_tracing.notify_contacts">notify_contacts</a></td>
-<td>Notify contacts</td>
+<td><a href="#covasim.interventions.contact_tracing.init_post">init_post</a></td>
+<td>Fill in the defaults, and expand trace_probs and trace_time into dicts with a value for each layer</td>
 </tr>
 <tr class="odd">
+<td><a href="#covasim.interventions.contact_tracing.notify_contacts">notify_contacts</a></td>
+<td>Notify people that they have had contact with a confirmed case: set their</td>
+</tr>
+<tr class="even">
 <td><a href="#covasim.interventions.contact_tracing.select_cases">select_cases</a></td>
-<td>Return people to be traced at this time step</td>
+<td>Return the people to be traced on this timestep: those diagnosed today or, if</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.interventions.contact_tracing.step">step</a></td>
+<td>Trace and notify contacts</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.contact_tracing.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Trace and notify contacts</p>
-<p>Tracing involves three steps that can independently be overloaded or extended by derived classes</p>
-<ul>
-<li>Select which confirmed cases get interviewed by contact tracers</li>
-<li>Identify the contacts of the confirmed case</li>
-<li>Notify those contacts that they have been exposed and need to take some action</li>
-</ul>
-</section>
 <section id="covasim.interventions.contact_tracing.identify_contacts" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.identify_contacts">identify_contacts</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.identify_contacts(sim, trace_inds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return contacts to notify by trace time</p>
-<p>In the base class, the trace time is the same per-layer, but derived classes might provide different functionality e.g.&nbsp;sampling the trace time from a distribution. The return value of this method is a dict keyed by trace time so that the <code>Person</code> object can be easily updated in <code>contact_tracing.notify_contacts</code></p>
-<section id="parameters-9" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.identify_contacts(sim, trace_inds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the contacts to notify, by trace time.</p>
+<p>In the base class, the trace time is the same for everyone in a layer, but derived classes might provide different functionality, e.g.&nbsp;sampling the trace time from a distribution.</p>
+<section id="parameters-7" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1427,42 +1211,60 @@ sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracin
 <tr class="odd">
 <td>sim</td>
 <td></td>
-<td>Simulation object</td>
+<td>the simulation object</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>trace_inds</td>
 <td></td>
-<td>Indices of people to trace</td>
+<td>the UIDs of the people to trace</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
 </table>
-<p>Returns: {trace_time: np.array(inds)} dictionary storing which people to notify</p>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 77%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>a dict <code>{trace_time: uids}</code> of the people to notify</td>
+</tr>
+</tbody>
+</table>
 </section>
 </section>
-<section id="covasim.interventions.contact_tracing.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Process the dates and dictionaries</p>
+<section id="covasim.interventions.contact_tracing.init_post" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.init_post">init_post</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.init_post()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Fill in the defaults, and expand trace_probs and trace_time into dicts with a value for each layer</p>
 </section>
 <section id="covasim.interventions.contact_tracing.notify_contacts" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.notify_contacts">notify_contacts</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.notify_contacts(sim, contacts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Notify contacts</p>
-<p>This method represents notifying people that they have had contact with a confirmed case. In this base class, that involves</p>
-<ul>
-<li>Setting the ‘known_contact’ flag and recording the ‘date_known_contact’</li>
-<li>Scheduling quarantine</li>
-</ul>
-<section id="parameters-10" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.notify_contacts(sim, contacts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Notify people that they have had contact with a confirmed case: set their <code>known_contact</code> flag, and schedule their quarantine to start on the day they are notified.</p>
+<section id="parameters-8" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 7%">
-<col style="width: 70%">
 <col style="width: 11%">
+<col style="width: 9%">
+<col style="width: 64%">
+<col style="width: 14%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1476,13 +1278,13 @@ sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracin
 <tr class="odd">
 <td>sim</td>
 <td></td>
-<td>Simulation object</td>
+<td>the simulation object</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>contacts</td>
 <td></td>
-<td>{trace_time: np.array(inds)} dictionary storing which people to notify</td>
+<td>a dict <code>{trace_time: uids}</code> of the people to notify</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
@@ -1491,19 +1293,24 @@ sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracin
 </section>
 <section id="covasim.interventions.contact_tracing.select_cases" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.select_cases">select_cases</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.select_cases(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return people to be traced at this time step</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.select_cases(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the people to be traced on this timestep: those diagnosed today or, if presumptive, those tested today who are infected</p>
+</section>
+<section id="covasim.interventions.contact_tracing.step" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.contact_tracing.step">step</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>interventions.contact_tracing.step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Trace and notify contacts</p>
 </section>
 </section>
 </section>
 <section id="covasim.interventions.dynamic_pars" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.dynamic_pars">dynamic_pars</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>interventions.dynamic_pars(pars<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>interventions.dynamic_pars(pars<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A generic intervention that modifies a set of parameters at specified points in time.</p>
-<p>The intervention takes a single argument, pars, which is a dictionary of which parameters to change, with following structure: keys are the parameters to change, then subkeys ‘days’ and ‘vals’ are either a scalar or list of when the change(s) should take effect and what the new value should be, respectively.</p>
+<p>The intervention takes a single argument, pars, which is a dictionary of which parameters to change, with following structure: keys are the parameters to change, then subkeys ‘days’ and ‘vals’ are either a scalar or list of when the change(s) should take effect and what the new value should be, respectively. If a value is a dict (e.g.&nbsp;for <code>beta_layer</code>), it updates the parameter rather than replacing it.</p>
 <p>You can also pass parameters to change directly as keyword arguments.</p>
-<section id="parameters-11" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1523,17 +1330,18 @@ sim = cv.Sim(interventions=[tp, ct]) # Note that without testing, contact tracin
 <tr class="even">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to Intervention()</td>
+<td>parameters to change, or else passed to Intervention()</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Examples</strong>::</p>
 <pre><code>interv = cv.dynamic_pars(n_imports=dict(days=10, vals=100))
-interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Change beta, and make diagnosed people stop transmitting</code></pre>
+interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_death_prob':{'days':30, 'vals':2.0}}) # Change beta, and make death more likely
+interv = cv.dynamic_pars(beta_layer=dict(days=20, vals=dict(s=0))) # Close schools on day 20</code></pre>
 </section>
-<section id="methods-5" class="level4">
-<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1543,40 +1351,48 @@ interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.dynamic_pars.apply">apply</a></td>
+<td><a href="#covasim.interventions.dynamic_pars.init_post">init_post</a></td>
+<td>Convert any dates to days</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.interventions.dynamic_pars.step">step</a></td>
 <td>Loop over the parameters, and then loop over the days, applying them if any are found</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.dynamic_pars.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.dynamic_pars.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>interventions.dynamic_pars.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="covasim.interventions.dynamic_pars.init_post" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.dynamic_pars.init_post">init_post</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>interventions.dynamic_pars.init_post()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert any dates to days</p>
+</section>
+<section id="covasim.interventions.dynamic_pars.step" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.dynamic_pars.step">step</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>interventions.dynamic_pars.step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Loop over the parameters, and then loop over the days, applying them if any are found</p>
 </section>
 </section>
 </section>
 <section id="covasim.interventions.historical_vaccinate_prob" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob">historical_vaccinate_prob</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob(</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    days,</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    compliance<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    days,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    compliance<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Probability-based historical vaccination</p>
-<p>This vaccine intervention allocates vaccines parametrized by the daily probability of being vaccinated. Unlike cv.vaccinate_prob this function allows vaccination prior to t=0 (and continuing into the simulation).</p>
-<p>If any people are infected at the t=0 timestep (e.g.&nbsp;seed infections), this finds those people and will re-infect them at the end of the historical vaccination. Thus you may have breakthrough infections and this might affect other interventions to initialize a population.</p>
-<section id="parameters-12" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
+<p>This vaccine intervention allocates vaccines parametrized by the daily probability of being vaccinated. Unlike cv.vaccinate_prob, this allows vaccination before the start of the sim (negative days), continuing into the simulation. The days before the start are stepped through when the sim is initialized, giving first doses and any second doses that are due, so people start the sim with waned NAbs; second doses due on or after the start are given during the sim. The doses given before the start are counted in the results on day 0. Requires <code>use_waning=True</code>.</p>
+<section id="parameters-10" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 4%">
+<col style="width: 75%">
 <col style="width: 6%">
-<col style="width: 66%">
-<col style="width: 9%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1590,25 +1406,25 @@ interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_
 <tr class="odd">
 <td>vaccine (dict/str)</td>
 <td></td>
-<td>which vaccine to use; see below for dict parameters</td>
+<td>which vaccine to use; see BaseVaccination for dict parameters</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
+<td>days (int/arr)</td>
+<td></td>
+<td>the day or array of days to apply the interventions; negative days are before the start of the sim (so -1 is the day before the start)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
 <td>label (str)</td>
 <td></td>
 <td>if vaccine is supplied as a dict, the name of the vaccine</td>
 <td><em>required</em></td>
 </tr>
-<tr class="odd">
-<td>days (int/arr)</td>
-<td></td>
-<td>the day or array of days to apply the interventions</td>
-<td><em>required</em></td>
-</tr>
 <tr class="even">
 <td>prob (float)</td>
 <td></td>
-<td>probability of being vaccinated (i.e., fraction of the population)</td>
+<td>probability of being vaccinated (i.e., fraction of the population); default 1 with no subtarget, or 0 with one</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -1620,7 +1436,7 @@ interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_
 <tr class="even">
 <td>compliance (float/arr)</td>
 <td></td>
-<td>compliance of the person to take each dose (if scalar then applied per dose)</td>
+<td>probability of a person taking each dose; a single number applies to both doses, or give two numbers for the first and second</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -1631,18 +1447,126 @@ interv = cv.dynamic_pars({'beta':{'days':[14, 28], 'vals':[0.005, 0.015]}, 'rel_
 </tr>
 </tbody>
 </table>
-<p>If <code>vaccine</code> is supplied as a dictionary, it must have the following parameters:</p>
-<pre><code>- ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
-- ``nab_init``:  the initial antibody level (higher = more protection)
-- ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
-- ``doses``:     the number of doses required to be fully vaccinated
-- ``interval``:  the interval between doses
-- entries for efficacy against each of the strains (e.g. ``b117``)</code></pre>
-<p>See <code>parameters.py</code> for additional examples of these parameters.</p>
 <p><strong>Example</strong>::</p>
 <pre><code>pfizer = cv.historical_vaccinate_prob(vaccine='pfizer', days=np.arange(-30,0), prob=0.007) # 30-day vaccination campaign
-cv.Sim(interventions=pfizer).run().plot()</code></pre>
-<p>New in version 3.1.0.</p>
+cv.Sim(interventions=pfizer, use_waning=True).run().plot()</code></pre>
+</section>
+<section id="methods-5" class="level4">
+<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#covasim.interventions.historical_vaccinate_prob.filter_compliance">filter_compliance</a></td>
+<td>Keep the people who comply with this dose (0 for the first, 1 for the second)</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.interventions.historical_vaccinate_prob.schedule_second_doses">schedule_second_doses</a></td>
+<td>Schedule the second dose for people given a first dose on day t, allowing for compliance</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.interventions.historical_vaccinate_prob.select_first_doses">select_first_doses</a></td>
+<td>Choose the people to give a first dose to on day t, allowing for compliance</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.interventions.historical_vaccinate_prob.update_historical_nab">update_historical_nab</a></td>
+<td>Step the NAbs of the people vaccinated by this intervention forward a day, on day t before the start of the sim</td>
+</tr>
+</tbody>
+</table>
+<section id="covasim.interventions.historical_vaccinate_prob.filter_compliance" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.filter_compliance">filter_compliance</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.filter_compliance(uids, dose)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep the people who comply with this dose (0 for the first, 1 for the second)</p>
+</section>
+<section id="covasim.interventions.historical_vaccinate_prob.schedule_second_doses" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.schedule_second_doses">schedule_second_doses</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.schedule_second_doses(t, uids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Schedule the second dose for people given a first dose on day t, allowing for compliance</p>
+</section>
+<section id="covasim.interventions.historical_vaccinate_prob.select_first_doses" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.select_first_doses">select_first_doses</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.select_first_doses(sim, t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Choose the people to give a first dose to on day t, allowing for compliance</p>
+</section>
+<section id="covasim.interventions.historical_vaccinate_prob.update_historical_nab" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.update_historical_nab">update_historical_nab</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.update_historical_nab(covid, t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step the NAbs of the people vaccinated by this intervention forward a day, on day t before the start of the sim</p>
+</section>
+</section>
+</section>
+<section id="covasim.interventions.historical_wave" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.interventions.historical_wave">historical_wave</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_wave(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    days_prior,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    prob,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    dist<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    variant<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Imprint a historical (pre t=0) wave of infections in the population.</p>
+<p>At the start of the first timestep, agents are infected as if on a day before the start of the sim, with the usual prognoses, so by day 0 most have recovered (with waned NAbs), some have died, and any infected shortly before the start are still infectious. As in v3, the infections, recoveries, deaths etc. before the start are counted in the results on day 0. Requires <code>use_waning=True</code>.</p>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>days_prior</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>offset relative to t=0 for the wave (the median of the default distribution), or the median date if a string like “2021-11-15”</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>prob</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>probability of infection during the wave</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>dist</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>the shape of the wave, as a v3 distribution, e.g.&nbsp;dict(dist=‘normal’, par1=0, par2=15) (default: normal with a full width at half maximum of 5 weeks)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>subtarget</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>subtarget the wave to people with particular indices (see test_num() for details)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>variant</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>name of the variant associated with the wave (default wild)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to Intervention()</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p>For multiple waves, supply lists; a single value applies to every wave.</p>
+<p><strong>Examples</strong>::</p>
+<pre><code>cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()
+cv.Sim(interventions=cv.historical_wave(days_prior=[300, 120], prob=[0.1, 0.3])).run().plot()</code></pre>
 </section>
 <section id="methods-6" class="level4">
 <h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
@@ -1655,137 +1579,42 @@ cv.Sim(interventions=pfizer).run().plot()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.interventions.historical_vaccinate_prob.estimate_prob">estimate_prob</a></td>
-<td>Estimate the per-day probability to achieve desired population coverage for a campaign of fixed duration and</td>
+<td><a href="#covasim.interventions.historical_wave.per_wave">per_wave</a></td>
+<td>A list is one value per wave; otherwise, use the same value for every wave</td>
 </tr>
 <tr class="even">
-<td><a href="#covasim.interventions.historical_vaccinate_prob.process_days">process_days</a></td>
-<td>Ensure lists of days are in consistent format. Used by change_beta, clip_edges,</td>
+<td><a href="#covasim.interventions.historical_wave.start_step">start_step</a></td>
+<td>Infect the people in each wave, before the COVID module updates the states on the first timestep (which applies the recoveries, deaths, etc.)</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.interventions.historical_wave.step">step</a></td>
+<td>As in v3, count the infections before the start of the sim in the results on day 0</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.interventions.historical_vaccinate_prob.estimate_prob" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.estimate_prob">estimate_prob</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.estimate_prob(duration, coverage)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Estimate the per-day probability to achieve desired population coverage for a campaign of fixed duration and fixed per-day probability of a person being vaccinated</p>
-<section id="parameters-13" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>duration</td>
-<td></td>
-<td>length of campign in days</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>coverage</td>
-<td></td>
-<td>target coverage of campaign</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>::</p>
-<pre><code>prob = historical_vaccinate.estimate_prob(duration=180, coverage=0.70)</code></pre>
+<section id="covasim.interventions.historical_wave.per_wave" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_wave.per_wave">per_wave</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_wave.per_wave(val, n_waves)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A list is one value per wave; otherwise, use the same value for every wave</p>
 </section>
+<section id="covasim.interventions.historical_wave.start_step" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_wave.start_step">start_step</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_wave.start_step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Infect the people in each wave, before the COVID module updates the states on the first timestep (which applies the recoveries, deaths, etc.)</p>
 </section>
-<section id="covasim.interventions.historical_vaccinate_prob.process_days" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.historical_vaccinate_prob.process_days">process_days</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_vaccinate_prob.process_days(</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    sim,</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    days,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    return_dates<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ensure lists of days are in consistent format. Used by change_beta, clip_edges, and some analyzers. Optionally return dates as well as days. If days is callable, leave unchanged.</p>
+<section id="covasim.interventions.historical_wave.step" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.historical_wave.step">step</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_wave.step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>As in v3, count the infections before the start of the sim in the results on day 0</p>
 </section>
-</section>
-</section>
-<section id="covasim.interventions.historical_wave" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.interventions.historical_wave">historical_wave</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>interventions.historical_wave(</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    days_prior,</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    prob,</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    dist<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    variant<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Imprint a historical (pre t=0) wave of infections in the population NAbs</p>
-<section id="parameters-14" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 18%">
-<col style="width: 5%">
-<col style="width: 68%">
-<col style="width: 8%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>days_prior (int/str/list)</td>
-<td></td>
-<td>offset relative to t=0 for the wave (median/par1 value) or median date if a string like “2021-11-15”</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>prob (float/list)</td>
-<td></td>
-<td>probability of infection during the wave</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>dist (dict/list)</td>
-<td></td>
-<td>passed to covasim.utils.sample to set wave shape (default gaussian with FWHM of 5 weeks)</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>subtarget (dict/list)</td>
-<td></td>
-<td>subtarget intervention to people with particular indices (see test_num() for details)</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>variants (str/list)</td>
-<td></td>
-<td>name of variant associated with the wave</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>kwargs (dict)</td>
-<td></td>
-<td>passed to Intervention()</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>:: cv.Sim(interventions=cv.historical_wave(120, 0.30)).run().plot()</p>
-<p>New in version 3.1.0.</p>
 </section>
 </section>
 <section id="covasim.interventions.sequence" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.sequence">sequence</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>interventions.sequence(days, interventions, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>interventions.sequence(days, interventions, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is an example of a meta-intervention which switches between a sequence of interventions.</p>
-<section id="parameters-15" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h4>
+<section id="parameters-12" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1818,62 +1647,25 @@ cv.Sim(interventions=pfizer).run().plot()</code></pre>
 </table>
 <p><strong>Example</strong>::</p>
 <pre><code>interv = cv.sequence(days=[10, 51], interventions=[
-            cv.test_num(n_tests=[100]*npts),
-            cv.test_prob(symptomatic_prob=0.2, asymptomatic_prob=0.002),
+            cv.test_num(daily_tests=100),
+            cv.test_prob(symp_prob=0.2, asymp_prob=0.002),
         ])</code></pre>
-</section>
-<section id="methods-7" class="level4">
-<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.interventions.sequence.apply">apply</a></td>
-<td>Find the matching day, and see which intervention to activate</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.sequence.initialize">initialize</a></td>
-<td>Fix the dates</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.interventions.sequence.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.sequence.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>interventions.sequence.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Find the matching day, and see which intervention to activate</p>
-</section>
-<section id="covasim.interventions.sequence.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.sequence.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>interventions.sequence.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fix the dates</p>
-</section>
 </section>
 </section>
 <section id="covasim.interventions.simple_vaccine" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.simple_vaccine">simple_vaccine</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>interventions.simple_vaccine(</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    days,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    rel_sus<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    rel_symp<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    cumulative<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Apply a simple vaccine to a subset of the population. In addition to changing the relative susceptibility and the probability of developing symptoms if still infected, this intervention stores several types of data:</p>
-<pre><code>- ``doses``:      the number of vaccine doses per person
-- ``vaccination_dates``: list of dates per person
-- ``orig_rel_sus``:      relative susceptibility per person at the beginning of the simulation
-- ``orig_symp_prob``:    probability of developing symptoms per person at the beginning of the simulation
-- ``mod_rel_sus``:       modifier on default susceptibility due to the vaccine
-- ``mod_symp_prob``:     modifier on default symptom probability due to the vaccine</code></pre>
-<section id="parameters-16" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>interventions.simple_vaccine(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    days,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    rel_sus<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    rel_symp<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    cumulative<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Apply a simple vaccine to a subset of the population. Rather than conferring neutralizing antibodies, this directly changes the relative susceptibility and the probability of developing symptoms if still infected. The number of doses given to each person (indexed by UID) is stored in <code>doses</code>.</p>
+<section id="parameters-13" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1886,7 +1678,7 @@ cv.Sim(interventions=pfizer).run().plot()</code></pre>
 <tbody>
 <tr class="odd">
 <td>days</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the day or array of days to apply the interventions</td>
 <td><em>required</em></td>
 </tr>
@@ -1928,69 +1720,38 @@ cv.Sim(interventions=pfizer).run().plot()</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Note: this intervention is still under development and should be used with caution. It is intended for use with use_waning=False.</p>
+<p>Note: this intervention is intended for use with use_waning=False.</p>
 <p><strong>Examples</strong>::</p>
 <pre><code>interv = cv.simple_vaccine(days=50, prob=0.3, rel_sus=0.5, rel_symp=0.1)
 interv = cv.simple_vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative=[1, 0.3, 0.1, 0]) # A vaccine with efficacy up to the 3rd dose</code></pre>
 </section>
-<section id="methods-8" class="level4">
-<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.interventions.simple_vaccine.apply">apply</a></td>
-<td>Perform vaccination</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.simple_vaccine.initialize">initialize</a></td>
-<td>Fix the dates and store the doses</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.interventions.simple_vaccine.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.simple_vaccine.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>interventions.simple_vaccine.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform vaccination</p>
-</section>
-<section id="covasim.interventions.simple_vaccine.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.simple_vaccine.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>interventions.simple_vaccine.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fix the dates and store the doses</p>
-</section>
-</section>
 </section>
 <section id="covasim.interventions.test_num" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.test_num">test_num</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>interventions.test_num(</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    daily_tests,</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    symp_test<span class="op">=</span><span class="fl">100.0</span>,</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    quar_test<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    quar_policy<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    ili_prev<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    sensitivity<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    loss_prob<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>    test_delay<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>    swab_delay<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>interventions.test_num(</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    daily_tests,</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    symp_test<span class="op">=</span><span class="fl">100.0</span>,</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    quar_test<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    quar_policy<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    ili_prev<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    sensitivity<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    loss_prob<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    test_delay<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>    swab_delay<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Test the specified number of people per day. Useful for including historical testing data. The probability of a given person getting a test is dependent on the total number of tests, population size, and odds ratios. Compare this intervention with cv.test_prob().</p>
-<section id="parameters-17" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h4>
+<section id="parameters-14" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 10%">
-<col style="width: 3%">
-<col style="width: 80%">
-<col style="width: 5%">
+<col style="width: 8%">
+<col style="width: 2%">
+<col style="width: 84%">
+<col style="width: 4%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2028,7 +1789,7 @@ interv = cv.simple_vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative
 <tr class="odd">
 <td>subtarget (dict)</td>
 <td></td>
-<td>subtarget intervention to people with particular indices (format: {‘ind’: array of indices, or function to return indices from the sim, ‘vals’: value(s) to apply}</td>
+<td>subtarget intervention to people with particular indices (format: {‘inds’: array of indices, or function to return indices from the sim, ‘vals’: value(s) to apply})</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -2056,21 +1817,21 @@ interv = cv.simple_vaccine(days=[10,20,30,40], prob=0.8, rel_sus=0.5, cumulative
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>start_day (int)</td>
+<td>start_day (int/str)</td>
 <td></td>
 <td>day the intervention starts (default: 0, i.e.&nbsp;first day of the simulation)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>end_day (int)</td>
+<td>end_day (int/str)</td>
 <td></td>
-<td>day the intervention ends</td>
+<td>day the intervention ends (default: no end)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>swab_delay (dict)</td>
 <td></td>
-<td>distribution for the delay from onset to swab; if this is present, it is used instead of test_delay</td>
+<td>distribution for the delay from onset to swab, e.g.&nbsp;dict(dist=‘lognormal’, par1=10, par2=170); if this is present, it is used instead of test_delay. For ‘lognormal’, par2 is the variance, not the standard deviation (see cv.utils.get_pdf())</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -2088,65 +1849,34 @@ interv = cv.test_num(daily_tests=[0.10*n_people]*npts, subtarget={'inds': lambda
 interv = cv.test_num(daily_tests='data') # Take number of tests from loaded data using default column name (new_tests)
 interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from loaded data using a custom column name</code></pre>
 </section>
-<section id="methods-9" class="level4">
-<h4 class="anchored" data-anchor-id="methods-9">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.interventions.test_num.finalize">finalize</a></td>
-<td>Ensure variables with large memory footprints get erased</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.test_num.initialize">initialize</a></td>
-<td>Fix the dates and number of tests</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.interventions.test_num.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.test_num.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>interventions.test_num.finalize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ensure variables with large memory footprints get erased</p>
-</section>
-<section id="covasim.interventions.test_num.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.test_num.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>interventions.test_num.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fix the dates and number of tests</p>
-</section>
-</section>
 </section>
 <section id="covasim.interventions.test_prob" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.test_prob">test_prob</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>interventions.test_prob(</span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    symp_prob,</span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    asymp_prob<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>    symp_quar_prob<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>    asymp_quar_prob<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    quar_policy<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>    ili_prev<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>    sensitivity<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>    loss_prob<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>    test_delay<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>    swab_delay<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Assign each person a probability of being tested for COVID based on their symptom state, quarantine state, and other states. Unlike test_num, the total number of tests not specified, but rather is an output.</p>
-<section id="parameters-18" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>interventions.test_prob(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    symp_prob,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    asymp_prob<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    symp_quar_prob<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    asymp_quar_prob<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    quar_policy<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    ili_prev<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>    sensitivity<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>    loss_prob<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>    test_delay<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>    start_day<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>    end_day<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    swab_delay<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Assign each person a probability of being tested for COVID based on their symptom state, quarantine state, and other states. Unlike test_num, the total number of tests is not specified, but rather is an output.</p>
+<section id="parameters-15" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 14%">
-<col style="width: 3%">
-<col style="width: 76%">
-<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 2%">
+<col style="width: 82%">
+<col style="width: 4%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2218,13 +1948,13 @@ interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from lo
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>start_day (int)</td>
+<td>start_day (int/str)</td>
 <td></td>
 <td>day the intervention starts (default: 0, i.e.&nbsp;first day of the simulation)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>end_day (int)</td>
+<td>end_day (int/str)</td>
 <td></td>
 <td>day the intervention ends (default: no end)</td>
 <td><em>required</em></td>
@@ -2232,7 +1962,7 @@ interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from lo
 <tr class="odd">
 <td>swab_delay (dict)</td>
 <td></td>
-<td>distribution for the delay from onset to swab; if this is present, it is used instead of test_delay</td>
+<td>distribution for the delay from onset to swab, e.g.&nbsp;dict(dist=‘lognormal’, par1=10, par2=170); if this is present, it is used instead of test_delay. For ‘lognormal’, par2 is the variance, not the standard deviation (see cv.utils.get_pdf())</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -2245,62 +1975,23 @@ interv = cv.test_num(daily_tests='swabs_per_day') # Take number of tests from lo
 </table>
 <p><strong>Examples</strong>::</p>
 <pre><code>interv = cv.test_prob(symp_prob=0.1, asymp_prob=0.01) # Test 10% of symptomatics and 1% of asymptomatics
-interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms</code></pre>
-</section>
-<section id="methods-10" class="level4">
-<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#covasim.interventions.test_prob.apply">apply</a></td>
-<td>Perform testing</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.interventions.test_prob.finalize">finalize</a></td>
-<td>Ensure variables with large memory footprints get erased</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.interventions.test_prob.initialize">initialize</a></td>
-<td>Fix the dates</td>
-</tr>
-</tbody>
-</table>
-<section id="covasim.interventions.test_prob.apply" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.test_prob.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>interventions.test_prob.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform testing</p>
-</section>
-<section id="covasim.interventions.test_prob.finalize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.test_prob.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>interventions.test_prob.finalize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ensure variables with large memory footprints get erased</p>
-</section>
-<section id="covasim.interventions.test_prob.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.interventions.test_prob.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>interventions.test_prob.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fix the dates</p>
-</section>
+interv = cv.test_prob(symp_prob=0.1, symp_quar_prob=0.4) # Test 40% of those in quarantine with symptoms</code></pre>
 </section>
 </section>
 <section id="covasim.interventions.vaccinate_num" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.vaccinate_num">vaccinate_num</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_num(</span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>    num_doses,</span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>    booster<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>    sequence<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_num(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    num_doses,</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    booster<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    sequence<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This vaccine intervention allocates vaccines in a pre-computed order of distribution, at a specified rate of doses per day. Second doses are prioritized each day.</p>
-<section id="parameters-19" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h4>
+<section id="parameters-16" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2314,13 +2005,13 @@ interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with
 <tr class="odd">
 <td>vaccine</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>which vaccine to use; see below for dict parameters</td>
+<td>which vaccine to use; see BaseVaccination for dict parameters</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>label</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>if vaccine is supplied as a dict, the name of the vaccine</td>
+<td>num_doses</td>
+<td></td>
+<td>Specify the number of doses per day. This can take three forms - A scalar number of doses per day - A dict keyed by day/date with the number of doses e.g.&nbsp;<code>{2:10000, '2021-05-01':20000}</code>. Any dates are converted to simulation days when the sim is initialized. - A callable that takes in a <a href="../api/sim.html#covasim.sim.Sim" title="0"><code>cv.Sim</code></a> and returns a scalar number of doses. For example, <code>def doses(sim): return 100 if sim.ti &gt; 10 else 0</code> would be suitable</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -2332,7 +2023,7 @@ interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with
 <tr class="even">
 <td>subtarget</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>subtarget intervention to people with particular indices (see test_num() for details)</td>
+<td>subtarget intervention to people with particular indices (see test_num() for details); the values multiply each person’s chance of being offered a first dose</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
@@ -2342,81 +2033,9 @@ interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
-<td>num_doses</td>
-<td></td>
-<td>Specify the number of doses per day. This can take three forms - A scalar number of doses per day - A dict keyed by day/date with the number of doses e.g.&nbsp;<code>{2:10000, '2021-05-01':20000}</code>. Any dates are converted to simulation days in <code>initialize()</code> which will also copy the dictionary passed in. - A callable that takes in a <a href="../api/sim.html#covasim.sim.Sim" title="0"><code>cv.Sim</code></a> and returns a scalar number of doses. For example, <code>def doses(sim): return 100 if sim.t &gt; 10 else 0</code> would be suitable</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>**kwargs</td>
-<td></td>
-<td>Additional arguments passed to <a href="../api/interventions.html#covasim.interventions.BaseVaccination" title="0"><code>cv.BaseVaccination</code></a></td>
-<td><code>{}</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>:: pfizer = cv.vaccinate_num(vaccine=‘pfizer’, sequence=‘age’, num_doses=100) cv.Sim(interventions=pfizer, use_waning=True).run().plot()</p>
-</section>
-</section>
-<section id="covasim.interventions.vaccinate_prob" class="level3">
-<h3 class="anchored" data-anchor-id="covasim.interventions.vaccinate_prob">vaccinate_prob</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_prob(</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>    days,</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    booster<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Probability-based vaccination</p>
-<p>This vaccine intervention allocates vaccines parametrized by the daily probability of being vaccinated.</p>
-<section id="parameters-20" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>vaccine</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>which vaccine to use; see below for dict parameters</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
 <td>label</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if vaccine is supplied as a dict, the name of the vaccine</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>days</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code></td>
-<td>the day or array of days to apply the interventions</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>prob</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>probability of being vaccinated (i.e., fraction of the population)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>booster</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether it’s a booster (i.e.&nbsp;targeted to vaccinated people) or not</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-<tr class="even">
-<td>subtarget</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>subtarget intervention to people with particular indices (see test_num() for details)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
@@ -2427,17 +2046,154 @@ interv = cv.test_prob(symp_quar_prob=0.4) # Test 40% of those in quarantine with
 </tr>
 </tbody>
 </table>
-<p>If <code>vaccine</code> is supplied as a dictionary, it must have the following parameters:</p>
-<pre><code>- ``nab_eff``:   the waning efficacy of neutralizing antibodies at preventing infection
-- ``nab_init``:  the initial antibody level (higher = more protection)
-- ``nab_boost``: how much of a boost being vaccinated on top of a previous dose or natural infection provides
-- ``doses``:     the number of doses required to be fully vaccinated
-- ``interval``:  the interval between doses (integer)
-- entries for efficacy against each of the strains (e.g. ``b117``)</code></pre>
-<p>See <code>parameters.py</code> for additional examples of these parameters.</p>
+<p><strong>Example</strong>::</p>
+<pre><code>pfizer = cv.vaccinate_num(vaccine='pfizer', sequence='age', num_doses=100)
+cv.Sim(interventions=pfizer, use_waning=True).run().plot()</code></pre>
+</section>
+<section id="methods-7" class="level4">
+<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#covasim.interventions.vaccinate_num.process_sequence">process_sequence</a></td>
+<td>Handle the different types of prioritization sequence for vaccination</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.interventions.vaccinate_num.select_people">select_people</a></td>
+<td>Return the people due a second dose, then those next in the sequence for a first dose, up to the number of doses today</td>
+</tr>
+</tbody>
+</table>
+<section id="covasim.interventions.vaccinate_num.process_sequence" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.vaccinate_num.process_sequence">process_sequence</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_num.process_sequence(sequence)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Handle the different types of prioritization sequence for vaccination</p>
+</section>
+<section id="covasim.interventions.vaccinate_num.select_people" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.vaccinate_num.select_people">select_people</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_num.select_people(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the people due a second dose, then those next in the sequence for a first dose, up to the number of doses today</p>
+</section>
+</section>
+</section>
+<section id="covasim.interventions.vaccinate_prob" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.interventions.vaccinate_prob">vaccinate_prob</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_prob(</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>    vaccine,</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    days,</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    subtarget<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    booster<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Probability-based vaccination</p>
+<p>This vaccine intervention allocates vaccines parametrized by the daily probability of being vaccinated. People given a first dose of a two-dose vaccine are given their second dose after the vaccine’s dosing interval.</p>
+<section id="parameters-17" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>vaccine</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>which vaccine to use; see BaseVaccination for dict parameters</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>days</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>arr</code></td>
+<td>the day or array of days to apply the interventions</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>label</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>if vaccine is supplied as a dict, the name of the vaccine</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>prob</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>probability of being vaccinated (i.e., fraction of the population); default 1 with no subtarget, or 0 with one (so only the people subtargeted are vaccinated)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>subtarget</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>subtarget intervention to people with particular indices (see test_num() for details)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>booster</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether it’s a booster (i.e.&nbsp;targeted to vaccinated people) or not</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to Intervention()</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
 <p><strong>Example</strong>::</p>
 <pre><code>pfizer = cv.vaccinate_prob(vaccine='pfizer', days=30, prob=0.7)
 cv.Sim(interventions=pfizer, use_waning=True).run().plot()</code></pre>
+</section>
+<section id="methods-8" class="level4">
+<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#covasim.interventions.vaccinate_prob.schedule_second_doses">schedule_second_doses</a></td>
+<td>Schedule the second dose for people given a first dose on day t</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.interventions.vaccinate_prob.select_first_doses">select_first_doses</a></td>
+<td>Choose the people to give a first dose to on day t</td>
+</tr>
+<tr class="odd">
+<td><a href="#covasim.interventions.vaccinate_prob.select_people">select_people</a></td>
+<td>Return the people to give a first dose to on day t (by default, today), and those due a second dose</td>
+</tr>
+</tbody>
+</table>
+<section id="covasim.interventions.vaccinate_prob.schedule_second_doses" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.vaccinate_prob.schedule_second_doses">schedule_second_doses</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_prob.schedule_second_doses(t, uids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Schedule the second dose for people given a first dose on day t</p>
+</section>
+<section id="covasim.interventions.vaccinate_prob.select_first_doses" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.vaccinate_prob.select_first_doses">select_first_doses</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_prob.select_first_doses(sim, t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Choose the people to give a first dose to on day t</p>
+</section>
+<section id="covasim.interventions.vaccinate_prob.select_people" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.interventions.vaccinate_prob.select_people">select_people</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate_prob.select_people(sim, t<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the people to give a first dose to on day t (by default, today), and those due a second dose</p>
+</section>
 </section>
 </section>
 </section>
@@ -2467,23 +2223,22 @@ cv.Sim(interventions=pfizer, use_waning=True).run().plot()</code></pre>
 </table>
 <section id="covasim.interventions.InterventionDict" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.InterventionDict">InterventionDict</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>interventions.InterventionDict(which, pars)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>interventions.InterventionDict(which, pars)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Generate an intervention from a dictionary. Although a function, it acts like a class, since it returns a class instance.</p>
 <p><strong>Example</strong>::</p>
 <pre><code>interv = cv.InterventionDict(which='change_beta', pars={'days': 30, 'changes': 0.5, 'layers': None})</code></pre>
 </section>
 <section id="covasim.interventions.prior_immunity" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.prior_immunity">prior_immunity</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>interventions.prior_immunity(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>interventions.prior_immunity(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Wrapper function for <code>historical_wave</code> and <code>historical_vaccinate_prob</code>. If the <code>vaccine</code> keyword is present then <code>historical_vaccinate_prob</code> will be used. Otherwise <code>historical_wave</code> is used.</p>
 <p><strong>Examples</strong>::</p>
 <pre><code>pim1 = cv.prior_immunity(vaccine='pfizer', days=[-30], prob=0.7)
 pim2 = cv.prior_immunity(120, 0.05)</code></pre>
-<p>New in version 3.1.0.</p>
 </section>
 <section id="covasim.interventions.vaccinate" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.interventions.vaccinate">vaccinate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>interventions.vaccinate(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Wrapper function for <code>vaccinate_prob()</code> and <code>vaccinate_num()</code>. If the <code>num_doses</code> argument is used, will call <code>vaccinate_num()</code>; else, calls <code>vaccinate_prob()</code>.</p>
 <p><strong>Examples</strong>::</p>
 <pre><code>vx1 = cv.vaccinate(vaccine='pfizer', days=30, prob=0.7)
@@ -2927,7 +2682,7 @@ vx2 = cv.vaccinate(vaccine='pfizer', num_doses=100)</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

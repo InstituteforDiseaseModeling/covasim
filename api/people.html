@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -508,29 +512,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
-  <li><a href="#covasim.people.People.check_critical" id="toc-covasim.people.People.check_critical" class="nav-link" data-scroll-target="#covasim.people.People.check_critical">check_critical</a></li>
-  <li><a href="#covasim.people.People.check_death" id="toc-covasim.people.People.check_death" class="nav-link" data-scroll-target="#covasim.people.People.check_death">check_death</a></li>
-  <li><a href="#covasim.people.People.check_diagnosed" id="toc-covasim.people.People.check_diagnosed" class="nav-link" data-scroll-target="#covasim.people.People.check_diagnosed">check_diagnosed</a></li>
-  <li><a href="#covasim.people.People.check_exit_iso" id="toc-covasim.people.People.check_exit_iso" class="nav-link" data-scroll-target="#covasim.people.People.check_exit_iso">check_exit_iso</a></li>
-  <li><a href="#covasim.people.People.check_inds" id="toc-covasim.people.People.check_inds" class="nav-link" data-scroll-target="#covasim.people.People.check_inds">check_inds</a></li>
-  <li><a href="#covasim.people.People.check_infectious" id="toc-covasim.people.People.check_infectious" class="nav-link" data-scroll-target="#covasim.people.People.check_infectious">check_infectious</a></li>
-  <li><a href="#covasim.people.People.check_quar" id="toc-covasim.people.People.check_quar" class="nav-link" data-scroll-target="#covasim.people.People.check_quar">check_quar</a></li>
-  <li><a href="#covasim.people.People.check_recovery" id="toc-covasim.people.People.check_recovery" class="nav-link" data-scroll-target="#covasim.people.People.check_recovery">check_recovery</a></li>
-  <li><a href="#covasim.people.People.check_severe" id="toc-covasim.people.People.check_severe" class="nav-link" data-scroll-target="#covasim.people.People.check_severe">check_severe</a></li>
-  <li><a href="#covasim.people.People.check_symptomatic" id="toc-covasim.people.People.check_symptomatic" class="nav-link" data-scroll-target="#covasim.people.People.check_symptomatic">check_symptomatic</a></li>
-  <li><a href="#covasim.people.People.infect" id="toc-covasim.people.People.infect" class="nav-link" data-scroll-target="#covasim.people.People.infect">infect</a></li>
-  <li><a href="#covasim.people.People.init_flows" id="toc-covasim.people.People.init_flows" class="nav-link" data-scroll-target="#covasim.people.People.init_flows">init_flows</a></li>
-  <li><a href="#covasim.people.People.initialize" id="toc-covasim.people.People.initialize" class="nav-link" data-scroll-target="#covasim.people.People.initialize">initialize</a></li>
-  <li><a href="#covasim.people.People.make_naive" id="toc-covasim.people.People.make_naive" class="nav-link" data-scroll-target="#covasim.people.People.make_naive">make_naive</a></li>
-  <li><a href="#covasim.people.People.make_nonnaive" id="toc-covasim.people.People.make_nonnaive" class="nav-link" data-scroll-target="#covasim.people.People.make_nonnaive">make_nonnaive</a></li>
   <li><a href="#covasim.people.People.plot" id="toc-covasim.people.People.plot" class="nav-link" data-scroll-target="#covasim.people.People.plot">plot</a></li>
-  <li><a href="#covasim.people.People.schedule_quarantine" id="toc-covasim.people.People.schedule_quarantine" class="nav-link" data-scroll-target="#covasim.people.People.schedule_quarantine">schedule_quarantine</a></li>
-  <li><a href="#covasim.people.People.set_prognoses" id="toc-covasim.people.People.set_prognoses" class="nav-link" data-scroll-target="#covasim.people.People.set_prognoses">set_prognoses</a></li>
-  <li><a href="#covasim.people.People.story" id="toc-covasim.people.People.story" class="nav-link" data-scroll-target="#covasim.people.People.story">story</a></li>
-  <li><a href="#covasim.people.People.test" id="toc-covasim.people.People.test" class="nav-link" data-scroll-target="#covasim.people.People.test">test</a></li>
-  <li><a href="#covasim.people.People.update_contacts" id="toc-covasim.people.People.update_contacts" class="nav-link" data-scroll-target="#covasim.people.People.update_contacts">update_contacts</a></li>
-  <li><a href="#covasim.people.People.update_states_post" id="toc-covasim.people.People.update_states_post" class="nav-link" data-scroll-target="#covasim.people.People.update_states_post">update_states_post</a></li>
-  <li><a href="#covasim.people.People.update_states_pre" id="toc-covasim.people.People.update_states_pre" class="nav-link" data-scroll-target="#covasim.people.People.update_states_pre">update_states_pre</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -548,7 +530,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.people" class="level1">
 <h1>people</h1>
 <p><code>people</code></p>
-<p>Defines the People class and functions associated with making people and handling the transitions between states (e.g., from susceptible to infected).</p>
+<p>Defines the People class.</p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -561,16 +543,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.people.People">People</a></td>
-<td>A class to perform all the operations on the people – usually not invoked directly.</td>
+<td>The people in the simulation: their ages and sexes, and (once in a sim) their disease states.</td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.people.People" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.people.People">People</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>people.People(pars, strict<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>A class to perform all the operations on the people – usually not invoked directly.</p>
-<p>This class is usually created automatically by the sim. The only required input argument is the population size, but typically the full parameters dictionary will get passed instead since it will be needed before the People object is initialized. However, ages, contacts, etc. will need to be created separately – see <a href="../api/population.html#covasim.population.make_people" title="0"><code>cv.make_people()</code></a> instead.</p>
-<p>Note that this class handles the mechanics of updating the actual people, while <a href="../api/base.html#covasim.base.BasePeople" title="0"><code>cv.BasePeople</code></a> takes care of housekeeping (saving, loading, exporting, etc.). Please see the BasePeople class for additional methods.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>people.People(n_agents, age_data<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The people in the simulation: their ages and sexes, and (once in a sim) their disease states.</p>
+<p>The disease states (e.g.&nbsp;<code>people.exposed</code>) are stored on the COVID module (<code>sim.diseases.covid</code>), but can be read from the people as in v3. Dates such as <code>people.date_infectious</code> are the time indices (e.g.&nbsp;<code>ti_infectious</code>), since the timestep is one day. The per-agent arrays only include agents who are alive, except for <code>people.dead</code> and <code>people.date_dead</code>, which cover every agent ever created.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
@@ -584,30 +565,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>pars</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>the sim parameters, e.g.&nbsp;sim.pars – alternatively, if a number, interpreted as pop_size</td>
+<td>n_agents</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td>the number of agents</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>strict</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not to only create keys that are already in self.meta.person; otherwise, let any key be set</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+<td>age_data</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a> / <code>dataframe</code></td>
+<td>the age distribution, either as Covasim’s (minimum age, maximum age, fraction) rows (e.g.&nbsp;from <code>cv.data.get_age_distribution()</code>) or as Starsim’s (lower edge, value) rows; defaults to Covasim’s default age distribution</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>the actual data, e.g.&nbsp;from a popdict, being specified</td>
+<td>passed to <a href="https://docs.starsim.org/api/people.html#starsim.people.People" title="0"><code>ss.People</code></a> (e.g.&nbsp;<code>extra_states</code>)</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Examples</strong>::</p>
-<pre><code>ppl1 = cv.People(2000)
-
-sim = cv.Sim()
-ppl2 = cv.People(sim.pars)</code></pre>
+<p><strong>Example</strong>::</p>
+<pre><code>people = cv.People(1000, age_data=cv.data.get_age_distribution('nigeria'))
+sim = cv.Sim(people=people, pop_size=1000)</code></pre>
 </section>
 <section id="methods" class="level4">
 <h4 class="anchored" data-anchor-id="methods">Methods</h4>
@@ -620,505 +599,15 @@ ppl2 = cv.People(sim.pars)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#covasim.people.People.check_critical">check_critical</a></td>
-<td>Check for new progressions to critical</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.check_death">check_death</a></td>
-<td>Check whether or not this person died on this timestep</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.check_diagnosed">check_diagnosed</a></td>
-<td>Check for new diagnoses. Since most data are reported with diagnoses on</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.check_exit_iso">check_exit_iso</a></td>
-<td>End isolation for anyone due to exit isolation</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.check_inds">check_inds</a></td>
-<td>Return indices for which the current state is false and which meet the date criterion</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.check_infectious">check_infectious</a></td>
-<td>Check if they become infectious</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.check_quar">check_quar</a></td>
-<td>Update quarantine state</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.check_recovery">check_recovery</a></td>
-<td>Check for recovery.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.check_severe">check_severe</a></td>
-<td>Check for new progressions to severe</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.check_symptomatic">check_symptomatic</a></td>
-<td>Check for new progressions to symptomatic</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.infect">infect</a></td>
-<td>Infect people and determine their eventual outcomes.</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.init_flows">init_flows</a></td>
-<td>Initialize flows to be zero</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.initialize">initialize</a></td>
-<td>Perform initializations</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.make_naive">make_naive</a></td>
-<td>Make a set of people naive. This is used during dynamic resampling.</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.make_nonnaive">make_nonnaive</a></td>
-<td>Make a set of people non-naive.</td>
-</tr>
-<tr class="even">
 <td><a href="#covasim.people.People.plot">plot</a></td>
-<td>Plot statistics of the population – age distribution, numbers of contacts,</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.schedule_quarantine">schedule_quarantine</a></td>
-<td>Schedule a quarantine. Typically not called by the user directly except</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.set_prognoses">set_prognoses</a></td>
-<td>Set the prognoses for each person based on age during initialization. Need</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.story">story</a></td>
-<td>Print out a short history of events in the life of the specified individual.</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.test">test</a></td>
-<td>Method to test people. Typically not to be called by the user directly;</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.update_contacts">update_contacts</a></td>
-<td>Refresh dynamic contacts, e.g.&nbsp;community</td>
-</tr>
-<tr class="even">
-<td><a href="#covasim.people.People.update_states_post">update_states_post</a></td>
-<td>Perform post-timestep updates</td>
-</tr>
-<tr class="odd">
-<td><a href="#covasim.people.People.update_states_pre">update_states_pre</a></td>
-<td>Perform all state updates at the current timestep</td>
+<td>Plot statistics of the population – age distribution, numbers of contacts, and overall weight of contacts (number of contacts multiplied by beta per layer); see cv.plot_people()</td>
 </tr>
 </tbody>
 </table>
-<section id="covasim.people.People.check_critical" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_critical">check_critical</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>people.People.check_critical()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check for new progressions to critical</p>
-</section>
-<section id="covasim.people.People.check_death" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_death">check_death</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>people.People.check_death()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check whether or not this person died on this timestep</p>
-</section>
-<section id="covasim.people.People.check_diagnosed" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_diagnosed">check_diagnosed</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>people.People.check_diagnosed()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check for new diagnoses. Since most data are reported with diagnoses on the date of the test, this function reports counts not for the number of people who received a positive test result on a day, but rather, the number of people who were tested on that day who are schedule to be diagnosed in the future.</p>
-</section>
-<section id="covasim.people.People.check_exit_iso" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_exit_iso">check_exit_iso</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>people.People.check_exit_iso()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>End isolation for anyone due to exit isolation</p>
-</section>
-<section id="covasim.people.People.check_inds" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_inds">check_inds</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>people.People.check_inds(current, date, filter_inds<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Return indices for which the current state is false and which meet the date criterion</p>
-</section>
-<section id="covasim.people.People.check_infectious" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_infectious">check_infectious</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>people.People.check_infectious()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check if they become infectious</p>
-</section>
-<section id="covasim.people.People.check_quar" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_quar">check_quar</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>people.People.check_quar()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Update quarantine state</p>
-</section>
-<section id="covasim.people.People.check_recovery" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_recovery">check_recovery</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>people.People.check_recovery(inds<span class="op">=</span><span class="va">None</span>, filter_inds<span class="op">=</span><span class="st">'is_exp'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check for recovery.</p>
-<p>More complex than other functions to allow for recovery to be manually imposed for a specified set of indices.</p>
-</section>
-<section id="covasim.people.People.check_severe" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_severe">check_severe</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>people.People.check_severe()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check for new progressions to severe</p>
-</section>
-<section id="covasim.people.People.check_symptomatic" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.check_symptomatic">check_symptomatic</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>people.People.check_symptomatic()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check for new progressions to symptomatic</p>
-</section>
-<section id="covasim.people.People.infect" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.infect">infect</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>people.People.infect(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    inds,</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    hosp_max<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    icu_max<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    layer<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    variant<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Infect people and determine their eventual outcomes.</p>
-<pre><code>* Every infected person can infect other people, regardless of whether they develop symptoms
-* Infected people that develop symptoms are disaggregated into mild vs. severe (=requires hospitalization) vs. critical (=requires ICU)
-* Every asymptomatic, mildly symptomatic, and severely symptomatic person recovers
-* Critical cases either recover or die
-* If the simulation is being run with waning, this method also sets/updates agents' neutralizing antibody levels</code></pre>
-<p>Method also deduplicates input arrays in case one agent is infected many times and stores who infected whom in infection_log list.</p>
-<section id="parameters-1" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>inds</td>
-<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
-<td>array of people to infect</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>hosp_max</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not there is an acute bed available for this person</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>icu_max</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether or not there is an ICU bed available for this person</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>source</td>
-<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
-<td>source indices of the people who transmitted this infection (None if an importation or seed infection)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>layer</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>contact layer this infection was transmitted on</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="even">
-<td>variant</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>the variant people are being infected by</td>
-<td><code>0</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>count</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>number of people infected</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.people.People.init_flows" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.init_flows">init_flows</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>people.People.init_flows()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Initialize flows to be zero</p>
-</section>
-<section id="covasim.people.People.initialize" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>people.People.initialize(sim_pars<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform initializations</p>
-</section>
-<section id="covasim.people.People.make_naive" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.make_naive">make_naive</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>people.People.make_naive(inds, reset_vx<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Make a set of people naive. This is used during dynamic resampling.</p>
-<section id="parameters-2" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>inds</td>
-<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
-<td>list of people to make naive</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>reset_vx</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether to reset vaccine-derived immunity</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.people.People.make_nonnaive" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.make_nonnaive">make_nonnaive</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>people.People.make_nonnaive(inds, set_recovered<span class="op">=</span><span class="va">False</span>, date_recovered<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Make a set of people non-naive.</p>
-<p>This can be done either by setting only susceptible and naive states, or else by setting them as if they have been infected and recovered.</p>
-</section>
 <section id="covasim.people.People.plot" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.people.People.plot">plot</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>people.People.plot(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Plot statistics of the population – age distribution, numbers of contacts, and overall weight of contacts (number of contacts multiplied by beta per layer).</p>
-<section id="parameters-3" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 21%">
-<col style="width: 8%">
-<col style="width: 56%">
-<col style="width: 13%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>bins (arr)</td>
-<td></td>
-<td>age bins to use (default, 0-100 in one-year bins)</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>width (float)</td>
-<td></td>
-<td>bar width</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>font_size (float)</td>
-<td></td>
-<td>size of font</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>alpha (float)</td>
-<td></td>
-<td>transparency of the plots</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>fig_args (dict)</td>
-<td></td>
-<td>passed to pl.figure()</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>axis_args (dict)</td>
-<td></td>
-<td>passed to pl.subplots_adjust()</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>plot_args (dict)</td>
-<td></td>
-<td>passed to pl.plot()</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>do_show (bool)</td>
-<td></td>
-<td>whether to show the plot</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>fig (fig)</td>
-<td></td>
-<td>handle of existing figure to plot into</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.people.People.schedule_quarantine" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.schedule_quarantine">schedule_quarantine</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>people.People.schedule_quarantine(inds, start_date<span class="op">=</span><span class="va">None</span>, period<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Schedule a quarantine. Typically not called by the user directly except via a custom intervention; see the contact_tracing() intervention instead.</p>
-<p>This function will create a request to quarantine a person on the start_date for a period of time. Whether they are on an existing quarantine that gets extended, or whether they are no longer eligible for quarantine, will be checked when the start_date is reached.</p>
-<section id="parameters-4" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>inds</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>indices of who to quarantine, specified by check_quar()</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>start_date</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>day to begin quarantine (defaults to the current day, <code>sim.t</code>)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>period</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>quarantine duration (defaults to <code>pars['quar_period']</code>)</td>
-<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.people.People.set_prognoses" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.set_prognoses">set_prognoses</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>people.People.set_prognoses()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Set the prognoses for each person based on age during initialization. Need to reset the seed because viral loads are drawn stochastically.</p>
-</section>
-<section id="covasim.people.People.story" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.story">story</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>people.People.story(uid, <span class="op">*</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Print out a short history of events in the life of the specified individual.</p>
-<section id="parameters-5" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>uid</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>the person or people whose story is being regaled</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>args</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>these people will tell their stories too</td>
-<td><code>()</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>::</p>
-<pre><code>sim = cv.Sim(pop_type='hybrid', verbose=0)
-sim.run()
-sim.people.story(12)
-sim.people.story(795)</code></pre>
-</section>
-</section>
-<section id="covasim.people.People.test" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.test">test</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>people.People.test(inds, test_sensitivity<span class="op">=</span><span class="fl">1.0</span>, loss_prob<span class="op">=</span><span class="fl">0.0</span>, test_delay<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Method to test people. Typically not to be called by the user directly; see the test_num() and test_prob() interventions.</p>
-<section id="parameters-6" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>inds</td>
-<td></td>
-<td>indices of who to test</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>test_sensitivity</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>probability of a true positive</td>
-<td><code>1.0</code></td>
-</tr>
-<tr class="odd">
-<td>loss_prob</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
-<td>probability of loss to follow-up</td>
-<td><code>0.0</code></td>
-</tr>
-<tr class="even">
-<td>test_delay</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>number of days before test results are ready</td>
-<td><code>0</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="covasim.people.People.update_contacts" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.update_contacts">update_contacts</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>people.People.update_contacts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Refresh dynamic contacts, e.g.&nbsp;community</p>
-</section>
-<section id="covasim.people.People.update_states_post" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.update_states_post">update_states_post</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>people.People.update_states_post()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform post-timestep updates</p>
-</section>
-<section id="covasim.people.People.update_states_pre" class="level5">
-<h5 class="anchored" data-anchor-id="covasim.people.People.update_states_pre">update_states_pre</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>people.People.update_states_pre(t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Perform all state updates at the current timestep</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>people.People.plot(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Plot statistics of the population – age distribution, numbers of contacts, and overall weight of contacts (number of contacts multiplied by beta per layer); see cv.plot_people()</p>
 
 
 </section>
@@ -1560,7 +1049,7 @@ sim.people.story(795)</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

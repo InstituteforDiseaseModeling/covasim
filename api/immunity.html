@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-36db928f69306286132634f357b475da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">What’s new</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../migrate3to4.html"> 
+<span class="menu-text">v3 → v4 migration</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../faq.html"> 
 <span class="menu-text">FAQ</span></a>
   </li>  
@@ -511,7 +515,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#covasim.immunity.variant.apply" id="toc-covasim.immunity.variant.apply" class="nav-link" data-scroll-target="#covasim.immunity.variant.apply">apply</a></li>
   <li><a href="#covasim.immunity.variant.initialize" id="toc-covasim.immunity.variant.initialize" class="nav-link" data-scroll-target="#covasim.immunity.variant.initialize">initialize</a></li>
   <li><a href="#covasim.immunity.variant.parse" id="toc-covasim.immunity.variant.parse" class="nav-link" data-scroll-target="#covasim.immunity.variant.parse">parse</a></li>
+  <li><a href="#covasim.immunity.variant.process_days" id="toc-covasim.immunity.variant.process_days" class="nav-link" data-scroll-target="#covasim.immunity.variant.process_days">process_days</a></li>
   </ul></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions">Functions</a>
+  <ul>
+  <li><a href="#covasim.immunity.build_immunity_matrix" id="toc-covasim.immunity.build_immunity_matrix" class="nav-link" data-scroll-target="#covasim.immunity.build_immunity_matrix">build_immunity_matrix</a>
+  <ul class="collapse">
+  <li><a href="#parameters-1" id="toc-parameters-1" class="nav-link" data-scroll-target="#parameters-1">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -528,7 +541,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="covasim.immunity" class="level1">
 <h1>immunity</h1>
 <p><code>immunity</code></p>
-<p>Defines classes and methods for calculating immunity</p>
+<p>Variants and immunity for Covasim on the Starsim base.</p>
+<p><a href="../api/immunity.html#covasim.immunity.variant" title="0"><code>cv.variant</code></a> adds a co-circulating variant to a sim. Since there is a single <code>cv.COVID</code> module with an internal variant axis, <a href="../api/immunity.html#covasim.immunity.variant" title="0"><code>cv.variant</code></a> is not a module: as in v3, it registers the variant’s parameters with the COVID module and seeds infections with it on the days it is introduced. <code>cv.Sim(variants=[...])</code> registers each into the module before the states are allocated. The cross-immunity matrix builder (<code>build_immunity_matrix</code>) and the neutralizing antibody (NAb) waning functions live here too, and are used by <code>cv.COVID</code> and <code>cv.CrossImmunity</code> (connectors.py). As in v3 unless noted.</p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -541,14 +555,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.immunity.variant">variant</a></td>
-<td>Add a new variant to the sim</td>
+<td>Add a new variant to the sim.</td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.immunity.variant" class="level3">
 <h3 class="anchored" data-anchor-id="covasim.immunity.variant">variant</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>immunity.variant(variant, days, label<span class="op">=</span><span class="va">None</span>, n_imports<span class="op">=</span><span class="dv">1</span>, rescale<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Add a new variant to the sim</p>
+<p>Add a new variant to the sim.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
@@ -564,41 +578,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>variant</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>name of variant, or dictionary of parameters specifying information about the variant</td>
+<td>name of a predefined variant (<code>'alpha'</code>, <code>'delta'</code>, …), or a dict of the per-variant parameters (<code>rel_beta</code>/<code>rel_symp_prob</code>/ <code>rel_severe_prob</code>/<code>rel_crit_prob</code>/<code>rel_death_prob</code>).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>days</td>
-<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>day(s) on which new variant is introduced</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>day(s) on which the variant is introduced, as day indices or dates (e.g.&nbsp;<code>'2020-03-15'</code>).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>label</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>if variant is supplied as a dict, the name of the variant</td>
+<td>if <code>variant</code> is a dict, the variant’s name (dict key).</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>n_imports</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
-<td>the number of imports of the variant to be added</td>
+<td>number of infections to import on each introduction day.</td>
 <td><code>1</code></td>
 </tr>
 <tr class="odd">
 <td>rescale</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>whether the number of imports should be rescaled with the population</td>
+<td>whether to scale <code>n_imports</code> down by <code>pop_scale</code> (so the number of <em>real</em> introductions is preserved under population scaling).</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>::</p>
-<pre><code>alpha    = cv.variant('alpha', days=10) # Make the alpha variant B117 active from day 10
-p1      = cv.variant('p1', days=15) # Make variant P1 active from day 15
-my_var  = cv.variant(variant={'rel_beta': 2.5}, label='My variant', days=20)
-sim     = cv.Sim(variants=[alpha, p1, my_var]).run() # Add them all to the sim
-sim2    = cv.Sim(variants=cv.variant('alpha', days=0, n_imports=20), pop_infected=0).run() # Replace default variant with alpha</code></pre>
+<p><strong>Examples</strong>::</p>
+<pre><code>alpha = cv.variant('alpha', days=10, n_imports=20)
+delta = cv.variant('delta', days='2020-04-01', n_imports=20)
+sim   = cv.Sim(variants=[alpha, delta]).run()
+
+my_var = cv.variant(variant={'rel_beta': 2.5}, label='My variant', days=20) # A custom variant</code></pre>
 </section>
 <section id="methods" class="level4">
 <h4 class="anchored" data-anchor-id="methods">Methods</h4>
@@ -612,35 +626,113 @@ sim2    = cv.Sim(variants=cv.variant('alpha', days=0, n_imports=20), pop_infecte
 <tbody>
 <tr class="odd">
 <td><a href="#covasim.immunity.variant.apply">apply</a></td>
-<td>Introduce new infections with this variant</td>
+<td>On a matched introduction day, seed <code>n_imports</code> susceptibles with this variant.</td>
 </tr>
 <tr class="even">
 <td><a href="#covasim.immunity.variant.initialize">initialize</a></td>
-<td>Update variant info in sim</td>
+<td>Register this variant into the single COVID module’s variant axis (grow <code>nv</code>).</td>
 </tr>
 <tr class="odd">
 <td><a href="#covasim.immunity.variant.parse">parse</a></td>
-<td>Unpack variant information, which may be given as either a string or a dict</td>
+<td>Unpack the variant info, given as either a predefined-name string or a pars dict.</td>
+</tr>
+<tr class="even">
+<td><a href="#covasim.immunity.variant.process_days">process_days</a></td>
+<td>Convert the days (day indices or dates) to day indices, as for interventions; called by <code>cv.COVID.init_pre()</code></td>
 </tr>
 </tbody>
 </table>
 <section id="covasim.immunity.variant.apply" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.immunity.variant.apply">apply</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.<span class="bu">apply</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Introduce new infections with this variant</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.<span class="bu">apply</span>(covid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On a matched introduction day, seed <code>n_imports</code> susceptibles with this variant.</p>
 </section>
 <section id="covasim.immunity.variant.initialize" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.immunity.variant.initialize">initialize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.initialize(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Update variant info in sim</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.initialize(covid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Register this variant into the single COVID module’s variant axis (grow <code>nv</code>).</p>
 </section>
 <section id="covasim.immunity.variant.parse" class="level5">
 <h5 class="anchored" data-anchor-id="covasim.immunity.variant.parse">parse</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.parse(variant<span class="op">=</span><span class="va">None</span>, label<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Unpack variant information, which may be given as either a string or a dict</p>
-
-
+<p>Unpack the variant info, given as either a predefined-name string or a pars dict.</p>
 </section>
+<section id="covasim.immunity.variant.process_days" class="level5">
+<h5 class="anchored" data-anchor-id="covasim.immunity.variant.process_days">process_days</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>immunity.variant.process_days(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert the days (day indices or dates) to day indices, as for interventions; called by <code>cv.COVID.init_pre()</code></p>
+</section>
+</section>
+</section>
+</section>
+<section id="functions" class="level2">
+<h2 class="anchored" data-anchor-id="functions">Functions</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#covasim.immunity.build_immunity_matrix">build_immunity_matrix</a></td>
+<td>Build the asymmetric <code>nv x nv</code> cross-immunity matrix (v3 <code>init_immunity</code>).</td>
+</tr>
+</tbody>
+</table>
+<section id="covasim.immunity.build_immunity_matrix" class="level3">
+<h3 class="anchored" data-anchor-id="covasim.immunity.build_immunity_matrix">build_immunity_matrix</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>immunity.build_immunity_matrix(variant_map, override<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Build the asymmetric <code>nv x nv</code> cross-immunity matrix (v3 <code>init_immunity</code>).</p>
+<p><code>matrix[target, source]</code> is the protection a prior <code>source</code> infection confers against a <code>target</code> challenge (diagonal 1.0 = full homologous protection). Start from <code>np.ones((nv,nv))</code> and overwrite known pairs from <code>get_cross_immunity()</code> (a dict-of-dicts keyed by variant label).</p>
+<section id="parameters-1" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>variant_map</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td><code>{index: label}</code> for the variants in the sim.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>override</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>an explicit <code>nv x nv</code> matrix to use instead of the defaults.</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>an <code>nv x nv</code> float ndarray.</td>
+</tr>
+</tbody>
+</table>
+
+
 </section>
 </section>
 </section>
@@ -1079,7 +1171,7 @@ sim2    = cv.Sim(variants=cv.variant('alpha', days=0, n_imports=20), pop_infecte
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Covasim v3.1.9 (2026-09-29).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
+<p>Docs built for Covasim v4.0.1 (2026-10-16).<br>© 2020–2026, Bill &amp; Melinda Gates Foundation. All rights reserved.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/starsimhub/covasim/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
