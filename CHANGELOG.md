@@ -11,7 +11,7 @@ There are no further major releases planned. If there is a specific bugfix or fe
 ### Version 4.0.1 (2026-10-16)
 
 - Fixed `cv.change_beta()` and `cv.clip_edges()` raising an error when the days are given as an array (e.g. `np.arange(180)`).
-- Fixed the docs build stopping partway through, and no longer building the AI migration skill as a docs page.
+- *GitHub info*: PR [468](https://github.com/starsimhub/covasim/pull/468)
 
 ### Version 4.0.0 (2026-10-04)
 
