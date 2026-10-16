@@ -1321,7 +1321,7 @@ def process_days(sim, days, return_dates=False):
     """
     if callable(days):
         return days
-    days = sc.tolist(days)
+    days = sc.tolist(days, coerce='full') # Allow a single day, a list, or an array
     for d, day in enumerate(days):
         if sc.isstring(day) and day == 'end':
             day = sim.npts - 1
@@ -1351,7 +1351,7 @@ def process_days_changes(sim, days, changes):
     """ Process the days and changes of change_beta and clip_edges together, so that each change stays with its day when the days are sorted """
     if callable(days):
         return days, process_changes(changes, days)
-    days = [process_days(sim, day)[0] for day in sc.tolist(days)] # Convert each day to an integer, keeping the order
+    days = [process_days(sim, day)[0] for day in sc.tolist(days, coerce='full')] # Convert each day to an integer, keeping the order
     changes = process_changes(changes, days)
     order = np.argsort(days, kind='stable')
     return np.array(days, dtype=int)[order], changes[order]

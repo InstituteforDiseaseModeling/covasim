@@ -5,6 +5,11 @@ project:
   output-dir: _site
   title: "Covasim"
   execute-dir: file
+  render: # Render all pages except the AI migration skill, which isn't a docs page
+    - "**/*.md"
+    - "**/*.qmd"
+    - "**/*.ipynb"
+    - "!migrate3to4/"
   resources:
     - objects.json
     - objects.inv
