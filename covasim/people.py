@@ -64,6 +64,10 @@ class People(cvb.BasePeople):
         for key in self.meta.person:
             if key == 'uid' or key == 'region':
                 self[key] = np.arange(self.pars['pop_size'], dtype=cvd.default_int)
+            elif key == 'sewershed':
+                self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
+            elif key in ['x', 'y']:
+                self[key] = np.full(self.pars['pop_size'], np.nan, dtype=np.float64)
             elif key in ['n_infections', 'n_breakthroughs']:
                 self[key] = np.zeros(self.pars['pop_size'], dtype=cvd.default_int)
             else:

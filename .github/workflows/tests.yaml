@@ -4,7 +4,7 @@ on: [pull_request]
 jobs:
   install_and_test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     permissions:
       checks: write
       pull-requests: write

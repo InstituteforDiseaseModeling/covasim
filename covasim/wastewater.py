@@ -62,6 +62,8 @@ class WastewaterSampler(Analyzer):
     Args:
         days  (list): simulation days (int) or calendar date strings to sample.
         label (str):  optional label for the analyzer.
+        sid   (int):  optional sewershed ID; None samples everyone (legacy behavior),
+                      -1 samples people outside all supplied polygons. Use one analyzer per sid.
 
     Example::
 
@@ -71,8 +73,11 @@ class WastewaterSampler(Analyzer):
         print(ww.to_fasta(56))
     '''
 
-    def __init__(self, days, label=None):
+    def __init__(self, days, label=None, sid=None):
         super().__init__(label=label)
+        if sid is not None and (isinstance(sid, (bool, np.bool_)) or not isinstance(sid, (int, np.integer)) or sid < -1):
+            raise ValueError('sid must be an integer >= -1, or None for the entire population')
+        self.sid = sid
         self._days_input = days  # raw user input; converted in initialize()
         self.samples     = {}
         self._reference  = None  # set in initialize()
@@ -96,7 +101,10 @@ class WastewaterSampler(Analyzer):
 
     def _take_sample(self, sim):
         # Infectious agents only
-        inds = np.nonzero(sim.people.infectious)[0]
+        eligible = sim.people.infectious
+        if self.sid is not None:
+            eligible = eligible & (sim.people.sewershed == self.sid)
+        inds = np.nonzero(eligible)[0]
 
         if len(inds) == 0:
             self.samples[sim.t] = None
@@ -120,6 +128,9 @@ class WastewaterSampler(Analyzer):
                 )
 
         total         = sum(load_by_muts.values())
+        if total <= 0:
+            self.samples[sim.t] = None
+            return
         mutation_sets = list(load_by_muts.keys())
         raw_loads     = [load_by_muts[m] for m in mutation_sets]
         proportions   = [v / total for v in raw_loads]
@@ -129,7 +140,7 @@ class WastewaterSampler(Analyzer):
         variant_indices = sim.people.infectious_variant[inds]
         load_by_variant = defaultdict(float)
         for vi, load in zip(variant_indices, loads):
-            vname = variant_map.get(int(vi), f'variant_{int(vi)}')
+            vname = variant_map.get(int(vi), f'variant_{int(vi)}') if not np.isnan(vi) else 'wild'
             load_by_variant[vname] += float(load)
 
         self.samples[sim.t] = WastewaterSample(

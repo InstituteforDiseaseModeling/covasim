@@ -45,6 +45,9 @@ class PeopleMeta(sc.prettyobj):
             'age',              # Float
             'sex',              # Float
             'region',           # Int
+            'sewershed',         # Int: 0 default catchment, -1 outside supplied polygons
+            'x',                # Float64 home coordinate
+            'y',                # Float64 home coordinate
             'symp_prob',        # Float
             'severe_prob',      # Float
             'crit_prob',        # Float

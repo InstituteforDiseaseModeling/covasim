@@ -4,6 +4,7 @@ Load data
 
 #%% Housekeeping
 import numpy as np
+import pandas as pd
 import sciris as sc
 from . import country_age_data    as cad
 from . import state_age_data      as sad
@@ -132,7 +133,6 @@ def show_locations(location=None, output=False):
         print('\nList of available locations (case insensitive):\n')
         sc.pp(loclist)
         return
-
 
 def get_age_distribution(location=None):
     '''
