@@ -13,7 +13,7 @@ from . import data as cvdata
 from . import defaults as cvd
 from . import parameters as cvpar
 from . import people as cvppl
-from .geography import assign_coords
+from .geography import assign_density_based_coords
 from .sewersheds import assign_sewersheds
 import geopandas as gpd
 import pandas as pd
@@ -21,7 +21,7 @@ from shapely.geometry import Point
 
 # Specify all externally visible functions this file defines
 __all__ = ['make_people', 'make_randpop', 'assign_regions',
-           'assign_coords', 'make_random_contacts',
+           'assign_density_based_coords', 'make_random_contacts',
            'make_microstructured_contacts', 'make_hybrid_contacts',
            'make_synthpop', 'make_rank_based_contacts']
 
@@ -315,7 +315,7 @@ def make_randpop(pars, use_age_data=True, use_household_data=True, sex_ratio=0.5
     elif microstructure == 'hybrid':
         contacts = make_hybrid_contacts(pop_size, ages, pars['contacts'], **kwargs)
     elif microstructure == 'rank':
-        coords = assign_coords(pars)                       # (N,2) x,y in km, sampled from the density raster
+        coords = assign_density_based_coords(pars)                       # (N,2) x,y in km, sampled from the density raster
         popdict['x'], popdict['y'] = coords[:, 0], coords[:, 1]
         contacts = dict()
         for lkey,n in pars['contacts'].items():

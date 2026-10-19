@@ -46,7 +46,7 @@ load_density_raster(): pip install rasterio
 
 import numpy as np
 
-__all__ = ['load_density_raster', 'sample_coords_from_density', 'lonlat_to_km', 'assign_coords']
+__all__ = ['load_density_raster', 'sample_coords_from_density', 'lonlat_to_km', 'assign_density_based_coords']
 
 
 def load_density_raster(path, bbox=None):
@@ -140,7 +140,7 @@ def _get_par(pars, key, default=None):
     except (KeyError, AttributeError): # sciris' KeyNotFoundError is a KeyError
         return default
 
-def assign_coords(pars):
+def assign_density_based_coords(pars):
     '''
     Assign each agent an (x, y) location in km, sampled from a population-density raster.
 
