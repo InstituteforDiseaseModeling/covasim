@@ -23,6 +23,7 @@ from .plotting      import * # Depends on defaults, misc
 from .base          import * # Depends on version, misc, defaults, parameters, utils
 from .people        import * # Depends on utils, defaults, base, plotting
 from .population    import * # Depends on people et al.
+from .sewersheds    import * # Depends on nothing else in covasim
 from .interventions import * # Depends on defaults, utils, base
 from .immunity      import * # Depends on utils, parameters, defaults
 from .analysis           import * # Depends on utils, misc, interventions

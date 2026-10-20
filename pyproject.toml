@@ -40,7 +40,7 @@ dependencies = [
     "biopython>=1.79",
     "shedding_hub>=0.2.1",
     "geopandas",
-    "shapely>=1.8",
+    "shapely>=2.0",
 ]
 dynamic = ["version"]
 
@@ -48,6 +48,7 @@ dynamic = ["version"]
 full = [
     "plotly",
     "fire",
+    "rasterio",
     "optuna",
     "synthpops",
     "parestlib",

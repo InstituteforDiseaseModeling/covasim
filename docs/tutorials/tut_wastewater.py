@@ -88,8 +88,9 @@ plt.show()
 import geopandas as gpd
 
 sewershed_gdf = gpd.read_file('san-diego-data/sewersheds.geojson')
-# sid strings like "SWR-01" become the integer 1 in sim.people.sewershed
-sewershed_gdf['sid_num'] = sewershed_gdf['sid'].str.extract(r'(\d+)', expand=False).astype(int)
+# people.sewershed holds integer IDs; sim.sewershed_labels gives {integer ID: original sid}
+id_to_sid = sim.sewershed_labels
+sewershed_gdf['sid_num'] = sewershed_gdf['sid'].map({v: k for k, v in id_to_sid.items()})
 
 agent_total = viral_shedding.sum(axis=1)  # cumulative shedding per agent
 totals = {sid: float(agent_total[sewersheds == sid].sum()) for sid in np.unique(sewersheds)}

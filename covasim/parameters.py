@@ -58,7 +58,7 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['contacts']        = None  # The number of contacts per layer; set by reset_layer_pars() below
     pars['dynam_layer']     = None  # Which layers are dynamic; set by reset_layer_pars() below
     pars['beta_layer']      = None  # Transmissibility per layer; set by reset_layer_pars() below
-    pars['density_raster'] = None # Path to a population-density GeoTIFF (people per pixel), used to place agents when pop_type='rank'; None uses a 10x10 km test square
+    pars['density_raster'] = None # Path to a population-density GeoTIFF (people per pixel), used to place agents when pop_type='rank' (inside boundary_shapefile, if given); None uses a 10x10 km test square
     pars['density_bbox']   = None # Optional (lon_min, lat_min, lon_max, lat_max) window of that raster to read; None reads the whole file
     
     # Basic disease transmission parameters

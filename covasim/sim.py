@@ -71,6 +71,7 @@ class Sim(cvb.BaseSim):
         self._legacy_trans = None     # Whether to use the legacy transmission calculation method (slower; for reproducing earlier results)
         self._orig_pars    = None     # Store original parameters to optionally restore at the end of the simulation
         self.shedding_lookup = None     # Lookup table for viral shedding values
+        self.sewershed_labels = {}      # {integer sewershed ID in people.sewershed: original sid from the sewershed file}; set when the population is made
         # Make default parameters (using values from parameters.py)
         default_pars = cvpar.make_pars(version=version) # Start with default pars
         super().__init__(default_pars) # Initialize and set the parameters as attributes
@@ -329,7 +330,7 @@ class Sim(cvb.BaseSim):
         self.results['pop_nabs']            = init_res('Population nab levels', scale=False, color=dcols.pop_nabs)
         self.results['pop_protection']      = init_res('Population immunity protection', scale=False, color=dcols.pop_protection)
         self.results['pop_symp_protection'] = init_res('Population symptomatic protection', scale=False, color=dcols.pop_symp_protection)
-        self.results['viral_load_hist'] = np.zeros((self['pop_size'], self.npts),dtype=cvd.default_float,)
+        # self.results['viral_load_hist'] = np.zeros((self['pop_size'], self.npts),dtype=cvd.default_float,)
         self.results['viral_shedding_hist'] = np.zeros((self['pop_size'], self.npts), dtype=cvd.default_float,)
         self.compute_viral_shedding_lookup()
         # Handle variants
@@ -648,7 +649,7 @@ class Sim(cvb.BaseSim):
         )
         self.people.viral_load     = viral_load
         self.people.viral_shedding = viral_shedding
-        self.results['viral_load_hist'][:, self.t]     = viral_load
+        # self.results['viral_load_hist'][:, self.t]     = viral_load
         self.results['viral_shedding_hist'][:, self.t] = viral_shedding
         # Shorten useful parameters
         nv = self['n_variants'] # Shorten number of variants

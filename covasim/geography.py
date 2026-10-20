@@ -31,10 +31,15 @@ How it is used (pop_type='rank'):
        To read only part of a large raster, also pass
            density_bbox=(lon_min, lat_min, lon_max, lat_max)
        Both parameters default to None in make_pars().
-    2. make_randpop() calls assign_coords(pars) and passes the resulting x, y array to
+    2. make_randpop() calls assign_density_based_coords(pars) and passes the resulting x, y array to
        make_rank_based_contacts().
     If no raster is given, agents are spread uniformly over a 10 x 10 km square, which is
     only useful for testing.
+
+With a boundary file (boundary_shapefile) as well, agents are still placed according to the raster, but only inside
+the boundary polygons (sample_coords_within_boundaries()); their region is the polygon they land in
+(assign_regions_from_coords()) and the region 'population' column is not used. Locations then stay in longitude/latitude,
+so they can be matched to sewershed polygons; only the contact network converts them to km.
 
 The Sim's 'location' parameter (which loads national age and household data) is not used
 here; only density_raster and density_bbox decide where agents are placed.
@@ -46,7 +51,8 @@ load_density_raster(): pip install rasterio
 
 import numpy as np
 
-__all__ = ['load_density_raster', 'sample_coords_from_density', 'lonlat_to_km', 'assign_density_based_coords']
+__all__ = ['load_density_raster', 'sample_coords_from_density', 'sample_coords_within_boundaries', 'assign_regions_from_coords',
+           'lonlat_to_km', 'assign_density_based_coords']
 
 
 def load_density_raster(path, bbox=None):
@@ -112,6 +118,69 @@ def sample_coords_from_density(raster, pop_size):
     lon = raster['lons'][cols] + (np.random.random(pop_size) - 0.5)*abs(raster['dlon'])
     lat = raster['lats'][rows] + (np.random.random(pop_size) - 0.5)*abs(raster['dlat'])
     return np.column_stack((lon, lat))
+
+
+def sample_coords_within_boundaries(raster, boundaries, pop_size, max_tries=100):
+    '''
+    Draw pop_size (lon, lat) points from a population-density raster, but only inside the boundary polygons.
+
+    Pixels whose centre is outside every polygon get zero weight; the rest are chosen in proportion to
+    their population, and the agent is placed at a random spot in the pixel. A spot that falls just outside
+    the boundary (pixels on the edge) is redrawn until it is inside.
+
+    Args:
+        raster     (dict):         as returned by load_density_raster(), in longitude/latitude
+        boundaries (GeoDataFrame): region polygons in longitude/latitude (EPSG:4326)
+        pop_size   (int):          number of agents to place
+        max_tries  (int):          maximum number of redraws for agents that land outside the boundary
+
+    Returns:
+        (pop_size, 2) array of longitude, latitude in degrees
+    '''
+    import shapely # Imported here since only the boundary-based placement needs it
+
+    boundary = shapely.union_all(boundaries.geometry.values) # All regions as one shape
+    lon_grid, lat_grid = np.meshgrid(raster['lons'], raster['lats'])
+    inside = shapely.contains_xy(boundary, lon_grid.ravel(), lat_grid.ravel()).reshape(lon_grid.shape)
+    masked = dict(raster, counts=raster['counts']*inside) # People per pixel, zero outside the boundary
+    if masked['counts'].sum() <= 0:
+        errormsg = 'The density raster has no population inside the boundary polygons; check that they overlap and use the same coordinates (longitude/latitude)'
+        raise ValueError(errormsg)
+
+    pop_size = int(pop_size)
+    coords = sample_coords_from_density(masked, pop_size)
+    for _ in range(max_tries):
+        outside = ~shapely.contains_xy(boundary, coords[:, 0], coords[:, 1])
+        if not outside.any():
+            return coords
+        coords[outside] = sample_coords_from_density(masked, int(outside.sum())) # Redraw only those outside
+    errormsg = f'Could not place all agents inside the boundary polygons after {max_tries} tries'
+    raise RuntimeError(errormsg)
+
+
+def assign_regions_from_coords(lonlat, boundaries):
+    '''
+    Give each agent the region_code of the boundary polygon that contains its location.
+    Where polygons overlap, the first one in the file wins.
+
+    Args:
+        lonlat     (array):        (N, 2) array of longitude, latitude in degrees
+        boundaries (GeoDataFrame): region polygons (EPSG:4326) with a region_code column
+
+    Returns:
+        array of region_code values, one per agent
+    '''
+    import shapely
+    labels = boundaries['region_code'].to_numpy()
+    index  = np.full(len(lonlat), -1)
+    for i, geom in enumerate(boundaries.geometry.values):
+        unassigned = index < 0
+        hit = shapely.contains_xy(geom, lonlat[unassigned, 0], lonlat[unassigned, 1])
+        index[np.nonzero(unassigned)[0][hit]] = i
+    if (index < 0).any():
+        errormsg = f'{int((index < 0).sum())} agents are outside all boundary polygons'
+        raise ValueError(errormsg)
+    return labels[index]
 
 
 def lonlat_to_km(lonlat):
