@@ -35,8 +35,8 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['pop_infected'] = 20       # Number of initial infections
     pars['pop_type']     = 'random' # What type of population data to use -- 'random' (fastest), 'synthpops' (best), 'hybrid' (compromise), 'rank' (population-density based modeling)
     pars['location']     = None     # What location to load data from -- default Seattle
-    pars['boundary_shapefile']     = 'example_boundaries.geojson' # Optional shapefile for the boundary of the population; if None, use the whole population
-    pars['sewershed_file'] = 'example_sewersheds.geojson'   # Optional CSV with sid,polygon; None means one whole-population catchment
+    pars['boundary_shapefile'] = None # Optional path to a boundary file (GeoJSON/shapefile with region_code, region_name, population) used to assign regions and coordinates; None means a single region with no coordinates
+    pars['sewershed_file'] = None # Optional path to a sewershed polygon file (GeoJSON/shapefile with a 'sid' property); None means one whole-population catchment (requires boundary_shapefile or people_coords)
     pars['people_coords'] = None   # Optional array of shape (pop_size, 2) with x,y coordinates for each person; if None, assign randomly within the boundary shapefile
       
     # Simulation parameters
